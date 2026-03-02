@@ -16,6 +16,10 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-03-02
+- **Web presence**: README updated with "What makes ByteOS different" highlights (Byte's memory, adaptive paths, compliance, open source). Updates section now references Phase 5 in progress (flashcards, document-to-course, SCORM 1.2 import).
+- **Phase 5**: Flashcards modality (Learn), document-to-course (Studio generate-from-document), and SCORM 1.2 import (Studio import-scorm) documented as implemented.
+
 ### 2026-02-26
 - **Learn (Memory)**: Info banner on Byte's Memory page now uses explicit light/dark colors (amber-50/amber-950, amber-900/amber-100) so text is readable in both themes — no camouflaging when switching color mode.
 - **Roadmap**: SCORM & format import added to "What's upcoming" (upload SCORM 1.2 packages, parse manifest, map to courses; other formats later). Second modality and Document/URL import remain first priorities.
@@ -63,7 +67,8 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ### Phase 5 — Scale (in progress)
 - **Done**: Path assignment + due dates, compliance view, certificate print, upcoming deadlines, required paths.
-- **Upcoming**: Second modality (e.g. Flashcards or Audio), document/URL import for authoring, email reminders for at-risk/overdue, then BytePlay/ByteFeed/ByteMind, white-label, SSO/HRIS.
+- **Implemented**: Flashcards modality (Learn: FlashcardsCard, generate-flashcards API); document-to-course (Studio: generate-from-document API for PDF/DOCX/URL); SCORM 1.2 import (Studio: import-scorm API).
+- **Upcoming**: Email reminders for at-risk/overdue, then BytePlay/ByteFeed/ByteMind, white-label, SSO/HRIS.
 
 ---
 

@@ -9,6 +9,14 @@
   <strong>static content</strong>, <strong>one course for all</strong>, and <strong>no memory of the learner</strong>.
 </p>
 
+### What makes ByteOS different
+
+- **Byte's longitudinal memory** — The AI tutor remembers struggles, preferences, and prior learning across sessions and courses; most "AI in LMS" is stateless.
+- **Adaptive paths** — Next-best-action, struggle detection from quizzes, and optional course reordering so each learner gets a path that fits.
+- **AI tutor in context** — RAG over course content plus learner memory; "Explain this" from selected text; My Memory page.
+- **Compliance and certifications** — Assign paths with due dates, compliance view (overdue / at-risk / on-track), shareable certificates with verification.
+- **Open source and research-backed** — MIT license; design grounded in learning sciences ([RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md)). Flashcards modality and document/SCORM import in progress.
+
 ---
 
 ## The problem (and why it matters)
@@ -43,9 +51,21 @@ We are actively working on **bringing this same AI intelligence — learner memo
 
 We maintain a **phase-wise development log** so every commit tells a clear story. See:
 
-- **[UPDATES.md](./UPDATES.md)** — What we've built (Phases 1–4 complete; Phase 5 in progress), what's upcoming, and a **daily-update template** for end-of-day commits.
+- **[UPDATES.md](./UPDATES.md)** — What we've built (Phases 1–4 complete; Phase 5 in progress: flashcards modality, document-to-course, SCORM 1.2 import), what's upcoming, and a **daily-update template** for end-of-day commits.
 
 **Why star this repo?** ByteOS is one of the few open-source platforms that combine **learner memory**, **adaptive sequencing**, and **AI tutoring** in a single stack — with a clear research foundation and a roadmap to bring this intelligence into traditional LMS workflows. Star and watch **UPDATES.md** to follow progress; we ship in phases and document each step.
+
+---
+
+## Byte's memory (the differentiator)
+
+Byte, the AI tutor, uses **longitudinal memory**: it remembers what you've struggled with, what you know, and how you like to learn — across sessions and courses. Most "AI in LMS" implementations are stateless; Byte is not. For how it works and where it lives in the codebase, see **[docs/byte-memory.md](./docs/byte-memory.md)**. A short **demo video** will be linked from **[docs/demo.md](./docs/demo.md)** once recorded.
+
+---
+
+## Screenshots
+
+Screenshots (Learn dashboard, course viewer with Byte, Studio paths/compliance) are in **[docs/screenshots/](./docs/screenshots/)**. Adding 2–4 screenshots there improves contributor and user confidence that ByteOS is building, not just planning.
 
 ---
 
@@ -197,7 +217,10 @@ See [docs/PRODUCT_FEATURES.md](./docs/PRODUCT_FEATURES.md) for the full specific
 | [RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md) | Learning sciences, evidence base, the gap ByteOS fills, citation. |
 | [AGENTS.md](./AGENTS.md) | Instructions for AI coding agents. |
 | [docs/STRATEGIC_PATH.md](./docs/STRATEGIC_PATH.md) | Vision alignment and roadmap. |
+| [PROGRESS.md](./PROGRESS.md) | Next 3 outcomes and quick context for contributors/agents. |
 | [docs/ACTION_PLANS.md](./docs/ACTION_PLANS.md) | Executable action plans. |
+| [docs/byte-memory.md](./docs/byte-memory.md) | How Byte's longitudinal memory works and where it lives in the codebase. |
+| [docs/demo.md](./docs/demo.md) | Demo video link (add once recorded). |
 | [docs/PRD.md](./docs/PRD.md) | Product requirements. |
 
 ---
