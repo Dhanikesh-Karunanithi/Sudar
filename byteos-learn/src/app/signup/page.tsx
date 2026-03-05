@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import { Zap, CheckCircle2 } from 'lucide-react'
+import { CheckCircle2 } from 'lucide-react'
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState('')
@@ -73,11 +74,18 @@ export default function SignupPage() {
       <div className="w-full max-w-md space-y-8">
         {/* Logo */}
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-indigo-500/25 mx-auto">
-            <Zap className="w-6 h-6 text-white" strokeWidth={2.5} />
+          <div className="relative w-16 h-16 mx-auto">
+            <Image
+              src="/sudar-logo.png"
+              alt="Sudar"
+              fill
+              className="object-contain"
+              sizes="64px"
+              priority
+            />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">ByteOS Learn</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Sudar Learn</h1>
             <p className="text-slate-500 text-sm mt-1">Start your learning journey</p>
           </div>
         </div>
@@ -86,7 +94,7 @@ export default function SignupPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-6">
           <div className="space-y-1">
             <h2 className="text-lg font-semibold text-slate-900">Create your account</h2>
-            <p className="text-slate-500 text-sm">Join thousands of learners on ByteOS.</p>
+            <p className="text-slate-500 text-sm">Join thousands of learners on Sudar.</p>
           </div>
 
           {error && (

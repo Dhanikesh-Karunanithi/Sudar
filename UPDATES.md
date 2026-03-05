@@ -17,11 +17,11 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 ## Latest (add new entries at the top)
 
 ### 2026-03-02
-- **Web presence**: README updated with "What makes ByteOS different" highlights (Byte's memory, adaptive paths, compliance, open source). Updates section now references Phase 5 in progress (flashcards, document-to-course, SCORM 1.2 import).
+- **Web presence**: README updated with "What makes ByteOS different" highlights (Sudar's memory, adaptive paths, compliance, open source). Updates section now references Phase 5 in progress (flashcards, document-to-course, SCORM 1.2 import).
 - **Phase 5**: Flashcards modality (Learn), document-to-course (Studio generate-from-document), and SCORM 1.2 import (Studio import-scorm) documented as implemented.
 
 ### 2026-02-26
-- **Learn (Memory)**: Info banner on Byte's Memory page now uses explicit light/dark colors (amber-50/amber-950, amber-900/amber-100) so text is readable in both themes — no camouflaging when switching color mode.
+- **Learn (Memory)**: Info banner on Sudar's Memory page now uses explicit light/dark colors (amber-50/amber-950, amber-900/amber-100) so text is readable in both themes — no camouflaging when switching color mode.
 - **Roadmap**: SCORM & format import added to "What's upcoming" (upload SCORM 1.2 packages, parse manifest, map to courses; other formats later). Second modality and Document/URL import remain first priorities.
 - **Repo & docs**: ByteOS pushed to GitHub with README, RESEARCH_FOUNDATION, UPDATES, CONTRIBUTING, LICENSE. Creator story and problem/solution framing added; research-backed positioning for adaptive learning + learner memory.
 - **Phase summary**: UPDATES.md created; phase-wise “what we’ve built” and “what’s upcoming” documented for daily commits.
@@ -48,9 +48,9 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 - End-to-end flow: author → publish → enroll → learn → track.
 
 ### Phase 3 — Learner experience ✅
-- **Personalised dashboard**: Streak, total learning time, engagement %, courses completed, “Byte recommends” (next best action).
+- **Personalised dashboard**: Streak, total learning time, engagement %, courses completed, “Sudar recommends” (next best action).
 - **Course viewer**: Markdown rendering, module navigation, progress auto-save, quizzes with immediate feedback.
-- **AI tutor “Byte”**: RAG over full course content, longitudinal memory (ai_interactions + ai_tutor_context), contextual “Explain this” from text selection, My Memory page (view/edit what Byte knows).
+- **AI tutor "Sudar"**: RAG over full course content, longitudinal memory (ai_interactions + ai_tutor_context), contextual “Explain this” from text selection, My Memory page (view/edit what Sudar knows).
 - **Onboarding assessment**: Short intake flow to bootstrap learner profile (goals, background, style).
 - **Learning paths**: Enroll in paths, personalised sequence for adaptive paths, path progress and unlock rules (complete previous first).
 - **Certifications**: Auto-issued on path completion, shareable public verification link, Print/Save as PDF.
@@ -60,7 +60,7 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 ### Phase 4 — Intelligence ✅
 - **Next best action**: Scores unenrolled courses from learner profile, AI-generated reason, stored in learner_profiles.
 - **Struggle detection**: Quiz wrong answers feed into ai_tutor_context.struggles_with; used for path ordering and tutor context.
-- **Adaptive path ordering**: Optional courses in a path reordered per learner (Byte surfaces gaps, deprioritises known concepts).
+- **Adaptive path ordering**: Optional courses in a path reordered per learner (Sudar surfaces gaps, deprioritises known concepts).
 - **Personalised welcome**: On enrollment in adaptive courses, AI-generated welcome that connects prior learning to the new course.
 - **Studio analytics**: Org-level completions, quiz scores, top struggle topics; **Compliance** view (overdue / at-risk / on-track).
 - **Path assignment**: Assign path to learners from Studio, optional due date, “Assigned learners” table.

@@ -257,7 +257,7 @@ export default async function DashboardPage() {
         </BentoCard>
       )}
 
-      {/* Byte memory card */}
+      {/* Sudar memory card */}
       {interactionCount > 0 && (
         <BentoCard padding="md" className="bg-primary/5 border-primary/20 flex items-start gap-4 transition-all duration-200 hover:shadow-md hover:border-primary/30">
           <div className="w-10 h-10 rounded-card bg-card border border-border shadow-sm flex items-center justify-center shrink-0">
@@ -265,12 +265,12 @@ export default async function DashboardPage() {
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-card-foreground">
-              Byte has learned from {interactionCount} interaction{interactionCount !== 1 ? 's' : ''} with you
+              Sudar has learned from {interactionCount} interaction{interactionCount !== 1 ? 's' : ''} with you
             </p>
             <p className="text-muted-foreground text-xs mt-0.5">
               {(memory.known_concepts as string[] | undefined)?.length
                 ? `Concepts covered: ${(memory.known_concepts as string[]).slice(0, 3).join(', ')}${(memory.known_concepts as string[]).length > 3 ? ' and more' : ''}`
-                : "Byte is learning your style. Keep asking questions!"}
+                : "Sudar is learning your style. Keep asking questions!"}
             </p>
           </div>
           <Link href="/memory" className="text-xs font-medium text-primary hover:opacity-90 px-3 py-1.5 rounded-button hover:bg-primary/10 transition-all shrink-0">
@@ -279,7 +279,7 @@ export default async function DashboardPage() {
         </BentoCard>
       )}
 
-      {/* Next best action — Byte recommends */}
+      {/* Next best action — Sudar recommends */}
       {(() => {
         const nba = learnerProfile?.next_best_action as Record<string, unknown> | null
         if (!nba?.course_id) return null
@@ -290,7 +290,7 @@ export default async function DashboardPage() {
                 <Zap className="w-5 h-5 text-primary-foreground" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">Byte recommends</p>
+                <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">Sudar recommends</p>
                 <p className="text-base font-bold text-card-foreground line-clamp-1">{nba.course_title as string}</p>
                 <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{nba.reason as string}</p>
                 {nba.course_difficulty && (

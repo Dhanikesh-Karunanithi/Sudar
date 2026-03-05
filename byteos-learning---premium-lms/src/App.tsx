@@ -126,7 +126,7 @@ const ChatWindow = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void 
           <div className="relative">
             <input 
               type="text" 
-              placeholder="Ask ByteAI anything..." 
+              placeholder="Ask Sudar anything..." 
               className="w-full bg-white/60 border border-white/40 rounded-full py-4 px-6 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/20 transition-all"
             />
             <button className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-brand-blue text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
@@ -240,7 +240,7 @@ const Dashboard = ({ greeting, onOpenModal }: { greeting: string, onOpenModal: (
                 transition={{ delay: 0.5 }}
                 className="text-white/80 text-2xl font-medium max-w-lg leading-relaxed"
               >
-                Your CSAT is up <span className="text-emerald-400 font-bold">5%</span> this month! Byte recommends: <span className="text-white font-bold underline decoration-brand-blue underline-offset-4">Efficient Closing Mastery</span> to lower AHT.
+                Your CSAT is up <span className="text-emerald-400 font-bold">5%</span> this month! Sudar recommends: <span className="text-white font-bold underline decoration-brand-blue underline-offset-4">Efficient Closing Mastery</span> to lower AHT.
               </motion.p>
             </div>
 
@@ -619,7 +619,7 @@ const MemoryPage = () => {
     <div className="flex flex-col gap-10">
       <div className="hero-block h-[300px] bg-indigo-900 text-white p-16 flex items-center justify-between border-none">
         <div className="max-w-xl">
-          <h2 className="font-display text-5xl font-bold mb-4">Byte's Memory</h2>
+          <h2 className="font-display text-5xl font-bold mb-4">Sudar's Memory</h2>
           <p className="text-indigo-200 text-xl">Here's what I've learned about your unique learning style and performance patterns.</p>
         </div>
         <div className="w-32 h-32 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center">

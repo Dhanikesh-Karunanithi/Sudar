@@ -32,7 +32,7 @@ const LEARNING_FREQUENCIES = [
 ]
 
 const STEPS = [
-  { id: 'welcome', icon: Bot, label: 'Meet Byte' },
+  { id: 'welcome', icon: Bot, label: 'Meet Sudar' },
   { id: 'background', icon: User, label: 'Your background' },
   { id: 'goals', icon: Target, label: 'Your goals' },
   { id: 'style', icon: Lightbulb, label: 'How you learn' },
@@ -103,7 +103,7 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
               <Bot className="w-10 h-10 text-primary-foreground" />
             </div>
             <div className="space-y-3">
-              <h1 className="text-2xl font-bold text-card-foreground">Hi {firstName}, I&apos;m Byte</h1>
+              <h1 className="text-2xl font-bold text-card-foreground">Hi {firstName}, I&apos;m Sudar</h1>
               <p className="text-muted-foreground leading-relaxed">
                 I&apos;m your AI learning companion. Before we begin, I&apos;d love to learn a little about you — your background, goals, and how you learn best.
               </p>
@@ -127,7 +127,7 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
                 <User className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-bold text-card-foreground">Tell Byte about yourself</h2>
+                <h2 className="font-bold text-card-foreground">Tell Sudar about yourself</h2>
                 <p className="text-muted-foreground text-sm">This helps personalise examples and difficulty.</p>
               </div>
             </div>
@@ -177,7 +177,7 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
               </div>
               <div>
                 <h2 className="font-bold text-card-foreground">What are you here to achieve?</h2>
-                <p className="text-muted-foreground text-sm">Byte uses this to point you toward what matters most.</p>
+                <p className="text-muted-foreground text-sm">Sudar uses this to point you toward what matters most.</p>
               </div>
             </div>
 
@@ -226,7 +226,7 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
               </div>
               <div>
                 <h2 className="font-bold text-card-foreground">How do you learn best?</h2>
-                <p className="text-muted-foreground text-sm">Byte will adapt every explanation to your style.</p>
+                <p className="text-muted-foreground text-sm">Sudar will adapt every explanation to your style.</p>
               </div>
             </div>
 
@@ -262,19 +262,19 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
             </div>
             <div className="space-y-2">
               <h2 className="text-2xl font-bold text-card-foreground">
-                {saving ? 'Byte is learning about you...' : "You're all set!"}
+                {saving ? 'Sudar is learning about you...' : "You're all set!"}
               </h2>
               <p className="text-muted-foreground">
                 {saving
                   ? 'Building your personalised learning profile and computing your first recommendation...'
-                  : `Byte now knows your background, goals, and learning style. Every course, quiz, and conversation will be tailored to you, ${firstName}.`}
+                  : `Sudar now knows your background, goals, and learning style. Every course, quiz, and conversation will be tailored to you, ${firstName}.`}
               </p>
             </div>
             {!saving && (
               <div className="space-y-3">
                 <div className="bg-primary/10 border border-primary/20 rounded-xl p-4">
                   <p className="text-sm font-medium text-primary flex items-center gap-2">
-                    <BookOpen className="w-4 h-4" />Check your dashboard — Byte has already picked your first course.
+                    <BookOpen className="w-4 h-4" />Check your dashboard — Sudar has already picked your first course.
                   </p>
                 </div>
                 <button onClick={() => router.push('/')}

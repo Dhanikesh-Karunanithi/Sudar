@@ -128,7 +128,7 @@ export default async function AnalyticsPage() {
           { label: 'Active learners', value: totalLearners, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
           { label: 'Courses completed', value: completedEnrollments, icon: CheckCircle2, color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
           { label: 'Learning minutes', value: totalLearningMins.toLocaleString(), icon: Clock, color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/20' },
-          { label: 'Byte interactions', value: aiInteractions, icon: Brain, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
+          { label: 'Sudar interactions', value: aiInteractions, icon: Brain, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
         ].map(({ label, value, icon: Icon, color, bg }) => (
           <div key={label} className={cn('border rounded-xl p-5 space-y-3', bg)}>
             <div className="flex items-center justify-between">

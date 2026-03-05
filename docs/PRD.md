@@ -18,7 +18,7 @@ with a single, intelligent platform that:
    audio, games, mindmaps, flashcards, or TikTok-style micro-content.
 3. **Learns the learner** over time through a Digital Learner Twin, continuously adapting
    difficulty, pacing, and content recommendations.
-4. **Gives every learner** a personal AI tutor named "Byte" — reactive, proactive, and longitudinal.
+4. **Gives every learner** a personal AI tutor named "Sudar" — reactive, proactive, and longitudinal.
 
 ---
 
@@ -67,7 +67,7 @@ No single platform currently offers:
 | Democratize content creation | Time to create a complete course | < 15 minutes vs. 40+ hours in traditional tools |
 | Improve learner completion | Course completion rate | > 75% (industry avg: 15–30%) |
 | Personalization effectiveness | Learner satisfaction score | > 4.5 / 5.0 |
-| AI tutor adoption | % learners who use Byte per session | > 60% |
+| AI tutor adoption | % learners who use Sudar per session | > 60% |
 | Modality engagement | Avg modalities used per course | > 2 |
 | Platform growth | Monthly active learners | 1,000 in month 6, 10,000 in month 12 |
 
@@ -132,10 +132,10 @@ The personalized learning experience for every learner.
 **Core Flows**:
 1. **Learner Onboarding**: Profile creation, learning style assessment, goal setting
 2. **Personalized Dashboard**: AI-curated "what's next" based on Digital Learner Twin
-3. **Course Experience**: Multi-modality content consumption with Byte (AI tutor) always available
+3. **Course Experience**: Multi-modality content consumption with Sudar (AI tutor) always available
 4. **Modality Switching**: Learner or AI switches between Text / Video / Audio / MindMap /
    Flashcards / ByteFeed / BytePlay at any point
-5. **AI Tutor "Byte"**: Reactive Q&A, proactive nudges, longitudinal memory across all sessions
+5. **AI Tutor "Sudar"**: Reactive Q&A, proactive nudges, longitudinal memory across all sessions
 6. **Progress & Achievements**: Skill graph, streak tracking, certifications
 
 ### 5.3 ByteOS Intelligence (AI Engine)
@@ -210,7 +210,7 @@ The backend AI layer that powers all adaptation and generation.
 #### Dashboard
 - FR-LN-004: Learner SHALL see their enrolled courses with progress indicators
 - FR-LN-005: System SHALL show a "Continue Learning" card for the most recently active course
-- FR-LN-006: System SHALL show a "Byte recommends..." section with next best action
+- FR-LN-006: System SHALL show a "Sudar recommends..." section with next best action
 - FR-LN-007: Learner SHALL see their current skill levels on relevant skill domains
 - FR-LN-008: System SHALL show learning streak (consecutive days of learning activity)
 
@@ -231,14 +231,14 @@ The backend AI layer that powers all adaptation and generation.
 - FR-LN-020: BYTEFEED modality: TikTok-style vertical swipe format for mobile micro-learning
 - FR-LN-021: BYTEPLAY modality: AI-generated game from learning objectives
 
-#### AI Tutor "Byte"
-- FR-LN-022: Byte SHALL be accessible via a sidebar on every module page
-- FR-LN-023: Byte SHALL answer questions about the current module content using RAG
-- FR-LN-024: Byte SHALL proactively offer help after 90 seconds of inactivity on a module
-- FR-LN-025: Byte SHALL proactively offer an alternative explanation if a quiz is failed twice
-- FR-LN-026: Byte SHALL remember previous interactions across sessions (longitudinal memory)
-- FR-LN-027: Learner SHALL be able to rate Byte's responses (helpful / not helpful)
-- FR-LN-028: Byte responses SHALL be under 150 words unless learner requests more detail
+#### AI Tutor "Sudar"
+- FR-LN-022: Sudar SHALL be accessible via a sidebar on every module page
+- FR-LN-023: Sudar SHALL answer questions about the current module content using RAG
+- FR-LN-024: Sudar SHALL proactively offer help after 90 seconds of inactivity on a module
+- FR-LN-025: Sudar SHALL proactively offer an alternative explanation if a quiz is failed twice
+- FR-LN-026: Sudar SHALL remember previous interactions across sessions (longitudinal memory)
+- FR-LN-027: Learner SHALL be able to rate Sudar's responses (helpful / not helpful)
+- FR-LN-028: Sudar responses SHALL be under 150 words unless learner requests more detail
 
 #### Progress & Achievements
 - FR-LN-029: Learner SHALL see their overall completion percentage per course and path
@@ -328,7 +328,7 @@ The following are explicitly out of scope for the initial build:
 | Phase 1 | Foundation: Supabase schema, auth, project scaffold | Week 3 |
 | Phase 2 | Integration: Studio → Supabase → Learn flow | Week 6 |
 | Phase 3 | Learner experience: Dashboard, modalities, AI tutor | Week 10 |
-| Phase 4 | Intelligence: Adaptive engine, longitudinal Byte | Week 16 |
+| Phase 4 | Intelligence: Adaptive engine, longitudinal Sudar | Week 16 |
 | Phase 5 | Scale: All modalities, compliance, white-label | Week 20+ |
 | v1.0 Launch | Public launch with free + paid tiers | Month 6 |
 

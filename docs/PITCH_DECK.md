@@ -72,7 +72,7 @@ Learners hit a wall. There's nobody to ask. So they stop.
 - **Create**: Build a complete AI course in < 15 minutes from any document, URL, or idea
 - **Deliver**: 7 learning modalities — text, video, audio, games, mindmaps, flashcards, feed
 - **Adapt**: A Digital Learner Twin that personalizes difficulty, modality, and next steps
-- **Tutor**: "Byte" — a personal AI tutor that remembers every learner, in every session
+- **Tutor**: "Sudar" — a personal AI tutor that remembers every learner, in every session
 
 ---
 
@@ -88,7 +88,7 @@ Learners hit a wall. There's nobody to ask. So they stop.
 4. **Marcus, a store manager in Lagos** gets the course assigned to his learning path
 5. Marcus opens ByteOS Learn on his phone. The AI detected he's a visual learner — it auto-plays the
    video version of the course on first load
-6. Marcus gets stuck on module 3. Byte (AI tutor) proactively pops up: "Looks like you've been on
+6. Marcus gets stuck on module 3. Sudar (AI tutor) proactively pops up: "Looks like you've been on
    this section for a while — want me to explain it differently?"
 7. Marcus finishes the course, earns his compliance certificate
 8. Sarah sees Marcus's completion in real-time on her analytics dashboard

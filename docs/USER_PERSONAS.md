@@ -93,7 +93,7 @@ His only alternative is hiring an external training company — which costs $15,
 - ByteOS Studio reads it and generates a 6-module course with medical accuracy checks
 - He reviews the quiz questions, adds 2 clinical photos from his own files
 - Publishes the course; nurses complete it on their phones between shifts
-- Byte (AI tutor) answers nurses' clinical questions in context, citing the protocol
+- Sudar (AI tutor) answers nurses' clinical questions in context, citing the protocol
 
 **Quote**:
 > "My expertise was sitting in documents nobody read. Now it's a course that 300 nurses
@@ -180,8 +180,8 @@ He learns best by doing and watching — reading walls of text is not how his br
 - Onboarding assessment reveals he's a visual/kinaesthetic learner
 - ByteOS auto-selects the Video modality for his first module
 - He watches a 3-minute narrated video on his commute home
-- Gets stuck on a concept → asks Byte: "Can you explain what 'risk mitigation' means here?"
-- Byte responds in plain language with an example from Marcus's retail context
+- Gets stuck on a concept → asks Sudar: "Can you explain what 'risk mitigation' means here?"
+- Sudar responds in plain language with an example from Marcus's retail context
 - Switches to BytePlay for module 4 — plays a safety hazard spotting game
 - Finishes the course, earns his certificate, shares it on LinkedIn
 
@@ -226,7 +226,7 @@ She learns best by reading and mindmaps — she loves seeing how concepts connec
   Leadership Essentials → Marketing Strategy
 - Amara works through the path at her own pace
 - Uses MindMap modality to visualize how concepts connect before digging into text
-- Byte remembers she finds data concepts difficult — proactively asks if she'd like
+- Sudar remembers she finds data concepts difficult — proactively asks if she'd like
   extra examples when she reaches analytics modules
 - After 6 weeks: 3 certifications, visible skill progress, personal confidence boost
 
@@ -266,10 +266,10 @@ He learns best by listening — podcasts and audiobooks are how he consumes all 
 
 **How He Uses ByteOS Learn**:
 - Opens ByteOS Learn on his iPhone at 7am before his drive
-- Byte recommends: "You have 3 overdue modules — want me to play them as audio?"
+- Sudar recommends: "You have 3 overdue modules — want me to play them as audio?"
 - Daniel taps Audio modality — his phone plays a podcast-style narration for 45 minutes
 - Bluetooth in his car handles playback; transcript auto-syncs in the background
-- At red lights, Daniel asks Byte a quick question by voice (future: voice input)
+- At red lights, Daniel asks Sudar a quick question by voice (future: voice input)
 - In the evening: 10 minutes of Flashcards to reinforce what he heard that morning
 
 **Quote**:

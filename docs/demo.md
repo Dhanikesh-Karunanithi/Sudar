@@ -1,14 +1,14 @@
 # ByteOS Demo
 
-This page will link to a short **demo video** showing Byte's longitudinal memory and adaptive behaviour in action.
+This page will link to a short **demo video** showing Sudar's longitudinal memory and adaptive behaviour in action.
 
 ---
 
 ## Planned demo (1–2 minutes)
 
-- **Byte remembers**: Show Byte referring to something the learner struggled with in a previous session (e.g. "Last time you found X tricky; here's another way to look at it").
-- **My Memory**: Briefly show the learner's "My Memory" page where they can see what Byte knows (known concepts, struggles, preferences).
-- **Optional**: Quick tour of learner dashboard (streak, next best action, course viewer with Byte sidebar).
+- **Sudar remembers**: Show Sudar referring to something the learner struggled with in a previous session (e.g. "Last time you found X tricky; here's another way to look at it").
+- **My Memory**: Briefly show the learner's "My Memory" page where they can see what Sudar knows (known concepts, struggles, preferences).
+- **Optional**: Quick tour of learner dashboard (streak, next best action, course viewer with Sudar sidebar).
 
 ---
 

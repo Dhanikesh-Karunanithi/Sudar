@@ -30,10 +30,10 @@
 - **Design feel**: Liquid glass, depth, subtle gradients — premium but accessible
 - **Avoid**: Clipart, stock photo people, generic "tech" aesthetics
 
-### The AI Tutor "Byte"
-- Byte has a personality: curious, warm, knowledgeable
+### The AI Tutor "Sudar"
+- Sudar has a personality: curious, warm, knowledgeable
 - Visual: A small animated companion (think Clippy's good-looking descendant)
-- Byte never feels like a chatbot. Byte feels like a person who genuinely cares.
+- Sudar never feels like a chatbot. Sudar feels like a person who genuinely cares.
 
 ---
 
@@ -93,7 +93,7 @@ budget for Rise360."
 **Where**: App stores, word-of-mouth, LinkedIn posts
 **Pain**: "Corporate training is boring, irrelevant, and I always forget it by next week."
 **Desire**: Learning that actually sticks, that fits my life, that doesn't feel like homework
-**Message**: "Byte knows how you learn best. So does your next course."
+**Message**: "Sudar knows how you learn best. So does your next course."
 
 ---
 
@@ -271,7 +271,7 @@ personalization, and an AI tutor included."
 
 **For CHRO / HR Leader**: "ByteOS connects every training dollar to measurable skill outcomes. Finally, learning ROI you can see."
 
-**For Learner**: "Byte knows you. Your learning adapts to you. No more one-size-fits-all courses."
+**For Learner**: "Sudar knows you. Your learning adapts to you. No more one-size-fits-all courses."
 
 **For Investor**: "ByteOS is the AI-native operating system for a $370B market that hasn't been disrupted since the iPad era."
 

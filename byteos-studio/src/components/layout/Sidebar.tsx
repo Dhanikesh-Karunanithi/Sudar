@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   BookOpen,
@@ -86,11 +87,17 @@ export function Sidebar({ user }: SidebarProps) {
       {/* Logo */}
       <div className="p-5 border-b border-slate-800">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-md shadow-indigo-500/20 group-hover:bg-indigo-500 transition-colors">
-            <BookOpen className="w-4 h-4 text-white" strokeWidth={2} />
+          <div className="relative w-8 h-8 shrink-0">
+            <Image
+              src="/sudar-logo.png"
+              alt="Sudar"
+              fill
+              className="object-contain"
+              sizes="32px"
+            />
           </div>
           <div>
-            <p className="text-white font-semibold text-sm leading-tight">ByteOS</p>
+            <p className="text-white font-semibold text-sm leading-tight">Sudar</p>
             <p className="text-indigo-400 text-xs font-medium">Studio</p>
           </div>
         </Link>

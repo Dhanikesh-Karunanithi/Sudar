@@ -27,7 +27,7 @@ export function FlashcardsCard({
         <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center animate-pulse">
           <Layers className="w-6 h-6 text-primary" />
         </div>
-        <p className="text-sm text-muted-foreground">Byte is building your flashcards…</p>
+        <p className="text-sm text-muted-foreground">Sudar is building your flashcards…</p>
       </div>
     )
   }

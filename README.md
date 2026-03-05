@@ -11,7 +11,7 @@
 
 ### What makes ByteOS different
 
-- **Byte's longitudinal memory** — The AI tutor remembers struggles, preferences, and prior learning across sessions and courses; most "AI in LMS" is stateless.
+- **Sudar's longitudinal memory** — The AI tutor remembers struggles, preferences, and prior learning across sessions and courses; most "AI in LMS" is stateless.
 - **Adaptive paths** — Next-best-action, struggle detection from quizzes, and optional course reordering so each learner gets a path that fits.
 - **AI tutor in context** — RAG over course content plus learner memory; "Explain this" from selected text; My Memory page.
 - **Compliance and certifications** — Assign paths with due dates, compliance view (overdue / at-risk / on-track), shareable certificates with verification.
@@ -32,7 +32,7 @@ Most learning today is **static and one-size-fits-all**: the same course for eve
 - **AI-powered authoring** — Create courses from prompts or documents without armies of instructional designers.
 - **Adaptive delivery** — Content adapts to each learner’s goals, prior knowledge, and struggles.
 - **Multi-modality** — One authoring flow; delivery in text, video, audio, mindmaps, flashcards, and games.
-- **Personal AI tutor “Byte”** — RAG-based Q&A with longitudinal memory and contextual help.
+- **Personal AI tutor “Sudar”** — RAG-based Q&A with longitudinal memory and contextual help.
 - **Learning paths & certifications** — Structured programmes with due dates, compliance, and shareable credentials.
 
 The platform is designed so that **learners** get a personalised, supportive experience, **L&D teams** can build and assign training quickly, and **organisations** can track outcomes and compliance — all without the cost of traditional enterprise authoring tools and LMSs.
@@ -43,7 +43,7 @@ We are actively working on **bringing this same AI intelligence — learner memo
 
 ## Origin: from ByteAI and ByteVerse to ByteOS
 
-**ByteOS** was created by **Dhanikesh "Dhani" Karunanithi** as the culmination of the **ByteAI** and **ByteVerse** ecosystem — a long-running line of experiments and products in AI-powered learning and authoring. Over **hundreds of variants and versions** (authoring tools, LMS prototypes, AI tutors, modality switchers, and adaptive engines), the same vision kept surfacing: learning that **remembers the learner**, **adapts in real time**, and **delivers content in the modality that fits**. ByteOS is the unified system that brings that vision into one open platform: **Studio** (authoring and ops), **Learn** (learner experience), and **Intelligence** (adaptive engine and Byte, the AI tutor). It stands on the lessons of ByteAI and ByteVerse while aiming to become the reference implementation for **memory-aware, adaptive learning** that the world can use, extend, and cite.
+**ByteOS** was created by **Dhanikesh "Dhani" Karunanithi** as the culmination of the **ByteAI** and **ByteVerse** ecosystem — a long-running line of experiments and products in AI-powered learning and authoring. Over **hundreds of variants and versions** (authoring tools, LMS prototypes, AI tutors, modality switchers, and adaptive engines), the same vision kept surfacing: learning that **remembers the learner**, **adapts in real time**, and **delivers content in the modality that fits**. ByteOS is the unified system that brings that vision into one open platform: **Studio** (authoring and ops), **Learn** (learner experience), and **Intelligence** (adaptive engine and Sudar, the AI tutor). It stands on the lessons of ByteAI and ByteVerse while aiming to become the reference implementation for **memory-aware, adaptive learning** that the world can use, extend, and cite.
 
 ---
 
@@ -57,15 +57,15 @@ We maintain a **phase-wise development log** so every commit tells a clear story
 
 ---
 
-## Byte's memory (the differentiator)
+## Sudar's memory (the differentiator)
 
-Byte, the AI tutor, uses **longitudinal memory**: it remembers what you've struggled with, what you know, and how you like to learn — across sessions and courses. Most "AI in LMS" implementations are stateless; Byte is not. For how it works and where it lives in the codebase, see **[docs/byte-memory.md](./docs/byte-memory.md)**. A short **demo video** will be linked from **[docs/demo.md](./docs/demo.md)** once recorded.
+Sudar, the AI tutor, uses **longitudinal memory**: it remembers what you've struggled with, what you know, and how you like to learn — across sessions and courses. Most "AI in LMS" implementations are stateless; Sudar is not. For how it works and where it lives in the codebase, see **[docs/sudar-memory.md](./docs/sudar-memory.md)**. A short **demo video** will be linked from **[docs/demo.md](./docs/demo.md)** once recorded.
 
 ---
 
 ## Screenshots
 
-Screenshots (Learn dashboard, course viewer with Byte, Studio paths/compliance) are in **[docs/screenshots/](./docs/screenshots/)**. Adding 2–4 screenshots there improves contributor and user confidence that ByteOS is building, not just planning.
+Screenshots (Learn dashboard, course viewer with Sudar, Studio paths/compliance) are in **[docs/screenshots/](./docs/screenshots/)**. Adding 2–4 screenshots there improves contributor and user confidence that ByteOS is building, not just planning.
 
 ---
 
@@ -97,7 +97,7 @@ We encourage use and extension of ByteOS in **academic and applied research** an
 ```
 
 - **Studio** — Create courses, learning paths, assign learners, set due dates, view analytics and compliance.
-- **Learn** — Enrol in courses and paths, learn with Byte, track progress, earn certificates.
+- **Learn** — Enrol in courses and paths, learn with Sudar, track progress, earn certificates.
 - **Intelligence** — Optional Python service for heavier adaptive logic; core flows also work with direct AI calls from Studio/Learn.
 
 ---
@@ -165,7 +165,7 @@ npm run dev
 ```bash
 cd byteos-learn
 cp .env.example .env.local
-# Use the SAME Supabase keys; add TOGETHER_API_KEY for Byte
+# Use the SAME Supabase keys; add TOGETHER_API_KEY for Sudar
 npm install
 npm run dev
 ```
@@ -188,7 +188,7 @@ uvicorn src.api.main:app --reload --port 8000
 | Area | Capabilities |
 |------|----------------|
 | **Authoring** | AI course generation (outline + modules + quizzes), markdown content, adaptive/mandatory paths, assign learners + due dates. |
-| **Learning** | Personalised dashboard, streaks & progress, Byte tutor (RAG + memory), quizzes, text selection → Byte, learning paths with unlock rules. |
+| **Learning** | Personalised dashboard, streaks & progress, Sudar tutor (RAG + memory), quizzes, text selection → Sudar, learning paths with unlock rules. |
 | **Intelligence** | Next-best-action, onboarding assessment, struggle detection from quizzes, adaptive path ordering, personalised welcome. |
 | **Compliance** | Path/course assignments, due dates, compliance view (overdue / at-risk / on-track), certificates with shareable verification link. |
 
@@ -219,7 +219,7 @@ See [docs/PRODUCT_FEATURES.md](./docs/PRODUCT_FEATURES.md) for the full specific
 | [docs/STRATEGIC_PATH.md](./docs/STRATEGIC_PATH.md) | Vision alignment and roadmap. |
 | [PROGRESS.md](./PROGRESS.md) | Next 3 outcomes and quick context for contributors/agents. |
 | [docs/ACTION_PLANS.md](./docs/ACTION_PLANS.md) | Executable action plans. |
-| [docs/byte-memory.md](./docs/byte-memory.md) | How Byte's longitudinal memory works and where it lives in the codebase. |
+| [docs/Sudar-memory.md](./docs/Sudar-memory.md) | How Sudar's longitudinal memory works and where it lives in the codebase. |
 | [docs/demo.md](./docs/demo.md) | Demo video link (add once recorded). |
 | [docs/PRD.md](./docs/PRD.md) | Product requirements. |
 

@@ -104,7 +104,7 @@
 | Engagement by modality | Which modalities get most usage per course | 3 |
 | Skill gap heatmap | Visual map of skill gaps across the organization | 3 |
 | Time-on-task reports | Average time learners spend per module | 3 |
-| AI tutor usage | How often Byte is used and which questions are asked most | 3 |
+| AI tutor usage | How often Sudar is used and which questions are asked most | 3 |
 | CSV export | Export any report as CSV for external analysis | 3 |
 | Real-time dashboard | Live updates as learners complete modules | 4 |
 
@@ -163,7 +163,7 @@
 | Continue learning card | Resume from exactly where learner left off | 1 |
 | Enrolled paths & courses | Overview of all assigned and self-enrolled content | 1 |
 | Progress indicators | Visual progress bars on each course/path | 1 |
-| Byte recommends | AI-powered "next best action" card prominently displayed | 3 |
+| Sudar recommends | AI-powered "next best action" card prominently displayed | 3 |
 | Learning streak | Consecutive days streak counter with visual motivator | 2 |
 | Skill progress overview | Visual summary of top skills and current proficiency | 3 |
 | Achievement badges | Milestone badges (first course, 7-day streak, skill mastered, etc.) | 4 |
@@ -256,21 +256,21 @@
 
 ---
 
-### Feature Group 10: AI Tutor "Byte"
+### Feature Group 10: AI Tutor "Sudar"
 
 | Feature | Description | Phase |
 |---|---|---|
-| Persistent sidebar | Byte available on every module page, collapsible | 2 |
-| RAG-powered Q&A | Byte answers questions using the current module's content as context | 2 |
-| Proactive inactivity nudge | After 90 seconds of no scroll/interaction, Byte offers help | 3 |
-| Proactive quiz failure nudge | After 2 failed quiz attempts, Byte offers alternative explanation | 3 |
-| Longitudinal memory | Byte reads last 10 `ai_interactions` to maintain conversation continuity | 3 |
+| Persistent sidebar | Sudar available on every module page, collapsible | 2 |
+| RAG-powered Q&A | Sudar answers questions using the current module's content as context | 2 |
+| Proactive inactivity nudge | After 90 seconds of no scroll/interaction, Sudar offers help | 3 |
+| Proactive quiz failure nudge | After 2 failed quiz attempts, Sudar offers alternative explanation | 3 |
+| Longitudinal memory | Sudar reads last 10 `ai_interactions` to maintain conversation continuity | 3 |
 | Helpful / not helpful rating | Thumbs up/down on each response | 2 |
-| Byte personality responses | Friendly, encouraging, never judgmental | 2 |
-| Explain differently | Byte can re-explain content in a new way on request | 2 |
-| Suggest modality switch | Byte can suggest "you might prefer the video version of this" | 3 |
-| Cite sources | Byte references which section of the course it's drawing from | 3 |
-| Conversation history | View previous Byte conversations within a session | 3 |
+| Sudar personality responses | Friendly, encouraging, never judgmental | 2 |
+| Explain differently | Sudar can re-explain content in a new way on request | 2 |
+| Suggest modality switch | Sudar can suggest "you might prefer the video version of this" | 3 |
+| Cite sources | Sudar references which section of the course it's drawing from | 3 |
+| Conversation history | View previous Sudar conversations within a session | 3 |
 
 ---
 
@@ -302,7 +302,7 @@
 | Next Best Action computation | Computes what the learner should do next | 3 |
 | Skill gap identification | Maps completed quizzes/assessments to skill gaps | 3 |
 | Learning pace detection | Infers learner pace from session duration data | 4 |
-| Proactive nudge triggers | Generates conditions that trigger Byte's proactive messages | 3 |
+| Proactive nudge triggers | Generates conditions that trigger Sudar's proactive messages | 3 |
 
 ### Feature Group 13: Content Generation
 

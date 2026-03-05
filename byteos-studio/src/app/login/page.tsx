@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { BookOpen } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -38,11 +38,17 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(139,92,246,0.08),transparent_60%)] pointer-events-none" />
 
         <div className="relative flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-            <BookOpen className="w-5 h-5 text-white" strokeWidth={2} />
+          <div className="relative w-9 h-9 shrink-0">
+            <Image
+              src="/sudar-logo.png"
+              alt="Sudar"
+              fill
+              className="object-contain"
+              sizes="36px"
+            />
           </div>
           <div>
-            <p className="text-white font-semibold text-base leading-tight">ByteOS Studio</p>
+            <p className="text-white font-semibold text-base leading-tight">Sudar Studio</p>
             <p className="text-indigo-400 text-xs">Admin & Creator</p>
           </div>
         </div>
@@ -74,7 +80,7 @@ export default function LoginPage() {
         </div>
 
         <p className="relative text-slate-600 text-xs">
-          © 2026 ByteOS · Learns with you, for you.
+          © 2026 Sudar · Learns with you, for you.
         </p>
       </div>
 
@@ -83,10 +89,16 @@ export default function LoginPage() {
         <div className="w-full max-w-sm space-y-8">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 justify-center">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-white" strokeWidth={2} />
+            <div className="relative w-9 h-9 shrink-0">
+              <Image
+                src="/sudar-logo.png"
+                alt="Sudar"
+                fill
+                className="object-contain"
+                sizes="36px"
+              />
             </div>
-            <p className="text-white font-semibold text-base">ByteOS Studio</p>
+            <p className="text-white font-semibold text-base">Sudar Studio</p>
           </div>
 
           <div className="space-y-1.5">

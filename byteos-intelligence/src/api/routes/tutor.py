@@ -1,6 +1,6 @@
 """
 ByteOS Intelligence — AI Tutor Routes
-Handles reactive Q&A and proactive nudge generation for "Byte", the AI tutor.
+Handles reactive Q&A and proactive nudge generation for "Sudar", the AI tutor.
 """
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -43,7 +43,7 @@ class NudgeResponse(BaseModel):
 @router.post("/query", response_model=TutorQueryResponse)
 async def tutor_query(request: TutorQueryRequest):
     """
-    Handles a learner's question to Byte.
+    Handles a learner's question to Sudar.
     Uses RAG against the current module content.
     Reads recent ai_interactions for longitudinal context.
     """
@@ -65,7 +65,7 @@ async def tutor_query(request: TutorQueryRequest):
 @router.post("/nudge", response_model=NudgeResponse)
 async def generate_nudge(request: NudgeRequest):
     """
-    Generates a proactive nudge from Byte based on a trigger event.
+    Generates a proactive nudge from Sudar based on a trigger event.
     Triggers: inactivity (90s), quiz_fail (2x), low_engagement
     """
     # TODO: Implement nudge generation logic

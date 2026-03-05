@@ -87,7 +87,7 @@ export default function NewPathPage() {
 
         <div className="space-y-3">
           <p className="text-sm font-medium text-slate-300">Path settings</p>
-          <Toggle label="Adaptive path" desc="Byte reorders optional courses per learner based on their knowledge, goals, and pace. Mandatory courses always appear in fixed order." value={isAdaptive} onChange={setIsAdaptive} icon={Zap} color="bg-violet-950/40 border-violet-500/30" />
+          <Toggle label="Adaptive path" desc="Sudar reorders optional courses per learner based on their knowledge, goals, and pace. Mandatory courses always appear in fixed order." value={isAdaptive} onChange={setIsAdaptive} icon={Zap} color="bg-violet-950/40 border-violet-500/30" />
           <Toggle label="Org mandatory" desc="All learners in the organisation are required to complete this path (e.g. onboarding, compliance). Appears prominently in Learn." value={isMandatory} onChange={setIsMandatory} icon={Lock} color="bg-amber-950/30 border-amber-500/30" />
           <Toggle label="Issues certificate" desc="Learners receive a shareable certificate with a public verification link on completing all mandatory courses." value={issuesCertificate} onChange={setIssuesCertificate} icon={Award} color="bg-yellow-950/30 border-yellow-500/30" />
         </div>

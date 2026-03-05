@@ -104,7 +104,7 @@ A persistent \textbf{Digital Learner Twin} is stored in \texttt{learner\_profile
 \subsection{AI Tutor with Longitudinal Memory}
 \label{sec:tutor}
 
-The AI tutor (named Byte in the reference implementation) is reactive (RAG over course content, answers questions) and proactive (nudges when struggle or long pause is inferred). Every exchange is logged in \texttt{ai\_interactions}. The tutor's system prompt includes the learner's memory summary from \texttt{ai\_tutor\_context}, so responses can reference prior struggles, match explanation style, and connect to prior learning. Most ``AI in LMS'' implementations are stateless; ours is not.
+The AI tutor (named Sudar in the reference implementation) is reactive (RAG over course content, answers questions) and proactive (nudges when struggle or long pause is inferred). Every exchange is logged in \texttt{ai\_interactions}. The tutor's system prompt includes the learner's memory summary from \texttt{ai\_tutor\_context}, so responses can reference prior struggles, match explanation style, and connect to prior learning. Most ``AI in LMS'' implementations are stateless; ours is not.
 
 \subsection{Modality-Agnostic Delivery}
 \label{sec:modality}
@@ -146,7 +146,7 @@ The reference platform is implemented with Next.js~14 (Studio, Learn), Python~3.
 The design is evidence-informed. RESEARCH\_FOUNDATION.md in the repository maps each capability to learning-science references (adaptive instruction, dual coding, self-regulated learning, formative assessment, ITS, learner modeling).
 
 \paragraph{Proof of concept.}
-The reference platform currently implements: shared auth and schema; course and path CRUD and publish; learner dashboard with streak, time, and Byte recommends; course viewer with markdown, quizzes, and AI tutor with longitudinal memory (My Memory page, text selection to tutor); next-best-action and adaptive path ordering; learning paths with unlock rules and certifications with shareable links; compliance view (overdue, at-risk, on-track); analytics (completions, quiz scores, struggle topics, time per section). Flashcards modality and document-to-course generation are implemented; SCORM import is in progress. Additional modalities (video, audio, mindmap, feed, game) are planned.
+The reference platform currently implements: shared auth and schema; course and path CRUD and publish; learner dashboard with streak, time, and Sudar recommends; course viewer with markdown, quizzes, and AI tutor with longitudinal memory (My Memory page, text selection to tutor); next-best-action and adaptive path ordering; learning paths with unlock rules and certifications with shareable links; compliance view (overdue, at-risk, on-track); analytics (completions, quiz scores, struggle topics, time per section). Flashcards modality and document-to-course generation are implemented; SCORM import is in progress. Additional modalities (video, audio, mindmap, feed, game) are planned.
 
 \begin{center}
 \fbox{\parbox{0.9\columnwidth}{
@@ -175,7 +175,7 @@ Our goal is to make learning accessible and adaptive at scale---both through the
 We presented an AI-native learning system with two contributions: a reference platform that combines authoring, delivery, and intelligence with a Digital Learner Twin, adaptive sequencing, multimodal delivery, and an AI tutor with longitudinal memory; and the Adaptive Learning Layer (ALP), an architecture for deploying these capabilities as a layer on top of existing LMSs. The reference implementation is open source and evidence-informed. We invite collaboration from institutions and organizations so that learning can become accessible and adaptive for everyone.
 
 \section*{Acknowledgments}
-The system and research are the authors' project. The reference implementation is available at \url{https://github.com/lorddannykay/ByteOS} with documentation (ECOSYSTEM.md, RESEARCH\_FOUNDATION.md, docs/byte-memory.md).
+The system and research are the authors' project. The reference implementation is available at \url{https://github.com/lorddannykay/ByteOS} with documentation (ECOSYSTEM.md, RESEARCH\_FOUNDATION.md, docs/sudar-memory.md).
 
 \appendix
 \section{Schema summary}

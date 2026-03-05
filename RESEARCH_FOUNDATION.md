@@ -24,7 +24,7 @@ ByteOS is designed as an **evidence-informed learning platform** that applies es
 
 ### 1.3 Metacognition & Self-Regulated Learning
 
-- **Self-regulated learning** (Zimmerman, 2002) and **metacognitive scaffolding** improve persistence and transfer. ByteOS supports this via: **progress visibility** (streaks, time, completion), **Byte recommends** (next best action), **upcoming deadlines**, and **required-path** surfacing so learners can plan and prioritise.
+- **Self-regulated learning** (Zimmerman, 2002) and **metacognitive scaffolding** improve persistence and transfer. ByteOS supports this via: **progress visibility** (streaks, time, completion), **Sudar recommends** (next best action), **upcoming deadlines**, and **required-path** surfacing so learners can plan and prioritise.
 
 ### 1.4 Formative Assessment & Retrieval Practice
 
@@ -32,7 +32,7 @@ ByteOS is designed as an **evidence-informed learning platform** that applies es
 
 ### 1.5 Intelligent Tutoring & Dialogue
 
-- **Intelligent tutoring systems** (ITS) that provide step-by-step support and dialogue have a long history of improving learning gains (e.g. VanLehn, 2011). ByteOS’s **AI tutor “Byte”** provides: **reactive Q&A** (RAG over course content), **longitudinal memory** (conversation and learner context over time), **contextual help** (e.g. “Explain this” from selected text), and **proactive nudges** aligned with the learner’s current state.
+- **Intelligent tutoring systems** (ITS) that provide step-by-step support and dialogue have a long history of improving learning gains (e.g. VanLehn, 2011). ByteOS’s **AI tutor “Sudar”** provides: **reactive Q&A** (RAG over course content), **longitudinal memory** (conversation and learner context over time), **contextual help** (e.g. “Explain this” from selected text), and **proactive nudges** aligned with the learner’s current state.
 
 ### 1.6 Longitudinal Learner Model (Digital Learner Twin)
 
@@ -40,7 +40,7 @@ ByteOS is designed as an **evidence-informed learning platform** that applies es
 
 ### 1.7 Learning Paths & Prerequisite Structure
 
-- **Structured curricula** and **prerequisite ordering** help learners build knowledge in a coherent sequence (e.g. Gagné, 1985). ByteOS supports **learning paths** with **mandatory and optional courses**, **unlock rules** (complete previous before next), **adaptive path ordering** (optional courses reordered by Byte), and **certifications** on path completion to signal mastery.
+- **Structured curricula** and **prerequisite ordering** help learners build knowledge in a coherent sequence (e.g. Gagné, 1985). ByteOS supports **learning paths** with **mandatory and optional courses**, **unlock rules** (complete previous before next), **adaptive path ordering** (optional courses reordered by Sudar), and **certifications** on path completion to signal mastery.
 
 ### 1.8 Organisational Learning & Compliance
 
@@ -53,9 +53,9 @@ ByteOS is designed as an **evidence-informed learning platform** that applies es
 | Theme | ByteOS Implementation |
 |-------|------------------------|
 | **Differentiation** | Adaptive paths, modality choice, difficulty and pace inferred from behaviour and profile. |
-| **Scaffolding** | Byte as tutor, contextual “Explain this” / “Give me an example”, personalised welcome that links prior to new content. |
-| **Feedback** | Quiz feedback, Byte responses, progress and streak visibility, next-best-action reasons. |
-| **Motivation** | Streaks, progress bars, certificates, “Required” and “Due soon” surfacing, Byte’s supportive tone. |
+| **Scaffolding** | Sudar as tutor, contextual “Explain this” / “Give me an example”, personalised welcome that links prior to new content. |
+| **Feedback** | Quiz feedback, Sudar responses, progress and streak visibility, next-best-action reasons. |
+| **Motivation** | Streaks, progress bars, certificates, “Required” and “Due soon” surfacing, Sudar’s supportive tone. |
 | **Accessibility** | Multimodal delivery, keyboard navigation (roadmap), structure that supports assistive tech. |
 
 ---

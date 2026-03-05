@@ -491,8 +491,8 @@ export default function CourseEditorPage() {
               </div>
               <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                 {course.is_adaptive
-                  ? 'Byte will generate a personalized welcome for each learner on enrollment, bridging their past knowledge to this course.'
-                  : 'Enable to let Byte personalise this course for each learner — connecting their memory, prior courses, and goals to this content.'}
+                  ? 'Sudar will generate a personalized welcome for each learner on enrollment, bridging their past knowledge to this course.'
+                  : 'Enable to let Sudar personalise this course for each learner — connecting their memory, prior courses, and goals to this content.'}
               </p>
             </div>
             {/* Toggle indicator */}

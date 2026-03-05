@@ -10,7 +10,7 @@
 
 | Strategic pillar | What it means | How we measure progress |
 |------------------|---------------|--------------------------|
-| **Learns the learner** | Byte and the platform accumulate signals (goals, struggles, preferences, behavior) and use them to personalize content, order, and recommendations. | Learner profile richness, next best action accuracy, adaptive path ordering, tutor memory usage. |
+| **Learns the learner** | Sudar and the platform accumulate signals (goals, struggles, preferences, behavior) and use them to personalize content, order, and recommendations. | Learner profile richness, next best action accuracy, adaptive path ordering, tutor memory usage. |
 | **Author once, deliver any modality** | Content is authored once in Studio; Learn can present it as text, video, audio, mindmap, flashcards, feed, or game. | Number of modalities live, content reuse across modalities, learner modality switches. |
 | **Democratize creation** | L&D can build world-class training without armies of designers; AI and simple UX do the heavy lifting. | Time-to-course, source inputs (doc/URL/prompt), template usage, zero-code flows. |
 | **Outcomes and compliance** | Organizations see completions, skill gaps, and risk; mandatory training and certifications are tracked and attested. | Analytics usage, path assignments, due dates, certificates, compliance views. |
@@ -24,8 +24,8 @@ Every new feature or fix should map to at least one of these pillars. If it does
 **Done and live**  
 - **Foundation**: Supabase schema, shared auth, Studio + Learn scaffold, env contracts.  
 - **Integration**: Course CRUD, publish → Learn, enrollments, learning_events, progress.  
-- **Learner experience**: Personalized dashboard (streak, time, engagement, Byte recommends), course viewer with markdown, quizzes, AI tutor Byte (RAG + longitudinal memory), My Memory page, onboarding assessment, text selection → Byte.  
-- **Intelligence**: Next best action engine, onboarding bootstrap, learner_profiles + ai_tutor_context, struggle detection from quizzes, adaptive path ordering (optional courses reordered by Byte).  
+- **Learner experience**: Personalized dashboard (streak, time, engagement, Sudar recommends), course viewer with markdown, quizzes, AI tutor Sudar (RAG + longitudinal memory), My Memory page, onboarding assessment, text selection → Sudar.  
+- **Intelligence**: Next best action engine, onboarding bootstrap, learner_profiles + ai_tutor_context, struggle detection from quizzes, adaptive path ordering (optional courses reordered by Sudar).  
 - **Paths & certs**: Learning paths (Studio: create/edit, mandatory/adaptive/certificate toggles; Learn: enroll, personalised sequence, progress sync), path unlock rules (complete previous first), certifications on path completion with shareable public link.  
 - **Studio analytics**: Org-level analytics (completions, quiz scores, struggle topics); **Time per section** — per-course view of learner time per module with active vs idle time, “possible skip” and “over time” flags.
 - **Progress**: Dedicated Progress page (courses, paths, certificates), path progress % sync on course complete.
@@ -53,7 +53,7 @@ Every new feature or fix should map to at least one of these pillars. If it does
 ## 3. Prioritized Next Developments (In Order)
 
 **Next 3 (concrete outcomes)** — update after each milestone:
-1. **Visibility**: Record Byte memory demo video (1–2 min); add 2–4 screenshots to docs/screenshots and link from README.
+1. **Visibility**: Record Sudar memory demo video (1–2 min); add 2–4 screenshots to docs/screenshots and link from README.
 2. **Ship recent work**: Commit and document Flashcards modality, document-to-course (generate-from-document), and SCORM 1.2 import; update current state in Section 2.
 3. **One more win**: Either ship one more modality end-to-end (e.g. Audio TTS for current module) or add compliance email reminders for at-risk/overdue.
 

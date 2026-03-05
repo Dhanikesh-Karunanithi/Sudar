@@ -8,7 +8,7 @@ Apply these changes in the **lorddannykay/lorddannykay.github.io** repository. R
 
 - **ByteOS** = the open-source Learning Operating System (Studio + Learn + Intelligence).
 - **ByteVerse** = the product/brand at byteverse.app; powered by ByteOS.
-- **Byte** = the AI tutor.
+- **Sudar** = the AI tutor.
 
 Use "ByteOS & ByteVerse" as the flagship product story on the portfolio.
 
@@ -62,13 +62,13 @@ AI course generation (outline, modules, quizzes), document-to-course, SCORM 1.2 
 **Subtitle:** `Learner Experience`
 
 **Description:**  
-Personalised learner dashboard, AI tutor Byte with longitudinal memory, quizzes, learning paths, certifications. Modality switching (text, flashcards). Progress, streaks, and "Byte recommends."
+Personalised learner dashboard, AI tutor Sudar with longitudinal memory, quizzes, learning paths, certifications. Modality switching (text, flashcards). Progress, streaks, and "Sudar recommends."
 
 **Bullets (optional):**
-- AI tutor Byte with memory across sessions
+- AI tutor Sudar with memory across sessions
 - Learning paths and shareable certificates
 - Text and flashcards modalities (more coming)
-- My Memory page — see what Byte knows about you
+- My Memory page — see what Sudar knows about you
 
 ---
 
@@ -144,7 +144,7 @@ ByteOS is the open-source Learning Operating System; ByteVerse is the product at
 `Founded ByteVerse, a "Learn Your Way" learning ecosystem that democratizes AI-powered education and workforce development through adaptive, simulation-driven upskilling.`
 
 **With:**  
-`Founded and built ByteOS — the open-source AI-native Learning Operating System (learner memory, adaptive paths, AI tutor Byte). ByteVerse at byteverse.app. Part of the ByteAI/ByteVerse ecosystem.`
+`Founded and built ByteOS — the open-source AI-native Learning Operating System (learner memory, adaptive paths, AI tutor Sudar). ByteVerse at byteverse.app. Part of the ByteAI/ByteVerse ecosystem.`
 
 - **Year:** Change any `© 2024` to `© 2026`.
 

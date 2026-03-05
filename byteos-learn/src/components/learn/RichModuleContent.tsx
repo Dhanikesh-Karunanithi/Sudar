@@ -78,7 +78,7 @@ function CodeDemoBlock({
             onClick={() => onExplain(`Explain this code:\n\n${code}`)}
             className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
           >
-            <Sparkles className="w-3 h-3" /> Explain with Byte
+            <Sparkles className="w-3 h-3" /> Explain with Sudar
           </button>
         )}
       </div>
@@ -118,7 +118,7 @@ function DiagramBlock({
               onClick={() => onAskByte('Explain this diagram or concept in more detail.')}
               className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
             >
-              <Sparkles className="w-3 h-3" /> Ask Byte for more
+              <Sparkles className="w-3 h-3" /> Ask Sudar for more
             </button>
           )}
         </div>

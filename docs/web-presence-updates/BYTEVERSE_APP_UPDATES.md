@@ -37,7 +37,7 @@ One seed. Infinite ways to learn. Powered by ByteOS.
 
 **Update the `items` array to include these value props.** Add or replace so the list includes:
 
-- **AI tutor with memory** — Byte remembers struggles and preferences across sessions; not stateless chat.
+- **AI tutor with memory** — Sudar remembers struggles and preferences across sessions; not stateless chat.
 - **Built for L&D and learners** — Author in Studio (AI course gen, paths, compliance); learn in Learn (personalised dashboard, paths, certificates).
 - **Multimodal learning** — Text, flashcards, and more. One seed, switch modality anytime.
 - **Lesson seed** — Align once, reuse everywhere. One source generates every modality.
@@ -47,7 +47,7 @@ One seed. Infinite ways to learn. Powered by ByteOS.
 
 ```js
 const items = [
-  { title: 'AI Tutor with Memory', desc: 'Byte remembers your struggles and preferences across sessions and courses — not stateless chat.' },
+  { title: 'AI Tutor with Memory', desc: 'Sudar remembers your struggles and preferences across sessions and courses — not stateless chat.' },
   { title: 'Built for L&D and Learners', desc: 'Author in Studio (AI course gen, paths, compliance); learn in Learn (personalised dashboard, paths, certificates).' },
   { title: 'Multimodal Learning', desc: 'Text, Flashcards, Video, Audio, and Mind Map. One seed, switch anytime; context and progress carry over.' },
   { title: 'Lesson Seed', desc: 'Align once, reuse everywhere. One source generates every modality.' },
@@ -100,7 +100,7 @@ Keep the existing Formspree waitlist and success/error messaging.
 
 ByteVerse is the AI learning ecosystem that **learns with you** — powered by [ByteOS](https://github.com/lorddannykay/ByteOS), the open-source Learning Operating System. One seed. Infinite ways to learn.
 
-This repository is the **landing page** for [byteverse.app](https://byteverse.app). The product is built on ByteOS: longitudinal learner memory, adaptive paths, AI tutor (Byte), and multi-modality (text, flashcards, video, audio, mind maps). Created by **Dhanikesh Karunanithi** — Global Head of Learning Tech & Data Strategy; 2× Gold Stevie (2024), Brandon Hall Gold & Silver (2022).
+This repository is the **landing page** for [byteverse.app](https://byteverse.app). The product is built on ByteOS: longitudinal learner memory, adaptive paths, AI tutor (Sudar), and multi-modality (text, flashcards, video, audio, mind maps). Created by **Dhanikesh Karunanithi** — Global Head of Learning Tech & Data Strategy; 2× Gold Stevie (2024), Brandon Hall Gold & Silver (2022).
 ```
 
 **Repo description (in GitHub repo Settings):**  

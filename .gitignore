@@ -25,6 +25,7 @@ dist/
 next-env.d.ts
 
 # IDE and OS
+.cursor/
 .DS_Store
 .idea/
 .vscode/

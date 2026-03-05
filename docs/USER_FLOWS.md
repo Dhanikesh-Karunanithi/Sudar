@@ -149,7 +149,7 @@ for UX design, frontend routing, and API design.
        ├── Google OAuth
        └── If invited by org: click invite link → auto-join org
     → [Welcome to ByteOS Learn screen]
-       "Let's help Byte learn how you learn best."
+       "Let's help Sudar learn how you learn best."
     → [Onboarding Assessment — 5 Questions]
        Q1: "How do you usually learn best?"
            Options: Reading articles / Watching videos / Listening while on the go /
@@ -164,11 +164,11 @@ for UX design, frontend routing, and API design.
        Q5: "Where do you usually learn?"
            Options: At my desk / On my phone / On the go / A mix
     → [Learner Profile Created]
-       "Byte knows how to help you now."
+       "Sudar knows how to help you now."
        Summary card showing personalized settings
     → [Learn Dashboard — Personalized State]
        ├── Your learning paths (enrolled by admin OR self-selected)
-       ├── "Byte recommends you start with..." card
+       ├── "Sudar recommends you start with..." card
        └── "Continue Learning" (if returning user)
 ```
 
@@ -185,7 +185,7 @@ for UX design, frontend routing, and API design.
     │   ├── "Continue where you left off" — last active module with progress
     │   ├── Learning streak: X days 🔥
     │   └── Overdue alerts (if any)
-    ├── "Byte Recommends" card:
+    ├── "Sudar Recommends" card:
     │   ├── Next course in current path
     │   ├── Alternative modality suggestion ("You haven't tried the video version")
     │   └── Skill gap learning ("You scored low on X — try this module")
@@ -210,49 +210,49 @@ for UX design, frontend routing, and API design.
        ├── Flashcards
        ├── ByteFeed
        └── BytePlay
-       "Byte will suggest the best format based on how you learn."
-       → Confirm / Let Byte choose
+       "Sudar will suggest the best format based on how you learn."
+       → Confirm / Let Sudar choose
     → [Module Loads in selected modality]
-    → [Byte sidebar visible but collapsed by default]
+    → [Sudar sidebar visible but collapsed by default]
     → [Module completes OR learner exits]
     → Supabase writes: learning_events (module_start, modality)
 ```
 
 ---
 
-### Flow L4: Module Experience with AI Tutor Byte
+### Flow L4: Module Experience with AI Tutor Sudar
 
 ```
 [Module page — any modality]
 
 LEARNER-INITIATED:
-    → Learner clicks Byte icon (bottom right)
-    → [Byte sidebar opens]
+    → Learner clicks Sudar icon (bottom right)
+    → [Sudar sidebar opens]
        ├── Header: "Hi [Name], how can I help?"
        ├── Quick prompt suggestions: 
        │   "Explain this differently" / "Give me an example" / "Quiz me on this"
        └── Text input field
     → Learner types question
-    → Byte responds (< 5 seconds, RAG against current module content)
+    → Sudar responds (< 5 seconds, RAG against current module content)
     → Learner rates response: 👍 / 👎
     → Conversation continues or learner closes
     → Supabase writes: ai_interactions (type: question)
 
 BYTE-INITIATED (Proactive):
     Trigger 1: 90 seconds of inactivity on a module
-        → Byte expands with soft animation
+        → Sudar expands with soft animation
         → Message: "Looks like you've been on this part for a bit — 
                     want me to explain it differently?"
         → Options: "Yes please" / "I'm good, just rereading"
         → Supabase writes: ai_interactions (type: proactive_nudge)
     
     Trigger 2: Quiz failed twice on same question
-        → Byte appears: "That one's tricky. Let me try explaining it another way."
-        → Byte provides alternative explanation + asks if learner wants to try again
+        → Sudar appears: "That one's tricky. Let me try explaining it another way."
+        → Sudar provides alternative explanation + asks if learner wants to try again
         → Supabase writes: ai_interactions (type: proactive_nudge)
     
     Trigger 3: Modality engagement low (scroll speed too fast, replays, drop-offs)
-        → Byte: "You might prefer the video version of this module —
+        → Sudar: "You might prefer the video version of this module —
                  learners like you often find it easier to follow."
         → Options: "Switch to video" / "I'll stay here"
         → Supabase writes: ai_interactions (type: proactive_nudge)
@@ -271,7 +271,7 @@ BYTE-INITIATED (Proactive):
        "Video" or "Audio" shows "Generating..." if not yet available
     → Learner clicks a different modality
     → [Loading state] — if modality not yet generated:
-       "Byte is preparing your [Video/Audio/etc.] version... (~30 seconds)"
+       "Sudar is preparing your [Video/Audio/etc.] version... (~30 seconds)"
        Background: Intelligence layer generates content variant
     → [Content reloads in new modality]
        Progress is maintained at the same logical position
@@ -289,13 +289,13 @@ BYTE-INITIATED (Proactive):
     → [Quiz results screen]
        ├── Score: X/X correct
        ├── Pass: "🎉 You passed! Course complete."
-       └── Fail: "You got X/X. You need X to pass. Try again?" / "Ask Byte for help?"
+       └── Fail: "You got X/X. You need X to pass. Try again?" / "Ask Sudar for help?"
     → [Course completion screen]
        ├── Confetti animation
        ├── Certificate preview (if cert enabled)
        ├── "Share on LinkedIn" button
        ├── "Download Certificate" button
-       └── "What's next? Byte recommends..." → next module in path
+       └── "What's next? Sudar recommends..." → next module in path
     → Supabase writes: enrollments (status: completed), certifications (if applicable)
     → Intelligence: runs adaptive scoring update, recomputes next_best_action
 ```
@@ -315,8 +315,8 @@ DAY 1 — Discovery & Signup
 WEEK 1 — First Course Experience
 │
 ├── Takes first module in preferred modality
-├── Meets Byte for the first time (proactive nudge likely in first session)
-├── Completes first quiz (Byte offers help if failed)
+├── Meets Sudar for the first time (proactive nudge likely in first session)
+├── Completes first quiz (Sudar offers help if failed)
 ├── Finishes first course → first certificate earned
 └── Streak begins: Day 1 🔥
 
@@ -326,7 +326,7 @@ WEEKS 2–4 — Pattern Establishment
 │   - Detects time-of-day patterns (Daniel learns at 7am in the car)
 │   - Identifies modality affinity (Marcus loves video + game)
 │   - Finds knowledge gaps (Amara struggles with data concepts)
-├── Byte becomes more personalized — references past interactions
+├── Sudar becomes more personalized — references past interactions
 ├── Modality auto-selection gets smarter with each session
 └── Dashboard starts showing "Your skill progress" with real data
 
@@ -334,7 +334,7 @@ MONTH 2 — Deepening Engagement
 │
 ├── Learner is now 3–5 courses in
 ├── ByteMind mindmap shows connected knowledge graph
-├── Byte remembers: "Last time you asked about X — here's how it connects to today's topic"
+├── Sudar remembers: "Last time you asked about X — here's how it connects to today's topic"
 ├── Next Best Action gets highly accurate (based on 20+ sessions of data)
 ├── Skills graph shows measurable progress
 └── Second certificate earned → shared on LinkedIn → new learners discover ByteOS
@@ -351,7 +351,7 @@ ONGOING — The Compounding Effect
 │
 ├── Digital Learner Twin is rich with 6+ months of data
 ├── Every new course is immediately personalized from session 1
-├── Byte knows: preferred modality, optimal session length, time-of-day, knowledge gaps
+├── Sudar knows: preferred modality, optimal session length, time-of-day, knowledge gaps
 ├── Learner can't imagine using a platform that doesn't know them
 └── Switching cost is the data — the longer you use ByteOS, the more personal it gets
 ```
@@ -381,7 +381,7 @@ ONGOING — The Compounding Effect
                 ↓
 [LEARN: Learner experience improves]
     Dashboard personalization increases
-    Byte gets smarter about this learner
+    Sudar gets smarter about this learner
                 ↓
 [STUDIO: Admin sees results]
     Analytics dashboard: completion rate, engagement, skill progress
@@ -424,14 +424,14 @@ ONGOING — The Compounding Effect
 
 | Situation | User-Facing Behaviour |
 |---|---|
-| AI generation fails | "Byte had trouble generating this. Try again?" + retry button |
+| AI generation fails | "Sudar had trouble generating this. Try again?" + retry button |
 | Video generation in progress | Loading animation with "Your video is being prepared..." |
-| Network offline | Cached module available; Byte in offline mode (limited responses) |
-| Quiz failed 3 times | Byte offers full alternative explanation; admin notified |
+| Network offline | Cached module available; Sudar in offline mode (limited responses) |
+| Quiz failed 3 times | Sudar offers full alternative explanation; admin notified |
 | Overdue compliance | Red badge on dashboard; automated email sent by Studio |
 | Invalid invite link | "This invite link has expired. Contact your administrator." |
-| Modality not available | "This format isn't ready yet. Byte is preparing it — check back in 2 minutes." |
-| AI tutor context too long | Byte summarizes last 10 interactions automatically |
+| Modality not available | "This format isn't ready yet. Sudar is preparing it — check back in 2 minutes." |
+| AI tutor context too long | Sudar summarizes last 10 interactions automatically |
 | Free tier limit reached | Friendly upgrade prompt: "You've reached your 10-learner limit. Upgrade to add more." |
 
 ---

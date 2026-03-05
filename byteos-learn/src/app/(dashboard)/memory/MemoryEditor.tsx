@@ -63,7 +63,7 @@ export function MemoryEditor({ initialBackground, initialGoals, initialPreferenc
 
       <div className="space-y-1.5">
         <label className="text-sm font-medium text-card-foreground">How you learn best</label>
-        <p className="text-xs text-muted-foreground">Byte will tailor explanations to your preference.</p>
+        <p className="text-xs text-muted-foreground">Sudar will tailor explanations to your preference.</p>
         <div className="grid grid-cols-2 gap-2">
           {[
             { value: 'examples-first', label: 'Examples first', desc: 'Show me an example, then explain' },

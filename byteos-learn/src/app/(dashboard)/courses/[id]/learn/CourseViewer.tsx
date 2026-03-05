@@ -599,7 +599,7 @@ export function CourseViewer({
     } catch {
       setMessages([...newMessages, {
         role: 'assistant',
-        content: 'Unable to reach Byte. Please check your connection and try again.',
+        content: 'Unable to reach Sudar. Please check your connection and try again.',
       }])
     } finally {
       setThinking(false)
@@ -774,13 +774,13 @@ export function CourseViewer({
             </div>
           )}
 
-          {/* Ask Byte button */}
+          {/* Ask Sudar button */}
           <button onClick={() => { setTutorOpen(!tutorOpen); setSelectionPopup(null) }}
             className={cn(
               'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0',
               tutorOpen ? 'bg-primary text-white shadow-md shadow-md' : 'bg-primary/5 text-primary hover:bg-primary/10 border border-primary/20'
             )}>
-            <Sparkles className="w-3.5 h-3.5" />Ask Byte
+            <Sparkles className="w-3.5 h-3.5" />Ask Sudar
             <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', tutorOpen && 'rotate-180')} />
           </button>
         </div>
@@ -803,7 +803,7 @@ export function CourseViewer({
                         <Bot className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-card-foreground">Byte knows you&apos;re here</p>
+                        <p className="text-sm font-semibold text-card-foreground">Sudar knows you&apos;re here</p>
                         <p className="text-xs text-primary">Personalized just for you</p>
                       </div>
                     </div>
@@ -926,7 +926,7 @@ export function CourseViewer({
             )}
           </div>
 
-          {/* Byte tutor panel */}
+          {/* Sudar tutor panel */}
           {tutorOpen && (
             <div className="w-80 border-l border-border bg-muted flex flex-col shrink-0">
               <div className="px-4 py-3 border-b border-border bg-background flex items-center gap-3">
@@ -934,7 +934,7 @@ export function CourseViewer({
                   <Bot className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-card-foreground">Byte</p>
+                  <p className="text-sm font-semibold text-card-foreground">Sudar</p>
                   <p className="text-xs text-muted-foreground">Knows the full course + your history</p>
                 </div>
                 <button onClick={() => setTutorOpen(false)} className="ml-auto p-1.5 hover:bg-muted rounded-md transition-colors">
@@ -950,7 +950,7 @@ export function CourseViewer({
                         <Bot className="w-3 h-3 text-white" />
                       </div>
                       <div className="bg-card border border-border rounded-xl rounded-tl-sm px-3 py-2 text-xs text-card-foreground leading-relaxed">
-                        {learnerName ? `Hi ${learnerName}! ` : 'Hi! '}I&apos;m Byte. I know <span className="font-medium text-primary">{currentModule?.title}</span> and your full learning history. Ask me anything.
+                        {learnerName ? `Hi ${learnerName}! ` : 'Hi! '}I&apos;m Sudar. I know <span className="font-medium text-primary">{currentModule?.title}</span> and your full learning history. Ask me anything.
                         <br /><span className="text-muted-foreground text-[10px] mt-1 block">💡 Tip: highlight any text in the module to get quick explanations.</span>
                       </div>
                     </div>
@@ -1003,7 +1003,7 @@ export function CourseViewer({
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTutorSend() } }}
-                    placeholder="Ask Byte anything, or highlight text above..."
+                    placeholder="Ask Sudar anything, or highlight text above..."
                     rows={1}
                     className="flex-1 bg-muted border border-border rounded-xl px-3 py-2 text-xs text-card-foreground placeholder-muted-foreground focus:outline-none focus:border-primary resize-none leading-relaxed"
                     style={{ maxHeight: '80px' }}
@@ -1017,7 +1017,7 @@ export function CourseViewer({
                     {thinking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-center text-muted-foreground text-[10px] mt-1.5">Byte knows the full course + your learning history</p>
+                <p className="text-center text-muted-foreground text-[10px] mt-1.5">Sudar knows the full course + your learning history</p>
               </div>
             </div>
           )}

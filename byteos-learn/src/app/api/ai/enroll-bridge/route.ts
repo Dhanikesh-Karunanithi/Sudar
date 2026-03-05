@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     .join('\n')
 
   // ── Generate the bridge ─────────────────────────────────────────────
-  const prompt = `You are Byte, a warm and expert AI learning tutor. Generate a personalized enrollment welcome for a learner.
+  const prompt = `You are Sudar, a warm and expert AI learning tutor. Generate a personalized enrollment welcome for a learner.
 
 Learner name: ${firstName}
 New course: "${newCourse.title}"${newCourse.description ? `\nCourse description: ${newCourse.description}` : ''}
@@ -82,7 +82,7 @@ ${moduleTitles}
 Prior learning history:
 ${priorCoursesText}
 
-What Byte knows about this learner:
+What Sudar knows about this learner:
 - Known concepts: ${knownConcepts.length ? knownConcepts.join(', ') : 'none yet'}
 - Known struggles: ${struggles.length ? struggles.join(', ') : 'none identified'}
 - Background: ${background || 'not provided'}

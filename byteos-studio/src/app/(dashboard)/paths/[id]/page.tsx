@@ -250,7 +250,7 @@ export default function PathEditorPage() {
         {/* Adaptive note */}
         {path.is_adaptive && (
           <div className="bg-violet-950/20 border border-violet-500/20 rounded-lg p-3 text-xs text-violet-300 leading-relaxed">
-            <span className="font-semibold">Adaptive mode on.</span> Byte will reorder optional courses per learner based on their known concepts, struggles, goals, and pace. Mandatory courses always stay in their set position.
+            <span className="font-semibold">Adaptive mode on.</span> Sudar will reorder optional courses per learner based on their known concepts, struggles, goals, and pace. Mandatory courses always stay in their set position.
           </div>
         )}
       </div>
@@ -312,7 +312,7 @@ export default function PathEditorPage() {
         {path.courses.length > 0 && (
           <div className="flex items-center gap-4 text-xs text-slate-500 px-1">
             <span className="flex items-center gap-1"><Lock className="w-3 h-3 text-red-400" />Mandatory — learner must complete</span>
-            <span className="flex items-center gap-1"><Unlock className="w-3 h-3 text-slate-500" />Optional — can be reordered by Byte if adaptive</span>
+            <span className="flex items-center gap-1"><Unlock className="w-3 h-3 text-slate-500" />Optional — can be reordered by Sudar if adaptive</span>
           </div>
         )}
       </div>

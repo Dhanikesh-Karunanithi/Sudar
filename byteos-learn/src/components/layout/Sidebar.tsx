@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  Zap,
   LayoutDashboard,
   BookOpen,
   BarChart2,
@@ -27,7 +27,7 @@ const navItems = [
   { label: 'Courses', href: '/courses', icon: BookOpen },
   { label: 'Paths', href: '/paths', icon: Route },
   { label: 'Progress', href: '/progress', icon: BarChart2 },
-  { label: "Byte's Memory", href: '/memory', icon: Brain },
+  { label: "Sudar's Memory", href: '/memory', icon: Brain },
 ]
 
 export function Sidebar({ user }: SidebarProps) {
@@ -48,12 +48,15 @@ export function Sidebar({ user }: SidebarProps) {
         href="/"
         className="flex flex-col items-center gap-1.5 px-3 py-5 border-b border-border"
       >
-        <div className="flex h-10 w-10 items-center justify-center rounded-card bg-primary shadow-sm">
-          <Zap className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
+        <div className="relative h-10 w-10 shrink-0">
+          <Image
+            src="/sudar-logo.png"
+            alt="Sudar"
+            fill
+            className="object-contain"
+            sizes="40px"
+          />
         </div>
-        <span className="text-[10px] font-semibold text-card-foreground leading-tight text-center">
-          ByteOS
-        </span>
         <span className="text-[10px] font-semibold text-primary leading-tight">
           Learn
         </span>

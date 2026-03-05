@@ -147,7 +147,7 @@ export default async function LearnPathDetailPage({ params }: { params: { id: st
         {path.is_adaptive && enrollment?.personalized_sequence && (
           <p className="text-xs text-primary flex items-center gap-1.5 bg-primary/10 border border-primary/20 rounded-button px-3 py-2">
             <Zap className="w-3.5 h-3.5 shrink-0" />
-            Byte reordered optional courses based on your knowledge and learning goals.
+            Sudar reordered optional courses based on your knowledge and learning goals.
           </p>
         )}
 

@@ -120,12 +120,12 @@ export function QuizCard({ quiz, moduleTitle, learnerName, onComplete, onAskByte
           })}
         </div>
 
-        {/* Struggled topics → Ask Byte */}
+        {/* Struggled topics → Ask Sudar */}
         {wrongTopics.length > 0 && (
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Bot className="w-4 h-4 text-primary" />
-              <p className="text-sm font-semibold text-card-foreground">Byte can help with these</p>
+              <p className="text-sm font-semibold text-card-foreground">Sudar can help with these</p>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {wrongTopics.map((topic) => (
@@ -138,11 +138,11 @@ export function QuizCard({ quiz, moduleTitle, learnerName, onComplete, onAskByte
                 </button>
               ))}
             </div>
-            <p className="text-xs text-primary">Click a topic and Byte will explain it with your learning style in mind.</p>
+            <p className="text-xs text-primary">Click a topic and Sudar will explain it with your learning style in mind.</p>
           </div>
         )}
 
-        {/* Byte encouragement prompt */}
+        {/* Sudar encouragement prompt */}
         <button
           onClick={() => onAskByte(
             score === 100
@@ -152,7 +152,7 @@ export function QuizCard({ quiz, moduleTitle, learnerName, onComplete, onAskByte
           className="w-full flex items-center gap-2 justify-center py-2.5 bg-primary/5 hover:bg-primary/10 border border-primary/20 text-primary text-sm font-medium rounded-xl transition-colors"
         >
           <Sparkles className="w-4 h-4" />
-          {score === 100 ? 'Challenge me further' : 'Get a summary from Byte'}
+          {score === 100 ? 'Challenge me further' : 'Get a summary from Sudar'}
         </button>
 
         <button
@@ -250,7 +250,7 @@ export function QuizCard({ quiz, moduleTitle, learnerName, onComplete, onAskByte
                 onClick={() => onAskByte(`I answered this quiz question incorrectly: "${q.question}". Can you explain the concept of "${q.topic}" more clearly?`)}
                 className="flex items-center gap-1.5 text-xs text-primary hover:text-primary font-medium mt-1"
               >
-                <Bot className="w-3.5 h-3.5" />Ask Byte to explain {q.topic}
+                <Bot className="w-3.5 h-3.5" />Ask Sudar to explain {q.topic}
               </button>
             )}
           </div>
@@ -278,7 +278,7 @@ export function QuizCard({ quiz, moduleTitle, learnerName, onComplete, onAskByte
           {!submitted && (
             <button
               onClick={() => onAskByte(`While looking at a quiz question about "${q.topic}", I'm not sure about: ${q.question}`)}
-              title="Ask Byte before answering"
+              title="Ask Sudar before answering"
               className="p-2.5 bg-primary/5 hover:bg-primary/10 border border-primary/20 text-primary rounded-xl transition-colors"
             >
               <Bot className="w-4 h-4" />

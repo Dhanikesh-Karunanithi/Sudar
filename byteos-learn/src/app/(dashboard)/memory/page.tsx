@@ -25,9 +25,9 @@ export default async function MemoryPage() {
           <Bot className="w-6 h-6 text-primary-foreground" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-card-foreground">Byte&apos;s Memory</h1>
+          <h1 className="text-2xl font-bold text-card-foreground">Sudar&apos;s Memory</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            What Byte knows about you — built from {interactionCount} interaction{interactionCount !== 1 ? 's' : ''}.
+            What Sudar knows about you — built from {interactionCount} interaction{interactionCount !== 1 ? 's' : ''}.
           </p>
         </div>
       </div>
@@ -38,9 +38,9 @@ export default async function MemoryPage() {
         <div className="text-sm space-y-1 text-amber-900 dark:text-amber-100">
           <p className="font-medium">How this memory works</p>
           <p className="text-xs leading-relaxed opacity-95">
-            Byte automatically builds a model of you from your questions and interactions.
-            You can add context that helps Byte help you better — like your background or learning goals.
-            AI-observed data (concepts Byte thinks you understood) is shown separately and cannot be manually inflated.
+            Sudar automatically builds a model of you from your questions and interactions.
+            You can add context that helps Sudar help you better — like your background or learning goals.
+            AI-observed data (concepts Sudar thinks you understood) is shown separately and cannot be manually inflated.
           </p>
         </div>
       </BentoCard>
@@ -49,7 +49,7 @@ export default async function MemoryPage() {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Lock className="w-4 h-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-card-foreground">Observed by Byte</h2>
+          <h2 className="text-sm font-semibold text-card-foreground">Observed by Sudar</h2>
           <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-pill">AI-written · read-only</span>
         </div>
 
@@ -88,7 +88,7 @@ export default async function MemoryPage() {
           <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-pill">You control this</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Help Byte understand your background and goals. This gets injected into every conversation.
+          Help Sudar understand your background and goals. This gets injected into every conversation.
         </p>
         <MemoryEditor
           userId={user!.id}

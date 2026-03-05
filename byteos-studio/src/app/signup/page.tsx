@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import { BookOpen, CheckCircle2 } from 'lucide-react'
+import { CheckCircle2 } from 'lucide-react'
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState('')
@@ -54,7 +55,7 @@ export default function SignupPage() {
             <p className="text-slate-400 text-sm leading-relaxed">
               We sent a confirmation link to{' '}
               <span className="text-slate-200 font-medium">{email}</span>.
-              Click it to activate your ByteOS Studio account.
+              Click it to activate your Sudar Studio account.
             </p>
           </div>
           <Link
@@ -75,11 +76,17 @@ export default function SignupPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(99,102,241,0.12),transparent_60%)] pointer-events-none" />
 
         <div className="relative flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-            <BookOpen className="w-5 h-5 text-white" strokeWidth={2} />
+          <div className="relative w-9 h-9 shrink-0">
+            <Image
+              src="/sudar-logo.png"
+              alt="Sudar"
+              fill
+              className="object-contain"
+              sizes="36px"
+            />
           </div>
           <div>
-            <p className="text-white font-semibold text-base leading-tight">ByteOS Studio</p>
+            <p className="text-white font-semibold text-base leading-tight">Sudar Studio</p>
             <p className="text-indigo-400 text-xs">Admin & Creator</p>
           </div>
         </div>
@@ -92,7 +99,7 @@ export default function SignupPage() {
             {[
               'Generate courses from PDFs, URLs, or a text prompt',
               'Deliver content in 7 modalities — text, video, game and more',
-              'AI Tutor "Byte" learns each learner over time',
+              'AI Tutor "Sudar" learns each learner over time',
               'Full analytics: completions, skill gaps, drop-off',
             ].map((feature) => (
               <li key={feature} className="flex items-start gap-3">
@@ -104,7 +111,7 @@ export default function SignupPage() {
         </div>
 
         <p className="relative text-slate-600 text-xs">
-          © 2026 ByteOS · Learns with you, for you.
+          © 2026 Sudar · Learns with you, for you.
         </p>
       </div>
 
@@ -113,15 +120,21 @@ export default function SignupPage() {
         <div className="w-full max-w-sm space-y-8">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 justify-center">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-white" strokeWidth={2} />
+            <div className="relative w-9 h-9 shrink-0">
+              <Image
+                src="/sudar-logo.png"
+                alt="Sudar"
+                fill
+                className="object-contain"
+                sizes="36px"
+              />
             </div>
-            <p className="text-white font-semibold text-base">ByteOS Studio</p>
+            <p className="text-white font-semibold text-base">Sudar Studio</p>
           </div>
 
           <div className="space-y-1.5">
             <h1 className="text-2xl font-semibold text-white">Create your account</h1>
-            <p className="text-slate-400 text-sm">Get started with ByteOS Studio — free to begin.</p>
+            <p className="text-slate-400 text-sm">Get started with Sudar Studio — free to begin.</p>
           </div>
 
           {error && (

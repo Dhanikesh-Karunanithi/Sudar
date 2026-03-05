@@ -130,7 +130,7 @@ export function Header({ user, showOnboardingNudge }: HeaderProps) {
                   onClick={() => setMenuOpen(false)}
                   className="flex w-full items-center gap-2.5 rounded-button px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
                 >
-                  Byte&apos;s Memory
+                  Sudar&apos;s Memory
                 </Link>
                 <button
                   onClick={() => { setMenuOpen(false); handleSignOut() }}

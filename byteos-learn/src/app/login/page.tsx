@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Zap } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -35,11 +35,18 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         {/* Logo */}
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-indigo-500/25 mx-auto">
-            <Zap className="w-6 h-6 text-white" strokeWidth={2.5} />
+          <div className="relative w-16 h-16 mx-auto">
+            <Image
+              src="/sudar-logo.png"
+              alt="Sudar"
+              fill
+              className="object-contain"
+              sizes="64px"
+              priority
+            />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">ByteOS Learn</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Sudar Learn</h1>
             <p className="text-slate-500 text-sm mt-1">Your personalized learning experience</p>
           </div>
         </div>
@@ -106,7 +113,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-slate-400 text-xs">
-          © 2026 ByteOS · Learns with you, for you.
+          © 2026 Sudar · Learns with you, for you.
         </p>
       </div>
     </div>

@@ -133,11 +133,11 @@ Learner Memory (use this to personalize every response):
 - Self-reported background: ${memory?.self_reported_background || 'not provided'}
 - Learning goals: ${memory?.learning_goals || 'not stated'}
 - Preferred explanation style: ${memory?.preferred_explanation_style || 'not set'}
-- Total interactions with Byte: ${memory?.interaction_count || 0}
+- Total interactions with Sudar: ${memory?.interaction_count || 0}
 ${priorCoursesText ? `\nPrior courses on this platform:\n${priorCoursesText}` : ''}`
 
   // ── 3. Build system prompt ─────────────────────────────────────────────
-  const systemPrompt = `You are Byte, the AI learning tutor for ByteOS Learn. You know this learner deeply.
+  const systemPrompt = `You are Sudar, the AI learning tutor for ByteOS Learn. You know this learner deeply.
 
 Personality: warm, concise, encouraging. You celebrate progress and meet people where they are.
 Format: plain text only (no markdown, no **, no ##). 2-4 paragraphs max unless detail is genuinely needed.
@@ -175,7 +175,7 @@ How to personalize:
     const msg = err instanceof Error ? err.message : 'AI service error'
     console.error('[tutor] callAI error:', msg)
     return NextResponse.json(
-      { error: msg.includes('401') || msg.includes('429') ? 'AI tutor is temporarily unavailable. Please try again later.' : 'Failed to get a response from Byte. Please try again.' },
+      { error: msg.includes('401') || msg.includes('429') ? 'AI tutor is temporarily unavailable. Please try again later.' : 'Failed to get a response from Sudar. Please try again.' },
       { status: 502 }
     )
   }

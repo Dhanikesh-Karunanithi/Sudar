@@ -164,7 +164,7 @@ export default function NewCoursePage() {
             <Sparkles className="w-8 h-8 text-violet-400 animate-pulse" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-lg font-semibold text-white">Byte is building your course</h2>
+            <h2 className="text-lg font-semibold text-white">Sudar is building your course</h2>
             <p className="text-slate-400 text-sm">This takes about 30–60 seconds for a full course.</p>
           </div>
 
@@ -224,7 +224,7 @@ export default function NewCoursePage() {
               <div>
                 <h3 className="text-white font-semibold text-sm">Create with AI</h3>
                 <p className="text-slate-500 text-xs mt-1 leading-relaxed">
-                  Byte generates the full course outline and writes every module automatically. Ready in ~60 seconds.
+                  Sudar generates the full course outline and writes every module automatically. Ready in ~60 seconds.
                 </p>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -266,7 +266,7 @@ export default function NewCoursePage() {
               <div>
                 <h3 className="text-white font-semibold text-sm">Import from document</h3>
                 <p className="text-slate-500 text-xs mt-1 leading-relaxed">
-                  Upload a PDF or DOCX, or paste a URL. Byte extracts text and generates a course from it (RAG).
+                  Upload a PDF or DOCX, or paste a URL. Sudar extracts text and generates a course from it (RAG).
                 </p>
               </div>
               <div className="flex flex-wrap gap-1.5">

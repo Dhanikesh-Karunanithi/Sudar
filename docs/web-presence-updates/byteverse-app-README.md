@@ -2,7 +2,7 @@
 
 ByteVerse is the AI learning ecosystem that **learns with you** — powered by [ByteOS](https://github.com/lorddannykay/ByteOS), the open-source Learning Operating System. One seed. Infinite ways to learn.
 
-This repository is the **landing page** for [byteverse.app](https://byteverse.app). The product is built on ByteOS: longitudinal learner memory, adaptive paths, AI tutor (Byte), and multi-modality (text, flashcards, video, audio, mind maps). Created by **Dhanikesh Karunanithi** — Global Head of Learning Tech & Data Strategy; 2× Gold Stevie (2024), Brandon Hall Gold & Silver (2022).
+This repository is the **landing page** for [byteverse.app](https://byteverse.app). The product is built on ByteOS: longitudinal learner memory, adaptive paths, AI tutor (Sudar), and multi-modality (text, flashcards, video, audio, mind maps). Created by **Dhanikesh Karunanithi** — Global Head of Learning Tech & Data Strategy; 2× Gold Stevie (2024), Brandon Hall Gold & Silver (2022).
 
 ---
 

@@ -518,7 +518,7 @@ ByteOS/
 - **Game modality**: BytePlay (branded feature within ByteOS Learn)
 - **Feed modality**: ByteFeed (branded feature within ByteOS Learn)
 - **Mindmap modality**: ByteMind (branded feature within ByteOS Learn)
-- **AI Tutor**: "Byte" (the tutor's name — short, memorable, on-brand)
+- **AI Tutor**: "Sudar" (the tutor's name — short, memorable, on-brand)
 - **The learner data profile**: Digital Learner Twin
 
 ---

@@ -62,13 +62,13 @@ ByteOS/
 
 ### 2. ByteOS Learn (`/byteos-learn`)
 **Who uses it**: Learners
-**What it does**: Take courses, interact with AI tutor "Byte", track progress, switch modalities
+**What it does**: Take courses, interact with AI tutor "Sudar", track progress, switch modalities
 **Stack**: Next.js 14, TypeScript, Tailwind CSS, Prisma, Supabase, Framer Motion, Zustand
 **Port**: 3001
 **Key files**:
 - `app/` — Next.js App Router pages
 - `components/modalities/` — Text, Video, Audio, MindMap, Flashcards, ByteFeed, BytePlay
-- `components/tutor/` — AI Tutor "Byte" sidebar
+- `components/tutor/` — AI Tutor "Sudar" sidebar
 - `lib/intelligence/` — API client for byteos-intelligence
 
 ### 3. ByteOS Intelligence (`/byteos-intelligence`)
@@ -100,10 +100,10 @@ The schema is defined in `ECOSYSTEM.md` Section 5. The most important tables:
 
 ---
 
-## The AI Tutor — "Byte"
+## The AI Tutor — "Sudar"
 
-The AI tutor is named **"Byte"**. When writing UI copy, error messages, or tutor responses,
-always refer to the tutor as "Byte". Byte is:
+The AI tutor is named **"Sudar"**. When writing UI copy, error messages, or tutor responses,
+always refer to the tutor as "Sudar". Sudar is:
 - **Reactive**: Answers questions the learner asks about the course content
 - **Proactive**: Notices when a learner is struggling (long pause, replay, low quiz score)
   and offers help WITHOUT being asked
@@ -111,8 +111,8 @@ always refer to the tutor as "Byte". Byte is:
 - **Non-judgmental**: Never criticizes the learner. Always encouraging and constructive.
 - **Concise**: Responses are brief (under 150 words) unless the learner asks for more
 
-Byte's personality: Friendly, knowledgeable, patient. Like a brilliant study buddy.
-Byte's tone: Conversational, not academic. Uses simple language. Avoids jargon.
+Sudar's personality: Friendly, knowledgeable, patient. Like a brilliant study buddy.
+Sudar's tone: Conversational, not academic. Uses simple language. Avoids jargon.
 
 ---
 
@@ -177,7 +177,7 @@ Instead, it silently powers ALL personalization decisions behind the scenes.
 - Do NOT use `localStorage` for anything sensitive (auth tokens, user data)
 - Do NOT hardcode organization IDs, user IDs, or course IDs in any logic
 - Do NOT create new npm packages/pip packages without a clear reason
-- Do NOT rename "Byte" (the AI tutor) to anything else
+- Do NOT rename "Sudar" (the AI tutor) to anything else
 - Do NOT refer to the platform as "ByteLab", "ByteVerse", or any old name — it is "ByteOS"
 - Do NOT break the separation between Studio (admin) and Learn (learner) surfaces
 - Do NOT store AI model responses in a way that can't be updated when models improve
