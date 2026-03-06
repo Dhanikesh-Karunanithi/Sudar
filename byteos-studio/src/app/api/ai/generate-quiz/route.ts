@@ -5,6 +5,7 @@
  */
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { authorizeCourseAccess } from '@/lib/courseAccess'
 import { NextRequest, NextResponse } from 'next/server'
 
 const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
@@ -20,6 +21,17 @@ export async function POST(request: NextRequest) {
   const { module_id, course_title, module_title, content, difficulty = 'intermediate', num_questions = 4 } = await request.json()
 
   if (!module_id || !content) return NextResponse.json({ error: 'module_id and content required' }, { status: 400 })
+
+  const { data: module } = await admin
+    .from('modules')
+    .select('id, course_id')
+    .eq('id', module_id)
+    .single()
+
+  if (!module) return NextResponse.json({ error: 'Module not found' }, { status: 404 })
+
+  const access = await authorizeCourseAccess(module.course_id, 'edit')
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status })
 
   const prompt = `You are an expert instructional designer creating a quiz for an e-learning module.
 
@@ -80,6 +92,7 @@ Return ONLY valid JSON in this exact structure:
     .from('modules')
     .update({ quiz })
     .eq('id', module_id)
+    .eq('course_id', module.course_id)
 
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 

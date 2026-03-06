@@ -1,14 +1,33 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { CourseViewer } from './CourseViewer'
+import type { ModuleContent, ModalityVariants } from '@/types/content'
+
+interface ViewerCourse {
+  id: string
+  title: string
+  settings?: {
+    module_completion?: Record<string, { type: 'mark_button' | 'min_time'; min_time_secs?: number }>
+  } | null
+  modules: {
+    id: string
+    title: string
+    content: ModuleContent | null
+    modality_variants?: ModalityVariants | null
+    order_index: number
+    quiz?: { questions: unknown[] } | null
+  }[]
+}
 
 export default async function CourseLearnPage({
   params,
   searchParams,
 }: {
-  params: { id: string }
-  searchParams: { module?: string }
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ module?: string }>
 }) {
+  const { id } = await params
+  const { module } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -21,15 +40,15 @@ export default async function CourseLearnPage({
     .from('enrollments')
     .select('id, progress_pct, status, personalized_welcome')
     .eq('user_id', user.id)
-    .eq('course_id', params.id)
+    .eq('course_id', id)
     .single()
 
-  if (!enrollment) redirect(`/courses/${params.id}`)
+  if (!enrollment) redirect(`/courses/${id}`)
 
   const { data: course } = await admin
     .from('courses')
     .select('id, title, settings, modules(id, title, content, modality_variants, order_index, quiz)')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('status', 'published')
     .order('order_index', { referencedTable: 'modules', ascending: true })
     .single()
@@ -40,12 +59,12 @@ export default async function CourseLearnPage({
     .from('learning_events')
     .select('module_id')
     .eq('user_id', user.id)
-    .eq('course_id', params.id)
+    .eq('course_id', id)
     .eq('event_type', 'module_complete')
 
   const completedModuleIds = new Set(completedEvents?.map((e) => e.module_id) ?? [])
 
-  const activeModuleId = searchParams.module ?? course.modules[0].id
+  const activeModuleId = module ?? course.modules[0].id
 
   // Only show welcome on first-ever visit (before any module completion)
   const isFirstVisit = completedModuleIds.size === 0 && enrollment.status !== 'completed'
@@ -53,7 +72,7 @@ export default async function CourseLearnPage({
 
   return (
     <CourseViewer
-      course={course as any}
+      course={course as ViewerCourse}
       activeModuleId={activeModuleId}
       completedModuleIds={Array.from(completedModuleIds)}
       enrollmentProgress={Math.round(enrollment.progress_pct)}
