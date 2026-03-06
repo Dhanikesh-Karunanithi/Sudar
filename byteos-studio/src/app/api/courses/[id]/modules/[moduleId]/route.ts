@@ -1,13 +1,14 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { authorizeCourseAccess } from '@/lib/courseAccess'
+import { createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; moduleId: string } }
+  { params }: { params: Promise<{ id: string; moduleId: string }> }
 ) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { id, moduleId } = await params
+  const access = await authorizeCourseAccess(id, 'update_module')
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status })
 
   const admin = createAdminClient()
   const body = await request.json()
@@ -20,8 +21,8 @@ export async function PATCH(
   const { data, error } = await admin
     .from('modules')
     .update(updates)
-    .eq('id', params.moduleId)
-    .eq('course_id', params.id)
+    .eq('id', moduleId)
+    .eq('course_id', id)
     .select()
     .single()
 
@@ -31,19 +32,19 @@ export async function PATCH(
 
 export async function DELETE(
   _: NextRequest,
-  { params }: { params: { id: string; moduleId: string } }
+  { params }: { params: Promise<{ id: string; moduleId: string }> }
 ) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { id, moduleId } = await params
+  const access = await authorizeCourseAccess(id, 'delete_module')
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status })
 
   const admin = createAdminClient()
 
   const { error } = await admin
     .from('modules')
     .delete()
-    .eq('id', params.moduleId)
-    .eq('course_id', params.id)
+    .eq('id', moduleId)
+    .eq('course_id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return new NextResponse(null, { status: 204 })

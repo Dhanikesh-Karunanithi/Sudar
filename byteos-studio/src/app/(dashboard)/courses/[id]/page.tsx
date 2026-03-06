@@ -51,6 +51,7 @@ export default function CourseEditorPage() {
   const router = useRouter()
   const [course, setCourse] = useState<Course | null>(null)
   const [loading, setLoading] = useState(true)
+  const [accessDenied, setAccessDenied] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [publishing, setPublishing] = useState(false)
@@ -66,14 +67,30 @@ export default function CourseEditorPage() {
   const [showAiPanel, setShowAiPanel] = useState<string | null>(null)
   const [generatingQuiz, setGeneratingQuiz] = useState<string | null>(null)
 
+  const getResponseError = useCallback(async (response: Response, fallback: string) => {
+    const data = await response.json().catch(() => null)
+    return typeof data?.error === 'string' ? data.error : fallback
+  }, [])
+
   const fetchCourse = useCallback(async () => {
     const res = await fetch(`/api/courses/${id}`)
-    if (!res.ok) { router.push('/courses'); return }
+    if (res.status === 403) {
+      setAccessDenied(await getResponseError(res, 'You do not have permission to open this course.'))
+      setLoading(false)
+      return
+    }
+    if (res.status === 404) { router.push('/courses'); return }
+    if (!res.ok) {
+      setError(await getResponseError(res, 'Failed to load course'))
+      setLoading(false)
+      return
+    }
     const data = await res.json()
+    setAccessDenied(null)
     setCourse(data)
     setLoading(false)
     if (data.modules?.length > 0) setExpandedModule(data.modules[0].id)
-  }, [id, router])
+  }, [getResponseError, id, router])
 
   useEffect(() => { fetchCourse() }, [fetchCourse])
 
@@ -154,7 +171,7 @@ export default function CourseEditorPage() {
       }
       // Final fetch to ensure all content is up to date
       await fetchCourse()
-    } catch (err) {
+    } catch {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
       pollIntervalRef.current = null
       setError('Generation request failed. Check your connection and try again.')
@@ -204,11 +221,16 @@ export default function CourseEditorPage() {
   async function saveCourse(updates: Partial<Course>) {
     if (!course) return
     setSaving(true); setSaved(false)
-    await fetch(`/api/courses/${id}`, {
+    const res = await fetch(`/api/courses/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
     })
+    if (!res.ok) {
+      setError(await getResponseError(res, 'Failed to save course'))
+      setSaving(false)
+      return
+    }
     setCourse((c) => c ? { ...c, ...updates } : c)
     setSaving(false); setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -220,6 +242,10 @@ export default function CourseEditorPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title, content: { type: 'text', body: '' } }),
     })
+    if (!res.ok) {
+      setError(await getResponseError(res, 'Failed to add module'))
+      return null
+    }
     const mod = await res.json()
     setCourse((c) => c ? { ...c, modules: [...c.modules, mod] } : c)
     setExpandedModule(mod.id)
@@ -227,18 +253,26 @@ export default function CourseEditorPage() {
   }
 
   async function saveModule(moduleId: string, updates: Partial<Module>) {
-    await fetch(`/api/courses/${id}/modules/${moduleId}`, {
+    const res = await fetch(`/api/courses/${id}/modules/${moduleId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
     })
+    if (!res.ok) {
+      setError(await getResponseError(res, 'Failed to save module'))
+      return
+    }
     setCourse((c) => c ? {
       ...c, modules: c.modules.map((m) => m.id === moduleId ? { ...m, ...updates } : m),
     } : c)
   }
 
   async function deleteModule(moduleId: string) {
-    await fetch(`/api/courses/${id}/modules/${moduleId}`, { method: 'DELETE' })
+    const res = await fetch(`/api/courses/${id}/modules/${moduleId}`, { method: 'DELETE' })
+    if (!res.ok) {
+      setError(await getResponseError(res, 'Failed to delete module'))
+      return
+    }
     setCourse((c) => c ? { ...c, modules: c.modules.filter((m) => m.id !== moduleId) } : c)
     if (expandedModule === moduleId) setExpandedModule(null)
   }
@@ -376,6 +410,25 @@ export default function CourseEditorPage() {
   if (loading) return (
     <div className="flex items-center justify-center h-full">
       <Loader2 className="w-6 h-6 text-slate-500 animate-spin" />
+    </div>
+  )
+  if (accessDenied) return (
+    <div className="p-8 max-w-2xl mx-auto space-y-6">
+      <Link href="/courses" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-200 text-sm transition-colors">
+        <ArrowLeft className="w-4 h-4" />Courses
+      </Link>
+      <div className="bg-slate-900 border border-amber-500/20 rounded-2xl p-8 space-y-4">
+        <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+          <CircleHelp className="w-6 h-6 text-amber-400" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-xl font-semibold text-white">Access denied</h1>
+          <p className="text-sm text-slate-400">{accessDenied}</p>
+          <p className="text-sm text-slate-500">
+            Ask a workspace admin or manager if you need access to edit or publish this course.
+          </p>
+        </div>
+      </div>
     </div>
   )
   if (!course) return null

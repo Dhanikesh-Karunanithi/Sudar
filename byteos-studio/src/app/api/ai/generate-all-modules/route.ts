@@ -1,4 +1,5 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { authorizeCourseAccess } from '@/lib/courseAccess'
+import { createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { getOneImage } from '@/lib/media/imageSearch'
 import { selectComponentsForModule, toInteractiveElements, type ModuleRole } from '@/lib/ai/componentSelector'
@@ -159,26 +160,24 @@ function extractSummary(content: string, title: string): string {
 // ─── Route handler ──────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
   const apiKey = process.env.TOGETHER_API_KEY
   if (!apiKey) return NextResponse.json({ error: 'TOGETHER_API_KEY not configured' }, { status: 500 })
 
   const { course_id } = await request.json()
   if (!course_id) return NextResponse.json({ error: 'course_id required' }, { status: 400 })
 
+  const access = await authorizeCourseAccess(course_id, 'edit')
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status })
+
   const admin = createAdminClient()
 
   const { data: course, error: courseErr } = await admin
     .from('courses')
-    .select('id, title, description, difficulty, created_by')
+    .select('id, title, description, difficulty')
     .eq('id', course_id)
     .single()
 
   if (courseErr || !course) return NextResponse.json({ error: 'Course not found' }, { status: 404 })
-  if (course.created_by !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { data: modules } = await admin
     .from('modules')

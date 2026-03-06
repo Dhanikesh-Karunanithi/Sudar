@@ -1,26 +1,18 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { authorizeCourseAccess } from '@/lib/courseAccess'
+import { createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const access = await authorizeCourseAccess(id, 'add_module')
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status })
 
   const admin = createAdminClient()
-
-  const { data: course } = await admin
-    .from('courses')
-    .select('id')
-    .eq('id', params.id)
-    .eq('created_by', user.id)
-    .single()
-
-  if (!course) return NextResponse.json({ error: 'Course not found' }, { status: 404 })
 
   const { data: lastModule } = await admin
     .from('modules')
     .select('order_index')
-    .eq('course_id', params.id)
+    .eq('course_id', id)
     .order('order_index', { ascending: false })
     .limit(1)
     .single()
@@ -31,7 +23,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const { data, error } = await admin
     .from('modules')
     .insert({
-      course_id: params.id,
+      course_id: id,
       title: body.title ?? 'Untitled Module',
       content: body.content ?? { type: 'text', body: '' },
       order_index: nextIndex,
