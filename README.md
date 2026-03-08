@@ -18,7 +18,7 @@ An AI-native learning platform: one reference implementation, and a plugin layer
 1. **Reference platform** — Authoring (Studio), learner experience (Learn), and intelligence (adaptive engine + AI tutor) over a shared data layer. One place for courses, paths, and a **Digital Learner Twin** that accumulates behaviour, preferences, and tutor context across sessions.
 2. **Adaptive Learning Layer (ALP)** — A plugin architecture so you can attach learner memory, memory-aware tutoring, and modality choice to Moodle, Canvas, or other LMSs you already run. No full migration.
 
-Most LMSs deliver the same content to everyone and don’t remember the learner. Research shows adaptive instruction and intelligent tutoring beat one-size-fits-all, but mainstream products don’t keep a longitudinal learner model or offer tutoring that persists across sessions. Sudar is built to close that gap: open source (MIT), with design choices grounded in learning-science evidence ([RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md)).
+Most LMSs deliver the same content to everyone and don’t remember the learner. Research shows adaptive instruction and intelligent tutoring beat one-size-fits-all, but mainstream products don’t keep a longitudinal learner model or offer tutoring that persists across sessions. Sudar is built to close that gap: open source (Apache 2.0), with design choices grounded in learning-science evidence ([RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md)).
 
 ---
 
@@ -30,7 +30,7 @@ Most LMSs deliver the same content to everyone and don’t remember the learner.
 | **Tutor memory** | Cross-session, cross-course | Stateless |
 | **Modalities** | Text, video, audio, mindmap, flashcards, feed, game | Usually text/video only |
 | **Augment existing LMS** | Yes (ALP plugins) | N/A |
-| **Open source** | Yes (MIT) | Rarely |
+| **Open source** | Yes (Apache 2.0) | Rarely |
 
 - **Tutor that remembers** — The AI tutor (Sudar) uses your learner profile and past interactions so it can reference what you struggled with, match your style, and connect new material to what you already know. Details: [docs/sudar-memory.md](./docs/sudar-memory.md).
 - **Adaptive paths** — Next-best-action, struggle detection from quizzes, and optional course ordering adapted to the learner.
@@ -173,7 +173,7 @@ Contributions that fit the goal of evidence-informed, personalised learning are 
 
 ## License and citation
 
-**License:** MIT. See [LICENSE](./LICENSE).
+**License:** Apache 2.0. See [LICENSE](./LICENSE).
 
 **Citation:** If you use Sudar in research or derivative work, please cite:
 
@@ -198,5 +198,5 @@ Sudar grew out of the SudarAI/SudarVerse line of work: authoring tools, LMS prot
 </p>
 
 <p align="center">
-  <sub>2026 · Open source · MIT</sub>
+  <sub>2026 · Open source · Apache 2.0</sub>
 </p>

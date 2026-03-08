@@ -116,7 +116,7 @@ If the remote already has a README/license and push is rejected:
 
 - **README.md** — Project overview, research positioning, quick start.
 - **RESEARCH_FOUNDATION.md** — Learning sciences, references, citation.
-- **LICENSE** — MIT.
+- **LICENSE** — Apache 2.0.
 - **CONTRIBUTING.md** — How to contribute.
 - **.gitignore** — Excludes `.env`, `.env.local`, `node_modules`, `.cursor/`, build outputs.
 - **assets/logos/** — Sudar brand logos (used in Learn and Studio).

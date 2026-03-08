@@ -14,7 +14,7 @@ Thank you for your interest in Sudar. We aim to keep the project aligned with **
 
 ## How to Contribute
 
-- **Bug reports and feature ideas** — Open a [GitHub Issue](https://github.com/lorddannykay/ByteOS/issues).
+- **Bug reports and feature ideas** — Open a [GitHub Issue](https://github.com/Dhanikesh-Karunanithi/Sudar/issues).
 - **Code and docs** — Fork the repo, create a branch, make your changes, and open a Pull Request.
 
 ## Guidelines
@@ -25,7 +25,7 @@ Thank you for your interest in Sudar. We aim to keep the project aligned with **
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the [MIT License](./LICENSE).
+By contributing, you agree that your contributions will be licensed under the [Apache License 2.0](./LICENSE).
 
 ---
 

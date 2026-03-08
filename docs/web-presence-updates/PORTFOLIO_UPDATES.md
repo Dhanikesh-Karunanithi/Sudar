@@ -91,13 +91,13 @@ Next-best-action, struggle detection from quizzes, adaptive path ordering, longi
 **Block 4 — Open & Research-Backed**
 
 **Title:** `Open & Research-Backed`  
-**Subtitle:** `MIT · Evidence-Informed`
+**Subtitle:** `Apache 2.0 · Evidence-Informed`
 
 **Description:**  
-Sudar is open source (MIT). Design grounded in learning sciences. Built for L&D and learners; contributors and researchers can extend and cite.
+Sudar is open source (Apache 2.0). Design grounded in learning sciences. Built for L&D and learners; contributors and researchers can extend and cite.
 
 **Bullets (optional):**
-- MIT license
+- Apache 2.0 license
 - RESEARCH_FOUNDATION.md and citation
 - Single platform: Studio + Learn + Intelligence
 - byteverse.app powered by Sudar
