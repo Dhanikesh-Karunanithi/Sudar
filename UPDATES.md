@@ -16,6 +16,15 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-03-08
+- **Sudar Chat (Learn)**: Floating Sudar Chat widget (global access from dashboard), startup questions, paste context, generative blocks (enroll / continue / review), outcome logging (`tutor_action_taken` to learning_events), validate-memory quick preferences (response length: one_line, detailed, concise; modality: reading, listening, video, no_video). Tutor workflow API (summarize, extract_terms) for batch workflows.
+- **RAG (Learn)**: content_chunks migration (pgvector 1024), ingest API (index published courses or single course), embed/retrieve/cache libs, [RAG_SETUP_STEPS.md](byteos-learn/docs/RAG_SETUP_STEPS.md) for env, DB, and ingest.
+- **Memory & insights**: Insights builder from learner profile/events/enrollments/ai_interactions, InsightsCarousel component, memory/validate-memory alignment.
+- **Dashboard & paths**: DashboardSidebar, TopNav, ActivityChart, ProgressPieChart, PathNodeGraph, CourseThemeProvider and learning personas (themed learning experience).
+- **Auth**: Change password flow (require_password_change after admin reset) — page, form, complete-password-change API.
+- **SCORM**: SCORM asset proxy in Learn — serve SCORM package assets from Supabase Storage (course-media) with correct MIME types for iframe playback.
+- **Docs/assets**: Sudar Chat logo assets (light/dark), root doc tweaks (AGENTS, CONTRIBUTING, ECOSYSTEM, GITHUB_SETUP, README, RESEARCH_FOUNDATION).
+
 ### 2026-03-02
 - **Web presence**: README updated with "What makes ByteOS different" highlights (Sudar's memory, adaptive paths, compliance, open source). Updates section now references Phase 5 in progress (flashcards, document-to-course, SCORM 1.2 import).
 - **Phase 5**: Flashcards modality (Learn), document-to-course (Studio generate-from-document), and SCORM 1.2 import (Studio import-scorm) documented as implemented.
@@ -48,14 +57,15 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 - End-to-end flow: author → publish → enroll → learn → track.
 
 ### Phase 3 — Learner experience ✅
-- **Personalised dashboard**: Streak, total learning time, engagement %, courses completed, “Sudar recommends” (next best action).
-- **Course viewer**: Markdown rendering, module navigation, progress auto-save, quizzes with immediate feedback.
-- **AI tutor "Sudar"**: RAG over full course content, longitudinal memory (ai_interactions + ai_tutor_context), contextual “Explain this” from text selection, My Memory page (view/edit what Sudar knows).
+- **Personalised dashboard**: Streak, total learning time, engagement %, courses completed, “Sudar recommends” (next best action). DashboardSidebar, TopNav, ActivityChart, ProgressPieChart, PathNodeGraph. CourseThemeProvider and learning personas (themed experience per course).
+- **Course viewer**: Markdown rendering, module navigation, progress auto-save, quizzes with immediate feedback. SCORM delivery: proxy for SCORM package assets from Supabase Storage (course-media) with correct MIME types for iframe playback.
+- **AI tutor "Sudar"**: RAG over course content (content_chunks + pgvector 1024, ingest API, embed/retrieve/cache). Floating Sudar Chat (global), startup questions, paste context. Longitudinal memory (ai_interactions + ai_tutor_context), contextual “Explain this” from text selection. Structured tutor responses (blocks/actions: enroll, continue, review). Validate-memory quick preferences (response length, modality). Tutor workflow API (summarize, extract_terms). Outcome logging (tutor_action_taken) for learning from suggestions. My Memory page (view/edit what Sudar knows). Memory insights builder and InsightsCarousel.
 - **Onboarding assessment**: Short intake flow to bootstrap learner profile (goals, background, style).
 - **Learning paths**: Enroll in paths, personalised sequence for adaptive paths, path progress and unlock rules (complete previous first).
 - **Certifications**: Auto-issued on path completion, shareable public verification link, Print/Save as PDF.
 - **Progress page**: Single view for courses, paths, and certificates.
 - **Upcoming deadlines** and **Required by your organisation** on dashboard.
+- **Auth**: Change password flow when require_password_change is set (e.g. after admin reset).
 
 ### Phase 4 — Intelligence ✅
 - **Next best action**: Scores unenrolled courses from learner profile, AI-generated reason, stored in learner_profiles.
@@ -67,7 +77,7 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ### Phase 5 — Scale (in progress)
 - **Done**: Path assignment + due dates, compliance view, certificate print, upcoming deadlines, required paths.
-- **Implemented**: Flashcards modality (Learn: FlashcardsCard, generate-flashcards API); document-to-course (Studio: generate-from-document API for PDF/DOCX/URL); SCORM 1.2 import (Studio: import-scorm API).
+- **Implemented**: Flashcards modality (Learn: FlashcardsCard, generate-flashcards API); document-to-course (Studio: generate-from-document API for PDF/DOCX/URL); SCORM 1.2 import (Studio: import-scorm API). RAG in Learn (content_chunks, ingest, tutor search); Floating Sudar Chat (global); tutor workflows (summarize/extract_terms); outcome logging; validate-memory quick preferences; memory insights carousel; SCORM delivery proxy (Learn); change-password flow.
 - **Upcoming**: Email reminders for at-risk/overdue, then BytePlay/ByteFeed/ByteMind, white-label, SSO/HRIS.
 
 ---

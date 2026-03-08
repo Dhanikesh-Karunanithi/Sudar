@@ -1,7 +1,7 @@
-# ByteOS — Strategic Path to the Ultimate Goal
+# Sudar — Strategic Path to the Ultimate Goal
 
 **Document purpose**: Align all development toward the single vision and provide a clear, executable roadmap.  
-**Ultimate goal**: *ByteOS is the world's first AI-native Learning Operating System that learns the learner and adapts modality, pace, difficulty, and content in real time.*  
+**Ultimate goal**: *Sudar is the world's first AI-native Learning Operating System that learns the learner and adapts modality, pace, difficulty, and content in real time.*  
 **Tagline**: *Learns with you, for you.*
 
 ---
@@ -24,8 +24,8 @@ Every new feature or fix should map to at least one of these pillars. If it does
 **Done and live**  
 - **Foundation**: Supabase schema, shared auth, Studio + Learn scaffold, env contracts.  
 - **Integration**: Course CRUD, publish → Learn, enrollments, learning_events, progress.  
-- **Learner experience**: Personalized dashboard (streak, time, engagement, Sudar recommends), course viewer with markdown, quizzes, AI tutor Sudar (RAG + longitudinal memory), My Memory page, onboarding assessment, text selection → Sudar.  
-- **Intelligence**: Next best action engine, onboarding bootstrap, learner_profiles + ai_tutor_context, struggle detection from quizzes, adaptive path ordering (optional courses reordered by Sudar).  
+- **Learner experience**: Personalized dashboard (streak, time, engagement, Sudar recommends) with DashboardSidebar, TopNav, ActivityChart, ProgressPieChart, PathNodeGraph; CourseThemeProvider and learning personas. Course viewer with markdown, quizzes; SCORM delivery (proxy for SCORM package assets from Supabase Storage with correct MIME types for iframe playback). AI tutor Sudar: RAG in Learn (content_chunks + pgvector 1024, ingest API, embed/retrieve/cache); Floating Sudar Chat (global), startup questions, paste context; longitudinal memory (ai_interactions + ai_tutor_context); structured tutor responses (blocks/actions: enroll, continue, review); validate-memory quick preferences (response length, modality); tutor workflow API (summarize, extract_terms); outcome logging (tutor_action_taken); My Memory page and memory insights (InsightsCarousel). Onboarding assessment, text selection → Sudar. Change password flow when require_password_change is set (e.g. after admin reset).  
+- **Intelligence**: Next best action engine, onboarding bootstrap, learner_profiles + ai_tutor_context, struggle detection from quizzes, adaptive path ordering (optional courses reordered by Sudar). Tutor outcome logging so the system learns from suggestions.  
 - **Paths & certs**: Learning paths (Studio: create/edit, mandatory/adaptive/certificate toggles; Learn: enroll, personalised sequence, progress sync), path unlock rules (complete previous first), certifications on path completion with shareable public link.  
 - **Studio analytics**: Org-level analytics (completions, quiz scores, struggle topics); **Time per section** — per-course view of learner time per module with active vs idle time, “possible skip” and “over time” flags.
 - **Progress**: Dedicated Progress page (courses, paths, certificates), path progress % sync on course complete.
@@ -36,10 +36,12 @@ Every new feature or fix should map to at least one of these pillars. If it does
 - **Learner polish**: Certificate page has reliable “Print / Save as PDF” (client component + print CSS); Learn dashboard shows “Upcoming deadlines” and “Required by your organisation” when relevant.  
 - **Compliance**: Studio “Compliance” page lists path assignments with due date, progress, and status (Overdue / At risk / On track / Completed); Learn dashboard surfaces required paths and due-soon items.
 
-**Built, not yet shipped (uncommitted or in review)**  
+**Built and documented (shipped or ready)**  
 - **Flashcards modality**: FlashcardsCard in Learn course viewer; generate-flashcards API.  
 - **Document-to-course**: Studio generate-from-document API (PDF/DOCX/URL → course outline + modules).  
-- **SCORM 1.2 import**: Studio import-scorm API (ZIP → courses + modules).
+- **SCORM 1.2 import**: Studio import-scorm API (ZIP → courses + modules).  
+- **RAG (Learn)**: content_chunks, ingest API, tutor uses it for course search.  
+- **Floating Sudar Chat**, structured tutor responses, outcome logging, validate-memory quick preferences, memory insights, SCORM delivery proxy, change-password flow (see UPDATES.md 2026-03-08).
 
 **Remaining gaps vs. ultimate goal**  
 - **Creator velocity**: Document/URL import and SCORM import built; RAG-from-docs optional follow-on.  
@@ -59,7 +61,7 @@ Every new feature or fix should map to at least one of these pillars. If it does
 
 **Pending phases (from ECOSYSTEM §8)**  
 - **Phase 3 remaining**: Video modality (wire to bytetexttovid / Remotion).  
-- **Phase 5 — Engagement & Scale**: BytePlay, ByteFeed, ByteMind modalities; white-label per org; HRIS integration hooks.  
+- **Phase 5 — Engagement & Scale**: SudarPlay, SudarFeed, SudarMind modalities; white-label per org; HRIS integration hooks.  
 - **Compliance**: Email reminders for at-risk/overdue learners.  
 - **Polish**: Server-generated certificate PDF.
 
@@ -91,11 +93,11 @@ Priorities are chosen to maximise progress toward the four pillars without overb
    - *Why fifth*: Big win for “democratize creation” but larger scope; after core flows are solid.
 
 5b. **SCORM & format import (Studio)**  
-   - Upload SCORM 1.2 packages (ZIP); parse imsmanifest.xml and assets; map to ByteOS courses/modules. Other formats (xAPI, HTML bundle) as follow-on.  
+   - Upload SCORM 1.2 packages (ZIP); parse imsmanifest.xml and assets; map to Sudar courses/modules. Other formats (xAPI, HTML bundle) as follow-on.  
    - *Why after document import*: Enables reuse of existing content from other authoring tools/LMS; SCORM import is non-trivial (ZIP, manifest, asset resolution).
 
 6. **Further modalities and scale**  
-   - BytePlay, ByteFeed, ByteMind, then white-label/SSO/HRIS as in ECOSYSTEM Phase 5.  
+   - SudarPlay, SudarFeed, SudarMind, then white-label/SSO/HRIS as in ECOSYSTEM Phase 5.  
    - *Why last*: Higher effort and dependency; follow once 1–5 are in place.
 
 ---
@@ -119,4 +121,4 @@ Priorities are chosen to maximise progress toward the four pillars without overb
 
 ---
 
-*Last updated: Strategic path created; Action Plans A–C defined for execution.*
+*Last updated: Current state updated with RAG, Floating Sudar Chat, memory insights, SCORM delivery, change password (UPDATES.md 2026-03-08).*

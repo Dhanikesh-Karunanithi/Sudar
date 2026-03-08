@@ -1,10 +1,10 @@
-# ByteOS — Product Features & Functions
+# Sudar — Product Features & Functions
 ## Complete Feature Specification
 **Version**: 1.0 | **February 2026**
 
 ---
 
-## SURFACE 1: ByteOS Studio (Admin / Creator)
+## SURFACE 1: Sudar Studio (Admin / Creator)
 
 ### Feature Group 1: AI Course Builder
 
@@ -71,7 +71,7 @@
 #### 1.6 Export & Distribution
 | Feature | Description | Phase |
 |---|---|---|
-| Publish to ByteOS Learn | One-click publish; immediately available to enrolled learners | 1 |
+| Publish to Sudar Learn | One-click publish; immediately available to enrolled learners | 1 |
 | SCORM 1.2 export | Export as SCORM package for external LMS compatibility | 1 |
 | HTML export | Self-contained, offline-capable HTML course bundle | 1 |
 | ZIP export | Complete course bundle with all assets | 1 |
@@ -133,7 +133,7 @@
 | Role management | Super Admin / Admin / Manager / Creator / Learner roles | 1 |
 | Team / department groups | Create groups for path assignment and analytics filtering | 2 |
 | Organization branding | Upload logo, set primary/secondary colors | 2 |
-| White-label config | Custom domain, branded login page, remove ByteOS branding | 4 |
+| White-label config | Custom domain, branded login page, remove Sudar branding | 4 |
 | SSO configuration | SAML/OIDC-based Single Sign-On setup | 4 |
 | HRIS sync hooks | Webhook endpoints for Workday, BambooHR, Rippling | 5 |
 | Multi-org support | Platform supports multiple isolated organizations | 1 |
@@ -141,7 +141,7 @@
 
 ---
 
-## SURFACE 2: ByteOS Learn (Learner)
+## SURFACE 2: Sudar Learn (Learner)
 
 ### Feature Group 6: Onboarding & Profile
 
@@ -218,7 +218,7 @@
 | Transcript toggle | Full text transcript available while listening | 3 |
 | Background play | Audio continues if learner minimizes window | 4 |
 
-#### 9.4 MindMap Modality (ByteMind)
+#### 9.4 MindMap Modality (SudarMind)
 | Feature | Description | Phase |
 |---|---|---|
 | AI-generated mindmap | Interactive visual mindmap from module content | 3 |
@@ -237,7 +237,7 @@
 | Progress tracking | Cards marked: Know it / Still learning / Don't know | 2 |
 | Session summary | Review stats after completing a deck | 2 |
 
-#### 9.6 ByteFeed Modality (TikTok-style)
+#### 9.6 SudarFeed Modality (TikTok-style)
 | Feature | Description | Phase |
 |---|---|---|
 | Vertical swipe feed | Mobile-first, swipe-up micro-content cards | 3 |
@@ -245,7 +245,7 @@
 | Like / save cards | Learner can save important cards for review | 4 |
 | Progress tracking | Feed completion tracked as module progress | 3 |
 
-#### 9.7 BytePlay Modality (Games)
+#### 9.7 SudarPlay Modality (Games)
 | Feature | Description | Phase |
 |---|---|---|
 | AI game generation | Phaser.js platformer generated from learning objectives | 3 |
@@ -261,7 +261,10 @@
 | Feature | Description | Phase |
 |---|---|---|
 | Persistent sidebar | Sudar available on every module page, collapsible | 2 |
-| RAG-powered Q&A | Sudar answers questions using the current module's content as context | 2 |
+| Floating global chat | Sudar Chat widget available globally (e.g. dashboard); startup questions, paste context | 3 |
+| RAG-powered Q&A | Sudar answers questions using course content as context (content_chunks + pgvector, ingest API in Learn) | 2 |
+| Structured response blocks | Tutor returns actions (enroll, continue, review) and rich blocks; rendered via GenerativeBlockRenderer | 3 |
+| Quick memory preferences | One-tap preferences: response length (one_line, detailed, concise), modality (reading, listening, video, no_video) | 3 |
 | Proactive inactivity nudge | After 90 seconds of no scroll/interaction, Sudar offers help | 3 |
 | Proactive quiz failure nudge | After 2 failed quiz attempts, Sudar offers alternative explanation | 3 |
 | Longitudinal memory | Sudar reads last 10 `ai_interactions` to maintain conversation continuity | 3 |
@@ -271,6 +274,7 @@
 | Suggest modality switch | Sudar can suggest "you might prefer the video version of this" | 3 |
 | Cite sources | Sudar references which section of the course it's drawing from | 3 |
 | Conversation history | View previous Sudar conversations within a session | 3 |
+| Memory insights | Insight cards built from learner profile/events; InsightsCarousel on My Memory page | 3 |
 
 ---
 
@@ -289,7 +293,7 @@
 
 ---
 
-## LAYER 3: ByteOS Intelligence (AI Engine)
+## LAYER 3: Sudar Intelligence (AI Engine)
 
 ### Feature Group 12: Adaptive Engine
 
@@ -297,6 +301,7 @@
 |---|---|---|
 | Modality score tracking | Tracks 0–1 affinity scores for each modality per learner | 3 |
 | Engagement signal processing | Processes `learning_events` to infer engagement quality | 3 |
+| Tutor outcome logging | Logs `tutor_action_taken` when learner acts on Sudar suggestions (enroll, continue, review); used to adapt future suggestions | 3 |
 | Modality recommendation | Recommends switching modality based on engagement data | 4 |
 | Difficulty adjustment | Adjusts content depth/complexity for next modules | 4 |
 | Next Best Action computation | Computes what the learner should do next | 3 |
@@ -312,9 +317,9 @@
 | Course structure generation | Title, modules, objectives from any source | 1 |
 | Video script generation | Structured video scene scripts for Remotion | 2 |
 | Audio dialogue generation | Podcast-style dialogue scripts | 3 |
-| Mindmap data generation | Hierarchical JSON for ByteMind | 3 |
+| Mindmap data generation | Hierarchical JSON for SudarMind | 3 |
 | Flashcard generation | Key point extraction as Q&A pairs | 2 |
-| Game objective extraction | Learning objectives → BytePlay game parameters | 3 |
+| Game objective extraction | Learning objectives → SudarPlay game parameters | 3 |
 | Fine-tuning pipeline | Together AI fine-tune on educational content dataset | 4 |
 
 ---
@@ -343,11 +348,11 @@
 | Feature | Description | Phase |
 |---|---|---|
 | Responsive layout | All learner UI is mobile-first responsive | 1 |
-| Touch gestures | Swipe navigation for ByteFeed and MindMap | 3 |
+| Touch gestures | Swipe navigation for SudarFeed and MindMap | 3 |
 | PWA installable | Add to home screen on iOS and Android | 4 |
 | Offline module caching | Cache current module content for offline access | 5 |
 
 ---
 
-*ByteOS Product Features v1.0 | February 2026*
+*Sudar Product Features v1.0 | February 2026*
 *Phase key: 1=Foundation, 2=Integration, 3=Learner Experience, 4=Intelligence, 5=Scale*

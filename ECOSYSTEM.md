@@ -1,8 +1,8 @@
-# ByteOS — Ecosystem Master Context
+# Sudar — Ecosystem Master Context
 ## The Operating System for Learning
 ### *"Learns with you, for you."*
 
-> **FOR AI AGENTS (Cursor, Copilot, Devin):** This is the authoritative context document for the ByteOS project.
+> **FOR AI AGENTS (Cursor, Copilot, Devin):** This is the authoritative context document for the Sudar project.
 > Read this file completely before making any changes. Every architectural decision, naming convention,
 > tech stack choice, and product philosophy is documented here. Do not deviate from these decisions
 > without explicit instruction from the project owner.
@@ -16,7 +16,7 @@ access to the kind of adaptive, intelligent education that was previously availa
 who could afford thousands of dollars in eLearning subscriptions (Rise360, Articulate Storyline,
 Adobe Captivate, etc.).
 
-**Vision**: ByteOS is the world's first AI-native Learning Operating System — a platform that doesn't
+**Vision**: Sudar is the world's first AI-native Learning Operating System — a platform that doesn't
 just deliver content, but *learns* the learner. It adapts modality, pace, difficulty, and content
 in real-time based on behavioral signals, preferences, and outcomes.
 
@@ -43,19 +43,19 @@ in real-time based on behavioral signals, preferences, and outcomes.
 
 ## 3. Product Architecture
 
-ByteOS is composed of three primary surfaces and one shared intelligence + data layer:
+Sudar is composed of three primary surfaces and one shared intelligence + data layer:
 
 ```
 ╔══════════════════════════════════════════════════════════════════════╗
-║                           B Y T E O S                               ║
+║                           S U D A R                                 ║
 ║               The Operating System for Learning                     ║
 ╠═════════════════════════╦════════════════════════════════════════════╣
-║   BYTEOS STUDIO          ║   BYTEOS LEARN                           ║
-║   (Admin / Creator)      ║   (Learner / Delivery)                   ║
+║   SUDAR STUDIO          ║   SUDAR LEARN                             ║
+║   (Admin / Creator)     ║   (Learner / Delivery)                   ║
 ║   Port: 3000             ║   Port: 3001                             ║
-║   Base: ByteLab          ║   Base: ByteVerse-LMS                   ║
+║   Base: SudarLab         ║   Base: SudarVerse-LMS                   ║
 ╠═════════════════════════╩════════════════════════════════════════════╣
-║             BYTEOS INTELLIGENCE (Python FastAPI)                    ║
+║             SUDAR INTELLIGENCE (Python FastAPI)                    ║
 ║   Port: 8000 · Adaptive Engine · AI Tutor · Modality Dispatcher    ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                   SUPABASE (Single Source of Truth)                 ║
@@ -63,8 +63,8 @@ ByteOS is composed of three primary surfaces and one shared intelligence + data 
 ╚══════════════════════════════════════════════════════════════════════╝
 ```
 
-### 3.1 ByteOS Studio (`/byteos-studio`)
-- **Base**: ByteLab (Next.js 14, TypeScript, Tailwind CSS, Prisma → Supabase)
+### 3.1 Sudar Studio (`/byteos-studio`)
+- **Base**: SudarLab (Next.js 14, TypeScript, Tailwind CSS, Prisma → Supabase)
 - **Purpose**: The admin/creator surface where L&D teams build courses
 - **Key capabilities**:
   - AI-powered course generation from any source (PDF, DOCX, URL, text prompt)
@@ -80,20 +80,22 @@ ByteOS is composed of three primary surfaces and one shared intelligence + data 
   - Role-based access (Admin, Manager, Creator, Learner)
   - Compliance tracking (mandatory training, certifications, due dates)
 
-### 3.2 ByteOS Learn (`/byteos-learn`)
-- **Base**: ByteVerse-LMS (Next.js 14, TypeScript, Tailwind CSS, Prisma → Supabase)
+### 3.2 Sudar Learn (`/byteos-learn`)
+- **Base**: SudarVerse-LMS (Next.js 14, TypeScript, Tailwind CSS, Prisma → Supabase)
 - **Purpose**: The learner-facing delivery platform
 - **Key capabilities**:
   - Personalized learner dashboard (based on Supabase learner profile)
-  - Modality switching: Text / Video / Audio / MindMap / Flashcards / ByteFeed / BytePlay
-  - AI Tutor sidebar: reactive Q&A + proactive nudges + longitudinal memory
+  - Modality switching: Text / Video / Audio / MindMap / Flashcards / SudarFeed / SudarPlay
+  - AI Tutor: RAG over course content (content_chunks + pgvector, ingest API in Learn); Floating Sudar Chat (global); reactive Q&A + proactive nudges + longitudinal memory; structured response blocks (enroll, continue, review); quick memory preferences; outcome logging (tutor_action_taken). My Memory page with insights carousel.
   - Skills graph and knowledge gap visualization
   - Next Best Action recommendations
   - Learning path enrollment and progress tracking
   - Certification management
   - Digital Learner Twin (the accumulation of all signals about a learner)
+  - SCORM delivery: proxy for SCORM package assets from Supabase Storage (course-media) with correct MIME types for iframe playback.
+  - Change password flow when require_password_change is set (e.g. after admin reset).
 
-### 3.3 ByteOS Intelligence (`/byteos-intelligence`)
+### 3.3 Sudar Intelligence (`/byteos-intelligence`)
 - **Base**: bytengine (Python FastAPI)
 - **Purpose**: The AI brain — all heavy computation, adaptation, and generation
 - **Key capabilities**:
@@ -109,9 +111,9 @@ ByteOS is composed of three primary surfaces and one shared intelligence + data 
 ### 3.4 Microservices (standalone, called by Intelligence layer)
 - **byteos-video** (`/byteos-video`) — bytetexttovid: Python, FFmpeg, Edge-TTS
 - **byteos-renderer** (`/byteos-renderer`) — Remotion: TypeScript, React, MP4 render server
-- **byteos-feed** — shayshay (TikTok-style feed): absorbed into ByteOS Learn as a modality
-- **byteos-play** — BytePlay (game generator): Phaser.js, called as modality from Learn
-- **byteos-mind** — ByteMind (mindmap): embedded as modality component in Learn
+- **byteos-feed** — shayshay (TikTok-style feed): absorbed into Sudar Learn as a modality
+- **byteos-play** — SudarPlay (game generator): Phaser.js, called as modality from Learn
+- **byteos-mind** — SudarMind (mindmap): embedded as modality component in Learn
 
 ---
 
@@ -125,12 +127,12 @@ ByteOS is composed of three primary surfaces and one shared intelligence + data 
 | ORM | Prisma | Already configured in ByteLab & ByteVerse-LMS |
 | Database | Supabase (PostgreSQL) | Single source of truth, auth included |
 | Animation | Framer Motion | Already in ByteVerse-LMS |
-| State management | Zustand | Lightweight, already used in ByteMind & ByteVerse-LMS |
+| State management | Zustand | Lightweight, already used in SudarMind & ByteVerse-LMS |
 | AI providers | Together AI (primary), OpenAI (secondary), Anthropic (tertiary) | Cost-effective, multi-model |
 | Backend AI engine | Python FastAPI | Best for ML/AI operations, fine-tuning |
 | Video generation | Python + FFmpeg + Edge-TTS | bytetexttovid |
 | Programmatic video | Remotion 4.0 | MP4 render server |
-| Game engine | Phaser.js | BytePlay |
+| Game engine | Phaser.js | SudarPlay |
 | Auth | Supabase Auth | Shared across Studio + Learn |
 | File storage | Supabase Storage | RAG source docs, media assets |
 | Deployment target | Vercel (Studio + Learn) + Railway/Render (FastAPI) | Standard for Next.js |
@@ -154,6 +156,7 @@ profiles (
   role text CHECK (role IN ('super_admin', 'org_admin', 'manager', 'creator', 'learner')),
   org_id uuid references organisations,
   onboarding_complete boolean DEFAULT false,
+  require_password_change boolean DEFAULT false,  -- set when admin resets password (OTP); force change on first login
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 )
@@ -166,10 +169,13 @@ organisations (
   name text NOT NULL,
   slug text UNIQUE NOT NULL,
   branding jsonb,          -- {logo_url, primary_color, secondary_color, font}
-  settings jsonb,          -- {default_language, timezone, sso_config}
+  settings jsonb,          -- {default_language, timezone, sso_config, institution_type, performance_config}
   plan text DEFAULT 'free', -- 'free' | 'pro' | 'enterprise'
   created_at timestamptz DEFAULT now()
 )
+-- settings.performance_config: institution_type 'corporate' | 'educational' | 'other'
+--   corporate: { kpis: [{ id, name, unit, target?, period }] }
+--   educational: { scale: 'percentage' | 'letter' | 'gpa', terms: [{ id, name, start, end }] }
 
 org_members (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -178,6 +184,15 @@ org_members (
   role text CHECK (role IN ('admin', 'manager', 'creator', 'learner')),
   joined_at timestamptz DEFAULT now(),
   UNIQUE(org_id, user_id)
+)
+
+org_invites (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id uuid REFERENCES organisations NOT NULL,
+  email text NOT NULL,
+  role text CHECK (role IN ('admin', 'manager', 'creator', 'learner')) DEFAULT 'learner',
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(org_id, email)
 )
 ```
 
@@ -207,6 +222,24 @@ learner_profiles (
   next_best_action jsonb,   -- {type, target_id, reason, computed_at}
   ai_tutor_context jsonb,   -- last N interactions summary for longitudinal memory
   updated_at timestamptz DEFAULT now()
+)
+```
+
+### Learner performance data (institution-aware)
+```sql
+learner_performance_records (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id uuid REFERENCES organisations NOT NULL,
+  user_id uuid REFERENCES profiles NOT NULL,
+  source_type text NOT NULL,   -- 'kpi' | 'grade' | 'custom'
+  key text NOT NULL,           -- KPI id or exam/term id from org performance_config
+  value numeric NOT NULL,
+  value_display text,          -- optional letter grade / label
+  period_start date,
+  period_end date,
+  recorded_at timestamptz DEFAULT now(),
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(org_id, user_id, source_type, key, period_start)
 )
 ```
 
@@ -396,7 +429,7 @@ POST /api/modality/recommend  — recommend modality switch
 POST /api/content/generate    — generate content from topic/document
 POST /api/video/generate      — trigger bytetexttovid pipeline
 POST /api/mindmap/generate    — generate mindmap from content
-POST /api/game/generate       — trigger BytePlay game generation
+POST /api/game/generate       — trigger SudarPlay game generation
 ```
 
 ### Intelligence → External Services
@@ -422,13 +455,13 @@ ByteOS/
 │   ├── PRODUCT_FEATURES.md
 │   ├── USER_PERSONAS.md
 │   └── USER_FLOWS.md
-├── byteos-studio/            ← Next.js 14 (ByteLab base)
+├── byteos-studio/            ← Next.js 14 (SudarLab base)
 │   ├── app/
 │   ├── components/
 │   ├── lib/
 │   ├── prisma/
 │   └── package.json
-├── byteos-learn/             ← Next.js 14 (ByteVerse-LMS base)
+├── byteos-learn/             ← Next.js 14 (SudarVerse-LMS base)
 │   ├── app/
 │   ├── components/
 │   ├── lib/
@@ -451,7 +484,7 @@ ByteOS/
 
 ## 8. Build Phases (The Roadmap)
 
-**Current state (sync with docs/STRATEGIC_PATH.md):** Phases 1–4 are complete; Phase 5 is not started.
+**Current state (sync with docs/STRATEGIC_PATH.md):** Phases 1–4 complete; Phase 5 in progress (flashcards, document-to-course, SCORM import; RAG, Floating Sudar Chat, SCORM delivery, change password — see UPDATES.md).
 
 ### Phase 1 — Foundation
 **Goal**: Supabase schema + shared auth + data contracts
@@ -459,8 +492,8 @@ ByteOS/
 - [x] Set up shared auth (Supabase Auth) across Studio + Learn
 - [x] Define environment variable contracts
 - [x] Create ECOSYSTEM.md, AGENTS.md, .cursorrules
-- [x] Set up ByteOS Studio (ByteLab migration)
-- [x] Set up ByteOS Learn (ByteVerse-LMS migration)
+- [x] Set up Sudar Studio (ByteLab migration)
+- [x] Set up Sudar Learn (ByteVerse-LMS migration)
 
 ### Phase 2 — Integration Layer
 **Goal**: Course published in Studio appears in Learn, events flow back
@@ -475,6 +508,10 @@ ByteOS/
 - [x] Modality switcher on course view
 - [ ] Video modality (wire to bytetexttovid / Remotion)
 - [x] AI Tutor sidebar (reactive Q&A, RAG against course content)
+- [x] RAG in Learn (content_chunks + pgvector, ingest API, tutor course search)
+- [x] Floating Sudar Chat (global), structured responses, outcome logging, validate-memory quick preferences, memory insights
+- [x] SCORM delivery proxy (serve SCORM assets from Supabase Storage with correct MIME for iframe)
+- [x] Change password flow (require_password_change after admin reset)
 - [x] Proactive nudges from Intelligence layer
 
 ### Phase 4 — Intelligence
@@ -486,9 +523,9 @@ ByteOS/
 
 ### Phase 5 — Engagement & Scale
 **Goal**: All modalities + compliance + white-label
-- [ ] BytePlay game modality wired into Learn
-- [ ] shayshay ByteFeed modality
-- [ ] ByteMind mindmap modality
+- [ ] SudarPlay game modality wired into Learn
+- [ ] shayshay SudarFeed modality
+- [ ] SudarMind mindmap modality
 - [x] Compliance tracking + certifications
 - [ ] White-label per org
 - [ ] HRIS integration hooks (Workday, BambooHR)
@@ -510,14 +547,14 @@ ByteOS/
 
 ## 10. Naming Conventions
 
-- **Product**: ByteOS
-- **Admin surface**: ByteOS Studio
-- **Learner surface**: ByteOS Learn
-- **AI engine**: ByteOS Intelligence
-- **Video modality**: ByteOS Video (powered by Remotion + bytetexttovid)
-- **Game modality**: BytePlay (branded feature within ByteOS Learn)
-- **Feed modality**: ByteFeed (branded feature within ByteOS Learn)
-- **Mindmap modality**: ByteMind (branded feature within ByteOS Learn)
+- **Product**: Sudar (repo/folders remain ByteOS / byteos-* for compatibility)
+- **Admin surface**: Sudar Studio (runs in `byteos-studio/`)
+- **Learner surface**: Sudar Learn (runs in `byteos-learn/`)
+- **AI engine**: Sudar Intelligence (runs in `byteos-intelligence/`)
+- **Video modality**: Sudar Video (powered by Remotion + bytetexttovid)
+- **Game modality**: SudarPlay (branded feature within Sudar Learn)
+- **Feed modality**: SudarFeed (branded feature within Sudar Learn)
+- **Mindmap modality**: SudarMind (branded feature within Sudar Learn)
 - **AI Tutor**: "Sudar" (the tutor's name — short, memorable, on-brand)
 - **The learner data profile**: Digital Learner Twin
 
@@ -527,16 +564,16 @@ ByteOS/
 
 | Original Project | New Identity | Action |
 |---|---|---|
-| ByteLab | ByteOS Studio (core) | Extend + rename |
+| ByteLab | Sudar Studio (core) | Extend + rename |
 | bytelabslide | Studio Slide Mode | Merge into Studio |
-| ByteVerse-LMS | ByteOS Learn (core) | Extend + rename |
-| bytengine | ByteOS Intelligence | Canonical backend |
+| ByteVerse-LMS | Sudar Learn (core) | Extend + rename |
+| bytengine | Sudar Intelligence | Canonical backend |
 | byteaugnew | Reference only | Archive after migration |
 | bytetexttovid | byteos-video microservice | Keep as microservice |
 | Remotion | byteos-renderer microservice | Keep as microservice |
-| shayshay | ByteFeed modality in Learn | Absorb as feature |
-| BytePlay | BytePlay modality in Learn | Absorb as feature |
-| ByteMind | ByteMind modality in Learn | Absorb as feature |
+| shayshay | SudarFeed modality in Learn | Absorb as feature |
+| BytePlay | SudarPlay modality in Learn | Absorb as feature |
+| ByteMind | SudarMind modality in Learn | Absorb as feature |
 | byteblink | Base template | Utility |
 | Synchronicity | External project | Removed from ecosystem |
 | All backup/* | — | Archive folder |
@@ -580,5 +617,5 @@ REMOTION_SERVER_URL=http://localhost:3040
 
 ---
 
-*Last updated: February 2026 | ByteOS v1.0 Foundation*
-*This document is the single source of truth for the ByteOS ecosystem.*
+*Last updated: February 2026 | Sudar v1.0 Foundation*
+*This document is the single source of truth for the Sudar ecosystem.*
