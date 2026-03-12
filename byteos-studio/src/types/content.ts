@@ -33,18 +33,29 @@ export interface TextContent {
   body: string
 }
 
+/** Image alignment in the layout. */
+export type ImageAlignment = 'left' | 'center' | 'right' | 'full'
+/** Image size / width preset. */
+export type ImageSize = 'small' | 'medium' | 'large' | 'full'
+
 export interface RichContentSection {
   heading: string
   content: string
   type?: 'text' | 'list' | 'code' | 'diagram'
   items?: string[]
-  image?: { url: string; alt?: string; attribution?: string }
+  image?: { url: string; alt?: string; attribution?: string; alignment?: ImageAlignment; size?: ImageSize }
+  /** Stable block ID for editor roundtrip; set by mainTextAndBlocksToContent. */
+  _blockId?: string
+  /** True when this section is a standalone text block (not mainText); set by mainTextAndBlocksToContent. */
+  _isBlock?: boolean
 }
 
 export interface RichInteractiveElement {
   type: 'quiz' | 'expandable' | 'code-demo' | 'diagram' | 'video' | 'audio' | 'flashcard' | 'timeline' | 'flipcard' | 'hotspot' | 'matching' | 'tabs'
   data: Record<string, unknown>
   quizMode?: QuizMode
+  /** Stable block ID for editor roundtrip; set by mainTextAndBlocksToContent. */
+  _blockId?: string
 }
 
 export interface RichSideCard {
@@ -107,7 +118,7 @@ export interface EditorBlockText extends EditorBlockBase {
 
 export interface EditorBlockImage extends EditorBlockBase {
   type: 'image'
-  data: { url: string; alt?: string; attribution?: string }
+  data: { url: string; alt?: string; attribution?: string; alignment?: ImageAlignment; size?: ImageSize }
 }
 
 export interface EditorBlockExpandable extends EditorBlockBase {
@@ -127,12 +138,12 @@ export interface EditorBlockVideo extends EditorBlockBase {
 
 export interface EditorBlockTimeline extends EditorBlockBase {
   type: 'timeline'
-  data: { steps: { title: string; description: string; icon?: string }[] }
+  data: { steps: { id: string; title: string; description: string; icon?: string }[] }
 }
 
 export interface EditorBlockFlipcard extends EditorBlockBase {
   type: 'flipcard'
-  data: { cards: { front: string; back: string }[] }
+  data: { cards: { id: string; front: string; back: string }[] }
 }
 
 export interface EditorBlockHotspot extends EditorBlockBase {
@@ -142,12 +153,12 @@ export interface EditorBlockHotspot extends EditorBlockBase {
 
 export interface EditorBlockMatching extends EditorBlockBase {
   type: 'matching'
-  data: { pairs: { term: string; definition: string }[]; instruction?: string }
+  data: { pairs: { id: string; term: string; definition: string }[]; instruction?: string }
 }
 
 export interface EditorBlockTabs extends EditorBlockBase {
   type: 'tabs'
-  data: { tabs: { label: string; content: string }[] }
+  data: { tabs: { id: string; label: string; content: string }[] }
 }
 
 export interface EditorBlockAudio extends EditorBlockBase {
@@ -157,7 +168,7 @@ export interface EditorBlockAudio extends EditorBlockBase {
 
 export interface EditorBlockFlashcard extends EditorBlockBase {
   type: 'flashcard'
-  data: { cards: { front: string; back: string }[] }
+  data: { cards: { id: string; front: string; back: string }[] }
 }
 
 export type EditorBlock =
@@ -180,11 +191,15 @@ export interface VideoScene {
   narration: string
   visuals?: string
   duration?: number
+  /** Base64 data URL for TTS audio (optional). */
+  audioDataURL?: string
 }
 
 export interface DialogueSegment {
   speaker: 'host' | 'expert'
   text: string
+  /** Base64 data URL for TTS audio (optional). */
+  audioDataURL?: string
 }
 
 export interface ModalityVariants {

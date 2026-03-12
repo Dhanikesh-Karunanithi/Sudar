@@ -39,8 +39,16 @@ Rules: sections must have at least 2 items. Include exactly one interactiveEleme
 
 async function extractTextFromBuffer(buffer: Buffer, mimeType: string): Promise<string> {
   if (mimeType === 'application/pdf') {
-    const pdfParse = (await import('pdf-parse')).default
-    const data = await pdfParse(buffer)
+    const mod = await import('pdf-parse') as { PDFParse?: new (opts: { data: Buffer }) => { getText(): Promise<{ text: string }> }; default?: (buf: Buffer) => Promise<{ text?: string }> }
+    if (typeof mod.PDFParse !== 'function' && typeof mod.default !== 'function') {
+      throw new Error('pdf-parse: expected PDFParse or default export')
+    }
+    if (mod.PDFParse) {
+      const parser = new mod.PDFParse({ data: buffer })
+      const result = await parser.getText()
+      return (result?.text ?? '').trim()
+    }
+    const data = await (mod.default as (buf: Buffer) => Promise<{ text?: string }>)(buffer)
     return (data?.text ?? '').trim()
   }
   if (

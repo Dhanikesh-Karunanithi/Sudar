@@ -9,6 +9,7 @@ import {
   LogOut,
   Brain,
   Route,
+  Settings,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -27,6 +28,7 @@ const navItems = [
   { label: 'Paths', href: '/paths', icon: Route },
   { label: 'Progress', href: '/progress', icon: BarChart2 },
   { label: "Sudar's Memory", href: '/memory', icon: Brain },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ]
 
 export function Sidebar({ user }: SidebarProps) {

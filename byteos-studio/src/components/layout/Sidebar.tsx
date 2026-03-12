@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronRight,
   ArrowLeft,
+  Plug,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -38,6 +39,7 @@ const contentNavItems = [
 
 const organizationNavItems = [
   { label: 'Users', href: '/users', icon: Users },
+  { label: 'Integrations', href: '/integrations', icon: Plug },
   { label: 'Org settings', href: '/settings', icon: Settings },
 ]
 

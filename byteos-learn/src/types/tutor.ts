@@ -11,7 +11,7 @@ export interface TutorAction {
   path_id?: string
 }
 
-export const TUTOR_BLOCK_TYPES = ['text', 'action_group', 'card', 'workflow_status', 'external_action'] as const
+export const TUTOR_BLOCK_TYPES = ['text', 'action_group', 'card', 'workflow_status', 'external_action', 'quiz'] as const
 export type TutorBlockType = (typeof TUTOR_BLOCK_TYPES)[number]
 
 export interface TutorBlock {
@@ -48,6 +48,20 @@ export interface ExternalActionBlockPayload {
   app_id: string
   label: string
   payload: Record<string, unknown>
+}
+
+export interface QuizOption {
+  id: string
+  text: string
+  correct: boolean
+  explanation: string
+}
+
+export interface QuizBlockPayload {
+  question: string
+  options: QuizOption[]
+  topic: string
+  difficulty: 'recall' | 'application' | 'challenge'
 }
 
 export interface TutorQueryResponse {

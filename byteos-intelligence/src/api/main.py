@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from src.api.routes import tutor, learner, content, modality, health
+from src.api.routes import tutor, learner, content, modality, health, audio
 
 
 @asynccontextmanager
@@ -35,8 +35,19 @@ app.add_middleware(
 )
 
 # Routes
+@app.get("/")
+def root():
+    return {
+        "service": "ByteOS Intelligence",
+        "status": "running",
+        "docs": "/docs",
+        "health": "/api/health",
+        "audio": "POST /api/audio/generate",
+    }
+
 app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(tutor.router, prefix="/api/tutor", tags=["AI Tutor"])
 app.include_router(learner.router, prefix="/api/learner", tags=["Learner"])
 app.include_router(content.router, prefix="/api/content", tags=["Content Generation"])
 app.include_router(modality.router, prefix="/api/modality", tags=["Modality"])
+app.include_router(audio.router, prefix="/api/audio", tags=["Audio TTS"])

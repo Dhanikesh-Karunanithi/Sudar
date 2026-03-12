@@ -3,6 +3,7 @@
 import { GripVertical, Trash2, Plus, Shuffle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { EditorBlockMatching } from '@/types/content'
+import { createNewMatchingPair } from '@/lib/contentBlocks'
 
 function MatchingEditorInner({
   data,
@@ -16,10 +17,10 @@ function MatchingEditorInner({
   const pairs = data.pairs ?? []
   const updatePair = (index: number, patch: Partial<{ term: string; definition: string }>) => {
     const next = [...pairs]
-    next[index] = { ...next[index], term: '', definition: '', ...next[index], ...patch }
+    next[index] = { ...next[index], ...patch }
     onUpdate({ ...data, pairs: next })
   }
-  const addPair = () => onUpdate({ ...data, pairs: [...pairs, { term: '', definition: '' }] })
+  const addPair = () => onUpdate({ ...data, pairs: [...pairs, createNewMatchingPair()] })
   const removePair = (index: number) => {
     const next = pairs.filter((_, i) => i !== index)
     onUpdate({ ...data, pairs: next })
@@ -39,14 +40,14 @@ function MatchingEditorInner({
         className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-400 text-xs focus:outline-none focus:border-indigo-500"
       />
       {pairs.map((pair, idx) => (
-        <div key={idx} className="rounded border border-slate-700 bg-slate-900/60 p-2 space-y-1.5 grid grid-cols-2 gap-2">
+        <div key={pair.id} className="rounded border border-slate-700 bg-slate-900/60 p-2 space-y-1.5 grid grid-cols-2 gap-2">
           <input
             type="text"
             value={pair.term}
             onChange={(e) => updatePair(idx, { term: e.target.value })}
             disabled={disabled}
             placeholder="Term"
-            className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs"
+            className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs focus:outline-none focus:border-indigo-500"
           />
           <input
             type="text"
@@ -54,7 +55,7 @@ function MatchingEditorInner({
             onChange={(e) => updatePair(idx, { definition: e.target.value })}
             disabled={disabled}
             placeholder="Definition"
-            className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-400 text-xs"
+            className="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-400 text-xs focus:outline-none focus:border-indigo-500"
           />
           {!disabled && (
             <button

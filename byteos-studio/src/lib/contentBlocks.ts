@@ -20,6 +20,30 @@ function genId(): string {
   return `block-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`
 }
 
+function genItemId(): string {
+  return `item-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+/** Create a new timeline step with a stable id. */
+export function createNewTimelineStep(): { id: string; title: string; description: string; icon?: string } {
+  return { id: genItemId(), title: '', description: '' }
+}
+
+/** Create a new flipcard/flashcard card with a stable id. */
+export function createNewCard(): { id: string; front: string; back: string } {
+  return { id: genItemId(), front: '', back: '' }
+}
+
+/** Create a new matching pair with a stable id. */
+export function createNewMatchingPair(): { id: string; term: string; definition: string } {
+  return { id: genItemId(), term: '', definition: '' }
+}
+
+/** Create a new tab with a stable id. */
+export function createNewTabItem(): { id: string; label: string; content: string } {
+  return { id: genItemId(), label: '', content: '' }
+}
+
 /** Get plain text from module content for "has content" checks and AI context. */
 export function getModuleBodyText(content: ModuleContent | null | undefined): string {
   if (!content) return ''
@@ -52,14 +76,22 @@ export function contentToMainTextAndBlocks(content: ModuleContent | null | undef
   if (content.introduction?.trim()) textParts.push(content.introduction.trim())
 
   for (const section of content.sections ?? []) {
-    if (section.image?.url) {
+    if (section._isBlock === true) {
       blocks.push({
-        id: genId(),
+        id: section._blockId ?? genId(),
+        type: 'text',
+        data: { content: section.content?.trim() ?? '' },
+      } as EditorBlock)
+    } else if (section.image?.url) {
+      blocks.push({
+        id: section._blockId ?? genId(),
         type: 'image',
         data: {
           url: section.image.url,
           alt: section.image.alt,
           attribution: section.image.attribution,
+          alignment: section.image.alignment,
+          size: section.image.size,
         },
       } as EditorBlockImage)
     } else if (section.content?.trim()) {
@@ -70,9 +102,10 @@ export function contentToMainTextAndBlocks(content: ModuleContent | null | undef
   const mainText = textParts.join('\n\n')
 
   for (const el of content.interactiveElements ?? []) {
+    const bid = el._blockId ?? genId()
     if (el.type === 'expandable' && el.data?.title != null) {
       blocks.push({
-        id: genId(),
+        id: bid,
         type: 'expandable',
         data: {
           title: String(el.data.title),
@@ -81,7 +114,7 @@ export function contentToMainTextAndBlocks(content: ModuleContent | null | undef
       } as EditorBlockExpandable)
     } else if (el.type === 'quiz') {
       blocks.push({
-        id: genId(),
+        id: bid,
         type: 'quiz',
         data: {
           question: el.data?.question != null ? String(el.data.question) : undefined,
@@ -92,16 +125,17 @@ export function contentToMainTextAndBlocks(content: ModuleContent | null | undef
       } as EditorBlockQuiz)
     } else if (el.type === 'video' && el.data?.url) {
       blocks.push({
-        id: genId(),
+        id: bid,
         type: 'video',
         data: { url: String(el.data.url), title: el.data.title != null ? String(el.data.title) : undefined },
       })
     } else if (el.type === 'timeline' && Array.isArray(el.data?.steps)) {
       blocks.push({
-        id: genId(),
+        id: bid,
         type: 'timeline',
         data: {
-          steps: (el.data.steps as { title?: string; description?: string; icon?: string }[]).map((s) => ({
+          steps: (el.data.steps as { id?: string; title?: string; description?: string; icon?: string }[]).map((s) => ({
+            id: (s as { id?: string }).id ?? genItemId(),
             title: String(s?.title ?? ''),
             description: String(s?.description ?? ''),
             icon: s?.icon != null ? String(s.icon) : undefined,
@@ -110,10 +144,11 @@ export function contentToMainTextAndBlocks(content: ModuleContent | null | undef
       })
     } else if (el.type === 'flipcard' && Array.isArray(el.data?.cards)) {
       blocks.push({
-        id: genId(),
+        id: bid,
         type: 'flipcard',
         data: {
-          cards: (el.data.cards as { front?: string; back?: string }[]).map((c) => ({
+          cards: (el.data.cards as { id?: string; front?: string; back?: string }[]).map((c) => ({
+            id: (c as { id?: string }).id ?? genItemId(),
             front: String(c?.front ?? ''),
             back: String(c?.back ?? ''),
           })),
@@ -121,7 +156,7 @@ export function contentToMainTextAndBlocks(content: ModuleContent | null | undef
       })
     } else if (el.type === 'hotspot' && el.data?.imageUrl != null && Array.isArray(el.data?.spots)) {
       blocks.push({
-        id: genId(),
+        id: bid,
         type: 'hotspot',
         data: {
           imageUrl: String(el.data.imageUrl),
@@ -135,10 +170,11 @@ export function contentToMainTextAndBlocks(content: ModuleContent | null | undef
       })
     } else if (el.type === 'matching' && Array.isArray(el.data?.pairs)) {
       blocks.push({
-        id: genId(),
+        id: bid,
         type: 'matching',
         data: {
-          pairs: (el.data.pairs as { term?: string; definition?: string }[]).map((p) => ({
+          pairs: (el.data.pairs as { id?: string; term?: string; definition?: string }[]).map((p) => ({
+            id: (p as { id?: string }).id ?? genItemId(),
             term: String(p?.term ?? ''),
             definition: String(p?.definition ?? ''),
           })),
@@ -147,10 +183,11 @@ export function contentToMainTextAndBlocks(content: ModuleContent | null | undef
       })
     } else if (el.type === 'tabs' && Array.isArray(el.data?.tabs)) {
       blocks.push({
-        id: genId(),
+        id: bid,
         type: 'tabs',
         data: {
-          tabs: (el.data.tabs as { label?: string; content?: string }[]).map((t) => ({
+          tabs: (el.data.tabs as { id?: string; label?: string; content?: string }[]).map((t) => ({
+            id: (t as { id?: string }).id ?? genItemId(),
             label: String(t?.label ?? ''),
             content: String(t?.content ?? ''),
           })),
@@ -158,7 +195,7 @@ export function contentToMainTextAndBlocks(content: ModuleContent | null | undef
       })
     } else if (el.type === 'audio' && el.data?.url) {
       blocks.push({
-        id: genId(),
+        id: bid,
         type: 'audio',
         data: {
           url: String(el.data.url),
@@ -168,10 +205,11 @@ export function contentToMainTextAndBlocks(content: ModuleContent | null | undef
       })
     } else if (el.type === 'flashcard' && Array.isArray(el.data?.cards)) {
       blocks.push({
-        id: genId(),
+        id: bid,
         type: 'flashcard',
         data: {
-          cards: (el.data.cards as { front?: string; back?: string }[]).map((c) => ({
+          cards: (el.data.cards as { id?: string; front?: string; back?: string }[]).map((c) => ({
+            id: (c as { id?: string }).id ?? genItemId(),
             front: String(c?.front ?? ''),
             back: String(c?.back ?? ''),
           })),
@@ -198,27 +236,38 @@ export function mainTextAndBlocksToContent(
   for (const block of blocks) {
     if (block.type === 'text') {
       if (block.data.content?.trim()) {
-        sections.push({ heading: '', content: block.data.content.trim(), type: 'text' })
+        sections.push({
+          heading: '',
+          content: block.data.content.trim(),
+          type: 'text',
+          _blockId: block.id,
+          _isBlock: true,
+        })
       }
     } else if (block.type === 'image') {
       sections.push({
         heading: '',
         content: '',
         type: 'text',
+        _blockId: block.id,
         image: {
           url: block.data.url,
           alt: block.data.alt,
           attribution: block.data.attribution,
+          alignment: block.data.alignment,
+          size: block.data.size,
         },
       })
     } else if (block.type === 'expandable') {
       interactiveElements.push({
         type: 'expandable',
+        _blockId: block.id,
         data: { title: block.data.title, content: block.data.content },
       })
     } else if (block.type === 'quiz') {
       interactiveElements.push({
         type: 'quiz',
+        _blockId: block.id,
         data: {
           question: block.data.question,
           options: block.data.options,
@@ -229,41 +278,49 @@ export function mainTextAndBlocksToContent(
     } else if (block.type === 'video' && block.data.url) {
       interactiveElements.push({
         type: 'video',
+        _blockId: block.id,
         data: { url: block.data.url, title: block.data.title },
       })
     } else if (block.type === 'timeline' && Array.isArray(block.data.steps)) {
       interactiveElements.push({
         type: 'timeline',
+        _blockId: block.id,
         data: { steps: block.data.steps },
       })
     } else if (block.type === 'flipcard' && Array.isArray(block.data.cards)) {
       interactiveElements.push({
         type: 'flipcard',
+        _blockId: block.id,
         data: { cards: block.data.cards },
       })
     } else if (block.type === 'hotspot' && block.data.imageUrl && Array.isArray(block.data.spots)) {
       interactiveElements.push({
         type: 'hotspot',
+        _blockId: block.id,
         data: { imageUrl: block.data.imageUrl, spots: block.data.spots },
       })
     } else if (block.type === 'matching' && Array.isArray(block.data.pairs)) {
       interactiveElements.push({
         type: 'matching',
+        _blockId: block.id,
         data: { pairs: block.data.pairs, instruction: block.data.instruction },
       })
     } else if (block.type === 'tabs' && Array.isArray(block.data.tabs)) {
       interactiveElements.push({
         type: 'tabs',
+        _blockId: block.id,
         data: { tabs: block.data.tabs },
       })
     } else if (block.type === 'audio' && block.data.url) {
       interactiveElements.push({
         type: 'audio',
+        _blockId: block.id,
         data: { url: block.data.url, title: block.data.title, transcript: block.data.transcript },
       })
     } else if (block.type === 'flashcard' && Array.isArray(block.data.cards)) {
       interactiveElements.push({
         type: 'flashcard',
+        _blockId: block.id,
         data: { cards: block.data.cards },
       })
     }
@@ -282,7 +339,7 @@ export function createNewBlock(type: EditorBlock['type']): EditorBlock {
     case 'text':
       return { id, type: 'text', data: { content: '' } }
     case 'image':
-      return { id, type: 'image', data: { url: '', alt: '', attribution: '' } }
+      return { id, type: 'image', data: { url: '', alt: '', attribution: '', alignment: 'center', size: 'medium' } }
     case 'expandable':
       return { id, type: 'expandable', data: { title: '', content: '' } }
     case 'quiz':

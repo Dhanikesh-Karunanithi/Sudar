@@ -1,4 +1,3 @@
-import dynamic from 'next/dynamic'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { BookOpen, ArrowRight, GraduationCap, CheckCircle2, Flame, Clock, TrendingUp, Zap, Calendar, Route, Lock, ChevronRight, Activity } from 'lucide-react'
@@ -6,11 +5,7 @@ import { cn } from '@/lib/utils'
 import { headers } from 'next/headers'
 import { BentoCard } from '@/components/ui/BentoCard'
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
-
-const ActivityChart = dynamic(
-  () => import('@/components/dashboard/ActivityChart').then((m) => m.ActivityChart),
-  { ssr: false }
-)
+import { ActivityChartClient } from '@/components/dashboard/ActivityChartClient'
 
 // Compute streak from event dates
 function computeStreak(eventDates: string[]): number {
@@ -335,7 +330,7 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="h-[140px] w-full flex-shrink-0 flex flex-col">
-            <ActivityChart data={countByDay} />
+            <ActivityChartClient data={countByDay} />
           </div>
           {activeDaysThisWeek > 0 && (
             <p className="text-xs text-muted-foreground mt-2 flex-shrink-0">

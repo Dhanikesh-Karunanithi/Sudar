@@ -3,6 +3,7 @@
 import { GripVertical, Trash2, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { EditorBlockFlipcard } from '@/types/content'
+import { createNewCard } from '@/lib/contentBlocks'
 
 function FlipcardEditorInner({
   data,
@@ -16,10 +17,10 @@ function FlipcardEditorInner({
   const cards = data.cards ?? []
   const updateCard = (index: number, patch: Partial<{ front: string; back: string }>) => {
     const next = [...cards]
-    next[index] = { ...next[index], front: '', back: '', ...next[index], ...patch }
+    next[index] = { ...next[index], ...patch }
     onUpdate({ cards: next })
   }
-  const addCard = () => onUpdate({ cards: [...cards, { front: '', back: '' }] })
+  const addCard = () => onUpdate({ cards: [...cards, createNewCard()] })
   const removeCard = (index: number) => {
     const next = cards.filter((_, i) => i !== index)
     onUpdate({ cards: next })
@@ -30,7 +31,7 @@ function FlipcardEditorInner({
         <span className="text-xs text-slate-500">Flip cards</span>
       </div>
       {cards.map((card, idx) => (
-        <div key={idx} className="rounded border border-slate-700 bg-slate-900/60 p-2 space-y-1.5 grid grid-cols-2 gap-2">
+        <div key={card.id} className="rounded border border-slate-700 bg-slate-900/60 p-2 space-y-1.5 grid grid-cols-2 gap-2">
           <div className="space-y-1">
             <span className="text-[10px] text-slate-500">Front</span>
             <input

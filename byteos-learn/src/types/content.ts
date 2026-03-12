@@ -45,13 +45,22 @@ export interface TextContent {
   body: string
 }
 
+/** Image alignment in the layout (Studio + Learn). */
+export type ImageAlignment = 'left' | 'center' | 'right' | 'full'
+/** Image size preset (Studio + Learn). */
+export type ImageSize = 'small' | 'medium' | 'large' | 'full'
+
 /** Section within rich content */
 export interface RichContentSection {
   heading: string
   content: string
   type?: 'text' | 'list' | 'code' | 'diagram'
   items?: string[]
-  image?: { url: string; alt?: string; attribution?: string }
+  image?: { url: string; alt?: string; attribution?: string; alignment?: ImageAlignment; size?: ImageSize }
+  /** Stable block ID for editor roundtrip (Studio). */
+  _blockId?: string
+  /** True when this section is a standalone text block (not mainText) (Studio). */
+  _isBlock?: boolean
 }
 
 /** Interactive element in rich content */
@@ -60,6 +69,8 @@ export interface RichInteractiveElement {
   data: Record<string, unknown>
   /** For quiz elements: standard | predict-then-learn | confidence-tagged | scenario-fork | peer-contrast */
   quizMode?: QuizMode
+  /** Stable block ID for editor roundtrip (Studio). */
+  _blockId?: string
 }
 
 /** Side card in rich content */
@@ -119,12 +130,16 @@ export interface VideoScene {
   narration: string
   visuals?: string
   duration?: number
+  /** Base64 data URL for TTS audio (optional). */
+  audioDataURL?: string
 }
 
 /** Podcast dialogue segment */
 export interface DialogueSegment {
   speaker: 'host' | 'expert'
   text: string
+  /** Base64 data URL for TTS audio (optional). */
+  audioDataURL?: string
 }
 
 /** Modality variants stored on module (or course) */

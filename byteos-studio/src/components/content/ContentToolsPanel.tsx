@@ -1,6 +1,6 @@
 'use client'
 
-import { Sparkles, Plus, Loader2, FileText } from 'lucide-react'
+import { Sparkles, Plus, Loader2, FileText, ImageIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const AI_PROMPT_IDEAS = [
@@ -9,6 +9,7 @@ const AI_PROMPT_IDEAS = [
   'Add a short summary',
   'Use simple language for beginners',
   'Add definitions for key terms',
+  'Research from the web and cite sources',
 ]
 
 export interface ContentToolsPanelProps {
@@ -19,6 +20,7 @@ export interface ContentToolsPanelProps {
   expandedModuleId: string | null
   onJumpToModule: (moduleId: string, index: number) => void
   onPromptIdeaSelect?: (idea: string) => void
+  onOpenMediaPeek?: () => void
 }
 
 export function ContentToolsPanel({
@@ -29,10 +31,21 @@ export function ContentToolsPanel({
   expandedModuleId,
   onJumpToModule,
   onPromptIdeaSelect,
+  onOpenMediaPeek,
 }: ContentToolsPanelProps) {
   return (
     <div className="space-y-3">
       <div className="space-y-1">
+        {onOpenMediaPeek && (
+          <button
+            type="button"
+            onClick={onOpenMediaPeek}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-slate-100 hover:bg-slate-800 transition-all text-left"
+          >
+            <ImageIcon className="w-3.5 h-3.5 shrink-0" />
+            View project media
+          </button>
+        )}
         {modules.length === 0 && (
           <button
             type="button"

@@ -85,7 +85,7 @@ sequenceDiagram
 
 ## Screenshots
 
-Screenshots (dashboard, course viewer with Sudar, Studio paths/compliance) are in [docs/screenshots/](./docs/screenshots/). More will be added as we ship.
+Screenshots (dashboard, course viewer with Sudar, Studio paths/compliance) go in [docs/screenshots/](./docs/screenshots/). Use the suggested filenames there (`learn-dashboard.png`, `course-viewer-sudar.png`, `studio-compliance.png`). For a 1–2 min demo of Sudar’s memory, see [docs/screenshots/DEMO_VIDEO.md](./docs/screenshots/DEMO_VIDEO.md).
 
 ---
 

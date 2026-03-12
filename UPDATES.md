@@ -16,6 +16,19 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-03-13 — Product update: New modalities, ALP embed, certificates & media
+- **Learn — New modalities**: Audio (AudioCard, ReadAlongControls, ReadingBodyWithSentences), Video (CourseVideoCard), Podcast (CoursePodcastCard), MindMap (MindMapCard). Generate-audio and generate-mindmap APIs; ActivityChartClient, learner preferences API, settings page.
+- **Learn — Certificates**: Server-side certificate PDF generation (API route + CertificatePDF component), cert verification and print/save flow improvements.
+- **Learn — Sudar & ALP**: FloatingSudarChatClient, ModelPicker; ALP embed (AlpEmbedChat, embed page), embed-token, events, next-action, alp tutor query APIs; alp-auth lib.
+- **Studio — Content & media**: Generate-module-with-research API; media search (search-audio, search-videos) and libs (audioSearch, videoSearch, webSearch); studio generate-audio, podcast, video APIs; ProjectMediaPeek; courseContentForGeneration, courseMedia. ModelPicker, block editor and content panel updates.
+- **Studio — Operations**: Integrations page and API (keys, org settings); cron compliance-reminders route.
+- **Intelligence**: Audio route (FastAPI), README.run.md, run.bat for local run.
+- **Docs**: STUDIO_USER_GUIDE, ALP_API, AUDIO_STRATEGY, LAMP_BUILD_PLAN/TRACKER, PILOT_PLAN, DEMO_VIDEO; ACTION_PLANS, STRATEGIC_PATH, screenshots README.
+
+### 2026-03-08 (ship recent work)
+- **Documented as shipped**: Flashcards modality (Learn: FlashcardsCard + generate-flashcards API), document-to-course (Studio: generate-from-document API for PDF/DOCX/URL), SCORM 1.2 import (Studio: import-scorm API). All three are live; current state in STRATEGIC_PATH Section 2 and this file is aligned.
+- **Visibility**: Screenshots README and DEMO_VIDEO instructions added under docs/screenshots/; README links updated.
+
 ### 2026-03-08
 - **Sudar Chat (Learn)**: Floating Sudar Chat widget (global access from dashboard), startup questions, paste context, generative blocks (enroll / continue / review), outcome logging (`tutor_action_taken` to learning_events), validate-memory quick preferences (response length: one_line, detailed, concise; modality: reading, listening, video, no_video). Tutor workflow API (summarize, extract_terms) for batch workflows.
 - **RAG (Learn)**: content_chunks migration (pgvector 1024), ingest API (index published courses or single course), embed/retrieve/cache libs, [RAG_SETUP_STEPS.md](byteos-learn/docs/RAG_SETUP_STEPS.md) for env, DB, and ingest.
@@ -86,12 +99,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 | Priority | Item | Notes |
 |----------|------|--------|
-| 1 | **Second modality** | Ship one non-text modality end-to-end (e.g. Flashcards from module content or Audio TTS). |
-| 2 | **Document/URL import** | Upload PDF/DOCX or paste URL; extract text; optional RAG for course generation in Studio. |
-| 3 | **SCORM & format import** | Upload SCORM 1.2 packages (ZIP), parse manifest and assets, map to ByteOS courses/modules; other formats (xAPI, HTML bundle) as follow-on. |
+| 1 | **Second full modality** | Audio TTS for current module (standalone Audio tab in course viewer). Flashcards already live as embedded + generate API. |
+| 2 | ~~Document/URL import~~ | ✅ Shipped — generate-from-document (PDF/DOCX/URL) in Studio. |
+| 3 | ~~SCORM 1.2 import~~ | ✅ Shipped — import-scorm API in Studio. |
 | 4 | **Email reminders** | Notify learners (or admins) when assignments are at-risk or overdue. |
 | 5 | **Server-side certificate PDF** | Optional: generate PDF for download (in addition to browser Print). |
-| 6 | **BytePlay / ByteFeed / ByteMind** | Wire game, feed, and mindmap modalities into Learn. |
+| 6 | **SudarPlay / SudarFeed / SudarMind** | Wire game, feed, and mindmap modalities into Learn. |
 | 7 | **White-label & SSO** | Org branding, custom domain, SAML/OIDC (later phase). |
 | 8 | **HRIS integration** | Webhooks for Workday, BambooHR, Rippling (later phase). |
 

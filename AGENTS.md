@@ -203,6 +203,8 @@ Instead, it silently powers ALL personalization decisions behind the scenes.
 For up-to-date state and next priorities, see **docs/STRATEGIC_PATH.md** and **docs/ACTION_PLANS.md**.
 See `ECOSYSTEM.md` Section 8 for the full build roadmap with checkboxes.
 
+**For LAMP/ALP work (plugin layer, Moodle connector, paper)**: Use the **build-first** plan: **docs/LAMP_BUILD_PLAN.md**. After completing any task, update **docs/LAMP_BUILD_TRACKER.md** (set Status to Done, update Last updated). Stay grounded in ECOSYSTEM.md and this file.
+
 ---
 
 *Sudar — Learns with you, for you.*

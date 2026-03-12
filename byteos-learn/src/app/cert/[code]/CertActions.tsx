@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-export function CertActions() {
+export function CertActions({ code }: { code: string }) {
   const [copied, setCopied] = useState(false)
 
   function handlePrint() {
@@ -17,13 +17,20 @@ export function CertActions() {
   }
 
   return (
-    <div className="print:hidden mt-6 flex items-center gap-3">
+    <div className="print:hidden mt-6 flex items-center gap-3 flex-wrap">
+      <a
+        href={code ? `/api/certificates/${encodeURIComponent(code)}/pdf` : undefined}
+        download="certificate.pdf"
+        className="px-5 py-2.5 bg-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-button transition-colors no-underline"
+      >
+        Download PDF
+      </a>
       <button
         type="button"
         onClick={handlePrint}
-        className="px-5 py-2.5 bg-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-button transition-colors"
+        className="px-5 py-2.5 bg-card hover:bg-muted text-card-foreground text-sm font-medium rounded-button border border-border transition-colors"
       >
-        Print / Save as PDF
+        Print
       </button>
       <button
         type="button"

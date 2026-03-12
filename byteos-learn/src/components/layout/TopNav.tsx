@@ -128,8 +128,8 @@ export function TopNav({ user, showOnboardingNudge }: TopNavProps) {
           </button>
           {moreOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setMoreOpen(false)} />
-              <div className="absolute left-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-card border border-border bg-card shadow-lg py-1">
+              <div className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[2px]" onClick={() => setMoreOpen(false)} aria-hidden />
+              <div className="absolute left-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-card/98 shadow-xl shadow-black/5 dark:shadow-black/20 py-1">
                 <Link
                   href="/progress"
                   onClick={() => setMoreOpen(false)}
@@ -198,8 +198,8 @@ export function TopNav({ user, showOnboardingNudge }: TopNavProps) {
 
           {userMenuOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-              <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-card border border-border bg-card shadow-lg">
+              <div className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[2px]" onClick={() => setUserMenuOpen(false)} aria-hidden />
+              <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-card/98 shadow-xl shadow-black/5 dark:shadow-black/20">
                 <div className="border-b border-border px-4 py-3">
                   <p className="truncate text-sm font-medium text-card-foreground">
                     {user.full_name ?? 'Learner'}

@@ -6,13 +6,17 @@ import Link from 'next/link'
 import {
   ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight,
   BookOpen, List, X, Sparkles, Send, Loader2,
-  ChevronDown, FileText, Video, Headphones, Network,
-  Layers, Zap, MessageSquarePlus, Code, Quote, Pin, PinOff, PanelLeftClose
+  ChevronDown, FileText, Video, Network,
+  Layers, Zap, MessageSquarePlus, Code, Quote, Pin, PinOff, PanelLeftClose, Mic, Maximize2, Minimize2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { QuizCard } from './QuizCard'
 import { FlashcardsCard, type FlashcardPair } from './FlashcardsCard'
+import { CourseVideoCard } from './CourseVideoCard'
+import { CoursePodcastCard } from './CoursePodcastCard'
+import { MindMapCard, type MindMapNode } from './MindMapCard'
 import { RichModuleContent } from '@/components/learn/RichModuleContent'
+import { ReadAlongControls } from '@/components/learn/ReadAlongControls'
 import { CourseThemeProvider } from '@/components/learn/CourseThemeProvider'
 import { GenerativeBlockRenderer } from '@/components/tutor/GenerativeBlockRenderer'
 import { ChatMarkdown } from '@/components/tutor/ChatMarkdown'
@@ -45,6 +49,10 @@ interface Course {
   modules: Module[]
   settings?: {
     module_completion?: Record<string, { type: 'mark_button' | 'min_time'; min_time_secs?: number }>
+    include_video?: boolean
+    include_podcast?: boolean
+    video_scenes?: Array<{ sceneNumber: number; title: string; narration: string; visuals?: string; duration?: number; audioDataURL?: string }>
+    podcast_dialogue?: Array<{ speaker: 'host' | 'expert'; text: string; audioDataURL?: string }>
   } | null
 }
 
@@ -386,7 +394,7 @@ function renderMarkdown(body: string): React.ReactNode {
         i++
       }
       elements.push(
-        <blockquote key={nextKey()} className="my-4 border-l-4 border-primary/30 bg-primary/10/60 rounded-r-lg pl-4 pr-3 py-3 flex gap-3">
+        <blockquote key={nextKey()} className="my-4 border-l-4 border-primary/30 bg-primary/10 rounded-r-lg pl-4 pr-3 py-3 flex gap-3">
           <Quote className="w-4 h-4 text-primary shrink-0 mt-0.5" />
           <p className="text-sm text-card-foreground italic leading-relaxed">{parseInline(quoteLines.join(' '))}</p>
         </blockquote>
@@ -572,9 +580,17 @@ export function CourseViewer({
   const [activeModality, setActiveModality] = useState<string>('text')
   const [flashcardsByModule, setFlashcardsByModule] = useState<Record<string, FlashcardPair[]>>({})
   const [flashcardsLoading, setFlashcardsLoading] = useState(false)
+  const [mindmapByModule, setMindmapByModule] = useState<Record<string, MindMapNode>>({})
+  const [mindmapLoading, setMindmapLoading] = useState(false)
+  const [mindmapScope, setMindmapScope] = useState<'module' | 'course'>('module')
+  const [mindmapCourse, setMindmapCourse] = useState<MindMapNode | null>(null)
+  const [mindmapCourseLoading, setMindmapCourseLoading] = useState(false)
 
   // Tutor state
   const [tutorOpen, setTutorOpen] = useState(false)
+  const [tutorPanelExpanded, setTutorPanelExpanded] = useState(false)
+  const [tutorPanelWidth, setTutorPanelWidth] = useState(384)
+  const [tutorPanelResizing, setTutorPanelResizing] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
@@ -633,7 +649,7 @@ export function CourseViewer({
           event_type: 'section_heartbeat',
           course_id: course.id,
           module_id: currentModuleId,
-          modality: 'text',
+          modality: activeModality,
           duration_secs: totalSecs,
           payload: { active_secs: activeSecs, total_secs: totalSecs },
         }),
@@ -643,7 +659,7 @@ export function CourseViewer({
       if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current)
       heartbeatIntervalRef.current = null
     }
-  }, [course.id, currentModuleId])
+  }, [course.id, currentModuleId, activeModality])
 
   useEffect(() => {
     startTimeRef.current = Date.now()
@@ -661,6 +677,7 @@ export function CourseViewer({
     if (prevCourseIdRef.current !== course.id) {
       prevCourseIdRef.current = course.id
       setMessages([])
+      setMindmapCourse(null)
     }
   }, [currentModuleId, course.id])
 
@@ -699,6 +716,61 @@ export function CourseViewer({
       .finally(() => setFlashcardsLoading(false))
   }, [activeModality, currentModuleId, currentModule?.content?.body, currentModule?.title])
 
+  // Fetch mindmap when switching to mindmap modality (module scope)
+  useEffect(() => {
+    if (activeModality !== 'mindmap' || mindmapScope !== 'module' || !currentModuleId) return
+    const body = getContentBodyForFlashcards(currentModule?.content ?? null)
+    if (!body.trim() || mindmapByModule[currentModuleId]) return
+    setMindmapLoading(true)
+    fetch('/api/ai/generate-mindmap', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scope: 'module',
+        content: body,
+        module_title: currentModule?.title ?? '',
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        const root = data?.root
+        if (root && typeof root === 'object') {
+          setMindmapByModule((prev) => ({ ...prev, [currentModuleId]: root as MindMapNode }))
+        }
+      })
+      .catch(() => {})
+      .finally(() => setMindmapLoading(false))
+  }, [activeModality, mindmapScope, currentModuleId, currentModule?.content, currentModule?.title])
+
+  // Fetch course mindmap when switching to mindmap modality (course scope)
+  useEffect(() => {
+    if (activeModality !== 'mindmap' || mindmapScope !== 'course' || mindmapCourse != null) return
+    const modulesPayload = course.modules.map((m) => ({
+      title: m.title,
+      content: getContentBodyForFlashcards(m.content ?? null),
+    })).filter((m) => m.content.trim().length > 0)
+    if (modulesPayload.length === 0) return
+    setMindmapCourseLoading(true)
+    fetch('/api/ai/generate-mindmap', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scope: 'course',
+        course_title: course.title,
+        modules: modulesPayload,
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        const root = data?.root
+        if (root && typeof root === 'object') {
+          setMindmapCourse(root as MindMapNode)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setMindmapCourseLoading(false))
+  }, [activeModality, mindmapScope, mindmapCourse, course.id, course.title, course.modules])
+
   // Fetch learner context when tutor panel opens (for "What Sudar knows" summary)
   useEffect(() => {
     if (!tutorOpen) return
@@ -707,6 +779,24 @@ export function CourseViewer({
       .then((data) => { if (data?.memory) setLearnerContext(data.memory as Record<string, unknown>) })
       .catch(() => {})
   }, [tutorOpen])
+
+  // Drag-to-resize Sudar overlay panel
+  useEffect(() => {
+    if (!tutorPanelResizing) return
+    const minW = 320
+    const maxW = () => Math.min(720, Math.floor(window.innerWidth * 0.9))
+    const onMove = (e: MouseEvent) => {
+      const w = window.innerWidth - e.clientX
+      setTutorPanelWidth(Math.min(maxW(), Math.max(minW, w)))
+    }
+    const onUp = () => setTutorPanelResizing(false)
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [tutorPanelResizing])
 
   // Text selection handler — shared logic for both mouseup and contextmenu
   const showSelectionPopup = useCallback((clientX?: number, clientY?: number) => {
@@ -798,7 +888,7 @@ export function CourseViewer({
         event_type: 'module_complete',
         course_id: course.id,
         module_id: currentModuleId,
-        modality: 'text',
+        modality: activeModality,
         duration_secs: totalSecs,
         payload: { active_secs: activeSecs, idle_secs: idleSecs },
       }),
@@ -881,6 +971,12 @@ export function CourseViewer({
           module_id: currentModuleId,
           conversation_history: messages,
           selected_text: selectedText,
+          active_modality: activeModality,
+          available_modalities: {
+            video: (course.settings?.video_scenes?.length ?? 0) > 0,
+            podcast: (course.settings?.podcast_dialogue?.length ?? 0) > 0,
+            mindmap_generated: !!mindmapByModule[currentModuleId],
+          },
         }),
       })
       const text = await res.text()
@@ -1150,24 +1246,31 @@ export function CourseViewer({
 
           {/* Modality switcher — hidden for SCORM modules */}
           <div className={cn('hidden sm:flex items-center gap-0.5 bg-muted rounded-lg p-0.5 shrink-0', isScormContent(currentModule?.content) && '!hidden')}>
-            {[
-              { id: 'text', icon: FileText, label: 'Read' },
-              { id: 'video', icon: Video, label: 'Watch', soon: true },
-              { id: 'audio', icon: Headphones, label: 'Listen', soon: true },
-              { id: 'mindmap', icon: Network, label: 'Map', soon: true },
-              { id: 'flashcards', icon: Layers, label: 'Cards' },
-            ].map(({ id, icon: Icon, label, soon }) => (
-              <button key={id} onClick={() => !soon && setActiveModality(id)}
-                title={soon ? `${label} — coming in Phase 4` : label}
-                className={cn(
-                  'flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all',
-                  soon ? 'opacity-40 cursor-not-allowed' : '',
-                  activeModality === id && !soon ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-card-foreground'
-                )}>
-                <Icon className="w-3 h-3" />
-                <span className="hidden md:inline">{label}</span>
-              </button>
-            ))}
+            {(() => {
+              const hasVideo = (course.settings?.include_video ?? false) &&
+                (course.settings?.video_scenes?.length ?? 0) > 0
+              const hasPodcast = (course.settings?.include_podcast ?? false) &&
+                (course.settings?.podcast_dialogue?.length ?? 0) > 0
+              const modalities = [
+                { id: 'text', icon: FileText, label: 'Read' },
+                { id: 'video', icon: Video, label: 'Watch', soon: !hasVideo },
+                ...(hasPodcast ? [{ id: 'podcast', icon: Mic, label: 'Podcast', soon: false }] : []),
+                { id: 'mindmap', icon: Network, label: 'Map' },
+                { id: 'flashcards', icon: Layers, label: 'Cards' },
+              ]
+              return modalities.map(({ id, icon: Icon, label, soon }) => (
+                <button key={id} onClick={() => !soon && setActiveModality(id)}
+                  title={soon ? `${label} — coming soon` : label}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all',
+                    soon ? 'opacity-40 cursor-not-allowed' : '',
+                    activeModality === id && !soon ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-card-foreground'
+                  )}>
+                  <Icon className="w-3 h-3" />
+                  <span className="hidden md:inline">{label}</span>
+                </button>
+              ))
+            })()}
           </div>
 
           {isCompleted && (
@@ -1188,8 +1291,8 @@ export function CourseViewer({
         </div>
 
         <div className="flex flex-1 min-h-0 overflow-hidden">
-          {/* Module content + quiz */}
-          <div className="flex flex-col min-h-0 overflow-hidden flex-1">
+          {/* Module content + quiz — only flex child so it always uses full width */}
+          <div className="flex flex-col min-h-0 overflow-hidden flex-1 min-w-0">
 
             {/* ── SCORM: full-height iframe — no scroll wrapper, no max-width ── */}
             {isScormContent(currentModule?.content) ? (
@@ -1228,7 +1331,12 @@ export function CourseViewer({
               <>
             <div className="flex-1 overflow-y-auto relative bg-background text-foreground" onClick={() => selectionPopup && setSelectionPopup(null)}>
               <CourseThemeProvider template={course.template}>
-              <div className="max-w-2xl mx-auto px-6 py-8 space-y-10" ref={contentRef}>
+              <div className={cn(
+                'mx-auto px-6 py-8 space-y-10',
+                activeModality === 'mindmap' ? 'max-w-6xl' :
+                activeModality === 'video' || activeModality === 'podcast' ? 'max-w-full' :
+                'max-w-2xl'
+              )} ref={contentRef}>
 
                 {/* Personalized welcome card */}
                 {showWelcome && welcome?.message && (
@@ -1272,8 +1380,125 @@ export function CourseViewer({
                   </div>
                 )}
 
-                {/* Module content — text, rich, or flashcards */}
-                {activeModality === 'flashcards' ? (
+                {/* Read-along: button + follow-along transcript (server TTS); main content stays rich with media */}
+                {activeModality !== 'video' &&
+                  activeModality !== 'podcast' &&
+                  activeModality !== 'mindmap' &&
+                  activeModality !== 'flashcards' &&
+                  currentModule && (
+                  <ReadAlongControls
+                    plainText={getContentBodyForFlashcards(currentModule.content ?? null)}
+                    courseId={course.id}
+                    moduleId={currentModuleId}
+                    onReadAlongStart={() => {
+                      fetch('/api/events', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          event_type: 'read_along_start',
+                          course_id: course.id,
+                          module_id: currentModuleId,
+                          modality: 'reading',
+                        }),
+                      }).catch(() => {})
+                    }}
+                    onReadAlongComplete={(durationSecs) => {
+                      fetch('/api/events', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          event_type: 'read_along_complete',
+                          course_id: course.id,
+                          module_id: currentModuleId,
+                          modality: 'reading',
+                          duration_secs: durationSecs,
+                        }),
+                      }).catch(() => {})
+                    }}
+                  />
+                )}
+
+                {/* Module content — text, rich, audio, video, podcast, mindmap, or flashcards */}
+                {activeModality === 'video' ? (
+                  (course.settings?.video_scenes?.length ?? 0) > 0 ? (
+                    <CourseVideoCard scenes={course.settings!.video_scenes!} courseTitle={course.title} />
+                  ) : (
+                    <div className="max-w-xl mx-auto py-12 text-center space-y-3">
+                      <Video className="w-10 h-10 text-muted-foreground mx-auto" />
+                      <p className="text-sm text-muted-foreground">No video overview for this course.</p>
+                      <p className="text-xs text-muted-foreground">Creators can add one in Sudar Studio.</p>
+                    </div>
+                  )
+                ) : activeModality === 'podcast' ? (
+                  (course.settings?.podcast_dialogue?.length ?? 0) > 0 ? (
+                    <CoursePodcastCard dialogue={course.settings!.podcast_dialogue!} courseTitle={course.title} />
+                  ) : (
+                    <div className="max-w-xl mx-auto py-12 text-center space-y-3">
+                      <Mic className="w-10 h-10 text-muted-foreground mx-auto" />
+                      <p className="text-sm text-muted-foreground">No podcast for this course.</p>
+                      <p className="text-xs text-muted-foreground">Creators can add one in Sudar Studio.</p>
+                    </div>
+                  )
+                ) : activeModality === 'mindmap' ? (
+                  <MindMapCard
+                    scope={mindmapScope}
+                    onScopeChange={setMindmapScope}
+                    root={mindmapScope === 'course' ? mindmapCourse : (mindmapByModule[currentModuleId] ?? null)}
+                    loading={mindmapScope === 'course' ? mindmapCourseLoading : mindmapLoading}
+                    onRetry={() => {
+                      if (mindmapScope === 'course') {
+                        setMindmapCourse(null)
+                        setMindmapCourseLoading(true)
+                        const modulesPayload = course.modules.map((m) => ({
+                          title: m.title,
+                          content: getContentBodyForFlashcards(m.content ?? null),
+                        })).filter((m) => m.content.trim().length > 0)
+                        fetch('/api/ai/generate-mindmap', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            scope: 'course',
+                            course_title: course.title,
+                            modules: modulesPayload,
+                          }),
+                        })
+                          .then((r) => r.json())
+                          .then((data) => {
+                            const root = data?.root
+                            if (root && typeof root === 'object') {
+                              setMindmapCourse(root as MindMapNode)
+                            }
+                          })
+                          .finally(() => setMindmapCourseLoading(false))
+                      } else {
+                        setMindmapByModule((prev) => {
+                          const next = { ...prev }
+                          delete next[currentModuleId]
+                          return next
+                        })
+                        setMindmapLoading(true)
+                        const body = getContentBodyForFlashcards(currentModule?.content ?? null)
+                        fetch('/api/ai/generate-mindmap', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            scope: 'module',
+                            content: body,
+                            module_title: currentModule?.title ?? '',
+                          }),
+                        })
+                          .then((r) => r.json())
+                          .then((data) => {
+                            const root = data?.root
+                            if (root && typeof root === 'object') {
+                              setMindmapByModule((prev) => ({ ...prev, [currentModuleId]: root as MindMapNode }))
+                            }
+                          })
+                          .finally(() => setMindmapLoading(false))
+                      }
+                    }}
+                  />
+                ) : activeModality === 'flashcards' ? (
                   <FlashcardsCard
                     cards={flashcardsByModule[currentModuleId] ?? []}
                     loading={flashcardsLoading}
@@ -1368,32 +1593,60 @@ export function CourseViewer({
             </>
             )} {/* end non-SCORM branch */}
           </div>
+        </div>
 
-          {/* Sudar tutor panel */}
-          {tutorOpen && (
-            <div className="w-96 border-l border-border bg-muted flex flex-col shrink-0">
+        {/* Sudar overlay — floats over content, does not push or resize the course area */}
+        {tutorOpen && (
+          <div
+            className="fixed top-16 right-0 bottom-0 z-50 flex flex-col border-l border-border bg-muted shadow-2xl transition-[width] duration-200"
+            style={{ width: tutorPanelWidth }}
+          >
+            {/* Draggable resize handle on left edge */}
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-valuenow={tutorPanelWidth}
+              onMouseDown={(e) => { e.preventDefault(); setTutorPanelResizing(true) }}
+              className={cn(
+                'absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-10',
+                tutorPanelResizing && 'bg-primary/50'
+              )}
+            />
+            <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <div className="px-4 py-3 border-b border-border bg-background flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-sm shadow-md">
                   <img src="/sudar-chat-logo.png" className="w-4 h-4 object-contain brightness-0 invert" alt="Sudar" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-card-foreground">Sudar</p>
-                  <p className="text-xs text-muted-foreground">Knows the full course + your history</p>
+                  <p className="text-xs text-muted-foreground truncate">Knows the full course + your history</p>
                 </div>
-                <button onClick={() => setTutorOpen(false)} className="ml-auto p-1.5 hover:bg-muted rounded-md transition-colors">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTutorPanelExpanded((e) => !e)
+                    setTutorPanelWidth((w) => (w >= 500 ? 384 : 560))
+                  }}
+                  className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-card-foreground"
+                  aria-label={tutorPanelExpanded ? 'Collapse chat' : 'Expand chat'}
+                  title={tutorPanelExpanded ? 'Collapse chat' : 'Expand chat for full engagement'}
+                >
+                  {tutorPanelExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+                <button onClick={() => setTutorOpen(false)} className="p-1.5 hover:bg-muted rounded-md transition-colors">
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
 
-              {/* What Sudar knows about you — collapsible */}
-              <div className="border-b border-border bg-background">
+              {/* What Sudar knows about you — collapsible (Apple-style) */}
+              <div className="border-b border-border/80 bg-background">
                 <button
                   type="button"
                   onClick={() => setContextPanelExpanded((e) => !e)}
-                  className="w-full px-4 py-2 flex items-center justify-between gap-2 text-left text-xs text-muted-foreground hover:text-card-foreground hover:bg-muted/50 transition-colors"
+                  className="w-full px-4 py-2.5 flex items-center justify-between gap-2 text-left text-xs text-muted-foreground hover:text-card-foreground hover:bg-muted/40 active:bg-muted/60 transition-colors rounded-none"
                 >
                   <span className="font-medium">Your context</span>
-                  <ChevronDown className={cn('w-3.5 h-3.5 shrink-0 transition-transform', contextPanelExpanded && 'rotate-180')} />
+                  <ChevronDown className={cn('w-4 h-4 shrink-0 text-muted-foreground/80 transition-transform duration-200 ease-out', contextPanelExpanded && 'rotate-180')} />
                 </button>
                 {contextPanelExpanded && learnerContext && (
                   <div className="px-4 pb-3 pt-0 space-y-2 text-xs text-muted-foreground">
@@ -1442,7 +1695,7 @@ export function CourseViewer({
                       </div>
                     </div>
                     <div className="space-y-1.5 pl-8">
-                      {['Give me a quick summary', 'Explain this with an example', 'What are the key takeaways?', 'How does this connect to what I\'ve learned before?'].map((prompt) => (
+                      {['Give me a quick summary', 'Explain this with an example', 'What are the key takeaways?', 'Quiz me on this module', 'How does this connect to what I\'ve learned before?'].map((prompt) => (
                         <button key={prompt} onClick={() => { setInput(prompt); setTimeout(() => handleTutorSend(prompt), 50) }}
                           className="w-full text-left px-2.5 py-1.5 bg-card border border-border hover:border-primary/30 hover:bg-primary/10 text-muted-foreground hover:text-primary text-xs rounded-lg transition-all">
                           {prompt}
@@ -1502,6 +1755,7 @@ export function CourseViewer({
                               }),
                             }).catch(() => {})
                           }}
+                          onQuizRetry={() => handleTutorSend('Give me another quiz question')}
                         />
                       ) : (
                         <span className="contents block">
@@ -1629,6 +1883,7 @@ export function CourseViewer({
                 </div>
                 <p className="text-center text-muted-foreground text-[10px] mt-1.5">Sudar knows the full course + your learning history</p>
               </div>
+            </div>
             </div>
           )}
         </div>

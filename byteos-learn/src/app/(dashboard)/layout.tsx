@@ -1,13 +1,8 @@
-import dynamic from 'next/dynamic'
 import { redirect } from 'next/navigation'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { TopNav } from '@/components/layout/TopNav'
 import { PageTransition } from '@/components/ui/PageTransition'
-
-const FloatingSudarChat = dynamic(
-  () => import('@/components/tutor/FloatingSudarChat').then((m) => m.FloatingSudarChat),
-  { ssr: false }
-)
+import { FloatingSudarChatClient } from '@/components/tutor/FloatingSudarChatClient'
 
 export default async function DashboardLayout({
   children,
@@ -56,7 +51,7 @@ export default async function DashboardLayout({
         <main className="flex-1 overflow-y-auto px-4 md:px-8 py-6 md:py-8">
           <PageTransition>{children}</PageTransition>
         </main>
-        <FloatingSudarChat />
+        <FloatingSudarChatClient />
       </div>
     </div>
   )

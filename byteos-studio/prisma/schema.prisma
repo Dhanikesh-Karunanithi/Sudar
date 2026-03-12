@@ -65,16 +65,31 @@ model Organisation {
   plan      String   @default("free")
   createdAt DateTime @default(now()) @map("created_at")
 
-  profiles           Profile[]
-  members            OrgMember[]
-  courses            Course[]
-  skills             Skill[]
-  learningPaths      LearningPath[]
-  branding_config    OrgBranding?
-  performanceRecords LearnerPerformanceRecord[]
-  orgInvites         OrgInvite[]
+  profiles             Profile[]
+  members              OrgMember[]
+  courses              Course[]
+  skills               Skill[]
+  learningPaths        LearningPath[]
+  branding_config      OrgBranding?
+  performanceRecords   LearnerPerformanceRecord[]
+  orgInvites           OrgInvite[]
+  integrationApiKeys   IntegrationApiKey[]
 
   @@map("organisations")
+}
+
+model IntegrationApiKey {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId       String    @map("org_id") @db.Uuid
+  name        String
+  keyHash     String    @map("key_hash")
+  keyPrefix   String    @map("key_prefix")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  lastUsedAt  DateTime? @map("last_used_at")
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@map("integration_api_keys")
 }
 
 model OrgMember {

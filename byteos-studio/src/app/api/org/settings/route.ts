@@ -27,6 +27,7 @@ export async function GET() {
 
   const settings = (org?.settings as Record<string, unknown>) ?? {}
   const performance_config = settings.performance_config ?? null
+  const ai_models = (settings.ai_models as Record<string, string | null> | undefined) ?? {}
 
   return NextResponse.json({
     performance_config,
@@ -34,6 +35,11 @@ export async function GET() {
     kpis: (performance_config as Record<string, unknown>)?.kpis ?? [],
     scale: (performance_config as Record<string, unknown>)?.scale ?? null,
     terms: (performance_config as Record<string, unknown>)?.terms ?? [],
+    ai_models: {
+      tts_voice: ai_models.tts_voice ?? null,
+      content_generation_model: ai_models.content_generation_model ?? null,
+      tutor_model: ai_models.tutor_model ?? null,
+    },
   })
 }
 
@@ -53,11 +59,6 @@ export async function PATCH(request: Request) {
   }
 
   const body = await request.json()
-  const parsed = performanceConfigSchema.safeParse(body.performance_config ?? body)
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid performance_config', details: parsed.error.flatten() }, { status: 400 })
-  }
-
   const admin = createAdminClient()
   const { data: org } = await admin
     .from('organisations')
@@ -66,7 +67,27 @@ export async function PATCH(request: Request) {
     .single()
 
   const currentSettings = (org?.settings as Record<string, unknown>) ?? {}
-  const updatedSettings = { ...currentSettings, performance_config: parsed.data }
+  let updatedSettings: Record<string, unknown> = { ...currentSettings }
+
+  if (body.performance_config !== undefined) {
+    const parsed = performanceConfigSchema.safeParse(body.performance_config)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid performance_config', details: parsed.error.flatten() }, { status: 400 })
+    }
+    updatedSettings.performance_config = parsed.data
+  }
+
+  if (body.ai_models !== undefined && typeof body.ai_models === 'object') {
+    const ai = body.ai_models as Record<string, string | null>
+    updatedSettings.ai_models = {
+      ...(typeof currentSettings.ai_models === 'object' && currentSettings.ai_models !== null
+        ? (currentSettings.ai_models as Record<string, unknown>)
+        : {}),
+      ...(ai.tts_voice !== undefined && { tts_voice: ai.tts_voice }),
+      ...(ai.content_generation_model !== undefined && { content_generation_model: ai.content_generation_model }),
+      ...(ai.tutor_model !== undefined && { tutor_model: ai.tutor_model }),
+    }
+  }
 
   const { error } = await admin
     .from('organisations')
@@ -74,5 +95,5 @@ export async function PATCH(request: Request) {
     .eq('id', orgId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ performance_config: parsed.data })
+  return NextResponse.json({ ok: true, settings: updatedSettings })
 }

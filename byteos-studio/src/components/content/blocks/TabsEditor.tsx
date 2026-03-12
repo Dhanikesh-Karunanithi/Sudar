@@ -3,6 +3,7 @@
 import { GripVertical, Trash2, Plus, LayoutList } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { EditorBlockTabs } from '@/types/content'
+import { createNewTabItem } from '@/lib/contentBlocks'
 
 function TabsEditorInner({
   data,
@@ -16,10 +17,10 @@ function TabsEditorInner({
   const tabs = data.tabs ?? []
   const updateTab = (index: number, patch: Partial<{ label: string; content: string }>) => {
     const next = [...tabs]
-    next[index] = { ...next[index], label: '', content: '', ...next[index], ...patch }
+    next[index] = { ...next[index], ...patch }
     onUpdate({ tabs: next })
   }
-  const addTab = () => onUpdate({ tabs: [...tabs, { label: '', content: '' }] })
+  const addTab = () => onUpdate({ tabs: [...tabs, createNewTabItem()] })
   const removeTab = (index: number) => {
     const next = tabs.filter((_, i) => i !== index)
     onUpdate({ tabs: next })
@@ -31,7 +32,7 @@ function TabsEditorInner({
         <span className="text-xs text-slate-500">Tabs</span>
       </div>
       {tabs.map((tab, idx) => (
-        <div key={idx} className="rounded border border-slate-700 bg-slate-900/60 p-2 space-y-1.5">
+        <div key={tab.id} className="rounded border border-slate-700 bg-slate-900/60 p-2 space-y-1.5">
           <div className="flex items-center justify-between">
             <input
               type="text"
@@ -53,7 +54,7 @@ function TabsEditorInner({
             disabled={disabled}
             placeholder="Tab content"
             rows={2}
-            className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-400 text-xs resize-none"
+            className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-400 text-xs resize-none focus:outline-none focus:border-indigo-500"
           />
         </div>
       ))}

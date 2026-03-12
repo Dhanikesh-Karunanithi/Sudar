@@ -121,4 +121,4 @@ Priorities are chosen to maximise progress toward the four pillars without overb
 
 ---
 
-*Last updated: Current state updated with RAG, Floating Sudar Chat, memory insights, SCORM delivery, change password (UPDATES.md 2026-03-08).*
+*Last updated: Current state updated with RAG, Floating Sudar Chat, memory insights, SCORM delivery, change password (UPDATES.md 2026-03-08). Flashcards, document-to-course, SCORM 1.2 import documented as shipped (UPDATES.md ship recent work 2026-03-08).*

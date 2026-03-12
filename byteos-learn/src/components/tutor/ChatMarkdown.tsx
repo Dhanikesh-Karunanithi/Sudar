@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 // ---------------------------------------------------------------------------
 // Inline parser — **bold**, *italic*, `code`
@@ -105,7 +107,7 @@ function detectCallout(trimmed: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Collapsible section — wraps content under a heading
+// Collapsible section — Apple-style disclosure (soft, rounded, chevron)
 // ---------------------------------------------------------------------------
 function CollapsibleSection({
   title,
@@ -126,28 +128,33 @@ function CollapsibleSection({
   }
 
   return (
-    <div className={`mt-3 mb-1 ${level <= 2 ? 'rounded-xl border border-border/60 overflow-hidden' : ''}`}>
+    <div className={`mt-3 mb-1 ${level <= 2 ? 'rounded-2xl overflow-hidden bg-muted/30' : ''}`}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`w-full flex items-center justify-between gap-2 text-left transition-colors ${
+        className={`w-full flex items-center justify-between gap-2 text-left transition-colors duration-150 ${
           level <= 2
-            ? 'px-3 py-2 bg-muted/40 hover:bg-muted/70'
-            : 'pb-0.5 hover:opacity-80'
+            ? 'px-4 py-2.5 hover:bg-muted/50 active:bg-muted/70'
+            : 'py-1 pr-1 hover:opacity-90'
         }`}
       >
-        <span className={`flex items-center gap-1.5 ${headerClasses[level]}`}>
+        <span className={`flex items-center gap-2 ${headerClasses[level]}`}>
           {level <= 2 && (
-            <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+            <span className="w-1 h-1 rounded-full bg-primary/60 shrink-0" />
           )}
           {title}
         </span>
-        <span className={`text-muted-foreground transition-transform duration-200 text-[10px] shrink-0 ${open ? 'rotate-90' : ''}`}>
-          ▶
-        </span>
+        <ChevronDown
+          className={cn(
+            'w-4 h-4 shrink-0 text-muted-foreground/80 transition-transform duration-200 ease-out',
+            open && 'rotate-180'
+          )}
+          strokeWidth={2.25}
+          aria-hidden
+        />
       </button>
       {open && (
-        <div className={level <= 2 ? 'px-3 pb-2 pt-1' : 'pl-3 border-l-2 border-primary/20 mt-1'}>
+        <div className={level <= 2 ? 'px-4 pb-3 pt-0.5' : 'pl-4 border-l border-muted-foreground/20 mt-1 ml-1'}>
           {children}
         </div>
       )}

@@ -33,6 +33,18 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     if (key in body) updates[key] = body[key]
   }
 
+  // Merge settings so video_scenes, podcast_dialogue, include_video, include_podcast don't wipe other settings
+  if ('settings' in body && typeof body.settings === 'object' && body.settings !== null) {
+    const { data: existing } = await admin
+      .from('courses')
+      .select('settings')
+      .eq('id', params.id)
+      .eq('created_by', user.id)
+      .single()
+    const current = (existing?.settings as Record<string, unknown>) ?? {}
+    updates.settings = { ...current, ...body.settings }
+  }
+
   const { data, error } = await admin
     .from('courses')
     .update(updates)

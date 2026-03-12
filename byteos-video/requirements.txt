@@ -1,0 +1,8 @@
+# ByteOS Video — Narrated slide / TTS-to-video pipeline
+# Requires FFmpeg installed on the system (e.g. ffmpeg in PATH)
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+pydantic==2.8.0
+python-multipart==0.0.12
+edge-tts>=6.1.0
+Pillow>=10.0.0

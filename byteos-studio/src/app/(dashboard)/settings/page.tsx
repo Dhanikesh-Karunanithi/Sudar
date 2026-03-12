@@ -9,8 +9,26 @@ import {
   Plus,
   Trash2,
   Save,
+  Volume2,
+  Sparkles,
 } from 'lucide-react'
 import type { PerformanceConfig, KpiDefinition, TermDefinition } from '@/types/performance'
+import { ModelPicker, type ModelPickerOption } from '@/components/ui/ModelPicker'
+
+const TTS_VOICE_OPTIONS: ModelPickerOption[] = [
+  { id: 'en-US-JennyNeural', name: 'Jenny (US)', description: 'Natural US English, female' },
+  { id: 'en-US-GuyNeural', name: 'Guy (US)', description: 'Natural US English, male' },
+  { id: 'en-GB-SoniaNeural', name: 'Sonia (UK)', description: 'Natural British English, female' },
+  { id: 'en-GB-RyanNeural', name: 'Ryan (UK)', description: 'Natural British English, male' },
+  { id: 'sarvam_shreya', name: 'Shreya (Sarvam)', description: 'Indian English, expressive (Sarvam AI)' },
+  { id: 'sarvam_shubh', name: 'Shubh (Sarvam)', description: 'Indian English, conversational (Sarvam AI)' },
+]
+
+const CONTENT_GENERATION_MODEL_OPTIONS: ModelPickerOption[] = [
+  { id: 'default', name: 'Default', description: 'Great for most course generation tasks' },
+  { id: 'complex', name: 'Complex tasks', description: 'Better for long or detailed content' },
+  { id: 'fast', name: 'Faster', description: 'Quicker responses for daily use' },
+]
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
@@ -21,6 +39,8 @@ export default function SettingsPage() {
   const [kpis, setKpis] = useState<KpiDefinition[]>([])
   const [scale, setScale] = useState<'percentage' | 'letter' | 'gpa'>('percentage')
   const [terms, setTerms] = useState<TermDefinition[]>([])
+  const [ttsVoice, setTtsVoice] = useState<string | null>('en-US-JennyNeural')
+  const [contentGenerationModel, setContentGenerationModel] = useState<string | null>('default')
 
   const fetchSettings = useCallback(async () => {
     const res = await fetch('/api/org/settings')
@@ -38,6 +58,10 @@ export default function SettingsPage() {
     setKpis(Array.isArray(data.kpis) ? data.kpis : [])
     setScale(data.scale ?? 'percentage')
     setTerms(Array.isArray(data.terms) ? data.terms : [])
+    if (data.ai_models) {
+      setTtsVoice(data.ai_models.tts_voice ?? 'en-US-JennyNeural')
+      setContentGenerationModel(data.ai_models.content_generation_model ?? 'default')
+    }
     setLoading(false)
   }, [])
 
@@ -54,7 +78,13 @@ export default function SettingsPage() {
     const res = await fetch('/api/org/settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ performance_config }),
+      body: JSON.stringify({
+        performance_config,
+        ai_models: {
+          tts_voice: ttsVoice,
+          content_generation_model: contentGenerationModel,
+        },
+      }),
     })
     setSaving(false)
     if (res.ok) {
@@ -303,6 +333,34 @@ export default function SettingsPage() {
           </p>
         </div>
       )}
+
+      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-6">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-slate-500" />
+          <h2 className="font-semibold text-white">AI models</h2>
+        </div>
+        <p className="text-slate-500 text-sm">
+          Default models for course generation and Listen (audio) modality. Learners can override TTS voice in Learn.
+        </p>
+        <div className="space-y-6">
+          <ModelPicker
+            title="TTS voice"
+            subtitle="Default voice for Listen (audiobook-style) audio. Used when generating module audio."
+            options={TTS_VOICE_OPTIONS.map((o) => ({ ...o, icon: <Volume2 className="w-4 h-4" /> }))}
+            value={ttsVoice}
+            onChange={(id) => setTtsVoice(id)}
+            className="text-white"
+          />
+          <ModelPicker
+            title="Content generation"
+            subtitle="Default model for AI course and content generation in Studio."
+            options={CONTENT_GENERATION_MODEL_OPTIONS.map((o) => ({ ...o, icon: <Sparkles className="w-4 h-4" /> }))}
+            value={contentGenerationModel}
+            onChange={(id) => setContentGenerationModel(id)}
+            className="text-white"
+          />
+        </div>
+      </div>
     </div>
   )
 }

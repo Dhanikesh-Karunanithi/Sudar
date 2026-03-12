@@ -9,6 +9,50 @@ const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
 const GUARDRAIL_REFUSAL_MESSAGE = "I'm here to help with your courses and learning. I can't help with that. What would you like to learn today?"
 const PLATFORM_CONTEXT_CATALOG_LIMIT = 25
 
+// Static, factual description of the Sudar Learn UI — injected into every prompt so Sudar
+// can guide navigation accurately instead of hallucinating steps.
+const SUDAR_PLATFORM_KNOWLEDGE = `
+## Sudar Learn — Platform Navigation Guide (use this when learners ask how to find or access anything)
+
+### Course Viewer Layout
+When inside a course, the screen has three areas:
+1. **Left sidebar** — collapsible list of all modules with a progress bar. Click any module title to jump to it.
+2. **Center content area** — the current module displayed in the chosen modality.
+3. **Right panel** — this Sudar chat, opened by clicking the "Ask Sudar" button in the top bar.
+
+### Modality Switcher (icon tabs in the top bar of the course viewer)
+The top bar has tabs to switch how content is presented. Each tab has a label and icon:
+- **Read** (document icon) — default text/markdown view. Always available immediately.
+- **Listen** (headphones icon) — AI-generated audio narration. Click it and it generates in 5–15 seconds on first use; subsequent opens are instant (cached).
+- **Map** (network icon) — AI-generated mind map. Generates in a few seconds on first click; cached after that. Has a "Module" vs "Course" scope toggle inside.
+- **Cards** (layers icon) — AI-generated flashcards. Always available; click to view.
+- **Watch** (video icon) — pre-recorded video. Only active when video was generated in Sudar Studio; otherwise shows "Coming soon" and cannot be clicked.
+- **Podcast** (mic icon) — AI dialogue format. Only shown if configured for the course in Studio.
+
+### Key Navigation
+- Switch modules: click the module name in the **left sidebar**.
+- Open/close Sudar chat: **"Ask Sudar" button** in the top-right of the top bar (or press the chat icon).
+- Go to course list: click **"My Courses"** in the left navigation sidebar of the dashboard.
+- Highlight any text in the content → a popup appears with quick actions (Explain this, Give me an example, etc.) that auto-send to Sudar.
+
+CRITICAL: When a learner asks how to access a modality, navigate to a module, or use any UI feature, use ONLY the accurate steps above. Do NOT invent navigation steps, menu names, or UI elements that are not described here.`
+
+// Regex patterns that indicate the learner wants an interactive quiz.
+const QUIZ_INTENT_PATTERNS = [
+  /\b(quiz\s+me|test\s+me)\b/i,
+  /\bgive\s+me\s+a\s+(quiz|test|challenge)\b/i,
+  /\bchallenge\s+(question|me)\b/i,
+  /\bknowledge\s+check\b/i,
+  /\bask\s+me\s+a\s+question\b/i,
+  /\bquiz\s+question\b/i,
+  /\bcan\s+you\s+(quiz|test)\s+me\b/i,
+  /\b(another|one\s+more)\s+(quiz|question|challenge)\b/i,
+]
+
+function detectsQuizIntent(message: string): boolean {
+  return QUIZ_INTENT_PATTERNS.some((p) => p.test(message))
+}
+
 // Blocklist: messages containing these (case-insensitive) are refused before calling the model.
 const INPUT_BLOCKLIST_PATTERNS = [
   /\bhow\s+to\s+(hack|exploit|cheat|steal|hurt|kill)\b/i,
@@ -202,6 +246,84 @@ async function callAI(
   }
 }
 
+/**
+ * Generates a single multiple-choice quiz question grounded in the course/module content.
+ * Returns null if generation fails (graceful degradation to text-only response).
+ */
+async function generateQuizBlock(
+  courseContent: string,
+  moduleTitle: string,
+  conversationContext: string,
+): Promise<{ question: string; options: Array<{ id: string; text: string; correct: boolean; explanation: string }>; topic: string; difficulty: 'recall' | 'application' | 'challenge' } | null> {
+  const apiKey = process.env.TOGETHER_API_KEY
+  if (!apiKey) return null
+
+  const difficultyHint = /challenge|harder|harder question|push me|more difficult/i.test(conversationContext)
+    ? 'challenge'
+    : /appl(y|ication)|real.world|scenario|practical/i.test(conversationContext)
+      ? 'application'
+      : 'recall'
+
+  const prompt = `You are generating a quiz question for a learner. Use ONLY the provided course content as your knowledge source.
+
+Module: "${moduleTitle}"
+Course content excerpt:
+---
+${courseContent.slice(0, 3000)}
+---
+Conversation context (for difficulty calibration): "${conversationContext.slice(0, 300)}"
+Requested difficulty: ${difficultyHint}
+
+Generate ONE multiple-choice question with exactly 4 options (A, B, C, D). Exactly one option must be correct.
+
+Respond with ONLY valid JSON in this exact shape (no markdown, no extra text):
+{
+  "topic": "<the specific concept being tested>",
+  "difficulty": "${difficultyHint}",
+  "question": "<clear, specific question>",
+  "options": [
+    { "id": "a", "text": "<option A text>", "correct": false, "explanation": "<why this is wrong or why this is right>" },
+    { "id": "b", "text": "<option B text>", "correct": true, "explanation": "<why this is the correct answer>" },
+    { "id": "c", "text": "<option C text>", "correct": false, "explanation": "<why this is wrong>" },
+    { "id": "d", "text": "<option D text>", "correct": false, "explanation": "<why this is wrong>" }
+  ]
+}
+
+Rules:
+- The correct option can be any of a/b/c/d — vary it, do not always use "b".
+- Explanations must be concise (1–2 sentences).
+- Options must be plausible distractors based on the actual content — no trick questions.
+- Return ONLY the JSON object. No other text.`
+
+  try {
+    const res = await fetch(TOGETHER_API_URL, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: process.env.TOGETHER_MEMORY_MODEL?.trim() || DEFAULT_MEMORY_MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 600,
+        temperature: 0.5,
+      }),
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    const raw = data.choices?.[0]?.message?.content?.trim() ?? ''
+    const match = raw.match(/\{[\s\S]*\}/)
+    if (!match) return null
+    const parsed = JSON.parse(match[0])
+    if (
+      typeof parsed.question !== 'string' ||
+      !Array.isArray(parsed.options) ||
+      parsed.options.length !== 4 ||
+      !parsed.options.some((o: { correct?: boolean }) => o.correct === true)
+    ) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -209,14 +331,28 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (!process.env.TOGETHER_API_KEY) return NextResponse.json({ error: 'AI tutor not configured' }, { status: 500 })
 
-    let body: { message?: string; course_id?: string; module_id?: string; conversation_history?: unknown[]; pasted_text?: string; selected_text?: string }
+    let body: {
+      message?: string
+      course_id?: string
+      module_id?: string
+      conversation_history?: unknown[]
+      pasted_text?: string
+      selected_text?: string
+      active_modality?: string
+      available_modalities?: {
+        video?: boolean
+        podcast?: boolean
+        audio_generated?: boolean
+        mindmap_generated?: boolean
+      }
+    }
     try {
       body = await request.json()
     } catch {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
 
-    const { message, course_id, module_id, conversation_history = [], pasted_text, selected_text } = body
+    const { message, course_id, module_id, conversation_history = [], pasted_text, selected_text, active_modality, available_modalities } = body
     if (!message?.trim()) return NextResponse.json({ error: 'message required' }, { status: 400 })
 
     // ── Input guardrail: refuse off-topic / harmful requests ─────────────────
@@ -464,6 +600,40 @@ ${selectedText}
 `
     : ''
 
+  // Build live modality context (only when inside a course)
+  let modalityContextText = ''
+  if (course_id) {
+    const MODALITY_LABELS: Record<string, string> = {
+      text: 'Read',
+      audio: 'Listen',
+      mindmap: 'Map',
+      flashcards: 'Cards',
+      video: 'Watch',
+      podcast: 'Podcast',
+    }
+    const activeLabel = active_modality ? (MODALITY_LABELS[active_modality] ?? active_modality) : 'Read'
+    const av = available_modalities ?? {}
+
+    const modalityLines = [
+      `Read ✓ (always available)`,
+      av.audio_generated
+        ? `Listen ✓ (audio already generated — available instantly)`
+        : `Listen ✓ (will AI-generate in ~10 seconds on first click)`,
+      av.mindmap_generated
+        ? `Map ✓ (mind map already generated — available instantly)`
+        : `Map ✓ (will AI-generate in a few seconds on first click)`,
+      `Cards ✓ (always available)`,
+      av.video ? `Watch ✓ (video is available for this course)` : `Watch ✗ (not enabled — shows "Coming soon")`,
+      av.podcast ? `Podcast ✓ (available for this course)` : null,
+    ].filter(Boolean)
+
+    modalityContextText = `
+Current modality (what the learner is viewing right now): **${activeLabel}**
+Available modalities for this course:
+${modalityLines.map((l) => `- ${l}`).join('\n')}
+When the learner asks how to switch modality or where to find one, refer to the platform navigation guide above.`
+  }
+
   const systemPrompt = `You are **Sudar**, the AI learning tutor built into Sudar Learn. Your name is Sudar — always.
 When asked "who are you?", "what is your name?", "what are you?", or any similar identity question, always respond: "I'm **Sudar**, your AI learning tutor on Sudar Learn. I'm here to help you learn, recommend courses, track your progress, and answer any questions about your studies."
 Never say you don't have a name. Never refuse to introduce yourself. Identity questions are always welcome.
@@ -482,11 +652,13 @@ Formatting & Engagement (always apply):
 - Never dump a wall of prose. Even short answers should be well-structured and easy to skim.
 
 Reasoning: When answering, think step by step (what did they ask → what context is relevant → best answer/action), then give your direct answer. Use the course content and learner context below to personalize every response.
+${SUDAR_PLATFORM_KNOWLEDGE}
 
 Current course: "${courseTitle}"
 Current module: "${currentModuleTitle}"
 ${selectedContentBlock}
 ${learnerMemoryText}
+${modalityContextText}
 ${platformContextText}
 
 Full course content (your knowledge base):
@@ -512,7 +684,7 @@ How to personalize:
     { role: 'user', content: message },
   ]
 
-  const maxTokens = preferredResponseLength === 'one_line' ? 150 : preferredResponseLength === 'detailed' ? 700 : 350
+  const maxTokens = preferredResponseLength === 'one_line' ? 150 : preferredResponseLength === 'detailed' ? 1400 : 600
 
   let aiResponse: string
   try {
@@ -529,6 +701,31 @@ How to personalize:
   // ── Parse and validate ACTIONS from response (output guardrail) ─────────
   const { text: responseText, rawActions } = parseActionsFromResponse(aiResponse)
   const actions = validateActions(rawActions, allowedCourseIds, allowedPathIds, enrollmentByCourseId)
+
+  // #region agent log
+  const _logPayload = {
+    sessionId: 'a39da6',
+    location: 'route.ts:tutor-response',
+    message: 'tutor_response',
+    data: {
+      maxTokens,
+      preferredResponseLength,
+      responseLengthChars: aiResponse.length,
+      responseTextLengthChars: responseText.length,
+      endsWithPeriod: /[.!?]\s*$/.test(responseText.trim()),
+      last50: responseText.slice(-50),
+    },
+    timestamp: Date.now(),
+    hypothesisId: 'A',
+  }
+  try {
+    await fetch('http://127.0.0.1:7701/ingest/4305abd0-a887-4162-9fa9-777888adc8ea', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'a39da6' },
+      body: JSON.stringify(_logPayload),
+    })
+  } catch { /* ignore */ }
+  // #endregion
 
   // ── 5. Save interaction (non-blocking; don't fail the request) ───────────
   if (course_id) {
@@ -561,10 +758,23 @@ How to personalize:
   // ── 6. Async memory update (fire and forget) ───────────────────────────
   updateLearnerMemory(user.id, message, responseText, admin).catch(() => {})
 
-  const blocks: Array<{ id: string; type: 'text' | 'action_group'; payload: Record<string, unknown> }> = [
+  // ── 7. Quiz block (if quiz intent detected) ───────────────────────────
+  let quizBlock: { id: string; type: 'quiz'; payload: Record<string, unknown> } | null = null
+  if (detectsQuizIntent(message)) {
+    const conversationContext = Array.isArray(conversation_history)
+      ? conversation_history.slice(-4).map((m: { content?: string }) => String(m.content ?? '')).join(' ')
+      : ''
+    const quizData = await generateQuizBlock(courseContext, currentModuleTitle, conversationContext)
+    if (quizData) {
+      quizBlock = { id: 'quiz-1', type: 'quiz', payload: quizData as unknown as Record<string, unknown> }
+    }
+  }
+
+  const blocks: Array<{ id: string; type: string; payload: Record<string, unknown> }> = [
     { id: 'text-1', type: 'text', payload: { content: responseText } },
   ]
   if (actions.length > 0) blocks.push({ id: 'actions-1', type: 'action_group', payload: { actions } })
+  if (quizBlock) blocks.push(quizBlock)
 
   return NextResponse.json({
     response: responseText,

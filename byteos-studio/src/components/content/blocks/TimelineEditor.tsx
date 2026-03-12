@@ -3,6 +3,7 @@
 import { GripVertical, Trash2, Plus, ListOrdered } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { EditorBlockTimeline } from '@/types/content'
+import { createNewTimelineStep } from '@/lib/contentBlocks'
 
 function TimelineEditorInner({
   data,
@@ -16,10 +17,10 @@ function TimelineEditorInner({
   const steps = data.steps ?? []
   const updateStep = (index: number, patch: Partial<{ title: string; description: string; icon: string }>) => {
     const next = [...steps]
-    next[index] = { ...next[index], title: '', description: '', ...next[index], ...patch }
+    next[index] = { ...next[index], ...patch }
     onUpdate({ steps: next })
   }
-  const addStep = () => onUpdate({ steps: [...steps, { title: '', description: '' }] })
+  const addStep = () => onUpdate({ steps: [...steps, createNewTimelineStep()] })
   const removeStep = (index: number) => {
     const next = steps.filter((_, i) => i !== index)
     onUpdate({ steps: next })
@@ -31,7 +32,7 @@ function TimelineEditorInner({
         <span className="text-xs text-slate-500">Timeline</span>
       </div>
       {steps.map((step, idx) => (
-        <div key={idx} className="rounded border border-slate-700 bg-slate-900/60 p-2 space-y-1.5">
+        <div key={step.id} className="rounded border border-slate-700 bg-slate-900/60 p-2 space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[10px] text-slate-500">Step {idx + 1}</span>
             {!disabled && (

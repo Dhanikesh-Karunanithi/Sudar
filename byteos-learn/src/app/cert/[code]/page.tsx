@@ -98,7 +98,7 @@ export default async function CertificatePage({ params }: { params: { code: stri
         </div>
       </div>
 
-      <CertActions />
+      <CertActions code={params.code} />
 
       <p className="print:hidden text-muted-foreground text-xs mt-4">
         <Link href="/" className="hover:text-muted-foreground transition-colors">← Back to Sudar</Link>

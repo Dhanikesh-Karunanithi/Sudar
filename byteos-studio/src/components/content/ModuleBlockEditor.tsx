@@ -18,9 +18,9 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, Trash2, Image, FileText, ChevronDown, CircleHelp, Sparkles, Loader2, Search, X, Upload, Video, ListOrdered, LayoutList, Mic, Layers, Shuffle, ImageIcon } from 'lucide-react'
+import { GripVertical, Trash2, Image, FileText, ChevronDown, CircleHelp, Sparkles, Loader2, Search, X, Upload, Video, ListOrdered, LayoutList, Mic, Layers, Shuffle, ImageIcon, AlignLeft, AlignCenter, AlignRight, Maximize2, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { ModuleContent, EditorBlock, EditorBlockType } from '@/types/content'
+import type { ModuleContent, EditorBlock, EditorBlockType, ImageAlignment, ImageSize } from '@/types/content'
 import {
   contentToMainTextAndBlocks,
   mainTextAndBlocksToContent,
@@ -48,11 +48,19 @@ function BlockRow({
   onUpdate,
   onRemove,
   disabled,
+  onOpenImageSearch,
+  onRequestImageUpload,
+  onRequestAudioUpload,
+  uploadLoading,
 }: {
   block: EditorBlock
   onUpdate: (data: EditorBlock['data']) => void
   onRemove: () => void
   disabled?: boolean
+  onOpenImageSearch?: (onSelected: (url: string, alt?: string) => void) => void
+  onRequestImageUpload?: (onSelected: (url: string) => void) => void
+  onRequestAudioUpload?: (onSelected: (url: string) => void) => void
+  uploadLoading?: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: block.id,
@@ -99,6 +107,20 @@ function BlockRow({
   }
 
   if (block.type === 'image') {
+    const alignment = (block.data.alignment ?? 'center') as ImageAlignment
+    const size = (block.data.size ?? 'medium') as ImageSize
+    const alignments: { value: ImageAlignment; icon: React.ReactNode; label: string }[] = [
+      { value: 'left', icon: <AlignLeft className="w-3.5 h-3.5" />, label: 'Left' },
+      { value: 'center', icon: <AlignCenter className="w-3.5 h-3.5" />, label: 'Center' },
+      { value: 'right', icon: <AlignRight className="w-3.5 h-3.5" />, label: 'Right' },
+      { value: 'full', icon: <Maximize2 className="w-3.5 h-3.5" />, label: 'Full width' },
+    ]
+    const sizes: { value: ImageSize; label: string }[] = [
+      { value: 'small', label: 'Small' },
+      { value: 'medium', label: 'Medium' },
+      { value: 'large', label: 'Large' },
+      { value: 'full', label: 'Full' },
+    ]
     return (
       <div
         ref={setNodeRef}
@@ -110,38 +132,128 @@ function BlockRow({
       >
         <button
           type="button"
-          className="cursor-grab touch-none p-1 text-slate-500 hover:text-slate-400 rounded"
+          className="cursor-grab touch-none p-1 text-slate-500 hover:text-slate-400 rounded shrink-0"
           {...attributes}
           {...listeners}
         >
           <GripVertical className="w-4 h-4" />
         </button>
-        <div className="flex-1 min-w-0 space-y-1.5">
+        <div className="flex-1 min-w-0 space-y-2">
           <div className="flex items-center gap-2">
             <Image className="w-3.5 h-3.5 text-slate-500 shrink-0" />
             <span className="text-xs text-slate-500">Image</span>
           </div>
-          <input
-            type="url"
-            value={block.data.url}
-            onChange={(e) => onUpdate({ ...block.data, url: e.target.value })}
-            onBlur={(e) => onUpdate({ ...block.data, url: e.target.value })}
-            disabled={disabled}
-            placeholder="Image URL"
-            className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs focus:outline-none focus:border-indigo-500"
-          />
-          <input
-            type="text"
-            value={block.data.alt ?? ''}
-            onChange={(e) => onUpdate({ ...block.data, alt: e.target.value })}
-            onBlur={(e) => onUpdate({ ...block.data, alt: e.target.value })}
-            disabled={disabled}
-            placeholder="Alt text"
-            className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-400 text-xs focus:outline-none focus:border-indigo-500"
-          />
+          {/* Preview: show media thumbnail and link to view */}
+          {block.data.url ? (
+            <div className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-900/80 p-2">
+              <a
+                href={block.data.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 block w-20 h-20 rounded-md overflow-hidden bg-slate-800 border border-slate-700 relative"
+                title="View full image"
+              >
+                <img
+                  src={block.data.url}
+                  alt={block.data.alt ?? 'Preview'}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const el = e.target as HTMLImageElement
+                    el.style.display = 'none'
+                    const fallback = el.parentElement?.querySelector('.image-block-fallback') as HTMLElement
+                    if (fallback) fallback.style.display = 'flex'
+                  }}
+                />
+                <div className="image-block-fallback absolute inset-0 flex items-center justify-center bg-slate-800 hidden">
+                  <Image className="w-8 h-8 text-slate-600" />
+                </div>
+              </a>
+              <div className="flex-1 min-w-0 flex flex-col gap-1">
+                <a
+                  href={block.data.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300"
+                >
+                  View media <ExternalLink className="w-3 h-3" />
+                </a>
+                <input
+                  type="url"
+                  value={block.data.url}
+                  onChange={(e) => onUpdate({ ...block.data, url: e.target.value })}
+                  onBlur={(e) => onUpdate({ ...block.data, url: e.target.value })}
+                  disabled={disabled}
+                  placeholder="Image URL"
+                  className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs focus:outline-none focus:border-indigo-500"
+                />
+                <input
+                  type="text"
+                  value={block.data.alt ?? ''}
+                  onChange={(e) => onUpdate({ ...block.data, alt: e.target.value })}
+                  onBlur={(e) => onUpdate({ ...block.data, alt: e.target.value })}
+                  disabled={disabled}
+                  placeholder="Alt text"
+                  className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-400 text-xs focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <input
+                type="url"
+                value={block.data.url}
+                onChange={(e) => onUpdate({ ...block.data, url: e.target.value })}
+                onBlur={(e) => onUpdate({ ...block.data, url: e.target.value })}
+                disabled={disabled}
+                placeholder="Image URL"
+                className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs focus:outline-none focus:border-indigo-500"
+              />
+              <input
+                type="text"
+                value={block.data.alt ?? ''}
+                onChange={(e) => onUpdate({ ...block.data, alt: e.target.value })}
+                onBlur={(e) => onUpdate({ ...block.data, alt: e.target.value })}
+                disabled={disabled}
+                placeholder="Alt text"
+                className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-400 text-xs focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          )}
+          {/* Position (alignment) and size */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-700/80">
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider">Position</span>
+            <div className="flex rounded-md border border-slate-700 overflow-hidden">
+              {alignments.map(({ value, icon, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  title={label}
+                  onClick={() => onUpdate({ ...block.data, alignment: value })}
+                  disabled={disabled}
+                  className={cn(
+                    'p-1.5 transition-colors',
+                    alignment === value ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500/50' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+                  )}
+                >
+                  {icon}
+                </button>
+              ))}
+            </div>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider ml-2">Size</span>
+            <select
+              value={size}
+              onChange={(e) => onUpdate({ ...block.data, size: e.target.value as ImageSize })}
+              disabled={disabled}
+              className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200 text-[11px] focus:outline-none focus:border-indigo-500"
+            >
+              {sizes.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
         {!disabled && (
-          <button type="button" onClick={onRemove} className="p-1 text-slate-500 hover:text-red-400 rounded">
+          <button type="button" onClick={onRemove} className="p-1 text-slate-500 hover:text-red-400 rounded shrink-0">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         )}
@@ -324,6 +436,8 @@ function BlockRow({
         isDragging={isDragging}
         attributes={attributes}
         listeners={listeners}
+        onOpenImageSearch={onOpenImageSearch}
+        onRequestImageUpload={onRequestImageUpload}
       />
     )
   }
@@ -369,6 +483,8 @@ function BlockRow({
         isDragging={isDragging}
         attributes={attributes}
         listeners={listeners}
+        onRequestAudioUpload={onRequestAudioUpload}
+        uploadLoading={uploadLoading}
       />
     )
   }
@@ -408,11 +524,54 @@ export function ModuleBlockEditor({
   const contextMenuRef = useRef<HTMLDivElement>(null)
   const [mediaSearchOpen, setMediaSearchOpen] = useState(false)
   const [mediaQuery, setMediaQuery] = useState('')
-  const [mediaSource, setMediaSource] = useState<'pexels' | 'unsplash' | 'google'>('pexels')
+  const [mediaSource, setMediaSource] = useState<'google' | 'pexels' | 'unsplash'>('pexels')
   const [mediaResults, setMediaResults] = useState<{ url: string; thumbnailUrl?: string; alt?: string; attribution?: string }[]>([])
   const [mediaLoading, setMediaLoading] = useState(false)
+  const [videoSearchOpen, setVideoSearchOpen] = useState(false)
+  const [videoQuery, setVideoQuery] = useState('')
+  const [videoResults, setVideoResults] = useState<{ url: string; thumbnailUrl?: string; title?: string; attribution?: string }[]>([])
+  const [videoLoading, setVideoLoading] = useState(false)
   const [uploadLoading, setUploadLoading] = useState(false)
   const uploadInputRef = useRef<HTMLInputElement>(null)
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingContentRef = useRef<ModuleContent | null>(null)
+  const hotspotImageCallbackRef = useRef<((url: string, alt?: string) => void) | null>(null)
+  const hotspotUploadCallbackRef = useRef<((url: string) => void) | null>(null)
+  const audioUploadCallbackRef = useRef<((url: string) => void) | null>(null)
+  const audioUploadInputRef = useRef<HTMLInputElement>(null)
+
+  const DEBOUNCE_MS = 350
+  const scheduleDebouncedFlush = useCallback(
+    (nextContent: ModuleContent) => {
+      pendingContentRef.current = nextContent
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+      debounceTimerRef.current = setTimeout(() => {
+        if (pendingContentRef.current) {
+          onContentChange(pendingContentRef.current)
+          pendingContentRef.current = null
+        }
+        debounceTimerRef.current = null
+      }, DEBOUNCE_MS)
+    },
+    [onContentChange]
+  )
+  const flushNow = useCallback(
+    (nextContent: ModuleContent) => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+        debounceTimerRef.current = null
+      }
+      pendingContentRef.current = null
+      onContentChange(nextContent)
+    },
+    [onContentChange]
+  )
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     const serialized = JSON.stringify(content ?? null)
@@ -423,6 +582,24 @@ export function ModuleBlockEditor({
       setBlocks(b)
     }
   }, [content])
+
+  useEffect(() => {
+    if (!mediaSearchOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMediaSearchOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [mediaSearchOpen])
+
+  useEffect(() => {
+    if (!videoSearchOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setVideoSearchOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [videoSearchOpen])
 
   const handleMainTextBlur = useCallback(
     (e: React.FocusEvent<HTMLTextAreaElement>) => {
@@ -437,9 +614,9 @@ export function ModuleBlockEditor({
     (type: EditorBlockType) => {
       const next = [...blocks, createNewBlock(type)]
       setBlocks(next)
-      onContentChange(mainTextAndBlocksToContent(mainText, next))
+      scheduleDebouncedFlush(mainTextAndBlocksToContent(mainText, next))
     },
-    [mainText, blocks, onContentChange]
+    [mainText, blocks, scheduleDebouncedFlush]
   )
 
   const insertImageBlock = useCallback(
@@ -450,27 +627,40 @@ export function ModuleBlockEditor({
       }
       const next = [...blocks, newBlock]
       setBlocks(next)
-      onContentChange(mainTextAndBlocksToContent(mainText, next))
+      scheduleDebouncedFlush(mainTextAndBlocksToContent(mainText, next))
     },
-    [mainText, blocks, onContentChange]
+    [mainText, blocks, scheduleDebouncedFlush]
+  )
+
+  const insertVideoBlock = useCallback(
+    (data: { url: string; title?: string; attribution?: string }) => {
+      const newBlock = createNewBlock('video')
+      if (newBlock.type === 'video') {
+        newBlock.data = { url: data.url, title: data.title ?? data.attribution ?? '' }
+      }
+      const next = [...blocks, newBlock]
+      setBlocks(next)
+      scheduleDebouncedFlush(mainTextAndBlocksToContent(mainText, next))
+    },
+    [mainText, blocks, scheduleDebouncedFlush]
   )
 
   const updateBlock = useCallback(
     (index: number, data: EditorBlock['data']) => {
       const next = blocks.map((b, i) => (i === index ? { ...b, data } : b)) as EditorBlock[]
       setBlocks(next)
-      onContentChange(mainTextAndBlocksToContent(mainText, next))
+      scheduleDebouncedFlush(mainTextAndBlocksToContent(mainText, next))
     },
-    [mainText, blocks, onContentChange]
+    [mainText, blocks, scheduleDebouncedFlush]
   )
 
   const removeBlock = useCallback(
     (index: number) => {
       const next = blocks.filter((_, i) => i !== index)
       setBlocks(next)
-      onContentChange(mainTextAndBlocksToContent(mainText, next))
+      flushNow(mainTextAndBlocksToContent(mainText, next))
     },
-    [mainText, blocks, onContentChange]
+    [mainText, blocks, flushNow]
   )
 
   const handleDragEnd = useCallback(
@@ -482,9 +672,9 @@ export function ModuleBlockEditor({
       if (oldIndex === -1 || newIndex === -1) return
       const next = arrayMove(blocks, oldIndex, newIndex)
       setBlocks(next)
-      onContentChange(mainTextAndBlocksToContent(mainText, next))
+      flushNow(mainTextAndBlocksToContent(mainText, next))
     },
-    [mainText, blocks, onContentChange]
+    [mainText, blocks, flushNow]
   )
 
   useEffect(() => {
@@ -553,6 +743,24 @@ export function ModuleBlockEditor({
     }
   }, [mediaQuery, mediaSource])
 
+  const runVideoSearch = useCallback(async () => {
+    if (!videoQuery.trim()) return
+    setVideoLoading(true)
+    setVideoResults([])
+    try {
+      const res = await fetch(
+        `/api/media/search-videos?q=${encodeURIComponent(videoQuery.trim())}`
+      )
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Video search failed')
+      setVideoResults(Array.isArray(data) ? data : [])
+    } catch {
+      setVideoResults([])
+    } finally {
+      setVideoLoading(false)
+    }
+  }, [videoQuery])
+
   const handleUploadImage = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
@@ -566,7 +774,14 @@ export function ModuleBlockEditor({
         const res = await fetch('/api/media/upload', { method: 'POST', body: form })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error ?? 'Upload failed')
-        insertImageBlock({ url: data.url, alt: file.name.replace(/\.[^.]+$/, ''), attribution: 'Uploaded' })
+        const url = data.url as string
+        const alt = file.name.replace(/\.[^.]+$/, '')
+        if (hotspotUploadCallbackRef.current) {
+          hotspotUploadCallbackRef.current(url)
+          hotspotUploadCallbackRef.current = null
+        } else {
+          insertImageBlock({ url, alt, attribution: 'Uploaded' })
+        }
       } catch {
         // Error could be shown via toast
       } finally {
@@ -575,6 +790,48 @@ export function ModuleBlockEditor({
     },
     [courseId, disabled, insertImageBlock]
   )
+
+  const openImageSearchForHotspot = useCallback((onSelected: (url: string, alt?: string) => void) => {
+    hotspotImageCallbackRef.current = onSelected
+    setMediaSearchOpen(true)
+  }, [])
+
+  const requestImageUploadForHotspot = useCallback((onSelected: (url: string) => void) => {
+    hotspotUploadCallbackRef.current = onSelected
+    uploadInputRef.current?.click()
+  }, [])
+
+  const handleAudioUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      e.target.value = ''
+      if (!file || disabled) return
+      setUploadLoading(true)
+      try {
+        const form = new FormData()
+        form.set('file', file)
+        if (courseId) form.set('course_id', courseId)
+        const res = await fetch('/api/media/upload', { method: 'POST', body: form })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error ?? 'Upload failed')
+        const url = data.url as string
+        if (audioUploadCallbackRef.current) {
+          audioUploadCallbackRef.current(url)
+          audioUploadCallbackRef.current = null
+        }
+      } catch {
+        // Error could be shown via toast
+      } finally {
+        setUploadLoading(false)
+      }
+    },
+    [courseId, disabled]
+  )
+
+  const requestAudioUploadForBlock = useCallback((onSelected: (url: string) => void) => {
+    audioUploadCallbackRef.current = onSelected
+    audioUploadInputRef.current?.click()
+  }, [])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -659,12 +916,27 @@ export function ModuleBlockEditor({
           >
             <Search className="w-3 h-3" />Search image
           </button>
+          <button
+            type="button"
+            onClick={() => setVideoSearchOpen(true)}
+            disabled={disabled}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all"
+          >
+            <Video className="w-3 h-3" />Search video
+          </button>
           <input
             ref={uploadInputRef}
             type="file"
             accept="image/jpeg,image/png,image/gif,image/webp"
             className="hidden"
             onChange={handleUploadImage}
+          />
+          <input
+            ref={audioUploadInputRef}
+            type="file"
+            accept=".mp3,.wav,.ogg,.m4a,audio/mpeg,audio/wav,audio/ogg,audio/x-m4a,audio/mp4"
+            className="hidden"
+            onChange={handleAudioUpload}
           />
           <button
             type="button"
@@ -680,7 +952,7 @@ export function ModuleBlockEditor({
 
       {mediaSearchOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setMediaSearchOpen(false)}>
-          <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-slate-700">
               <h3 className="text-sm font-semibold text-white">Search image</h3>
               <button type="button" onClick={() => setMediaSearchOpen(false)} className="p-1 text-slate-400 hover:text-white rounded">
@@ -688,6 +960,9 @@ export function ModuleBlockEditor({
               </button>
             </div>
             <div className="p-4 space-y-3">
+              {mediaSource === 'google' && (
+                <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Powered by Google Images</p>
+              )}
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -699,12 +974,12 @@ export function ModuleBlockEditor({
                 />
                 <select
                   value={mediaSource}
-                  onChange={(e) => setMediaSource(e.target.value as 'pexels' | 'unsplash' | 'google')}
+                  onChange={(e) => setMediaSource(e.target.value as 'google' | 'pexels' | 'unsplash')}
                   className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500"
                 >
+                  <option value="google">Google</option>
                   <option value="pexels">Pexels</option>
                   <option value="unsplash">Unsplash</option>
-                  <option value="google">Google</option>
                 </select>
                 <button
                   type="button"
@@ -716,14 +991,20 @@ export function ModuleBlockEditor({
                   Search
                 </button>
               </div>
-              <div className="grid grid-cols-4 gap-2 overflow-y-auto max-h-[50vh] min-h-[120px]">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 overflow-y-auto max-h-[50vh] min-h-[120px]">
                 {mediaResults.map((img, i) => (
                   <button
                     key={i}
                     type="button"
                     onClick={() => {
-                      insertImageBlock({ url: img.url, alt: img.alt, attribution: img.attribution })
-                      setMediaSearchOpen(false)
+                      if (hotspotImageCallbackRef.current) {
+                        hotspotImageCallbackRef.current(img.url, img.alt)
+                        hotspotImageCallbackRef.current = null
+                        setMediaSearchOpen(false)
+                      } else {
+                        insertImageBlock({ url: img.url, alt: img.alt, attribution: img.attribution })
+                        setMediaSearchOpen(false)
+                      }
                     }}
                     className="aspect-square rounded-lg border-2 border-slate-700 hover:border-indigo-500 overflow-hidden bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
@@ -743,6 +1024,70 @@ export function ModuleBlockEditor({
         </div>
       )}
 
+      {videoSearchOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setVideoSearchOpen(false)}>
+          <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-slate-700">
+              <h3 className="text-sm font-semibold text-white">Search video (Pexels)</h3>
+              <button type="button" onClick={() => setVideoSearchOpen(false)} className="p-1 text-slate-400 hover:text-white rounded">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Powered by Pexels — free stock videos</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={videoQuery}
+                  onChange={(e) => setVideoQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && runVideoSearch()}
+                  placeholder="e.g. teamwork, office, nature..."
+                  className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={runVideoSearch}
+                  disabled={videoLoading || !videoQuery.trim()}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white"
+                >
+                  {videoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  Search
+                </button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto max-h-[50vh] min-h-[120px]">
+                {videoResults.map((v, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      insertVideoBlock({ url: v.url, title: v.title, attribution: v.attribution })
+                      setVideoSearchOpen(false)
+                    }}
+                    className="rounded-lg border-2 border-slate-700 hover:border-indigo-500 overflow-hidden bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-left"
+                  >
+                    <div className="aspect-video bg-slate-800">
+                      {v.thumbnailUrl ? (
+                        <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Video className="w-8 h-8 text-slate-600" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="p-2 text-[10px] text-slate-500 truncate" title={v.attribution ?? v.title}>
+                      {v.attribution ?? v.title ?? 'Pexels video'}
+                    </p>
+                  </button>
+                ))}
+              </div>
+              {videoResults.length === 0 && !videoLoading && videoQuery.trim() && (
+                <p className="text-xs text-slate-500 text-center py-4">No videos found. Try another query or add PEXELS_API_KEY in .env.local.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {blocks.length > 0 && (
         <div className="space-y-2">
           <span className="text-xs text-slate-500">Blocks (drag to reorder)</span>
@@ -756,6 +1101,10 @@ export function ModuleBlockEditor({
                     onUpdate={(data) => updateBlock(index, data)}
                     onRemove={() => removeBlock(index)}
                     disabled={disabled}
+                    onOpenImageSearch={openImageSearchForHotspot}
+                    onRequestImageUpload={requestImageUploadForHotspot}
+                    onRequestAudioUpload={requestAudioUploadForBlock}
+                    uploadLoading={uploadLoading}
                   />
                 ))}
               </div>

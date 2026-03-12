@@ -6,15 +6,17 @@ import Link from 'next/link'
 import {
   ArrowLeft, Plus, Trash2, GripVertical, Globe, FileText,
   ChevronDown, ChevronUp, Loader2, CheckCircle2, Sparkles, Wand2, LayoutList, Zap,
-  CircleHelp, RefreshCcw, Eye, Timer, Palette
+  CircleHelp, RefreshCcw, Eye, Timer, Palette, Video, Mic, X
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSidebarContent } from '@/contexts/SidebarContentContext'
 import { ContentToolsPanel } from '@/components/content/ContentToolsPanel'
+import { ProjectMediaPeek } from '@/components/content/ProjectMediaPeek'
 import { ModuleBlockEditor } from '@/components/content/ModuleBlockEditor'
 import { getModuleBodyText } from '@/lib/contentBlocks'
 import { LEARNING_PERSONAS, type LearningPersonaSlug } from '@/lib/themes/learningPersonas'
 import type { ModuleContent } from '@/types/content'
+import type { VideoScene, DialogueSegment } from '@/types/content'
 
 interface QuizQuestion {
   id: string
@@ -44,6 +46,12 @@ interface Course {
   template?: string | null
   settings?: {
     module_completion?: Record<string, { type: 'mark_button' | 'min_time'; min_time_secs?: number }>
+    include_video?: boolean
+    include_podcast?: boolean
+    video_scenes?: VideoScene[]
+    podcast_dialogue?: DialogueSegment[]
+    video_generation_status?: 'idle' | 'generating' | 'complete' | 'failed'
+    podcast_generation_status?: 'idle' | 'generating' | 'complete' | 'failed'
   } | null
   modules: Module[]
 }
@@ -65,8 +73,16 @@ export default function CourseEditorPage() {
   const [generatingAllModules, setGeneratingAllModules] = useState(false)
   const hasAutoFilledRef = useRef(false)
   const [aiPrompt, setAiPrompt] = useState<Record<string, string>>({})
+  const [includeWebResearch, setIncludeWebResearch] = useState(false)
+  const [lastGeneratedReferences, setLastGeneratedReferences] = useState<{ moduleId: string; references: { title: string; link: string }[] } | null>(null)
+  const [showMediaPeek, setShowMediaPeek] = useState(false)
+  const [viewMediaSheet, setViewMediaSheet] = useState<'video' | 'podcast' | null>(null)
   const [showAiPanel, setShowAiPanel] = useState<string | null>(null)
   const [generatingQuiz, setGeneratingQuiz] = useState<string | null>(null)
+  const [generatingVideo, setGeneratingVideo] = useState(false)
+  const [generatingPodcast, setGeneratingPodcast] = useState(false)
+  const [videoGenStep, setVideoGenStep] = useState<'script' | 'audio' | null>(null)
+  const [podcastGenStep, setPodcastGenStep] = useState<'script' | 'audio' | null>(null)
 
   const fetchCourse = useCallback(async () => {
     const res = await fetch(`/api/courses/${id}`)
@@ -78,6 +94,15 @@ export default function CourseEditorPage() {
   }, [id, router])
 
   useEffect(() => { fetchCourse() }, [fetchCourse])
+
+  useEffect(() => {
+    if (!viewMediaSheet) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setViewMediaSheet(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [viewMediaSheet])
 
   // Auto-fill empty modules once on first load via curriculum-aware batch endpoint
   const [autoFillProgress, setAutoFillProgress] = useState<string>('')
@@ -179,10 +204,10 @@ export default function CourseEditorPage() {
   }, [])
 
   // Inject content development panel into sidebar while on this page
-  const sidebarContent = useSidebarContent()
+  const { setSidebarContent } = useSidebarContent()
   useEffect(() => {
-    if (!sidebarContent || !course) return
-    sidebarContent.setSidebarContent(
+    if (!setSidebarContent || !course) return
+    setSidebarContent(
       <ContentToolsPanel
         onGenerateOutline={generateOutline}
         onAddModule={() => addModule()}
@@ -196,12 +221,16 @@ export default function CourseEditorPage() {
           }, 100)
         }}
         onPromptIdeaSelect={(idea) => {
-          if (expandedModule) setAiPrompt((p) => ({ ...p, [expandedModule]: idea }))
+          if (expandedModule) {
+            setAiPrompt((p) => ({ ...p, [expandedModule]: idea }))
+            if (idea === 'Research from the web and cite sources') setIncludeWebResearch(true)
+          }
         }}
+        onOpenMediaPeek={() => setShowMediaPeek(true)}
       />
     )
-    return () => { sidebarContent.setSidebarContent(null) }
-  }, [sidebarContent, course, generatingOutline, expandedModule])
+    return () => { setSidebarContent(null) }
+  }, [setSidebarContent, course, generatingOutline, expandedModule])
 
   async function saveCourse(updates: Partial<Course>) {
     if (!course) return
@@ -304,7 +333,8 @@ export default function CourseEditorPage() {
           .slice(0, 250),
       }))
 
-    const res = await fetch('/api/ai/generate-module', {
+    const endpoint = includeWebResearch ? '/api/ai/generate-module-with-research' : '/api/ai/generate-module'
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -320,6 +350,14 @@ export default function CourseEditorPage() {
     if (!res.ok) { setError(data.error); setGeneratingModule(null); return }
 
     await saveModule(moduleId, { content: { type: 'text', body: data.content } })
+    if (includeWebResearch && Array.isArray(data.references) && data.references.length > 0) {
+      setLastGeneratedReferences({
+        moduleId,
+        references: data.references.map((r: { title?: string; link?: string }) => ({ title: r.title ?? '', link: r.link ?? '' })),
+      })
+    } else {
+      setLastGeneratedReferences(null)
+    }
     setShowAiPanel(null)
     setAiPrompt((p) => ({ ...p, [moduleId]: '' }))
     setGeneratingModule(null)
@@ -375,6 +413,110 @@ export default function CourseEditorPage() {
     saveModule(moduleId, { quiz: questions.length > 0 ? { questions } : null })
   }
 
+  async function generateVideoScriptAndAudio(courseId: string) {
+    setGeneratingVideo(true)
+    setVideoGenStep('script')
+    setError(null)
+    try {
+      // Step 1: generate script
+      const scriptRes = await fetch('/api/studio/video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId }),
+      })
+      const scriptData = await scriptRes.json()
+      if (!scriptRes.ok) {
+        setError(scriptData.error ?? 'Video script generation failed')
+        return
+      }
+      const scenes: VideoScene[] = (scriptData.script?.scenes ?? scriptData.scenes ?? []).map(
+        (s: { sceneNumber?: number; title?: string; narration?: string; visuals?: string; duration?: number }) => ({
+          sceneNumber: s.sceneNumber ?? 0,
+          title: s.title ?? '',
+          narration: s.narration ?? '',
+          visuals: s.visuals,
+          duration: s.duration,
+        })
+      )
+      const nextSettings = { ...(course?.settings || {}), video_scenes: scenes, video_generation_status: 'script_ready' as const }
+      await saveCourse({ settings: nextSettings })
+      setCourse((c) => c ? { ...c, settings: nextSettings } : c)
+
+      // Step 2: generate audio
+      setVideoGenStep('audio')
+      const audioRes = await fetch('/api/studio/generate-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId, type: 'video' }),
+      })
+      const audioData = await audioRes.json()
+      if (!audioRes.ok) {
+        setError(audioData.error ?? 'Video audio generation failed')
+      }
+      await fetchCourse()
+    } finally {
+      setGeneratingVideo(false)
+      setVideoGenStep(null)
+    }
+  }
+
+  async function generatePodcastScriptAndAudio(courseId: string) {
+    setGeneratingPodcast(true)
+    setPodcastGenStep('script')
+    setError(null)
+    try {
+      // Step 1: generate script (podcast route now saves dialogue directly to DB)
+      const scriptRes = await fetch('/api/studio/podcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId }),
+      })
+      const scriptData = await scriptRes.json()
+      if (!scriptRes.ok) {
+        setError(scriptData.error ?? 'Podcast script generation failed')
+        return
+      }
+      // Reload to pick up the dialogue saved by the podcast route
+      await fetchCourse()
+
+      // Step 2: generate audio
+      setPodcastGenStep('audio')
+      const audioRes = await fetch('/api/studio/generate-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId, type: 'podcast' }),
+      })
+      const audioData = await audioRes.json()
+      if (!audioRes.ok) {
+        setError(audioData.error ?? 'Podcast audio generation failed')
+      }
+      await fetchCourse()
+    } finally {
+      setGeneratingPodcast(false)
+      setPodcastGenStep(null)
+    }
+  }
+
+  async function handleVideoToggle(enabled: boolean) {
+    if (!course) return
+    const nextSettings = { ...(course.settings || {}), include_video: enabled }
+    await saveCourse({ settings: nextSettings })
+    setCourse((c) => c ? { ...c, settings: nextSettings } : c)
+    if (enabled && !(course.settings?.video_scenes?.length) && course.modules?.length) {
+      await generateVideoScriptAndAudio(course.id)
+    }
+  }
+
+  async function handlePodcastToggle(enabled: boolean) {
+    if (!course) return
+    const nextSettings = { ...(course.settings || {}), include_podcast: enabled }
+    await saveCourse({ settings: nextSettings })
+    setCourse((c) => c ? { ...c, settings: nextSettings } : c)
+    if (enabled && !(course.settings?.podcast_dialogue?.length) && course.modules?.length) {
+      await generatePodcastScriptAndAudio(course.id)
+    }
+  }
+
   if (loading) return (
     <div className="flex items-center justify-center h-full">
       <Loader2 className="w-6 h-6 text-slate-500 animate-spin" />
@@ -395,7 +537,15 @@ export default function CourseEditorPage() {
           {saved && <span className="flex items-center gap-1.5 text-green-400 text-xs"><CheckCircle2 className="w-3.5 h-3.5" />Saved</span>}
           {saving && <Loader2 className="w-3.5 h-3.5 text-slate-500 animate-spin" />}
           {course.modules.length > 0 && (
-            <Link
+            <>
+              <button
+                type="button"
+                onClick={() => document.getElementById('video-podcast-section')?.scrollIntoView({ behavior: 'smooth' })}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-slate-100 hover:bg-slate-800 transition-all"
+              >
+                <Video className="w-3.5 h-3.5" />Video &amp; Podcast
+              </button>
+              <Link
               href={`/courses/${id}/preview`}
               target="_blank"
               rel="noopener noreferrer"
@@ -403,6 +553,7 @@ export default function CourseEditorPage() {
             >
               <Eye className="w-3.5 h-3.5" />Preview
             </Link>
+            </>
           )}
           <button
             onClick={togglePublish}
@@ -562,6 +713,118 @@ export default function CourseEditorPage() {
             })}
           </div>
         </div>
+
+        {/* Video & Podcast */}
+        <div id="video-podcast-section" className="border-t border-slate-800 pt-4 mt-2 space-y-3">
+          <div className="flex items-center gap-2">
+            <Video className="w-4 h-4 text-slate-500 shrink-0" />
+            <span className="text-xs font-medium text-slate-400">Video &amp; Podcast</span>
+          </div>
+
+          {/* Video toggle */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={course.settings?.include_video ?? false}
+                disabled={generatingVideo || !course.modules?.length}
+                onChange={(e) => handleVideoToggle(e.target.checked)}
+                className="rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500 disabled:opacity-50"
+              />
+              Include video overview
+            </label>
+            {course.settings?.include_video && (
+              <div className="ml-6 text-[11px]">
+                {generatingVideo ? (
+                  <span className="flex items-center gap-1.5 text-indigo-400">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    {videoGenStep === 'script' ? 'Generating script…' : 'Generating audio…'}
+                  </span>
+                ) : (course.settings?.video_scenes?.length ?? 0) > 0 ? (
+                  <div className="space-y-1">
+                    <span className="flex items-center gap-1.5 text-green-400">
+                      ✓ Ready — {course.settings!.video_scenes!.length} scenes
+                      {course.settings!.video_scenes!.some((s) => s.audioDataURL)
+                        ? ', audio generated'
+                        : ' (no audio yet)'}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={generatingVideo || generatingPodcast}
+                      onClick={() => generateVideoScriptAndAudio(course.id)}
+                      className="text-slate-500 hover:text-slate-300 underline underline-offset-2 disabled:opacity-40"
+                    >
+                      Regenerate
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMediaSheet('video')}
+                      className="block mt-1 text-slate-500 hover:text-slate-300 underline underline-offset-2"
+                    >
+                      View scenes
+                    </button>
+                  </div>
+                ) : !course.modules?.length ? (
+                  <span className="text-amber-600">Add modules with content first</span>
+                ) : (
+                  <span className="text-slate-600">Pending generation…</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Podcast toggle */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={course.settings?.include_podcast ?? false}
+                disabled={generatingPodcast || !course.modules?.length}
+                onChange={(e) => handlePodcastToggle(e.target.checked)}
+                className="rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500 disabled:opacity-50"
+              />
+              Include podcast
+            </label>
+            {course.settings?.include_podcast && (
+              <div className="ml-6 text-[11px]">
+                {generatingPodcast ? (
+                  <span className="flex items-center gap-1.5 text-indigo-400">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    {podcastGenStep === 'script' ? 'Generating script…' : 'Generating audio…'}
+                  </span>
+                ) : (course.settings?.podcast_dialogue?.length ?? 0) > 0 ? (
+                  <div className="space-y-1">
+                    <span className="flex items-center gap-1.5 text-green-400">
+                      ✓ Ready — {course.settings!.podcast_dialogue!.length} segments
+                      {course.settings!.podcast_dialogue!.some((s) => s.audioDataURL)
+                        ? ', audio generated'
+                        : ' (no audio yet)'}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={generatingVideo || generatingPodcast}
+                      onClick={() => generatePodcastScriptAndAudio(course.id)}
+                      className="text-slate-500 hover:text-slate-300 underline underline-offset-2 disabled:opacity-40"
+                    >
+                      Regenerate
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMediaSheet('podcast')}
+                      className="block mt-1 text-slate-500 hover:text-slate-300 underline underline-offset-2"
+                    >
+                      View dialogue
+                    </button>
+                  </div>
+                ) : !course.modules?.length ? (
+                  <span className="text-amber-600">Add modules with content first</span>
+                ) : (
+                  <span className="text-slate-600">Pending generation…</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Modules */}
@@ -686,14 +949,31 @@ export default function CourseEditorPage() {
                       rows={2}
                       className="w-full bg-slate-800/80 border border-violet-500/20 rounded-lg text-slate-200 text-xs p-3 focus:outline-none focus:border-violet-400 resize-none placeholder-slate-500"
                     />
+                    <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={includeWebResearch}
+                        onChange={(e) => setIncludeWebResearch(e.target.checked)}
+                        className="rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500"
+                      />
+                      Include web research and citations
+                    </label>
+                    <p className="text-[10px] text-slate-500">When enabled, Sudar will search the web and cite sources in the content.</p>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => generateModuleContent(mod.id)}
                         disabled={generatingAllModules || !aiPrompt[mod.id]?.trim() || generatingModule === mod.id}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:bg-slate-700 disabled:text-slate-500 text-white text-xs font-medium rounded-lg transition-all"
+                        className={cn(
+                          'flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg transition-all',
+                          includeWebResearch
+                            ? 'bg-violet-600 hover:bg-violet-500 disabled:bg-slate-700 disabled:text-slate-500 text-white'
+                            : 'bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:opacity-50'
+                        )}
                       >
                         {generatingModule === mod.id ? (
                           <><Loader2 className="w-3.5 h-3.5 animate-spin" />Generating...</>
+                        ) : includeWebResearch ? (
+                          <><Sparkles className="w-3.5 h-3.5" />Research &amp; generate</>
                         ) : (
                           <><Sparkles className="w-3.5 h-3.5" />Generate content</>
                         )}
@@ -709,6 +989,29 @@ export default function CourseEditorPage() {
                       </button>
                     </div>
                   </div>
+                )}
+
+                {lastGeneratedReferences?.moduleId === mod.id && lastGeneratedReferences.references.length > 0 && (
+                  <details className="rounded-lg border border-slate-700 bg-slate-800/60 overflow-hidden">
+                    <summary className="px-3 py-2 text-xs font-medium text-slate-300 cursor-pointer hover:bg-slate-800">
+                      References — generated with web sources ({lastGeneratedReferences.references.length})
+                    </summary>
+                    <ul className="px-3 py-2 space-y-1.5 list-none">
+                      {lastGeneratedReferences.references.map((ref, i) => (
+                        <li key={i}>
+                          <a
+                            href={ref.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] text-violet-400 hover:text-violet-300 underline truncate block"
+                            title={ref.title}
+                          >
+                            [{i + 1}] {ref.title || ref.link}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
                 )}
 
                 {/* Content: SCORM placeholder or block editor */}
@@ -944,6 +1247,68 @@ export default function CourseEditorPage() {
           </div>
         ))}
       </div>
+
+      <ProjectMediaPeek
+        open={showMediaPeek}
+        onClose={() => setShowMediaPeek(false)}
+        course={course}
+        onScrollToVideoSection={() => document.getElementById('video-podcast-section')?.scrollIntoView({ behavior: 'smooth' })}
+      />
+
+      {viewMediaSheet && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          onClick={() => setViewMediaSheet(null)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-700 rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-slate-700 shrink-0">
+              <h2 className="text-sm font-semibold text-white">
+                {viewMediaSheet === 'video' ? 'Video scenes' : 'Podcast dialogue'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setViewMediaSheet(null)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 min-h-0">
+              {viewMediaSheet === 'video' && (course.settings?.video_scenes?.length ?? 0) > 0 && (
+                <ul className="space-y-2">
+                  {course.settings!.video_scenes!.map((s, i) => (
+                    <li key={i} className="rounded-lg border border-slate-700 bg-slate-800/60 p-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-medium text-slate-500 w-6">{s.sceneNumber}.</span>
+                        <span className="text-xs font-medium text-slate-200">{s.title || `Scene ${s.sceneNumber}`}</span>
+                        {s.audioDataURL && <span className="text-[10px] text-green-500">Audio</span>}
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 pl-8">{s.narration || '—'}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {viewMediaSheet === 'podcast' && (course.settings?.podcast_dialogue?.length ?? 0) > 0 && (
+                <ul className="space-y-2">
+                  {course.settings!.podcast_dialogue!.map((seg, i) => (
+                    <li key={i} className="rounded-lg border border-slate-700 bg-slate-800/60 p-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-medium text-slate-500 capitalize">{seg.speaker}:</span>
+                        {seg.audioDataURL && <span className="text-[10px] text-green-500">Audio</span>}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-1 line-clamp-3">{seg.text || '—'}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 
 interface SidebarContentContextValue {
   content: ReactNode
@@ -12,8 +12,9 @@ const SidebarContentContext = createContext<SidebarContentContextValue | null>(n
 export function SidebarContentProvider({ children }: { children: ReactNode }) {
   const [content, setContent] = useState<ReactNode>(null)
   const setSidebarContent = useCallback((node: ReactNode) => setContent(node), [])
+  const value = useMemo(() => ({ content, setSidebarContent }), [content, setSidebarContent])
   return (
-    <SidebarContentContext.Provider value={{ content, setSidebarContent }}>
+    <SidebarContentContext.Provider value={value}>
       {children}
     </SidebarContentContext.Provider>
   )

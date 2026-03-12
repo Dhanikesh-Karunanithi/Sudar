@@ -1,3 +1,7 @@
+**Sudar Studio** (SudarLab) — the admin/creator app for building courses, learning paths, and managing integrations (ALP API keys, embed Sudar, event ingestion).
+
+**User guide**: See [docs/STUDIO_USER_GUIDE.md](../docs/STUDIO_USER_GUIDE.md) in the repo root for full instructions (navigation, Integrations page, ALP API).
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

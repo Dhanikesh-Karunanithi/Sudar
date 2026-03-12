@@ -90,8 +90,55 @@ Or execute sequentially: A → B → C.
 
 ---
 
+## Action Plan D — LAMP / ALP (Build-First, Then Paper)
+
+**Objective**: Build ALP API, Moodle connector, and pilot plan first; then update the LAMP paper to reflect what was built; finally run pilot and apply for Claude-for-OSS.  
+**Strategic pillar**: Visibility, research credibility, and ecosystem (ALP).
+
+**Authoritative plan and tracker**:
+- **Long-term plan (build-first)**: [docs/LAMP_BUILD_PLAN.md](LAMP_BUILD_PLAN.md) — read this for full task descriptions, file paths, and acceptance criteria. Cursor agents must follow it and stay grounded via ECOSYSTEM.md and AGENTS.md.
+- **Progress tracker**: [docs/LAMP_BUILD_TRACKER.md](LAMP_BUILD_TRACKER.md) — update this when starting or completing any task (set Status to In progress / Done, update Last updated).
+
+**Execution order**: **Phase 1 Build** (B1 → B2–B4 → B5) → **Phase 2 Paper** (P1–P8) → **Phase 3** (O1 pilot, O2 Claude-for-OSS). Build first so the paper can accurately describe ALP and any improvements found during the build.
+
+### Task map (full detail in docs/LAMP_BUILD_PLAN.md; status in docs/LAMP_BUILD_TRACKER.md)
+
+| Phase | IDs | What |
+|-------|-----|------|
+| **1 — Build** | B1 | ALP API doc (docs/ALP_API.md or ECOSYSTEM subsection) |
+| | B2 | SudarMemory — event ingestion from Moodle/LRS |
+| | B3 | SudarChat — tutor in Moodle (block or LTI) |
+| | B4 | SudarRecommend — next-action block in Moodle |
+| | B5 | Pilot plan (docs/PILOT_PLAN.md) |
+| **2 — Paper** | P1–P8 | LAMP paper revisions (Background, stateless→stateful, ALP in paper, economics, evaluation, privacy, limitations, Claude) |
+| **3 — Pilot & OSS** | O1 | Pilot with partner(s); O2 = Claude-for-OSS application |
+
+**Definition of done for Plan D**: Phase 1 (B1–B5) Done → Phase 2 (P1–P8) Done → Phase 3 (O1, O2) Done. Track all status in **docs/LAMP_BUILD_TRACKER.md**.
+
+---
+
+## Execution Order and Agents
+
+| Plan | Can run in parallel with | Suggested order |
+|------|---------------------------|-----------------|
+| A (Studio) | B | A1 → A2 → A3 (then B) |
+| B (Learn) | A | B1 → B2 (can start after A1 if needed) |
+| C (Studio + Learn) | — | After A and B (depends on assign + due_date) |
+| D (LAMP & ALP) | — | Phase 1: B1→B2–B4→B5 (build); Phase 2: P1–P8 (paper); Phase 3: O1, O2. See docs/LAMP_BUILD_PLAN.md; track in docs/LAMP_BUILD_TRACKER.md. |
+
+**Using multiple agents**:  
+- **Agent 1**: Execute Plan A (Studio: assign path, due date, list assigned learners).  
+- **Agent 2**: Execute Plan B (Learn: certificate print, upcoming deadlines).  
+- **Agent 3**: After A and B, execute Plan C (compliance view + required/due soon on Learn).  
+- **Plan D**: Execute in phase order: **Build first** (B1 → B2–B4 → B5), then **Paper** (P1–P8), then **Pilot & OSS** (O1, O2). See docs/LAMP_BUILD_PLAN.md; update docs/LAMP_BUILD_TRACKER.md on each task completion.
+
+Or execute sequentially: A → B → C; then Phase 1 → Phase 2 → Phase 3 for Plan D.
+
+---
+
 ## Completion Checklist (Update as Done)
 
+**Plans A–C**
 - [x] **A1** Path assignment UI (Studio)
 - [x] **A2** Due date on assignment
 - [x] **A3** List assigned learners on path (Studio)
@@ -100,6 +147,15 @@ Or execute sequentially: A → B → C.
 - [x] **C1** Compliance view (Studio)
 - [x] **C2** Required / Due soon on Learn dashboard
 
+**Plan D — LAMP / ALP (build-first; track in docs/LAMP_BUILD_TRACKER.md)**
+- [ ] **B1** ALP API documentation
+- [ ] **B2** SudarMemory — event ingestion
+- [ ] **B3** SudarChat — tutor in Moodle
+- [ ] **B4** SudarRecommend — next-action in Moodle
+- [ ] **B5** Pilot plan (docs/PILOT_PLAN.md)
+- [ ] **P1–P8** Paper revisions (see LAMP_BUILD_PLAN.md)
+- [ ] **O1** Pilot with partner(s); **O2** Claude-for-OSS application
+
 ---
 
-*Last updated: Action plans A–C defined; execution to follow.*
+*Last updated: Plan D switched to build-first; see docs/LAMP_BUILD_PLAN.md and docs/LAMP_BUILD_TRACKER.md.*

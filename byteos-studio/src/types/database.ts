@@ -98,6 +98,34 @@ export type Database = {
         }
         Relationships: []
       }
+      integration_api_keys: {
+        Row: {
+          id: string
+          org_id: string
+          name: string
+          key_hash: string
+          key_prefix: string
+          created_at: string
+          last_used_at: string | null
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          name: string
+          key_hash: string
+          key_prefix: string
+          created_at?: string
+          last_used_at?: string | null
+        }
+        Update: {
+          org_id?: string
+          name?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+        }
+        Relationships: []
+      }
       learner_profiles: {
         Row: {
           id: string

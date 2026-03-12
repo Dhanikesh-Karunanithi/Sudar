@@ -276,20 +276,28 @@ export function RichModuleContent({
                   {renderMarkdown(section.content)}
                 </div>
               )}
-              {section.image?.url && (
-                <figure className="my-4">
-                  <img
-                    src={section.image.url}
-                    alt={section.image.alt ?? section.heading}
-                    className="rounded-lg border border-border max-w-full h-auto"
-                  />
-                  {section.image.attribution && (
-                    <figcaption className="text-xs text-muted-foreground mt-1">
-                      {section.image.attribution}
-                    </figcaption>
-                  )}
-                </figure>
-              )}
+              {section.image?.url && (() => {
+                const align = section.image.alignment ?? 'center'
+                const size = section.image.size ?? 'medium'
+                const alignClass = align === 'left' ? 'justify-start' : align === 'right' ? 'justify-end' : align === 'full' ? 'w-full' : 'justify-center'
+                const sizeClass = size === 'small' ? 'max-w-xs' : size === 'medium' ? 'max-w-md' : size === 'large' ? 'max-w-2xl' : 'w-full max-w-full'
+                return (
+                  <figure className={align !== 'full' ? `my-4 flex ${alignClass}` : 'my-4 w-full'}>
+                    <span className={cn('block', sizeClass)}>
+                      <img
+                        src={section.image.url}
+                        alt={section.image.alt ?? section.heading}
+                        className="rounded-lg border border-border w-full h-auto"
+                      />
+                      {section.image.attribution && (
+                        <figcaption className="text-xs text-muted-foreground mt-1">
+                          {section.image.attribution}
+                        </figcaption>
+                      )}
+                    </span>
+                  </figure>
+                )
+              })()}
               {section.items && section.items.length > 0 && (
                 <ul className="list-disc list-inside mt-2 text-sm text-muted-foreground space-y-1">
                   {section.items.map((item, i) => (

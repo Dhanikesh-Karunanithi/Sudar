@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, X, Send, Loader2, ExternalLink } from 'lucide-react'
+import { Sparkles, X, Send, Loader2, ExternalLink, Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { TutorAction, TutorBlock } from '@/types/tutor'
 import { GenerativeBlockRenderer } from './GenerativeBlockRenderer'
@@ -30,6 +30,7 @@ const STARTUP_QUESTIONS = [
 export function FloatingSudarChat() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [pastedText, setPastedText] = useState('')
@@ -131,7 +132,12 @@ export function FloatingSudarChat() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-24 right-6 z-[60] w-[calc(100vw-3rem)] max-w-[420px] h-[520px] liquid-glass flex flex-col overflow-hidden rounded-[2rem] shadow-2xl"
+            className={cn(
+              'fixed z-[60] liquid-glass flex flex-col overflow-hidden rounded-[2rem] shadow-2xl transition-all duration-200',
+              isExpanded
+                ? 'top-4 left-4 w-[calc(100vw-2rem)] max-w-[720px] h-[calc(100vh-6rem)]'
+                : 'bottom-24 right-6 w-[calc(100vw-3rem)] max-w-[420px] h-[520px]'
+            )}
           >
             <div className="p-5 border-b border-white/20 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
@@ -150,6 +156,15 @@ export function FloatingSudarChat() {
                 aria-label="Close"
               >
                 <X className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="p-2 text-muted-foreground hover:text-card-foreground transition-colors rounded-lg"
+                aria-label={isExpanded ? 'Collapse chat' : 'Expand chat'}
+                title={isExpanded ? 'Collapse chat' : 'Expand chat for full engagement'}
+              >
+                {isExpanded ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
               </button>
             </div>
 
@@ -191,6 +206,14 @@ export function FloatingSudarChat() {
                           : 'bg-muted/80 text-card-foreground border border-border'
                       )}
                     >
+                      {/* #region agent log */}
+                      {m.role === 'assistant' && (() => {
+                        const hasBlocks = (m.blocks?.length ?? 0) > 0
+                        const firstBlockType = m.blocks?.[0]?.type
+                        fetch('http://127.0.0.1:7701/ingest/4305abd0-a887-4162-9fa9-777888adc8ea', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'a39da6' }, body: JSON.stringify({ sessionId: 'a39da6', location: 'FloatingSudarChat.tsx:render', message: 'chat_render', data: { hasBlocks, blocksLength: m.blocks?.length ?? 0, firstBlockType, contentLength: m.content?.length ?? 0 }, timestamp: Date.now(), hypothesisId: 'B' }) }).catch(() => {})
+                        return null
+                      })()}
+                      {/* #endregion */}
                       {m.role === 'assistant' && m.blocks?.length ? (
                         <GenerativeBlockRenderer
                           blocks={m.blocks}
@@ -205,6 +228,7 @@ export function FloatingSudarChat() {
                               }),
                             }).catch(() => {})
                           }}
+                          onQuizRetry={() => handleSendWithMessage('Give me another quiz question')}
                         />
                       ) : (
                         <>
