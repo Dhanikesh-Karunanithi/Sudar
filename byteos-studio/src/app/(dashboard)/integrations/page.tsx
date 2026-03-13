@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Plug, Key, Code, Copy, Check, ExternalLink, MessageSquare, LayoutDashboard, Plus, Trash2, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { Plug, Key, Code, Copy, Check, ExternalLink, MessageSquare, LayoutDashboard, Plus, Trash2, Loader2, Building2, Users, Database, Shield, ListOrdered } from 'lucide-react'
 import { IntegrationVisualGuide } from '@/components/integrations/IntegrationVisualGuide'
 
 const LEARN_BASE_URL =
@@ -119,10 +120,68 @@ export default function IntegrationsPage() {
         </div>
       </div>
 
+      {/* Provisioning checklist — one place for all levers */}
+      <section className="mb-10">
+        <h2 className="flex items-center gap-2 text-base font-medium text-slate-200 mb-4">
+          <ListOrdered className="w-4 h-4 text-indigo-400" />
+          Provisioning &amp; integrations checklist
+        </h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Set up Sudar in order: identity, then directory sync, LMS/ALP, AI keys, and data ingestion.
+        </p>
+        <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 list-none">
+          <li>
+            <Link href="/help#identity" className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-800/50 p-3 block hover:border-slate-600 transition-colors">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400 text-sm font-medium">1</span>
+              <div>
+                <span className="text-sm font-medium text-slate-300">Identity</span>
+                <p className="text-xs text-slate-500 mt-0.5">SSO (SAML/OIDC) via Supabase Auth</p>
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link href="/help#directory" className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-800/50 p-3 block hover:border-slate-600 transition-colors">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400 text-sm font-medium">2</span>
+              <div>
+                <span className="text-sm font-medium text-slate-300">Directory</span>
+                <p className="text-xs text-slate-500 mt-0.5">User sync (Provisioning API or HRIS/SIS)</p>
+              </div>
+            </Link>
+          </li>
+          <li>
+            <a href="#alp" className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-800/50 p-3 block hover:border-slate-600 transition-colors">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400 text-sm font-medium">3</span>
+              <div>
+                <span className="text-sm font-medium text-slate-300">LMS / LTI</span>
+                <p className="text-xs text-slate-500 mt-0.5">ALP API keys, LTI 1.3, embed (below)</p>
+              </div>
+            </a>
+          </li>
+          <li>
+            <Link href="/settings/keys" className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-800/50 p-3 block hover:border-slate-600 transition-colors">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400 text-sm font-medium">4</span>
+              <div>
+                <span className="text-sm font-medium text-slate-300">AI &amp; API keys</span>
+                <p className="text-xs text-slate-500 mt-0.5">Chat, embeddings, TTS, media</p>
+              </div>
+            </Link>
+          </li>
+          <li>
+            <Link href="/help#data" className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-800/50 p-3 block hover:border-slate-600 transition-colors">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400 text-sm font-medium">5</span>
+              <div>
+                <span className="text-sm font-medium text-slate-300">Data</span>
+                <p className="text-xs text-slate-500 mt-0.5">ALP events, batch ingestion</p>
+              </div>
+            </Link>
+          </li>
+        </ol>
+      </section>
+
       <IntegrationVisualGuide />
 
       {/* ALP / API access */}
-      <section className="mb-10">
+      <section id="alp" className="mb-10">
         <h2 className="flex items-center gap-2 text-base font-medium text-slate-200 mb-4">
           <Key className="w-4 h-4 text-indigo-400" />
           ALP & API access
@@ -130,7 +189,8 @@ export default function IntegrationsPage() {
         <p className="text-sm text-slate-400 mb-4">
           The <strong className="text-slate-300">Adaptive Learning Layer (ALP)</strong> lets Moodle, Canvas, or other
           LMSs send learning events and use the Sudar tutor and next-action APIs without replacing your LMS. Your
-          external systems call the Learn app with an API key.
+          external systems call the Learn app with an API key. For <strong className="text-slate-300">LTI 1.3</strong> (Canvas, Blackboard, Moodle), <strong className="text-slate-300">SCORM 1.2</strong>, and <strong className="text-slate-300">xAPI/LRS</strong>, see the Integration guide and{' '}
+          <a href="https://github.com/Dhanikesh-Karunanithi/Sudar/blob/main/docs/ENTERPRISE_PROVISIONING.md#lti--lms-options" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300">Enterprise provisioning → LTI / LMS options</a>.
         </p>
 
         <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4 space-y-4">
@@ -235,7 +295,7 @@ export default function IntegrationsPage() {
 
           <div className="pt-2">
             <a
-              href="https://github.com/Dhanikesh-Karunanithi/Sudar/blob/main/docs/ALP_API.md"
+              href="https://github.com/Dhanikesh-Karunanithi/Sudar"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300"
@@ -243,7 +303,7 @@ export default function IntegrationsPage() {
               <ExternalLink className="w-4 h-4" />
               ALP API documentation
             </a>
-            <span className="text-slate-500 text-sm ml-1">(endpoints, request bodies, event ingestion)</span>
+            <span className="text-slate-500 text-sm ml-1">(docs/ALP_API.md in repo — endpoints, request bodies, event ingestion)</span>
           </div>
         </div>
       </section>
@@ -357,7 +417,7 @@ export default function IntegrationsPage() {
       </section>
 
       {/* Event ingestion */}
-      <section>
+      <section className="mb-10">
         <h2 className="flex items-center gap-2 text-base font-medium text-slate-200 mb-4">
           <Plug className="w-4 h-4 text-indigo-400" />
           Event ingestion (SudarMemory)
@@ -375,6 +435,103 @@ export default function IntegrationsPage() {
             Map your LMS user to Sudar <code className="text-slate-400">user_id</code> (e.g. via LTI or SSO). See ALP API
             doc for <code className="text-slate-400">event_type</code> values and schema.
           </p>
+        </div>
+      </section>
+
+      {/* Enterprise & university */}
+      <section>
+        <h2 className="flex items-center gap-2 text-base font-medium text-slate-200 mb-4">
+          <Building2 className="w-4 h-4 text-indigo-400" />
+          Enterprise & university setup
+        </h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Connect Sudar to existing identity, directory, and data systems. Configure SSO, user sync, and batch event
+          ingestion from the admin portal and documentation.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+          <Link href="/settings/keys" className="rounded-lg border border-slate-700 bg-slate-800/50 p-4 block hover:border-slate-600 transition-colors">
+            <div className="flex items-center gap-2 mb-2">
+              <Key className="w-4 h-4 text-indigo-400" />
+              <span className="text-sm font-medium text-slate-300">AI & API Keys</span>
+            </div>
+            <p className="text-xs text-slate-500 mb-3">
+              Configure AI providers (OpenRouter, Together, OpenAI, Anthropic), embeddings, TTS, and media keys. See status and step-by-step instructions.
+            </p>
+            <span className="text-xs text-indigo-400 hover:text-indigo-300">Open AI & API Keys →</span>
+          </Link>
+          <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Shield className="w-4 h-4 text-indigo-400" />
+              <span className="text-sm font-medium text-slate-300">SSO (SAML / OIDC)</span>
+            </div>
+            <p className="text-xs text-slate-500 mb-3">
+              Single sign-on with Azure AD, Okta, Google Workspace, or other identity providers. Configure in your
+              Supabase project (Auth → Providers) and optionally store status here.
+            </p>
+            <p className="text-xs text-slate-500 mb-2">
+              <ExternalLink className="w-3 h-3 inline mr-0.5" />
+              <a
+                href="https://supabase.com/docs/guides/auth/sso"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-400 hover:text-indigo-300"
+              >
+                Supabase SSO docs
+              </a>
+            </p>
+            <Link href="/help" className="text-xs text-indigo-400 hover:text-indigo-300">How to set this up →</Link>
+          </div>
+          <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="w-4 h-4 text-indigo-400" />
+              <span className="text-sm font-medium text-slate-300">Directory / user sync</span>
+            </div>
+            <p className="text-xs text-slate-500 mb-3">
+              Sync users from HRIS (Workday, BambooHR, Rippling) or university SIS via a provisioning API or webhooks.
+              Map external user IDs to Sudar for idempotent sync.
+            </p>
+            <p className="text-xs text-slate-500 mb-2">
+              See the integration guide for user mapping (LTI/SSO or directory sync) and ALP events.
+            </p>
+            <Link href="/help" className="text-xs text-indigo-400 hover:text-indigo-300">How to set this up →</Link>
+          </div>
+          <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Database className="w-4 h-4 text-indigo-400" />
+              <span className="text-sm font-medium text-slate-300">Data lakes & batch ingestion</span>
+            </div>
+            <p className="text-xs text-slate-500 mb-3">
+              Use the same ALP events API with your API key and Learn base URL. Batch jobs can read from your data
+              lake (e.g. S3, Delta) and POST events; map your user identifier to Sudar <code className="text-slate-400">user_id</code> (email or external_id).
+            </p>
+            <p className="text-xs text-slate-500 mb-2">
+              Use the base URL and keys above; see ALP API and integration guide for event schema.
+            </p>
+            <Link href="/help" className="text-xs text-indigo-400 hover:text-indigo-300">How to set this up →</Link>
+          </div>
+        </div>
+        <p className="text-sm text-slate-400 mb-3">
+          <strong className="text-slate-300">Recommended for…</strong> K-12: Google SSO, Clever/ClassLink, ALP + LTI. Higher ed: SAML/OIDC, SIS sync, LTI 1.3, SCORM. Corporate: Azure AD/Okta, Workday/BambooHR sync, ALP + xAPI. See Help &amp; Guides and the enterprise provisioning doc in repo.
+        </p>
+        <div className="mt-4 rounded-lg border border-slate-700 bg-slate-800/30 p-4 space-y-2">
+          <a
+            href="https://github.com/Dhanikesh-Karunanithi/Sudar/blob/main/docs/INTEGRATION_GUIDE.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 block"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Integration guide — LMS, ERP, and enterprise setup
+          </a>
+          <a
+            href="https://github.com/Dhanikesh-Karunanithi/Sudar/blob/main/docs/ENTERPRISE_PROVISIONING.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 block"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Enterprise provisioning — recommended setups (K-12, Higher ed, Corporate) and scaling
+          </a>
         </div>
       </section>
     </div>

@@ -15,6 +15,8 @@ import {
   ChevronRight,
   ArrowLeft,
   Plug,
+  Key,
+  HelpCircle,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -40,7 +42,9 @@ const contentNavItems = [
 const organizationNavItems = [
   { label: 'Users', href: '/users', icon: Users },
   { label: 'Integrations', href: '/integrations', icon: Plug },
+  { label: 'AI & API Keys', href: '/settings/keys', icon: Key },
   { label: 'Org settings', href: '/settings', icon: Settings },
+  { label: 'Help & Guides', href: '/help', icon: HelpCircle },
 ]
 
 export function Sidebar({ user, orgRole = 'LEARNER' }: SidebarProps) {

@@ -1,6 +1,7 @@
 # ByteOS — Root .gitignore
 # Environment and secrets (never commit)
 .env
+.env *
 .env.*
 !.env.example
 *.local

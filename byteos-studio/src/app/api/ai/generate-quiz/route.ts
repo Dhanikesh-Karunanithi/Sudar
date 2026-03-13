@@ -6,15 +6,14 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-
-const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
-const MODEL = 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
+import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!process.env.TOGETHER_API_KEY) return NextResponse.json({ error: 'TOGETHER_API_KEY not configured' }, { status: 500 })
+  const configError = getChatConfigError()
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
   const admin = createAdminClient()
   const { module_id, course_title, module_title, content, difficulty = 'intermediate', num_questions = 4 } = await request.json()
@@ -54,16 +53,12 @@ Return ONLY valid JSON in this exact structure:
   ]
 }`
 
-  const res = await fetch(TOGETHER_API_URL, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${process.env.TOGETHER_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: MODEL, messages: [{ role: 'user', content: prompt }], max_tokens: 1200, temperature: 0.5 }),
-  })
-
-  if (!res.ok) return NextResponse.json({ error: 'AI generation failed' }, { status: 500 })
-
-  const data = await res.json()
-  const raw = data.choices?.[0]?.message?.content?.trim() ?? ''
+  const { content: raw } = await chatCompletion({
+    messages: [{ role: 'user', content: prompt }],
+    max_tokens: 1200,
+    temperature: 0.5,
+  }).catch(() => ({ content: '' }))
+  if (!raw) return NextResponse.json({ error: 'AI generation failed' }, { status: 500 })
 
   let quiz: { questions: unknown[] }
   try {

@@ -1,10 +1,13 @@
 """
 ByteOS Intelligence — Content Generation Routes
 Handles course content generation requests from ByteOS Studio.
+Uses provider-agnostic AI client (OpenRouter, Together, OpenAI, Anthropic, custom).
 """
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
+
+from src.core.ai_client import _get_provider
 
 router = APIRouter()
 
@@ -34,11 +37,12 @@ async def generate_content(request: ContentGenerateRequest):
     Called by ByteOS Studio's course builder.
     Provider fallback: Together AI → OpenAI → Anthropic.
     """
-    # TODO: Implement full generation pipeline from bytengine
+    # TODO: Implement full generation pipeline; use ai_client.chat_completion() when ready
+    provider_used = _get_provider()
     return ContentGenerateResponse(
         course_title="Generated Course",
         modules=[],
         generation_time_ms=0,
-        provider_used="together",
+        provider_used=provider_used,
         completeness_score=0.0,
     )

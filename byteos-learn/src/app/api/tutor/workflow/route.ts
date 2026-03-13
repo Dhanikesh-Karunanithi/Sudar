@@ -4,8 +4,7 @@
  */
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-
-const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
+import { chatCompletion, getChatConfigError, getDefaultMemoryModel } from '@/lib/ai/chat'
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,13 +30,10 @@ export async function POST(request: NextRequest) {
     if (type === 'summarize') {
       steps.push('Extract content')
       steps.push('Summarize')
-      const apiKey = process.env.TOGETHER_API_KEY
-      if (!apiKey) return NextResponse.json({ error: 'AI not configured' }, { status: 500 })
-      const res = await fetch(TOGETHER_API_URL, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: process.env.TOGETHER_MEMORY_MODEL?.trim() || 'google/gemma-3n-E4B-it',
+      if (getChatConfigError()) return NextResponse.json({ error: 'AI not configured' }, { status: 500 })
+      try {
+        const { content: resContent } = await chatCompletion({
+          model: getDefaultMemoryModel(),
           messages: [
             {
               role: 'user',
@@ -46,28 +42,18 @@ export async function POST(request: NextRequest) {
           ],
           max_tokens: 500,
           temperature: 0.3,
-        }),
-      })
-      if (!res.ok) {
-        return NextResponse.json({
-          workflow_id: workflowId,
-          status: 'error',
-          steps,
-          summary: 'Summarization failed',
         })
+        result = resContent ?? ''
+        summary = result.slice(0, 200) + (result.length > 200 ? '…' : '')
+      } catch {
+        return NextResponse.json({ workflow_id: workflowId, status: 'error', steps, summary: 'Summarization failed' })
       }
-      const data = await res.json()
-      result = data.choices?.[0]?.message?.content?.trim() ?? ''
-      summary = result.slice(0, 200) + (result.length > 200 ? '…' : '')
     } else if (type === 'extract_terms') {
       steps.push('Extract key terms')
-      const apiKey = process.env.TOGETHER_API_KEY
-      if (!apiKey) return NextResponse.json({ error: 'AI not configured' }, { status: 500 })
-      const res = await fetch(TOGETHER_API_URL, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: process.env.TOGETHER_MEMORY_MODEL?.trim() || 'google/gemma-3n-E4B-it',
+      if (getChatConfigError()) return NextResponse.json({ error: 'AI not configured' }, { status: 500 })
+      try {
+        const { content: resContent } = await chatCompletion({
+          model: getDefaultMemoryModel(),
           messages: [
             {
               role: 'user',
@@ -76,19 +62,12 @@ export async function POST(request: NextRequest) {
           ],
           max_tokens: 400,
           temperature: 0.2,
-        }),
-      })
-      if (!res.ok) {
-        return NextResponse.json({
-          workflow_id: workflowId,
-          status: 'error',
-          steps,
-          summary: 'Extraction failed',
         })
+        result = resContent ?? ''
+        summary = result.slice(0, 200) + (result.length > 200 ? '…' : '')
+      } catch {
+        return NextResponse.json({ workflow_id: workflowId, status: 'error', steps, summary: 'Extraction failed' })
       }
-      const data = await res.json()
-      result = data.choices?.[0]?.message?.content?.trim() ?? ''
-      summary = result.slice(0, 200) + (result.length > 200 ? '…' : '')
     } else {
       return NextResponse.json({ error: 'Unknown workflow type' }, { status: 400 })
     }

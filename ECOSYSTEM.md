@@ -34,7 +34,8 @@ in real-time based on behavioral signals, preferences, and outcomes.
 ## 2. The Builder
 
 **Project Owner**: Dhani (dkaru002)
-**Repository root**: `C:\Users\dkaru002\Desktop\Dhani-Laboratory\ByteAI\ByteOS`
+**Repository root**: Local path may still show ByteOS; the **product and canonical repo are Sudar**.
+**Canonical repo**: https://github.com/Dhanikesh-Karunanithi/Sudar (official account; default push target). The project was rebranded from ByteOS to Sudar; ByteOS (lorddannykay) is legacy and will be private — focus is Sudar only.
 **Build style**: Solo builder — decisions must be achievable without a large team
 **Stack preference**: Pragmatic and modern. Always prefer the simplest architecture that achieves
   the goal without over-engineering.
@@ -599,20 +600,30 @@ ByteOS/
 
 ## 12. Environment Variables (Required)
 
+**Canonical list:** The full list of env vars, “Get key” links, and which app uses each lives in **docs/ENV_REFERENCE.md**. Below is a short summary. The stack is **provider-agnostic** for AI: set `AI_CHAT_PROVIDER` (e.g. `openrouter`, `together`, `openai`, `anthropic`, `custom`) and the corresponding key(s). Fallback when unset: OpenRouter → Together → OpenAI → Anthropic.
+
 ### Both Studio + Learn
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 NEXTAUTH_SECRET=
+NEXTAUTH_URL=
 BYTEOS_INTELLIGENCE_URL=http://localhost:8000
+```
+
+### AI (at least one chat provider)
+```env
+AI_CHAT_PROVIDER=openrouter|together|openai|anthropic|custom
+OPENROUTER_API_KEY=
+TOGETHER_API_KEY=
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+AI_CHAT_BASE_URL=   # for custom/local models
 ```
 
 ### Studio only
 ```env
-TOGETHER_API_KEY=
-OPENAI_API_KEY=
-ANTHROPIC_API_KEY=
 GOOGLE_SEARCH_API_KEY=
 GOOGLE_SEARCH_ENGINE_ID=
 PEXELS_API_KEY=
@@ -622,10 +633,8 @@ REMOTION_SERVER_URL=http://localhost:3040
 ```
 
 ### Intelligence (Python)
+Uses same `AI_CHAT_PROVIDER` and keys; see ENV_REFERENCE.md and `byteos-intelligence/src/core/ai_client.py`.
 ```env
-TOGETHER_API_KEY=
-OPENAI_API_KEY=
-ANTHROPIC_API_KEY=
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 BYTEOS_VIDEO_SERVICE_URL=http://localhost:5001

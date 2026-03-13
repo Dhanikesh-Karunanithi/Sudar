@@ -100,8 +100,7 @@ export function buildComponentPromptSnippet(): string {
   ).join('\n')
 }
 
-const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
-const MODEL = 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
+import { chatCompletion } from './chat'
 
 function extractJson(raw: string): string {
   let s = raw.trim()
@@ -145,8 +144,7 @@ export interface SelectedComponent {
 export async function selectComponentsForModule(
   moduleTitle: string,
   contentSummary: string,
-  moduleRole: ModuleRole,
-  apiKey: string
+  moduleRole: ModuleRole
 ): Promise<SelectedComponent[]> {
   const snippet = buildComponentPromptSnippet()
   const systemPrompt = `You are an expert instructional designer. Given a module's title, content summary, and role in the course, select 1-3 interactive components that would be most effective for learning. Return ONLY valid JSON. No markdown, no explanation.
@@ -164,22 +162,14 @@ Content summary: ${contentSummary.slice(0, 500)}
 Return JSON with 1-3 components (use "components" array). Only use types from the list. Generate full "data" for each.`
 
   try {
-    const res = await fetch(TOGETHER_API_URL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        max_tokens: 1500,
-        temperature: 0.5,
-      }),
+    const { content: text } = await chatCompletion({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 1500,
+      temperature: 0.5,
     })
-    if (!res.ok) return []
-    const data = await res.json()
-    const text = data.choices?.[0]?.message?.content?.trim()
     if (!text) return []
     const jsonStr = extractJson(text)
     const parsed = JSON.parse(jsonStr) as { components?: SelectedComponent[] }

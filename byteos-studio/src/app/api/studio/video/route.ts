@@ -1,17 +1,15 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { getCourseContentForGeneration } from '@/lib/courseContentForGeneration'
-
-const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
-const MODEL = 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
+import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const apiKey = process.env.TOGETHER_API_KEY
-  if (!apiKey) return NextResponse.json({ error: 'TOGETHER_API_KEY not configured' }, { status: 500 })
+  const configError = getChatConfigError()
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
   let body: { courseId?: string } = {}
   try {
@@ -59,30 +57,16 @@ Return ONLY valid JSON in this format:
 }`
 
   try {
-    const response = await fetch(TOGETHER_API_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: 'You are an expert video script writer. Always respond with valid JSON only, no additional text.' },
-          { role: 'user', content: prompt },
-        ],
-        max_tokens: 3000,
-        temperature: 0.7,
-      }),
+    const { content: raw } = await chatCompletion({
+      messages: [
+        { role: 'system', content: 'You are an expert video script writer. Always respond with valid JSON only, no additional text.' },
+        { role: 'user', content: prompt },
+      ],
+      max_tokens: 3000,
+      temperature: 0.7,
     })
 
-    if (!response.ok) {
-      const err = await response.text()
-      return NextResponse.json({ error: `AI provider error: ${err}` }, { status: 502 })
-    }
-
-    const data = await response.json()
-    const raw = data.choices?.[0]?.message?.content?.trim() ?? ''
+    if (!raw) return NextResponse.json({ error: 'AI provider returned empty response' }, { status: 502 })
 
     let videoScript: { scenes: Array<{ sceneNumber: number; title: string; narration: string; visuals?: string; duration?: number }> }
     try {

@@ -1,9 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { searchWeb } from '@/lib/search/webSearch'
-
-const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
-const MODEL = 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
+import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
 
 export interface GenerateModuleWithResearchBody {
   topic: string
@@ -20,8 +18,8 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const apiKey = process.env.TOGETHER_API_KEY
-  if (!apiKey) return NextResponse.json({ error: 'TOGETHER_API_KEY not configured' }, { status: 500 })
+  const configError = getChatConfigError()
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
   let body: GenerateModuleWithResearchBody
   try {
@@ -102,31 +100,15 @@ ${context ? `Additional context: ${context}` : ''}
 Write the full module content now.${webResults.length > 0 ? ' Use the web search results above and cite them with [1], [2], etc. End with a ## References section.' : ''}`
 
   try {
-    const response = await fetch(TOGETHER_API_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        max_tokens: 1400,
-        temperature: 0.7,
-        top_p: 0.9,
-      }),
+    const { content } = await chatCompletion({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 1400,
+      temperature: 0.7,
+      top_p: 0.9,
     })
-
-    if (!response.ok) {
-      const err = await response.text()
-      return NextResponse.json({ error: `AI provider error: ${err}` }, { status: 502 })
-    }
-
-    const data = await response.json()
-    const content = data.choices?.[0]?.message?.content?.trim()
 
     if (!content) return NextResponse.json({ error: 'No content generated' }, { status: 502 })
 

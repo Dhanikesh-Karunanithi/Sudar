@@ -4,8 +4,7 @@ import type { TutorAction, TutorActionType } from '@/types/tutor'
 import { TUTOR_ACTION_TYPES } from '@/types/tutor'
 import { retrieveChunks } from '@/lib/rag/retrieve'
 import { getCachedPublishedCourses, getCachedPublishedPaths } from '@/lib/cache'
-
-const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
+import { chatCompletion, getChatConfigError, getDefaultTutorModel, getDefaultMemoryModel } from '@/lib/ai/chat'
 const GUARDRAIL_REFUSAL_MESSAGE = "I'm here to help with your courses and learning. I can't help with that. What would you like to learn today?"
 const PLATFORM_CONTEXT_CATALOG_LIMIT = 25
 
@@ -125,29 +124,21 @@ async function runInputGuardrail(message: string, hasConversationHistory: boolea
   // learning-related regardless of whether it sounds like it in isolation.
   if (hasConversationHistory) return { pass: true }
 
-  const apiKey = process.env.TOGETHER_API_KEY
-  if (!apiKey) return { pass: true } // no API key → skip LLM check
+  if (getChatConfigError()) return { pass: true } // no API key → skip LLM check
 
   try {
-    const res = await fetch(TOGETHER_API_URL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: process.env.TOGETHER_MEMORY_MODEL?.trim() || 'google/gemma-3n-E4B-it',
-        messages: [
-          {
-            role: 'user',
-            content: `Does this message ask for help with learning, courses, studying, questions about the AI tutor, or using this learning platform? Reply with exactly YES or NO.\n\nMessage: "${trimmed.slice(0, 500)}"`,
-          },
-        ],
-        max_tokens: 10,
-        temperature: 0,
-      }),
+    const { content } = await chatCompletion({
+      model: getDefaultMemoryModel(),
+      messages: [
+        {
+          role: 'user',
+          content: `Does this message ask for help with learning, courses, studying, questions about the AI tutor, or using this learning platform? Reply with exactly YES or NO.\n\nMessage: "${trimmed.slice(0, 500)}"`,
+        },
+      ],
+      max_tokens: 10,
+      temperature: 0,
     })
-    if (!res.ok) return { pass: true }
-    const data = await res.json()
-    const answer = (data.choices?.[0]?.message?.content?.trim() ?? '').toUpperCase()
-    // Only block on an explicit "NO" — empty/unexpected responses (e.g. cold-start) pass through
+    const answer = (content ?? '').toUpperCase()
     const pass = !answer.startsWith('NO')
     return { pass }
   } catch {
@@ -221,7 +212,7 @@ const DEFAULT_MEMORY_MODEL = 'google/gemma-3n-E4B-it'
 function getTutorModel(): string {
   const env = process.env.TOGETHER_TUTOR_MODEL?.trim()
   if (env && TUTOR_MODELS.some((m) => m.id === env)) return env
-  return DEFAULT_TUTOR_MODEL
+  return getDefaultTutorModel()
 }
 
 async function callAI(
@@ -229,21 +220,14 @@ async function callAI(
   maxTokens = 600,
   model = getTutorModel()
 ): Promise<string> {
-  const apiKey = process.env.TOGETHER_API_KEY
-  if (!apiKey) throw new Error('TOGETHER_API_KEY not set')
-  const res = await fetch(TOGETHER_API_URL, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.7, top_p: 0.9 }),
+  const { content } = await chatCompletion({
+    messages: messages as { role: 'system' | 'user' | 'assistant'; content: string }[],
+    model,
+    max_tokens: maxTokens,
+    temperature: 0.7,
+    top_p: 0.9,
   })
-  const text = await res.text()
-  if (!res.ok) throw new Error(text || `AI API ${res.status}`)
-  try {
-    const data = JSON.parse(text)
-    return data.choices?.[0]?.message?.content?.trim() ?? ''
-  } catch {
-    return ''
-  }
+  return content ?? ''
 }
 
 /**
@@ -255,8 +239,7 @@ async function generateQuizBlock(
   moduleTitle: string,
   conversationContext: string,
 ): Promise<{ question: string; options: Array<{ id: string; text: string; correct: boolean; explanation: string }>; topic: string; difficulty: 'recall' | 'application' | 'challenge' } | null> {
-  const apiKey = process.env.TOGETHER_API_KEY
-  if (!apiKey) return null
+  if (getChatConfigError()) return null
 
   const difficultyHint = /challenge|harder|harder question|push me|more difficult/i.test(conversationContext)
     ? 'challenge'
@@ -296,19 +279,13 @@ Rules:
 - Return ONLY the JSON object. No other text.`
 
   try {
-    const res = await fetch(TOGETHER_API_URL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: process.env.TOGETHER_MEMORY_MODEL?.trim() || DEFAULT_MEMORY_MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 600,
-        temperature: 0.5,
-      }),
+    const { content: raw } = await chatCompletion({
+      model: getDefaultMemoryModel(),
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 600,
+      temperature: 0.5,
     })
-    if (!res.ok) return null
-    const data = await res.json()
-    const raw = data.choices?.[0]?.message?.content?.trim() ?? ''
+    if (!raw) return null
     const match = raw.match(/\{[\s\S]*\}/)
     if (!match) return null
     const parsed = JSON.parse(match[0])
@@ -826,25 +803,13 @@ Return a JSON object with ONLY the fields you can confidently infer (omit others
 Return only the JSON, nothing else.`
 
   try {
-    const raw = await fetch('https://api.together.xyz/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.TOGETHER_API_KEY!}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: process.env.TOGETHER_MEMORY_MODEL?.trim() || DEFAULT_MEMORY_MODEL,
-        messages: [{ role: 'user', content: extractPrompt }],
-        max_tokens: 150,
-        temperature: 0.2,
-      }),
+    const { content } = await chatCompletion({
+      model: getDefaultMemoryModel(),
+      messages: [{ role: 'user', content: extractPrompt }],
+      max_tokens: 150,
+      temperature: 0.2,
     })
-
-    if (!raw.ok) return
-
-    const data = await raw.json()
-    const content = data.choices?.[0]?.message?.content?.trim()
-    const match = content?.match(/\{[\s\S]*\}/)
+    const match = (content ?? '').match(/\{[\s\S]*\}/)
     if (!match) return
 
     const insights = JSON.parse(match[0])

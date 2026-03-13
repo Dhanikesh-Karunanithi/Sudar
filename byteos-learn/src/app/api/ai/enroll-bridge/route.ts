@@ -10,15 +10,13 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-
-const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
-const MODEL = 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo'
+import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!process.env.TOGETHER_API_KEY) return NextResponse.json({ ok: true }) // fail silently
+  if (getChatConfigError()) return NextResponse.json({ ok: true }) // fail silently
 
   const admin = createAdminClient()
   const { enrollment_id, course_id } = await request.json()
@@ -98,24 +96,17 @@ Write a short personalized welcome (3–4 sentences max). It should:
 Write in a warm, human tone. No bullet points. No markdown. Plain text only.
 If there's no prior history, make it a genuine warm welcome that references what they've told you about themselves or their goals.`
 
-  const res = await fetch(TOGETHER_API_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.TOGETHER_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: MODEL,
+  let message = ''
+  try {
+    const { content } = await chatCompletion({
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 300,
       temperature: 0.8,
-    }),
-  })
-
-  if (!res.ok) return NextResponse.json({ ok: true }) // fail silently — enrollment already created
-
-  const data = await res.json()
-  const message = data.choices?.[0]?.message?.content?.trim() ?? ''
+    })
+    message = content ?? ''
+  } catch {
+    return NextResponse.json({ ok: true }) // fail silently — enrollment already created
+  }
 
   if (!message) return NextResponse.json({ ok: true })
 

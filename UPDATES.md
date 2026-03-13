@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-03-13 — Ship recent work + one more win (Listen modality, compliance reminders)
+- **Ship recent work**: Documented Flashcards, document-to-course (generate-from-document), and SCORM 1.2 import in [docs/SHIPPED_FEATURES.md](docs/SHIPPED_FEATURES.md). Updated STRATEGIC_PATH §2 (current state) and §3 (Next 3: ship recent work and one more win marked done).
+- **Listen (Audio TTS) modality**: Added **Listen** tab to Learn course viewer (CourseViewer). Learners can switch to Listen to hear the current module via TTS; AudioCard + generate-audio API; cache per module, retry when unavailable. Same completion rules (e.g. min time) apply.
+- **Compliance email reminders**: Documented in SHIPPED_FEATURES.md and STUDIO_USER_GUIDE §5 (Compliance and email reminders). Cron endpoint `POST /api/cron/compliance-reminders` with CRON_SECRET; env: RESEND_API_KEY, RESEND_FROM. Quick reference table updated.
+- **ACTION_PLANS**: Plan D checklist updated — B1–B5 and P1–P8 marked done; O1/O2 (pilot, Claude-for-OSS) to be done after build is complete.
+
 ### 2026-03-13 — Product update: New modalities, ALP embed, certificates & media
 - **Learn — New modalities**: Audio (AudioCard, ReadAlongControls, ReadingBodyWithSentences), Video (CourseVideoCard), Podcast (CoursePodcastCard), MindMap (MindMapCard). Generate-audio and generate-mindmap APIs; ActivityChartClient, learner preferences API, settings page.
 - **Learn — Certificates**: Server-side certificate PDF generation (API route + CertificatePDF component), cert verification and print/save flow improvements.

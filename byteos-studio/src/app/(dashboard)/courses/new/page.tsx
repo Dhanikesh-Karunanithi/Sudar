@@ -323,7 +323,14 @@ export default function NewCoursePage() {
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">{error}</div>
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">
+              {error}
+              {(error.includes('not configured') || error.includes('No AI')) && (
+                <p className="mt-2">
+                  <Link href="/settings/keys" className="text-indigo-400 hover:text-indigo-300 underline">Open AI &amp; API Keys</Link> for step-by-step instructions.
+                </p>
+              )}
+            </div>
           )}
 
           {mode === 'document' && (

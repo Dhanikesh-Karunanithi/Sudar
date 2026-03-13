@@ -1,0 +1,4 @@
+email,name,role
+user1@example.com,John Doe,LEARNER
+user2@example.com,Jane Smith,CREATOR
+user3@example.com,Admin User,ADMIN

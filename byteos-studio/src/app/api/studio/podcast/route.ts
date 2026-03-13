@@ -2,17 +2,15 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { getCourseContentForGeneration } from '@/lib/courseContentForGeneration'
 import type { DialogueSegment } from '@/types/content'
-
-const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
-const MODEL = 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
+import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const apiKey = process.env.TOGETHER_API_KEY
-  if (!apiKey) return NextResponse.json({ error: 'TOGETHER_API_KEY not configured' }, { status: 500 })
+  const configError = getChatConfigError()
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
   let body: { courseId?: string } = {}
   try {
@@ -58,39 +56,23 @@ ${sampleText}
 Remember: ONLY output the JSON object. Start your response with { and end with }.`
 
   try {
-    const response = await fetch(TOGETHER_API_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a podcast script writer. Output ONLY valid JSON with no markdown, no explanations, no preamble. Start your response with { and end with }. Speaker labels must be exactly "host" or "expert" in lowercase.',
-          },
-          { role: 'user', content: prompt },
-        ],
-        max_tokens: 4500,
-        temperature: 0.75,
-        stop: null,
-      }),
+    const { content: raw } = await chatCompletion({
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a podcast script writer. Output ONLY valid JSON with no markdown, no explanations, no preamble. Start your response with { and end with }. Speaker labels must be exactly "host" or "expert" in lowercase.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      max_tokens: 4500,
+      temperature: 0.75,
     })
-
-    if (!response.ok) {
-      const err = await response.text()
-      return NextResponse.json({ error: `AI provider error: ${err}` }, { status: 502 })
-    }
-
-    const data = await response.json()
-    const raw = (data.choices?.[0]?.message?.content ?? '').trim()
+    const rawStr = (raw ?? '').trim()
 
     let segments: DialogueSegment[] = []
     try {
       // Extract JSON object from the response (handles any stray text)
-      const jsonMatch = raw.match(/\{[\s\S]*\}/)
+      const jsonMatch = rawStr.match(/\{[\s\S]*\}/)
       if (!jsonMatch) throw new Error('No JSON object found in response')
       const parsed = JSON.parse(jsonMatch[0]) as { segments?: Array<{ speaker?: string; text?: string }> }
       const rawSegments = Array.isArray(parsed.segments) ? parsed.segments : []

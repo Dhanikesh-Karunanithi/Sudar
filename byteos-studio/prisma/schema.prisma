@@ -284,6 +284,9 @@ model Module {
   modalityVariants Json?    @map("modality_variants")
   orderIndex       Int      @map("order_index")
   quiz             Json?
+  sudarplayMapUrl  String?  @map("sudarplay_map_url")
+  sudarplayMapId   String?  @map("sudarplay_map_id") @db.Uuid
+  sudarplayConfig  Json?    @map("sudarplay_config")
   createdAt        DateTime @default(now()) @map("created_at")
 
   course         Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)

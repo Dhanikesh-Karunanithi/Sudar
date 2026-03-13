@@ -237,10 +237,12 @@ The schema and event model are fully documented in the repository (`ECOSYSTEM.md
 - Next-best-action and adaptive path ordering; struggle detection from quiz and behavioural signals
 - Learning paths with mandatory/optional courses, unlock rules, and shareable certification links with PDF certificate generation
 - Compliance view (overdue / at-risk / on-track) and analytics (completions, quiz scores, struggle topics, time per section)
+- Compliance email reminders: cron endpoint for at-risk and overdue path assignments (Resend; CRON_SECRET), documented in STUDIO_USER_GUIDE and SHIPPED_FEATURES
 - Learner preferences page (TTS voice, response style, modality preferences stored in learner profile)
 - SCORM import with text content extraction for AI tutor RAG knowledge base
+- Listen (Audio TTS) modality: standalone Listen tab in course viewer with on-demand TTS per module (generate-audio API, AudioCard)
 
-**Remaining planned items:** SudarPlay (gamified modality), SudarFeed (social/TikTok-style learning feed), white-label configuration, SSO/HRIS integration, email/push reminders, and ALP LMS connectors for Moodle, Canvas, and Blackboard.
+**Remaining planned items:** SudarPlay (gamified modality), SudarFeed (social/TikTok-style learning feed), white-label configuration, SSO/HRIS integration, additional reminder channels (e.g. push), and ALP LMS connectors for Moodle, Canvas, and Blackboard. Pilot (O1) and Claude-for-OSS application (O2) to follow build completion.
 
 The project is open source under the MIT licence. Self-deployment requires a Supabase project (free tier supports approximately 500–700 learners before the 500 MB database limit), a Together AI API key, and a standard Node.js and Python 3.11 environment. No proprietary infrastructure is required to run a fully functional deployment.
 

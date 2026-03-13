@@ -59,6 +59,7 @@ interface OrgSettings {
 export default function UserDetailPage() {
   const params = useParams<{ id: string }>()
   const userId = params?.id ?? ''
+  const [user, setUser] = useState<UserDetail | null>(null)
   const [perfRecords, setPerfRecords] = useState<PerfRecord[]>([])
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [orgSettings, setOrgSettings] = useState<OrgSettings | null>(null)

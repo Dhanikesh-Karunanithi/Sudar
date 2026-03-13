@@ -168,7 +168,42 @@ Events are written to `learning_events` and drive the same side-effects as inter
 
 ---
 
-## 5. Quick reference
+## 5. Compliance and email reminders
+
+**Compliance page** (Sidebar → **Compliance**): Lists path assignments with due date, progress, and status (Overdue / At risk / On track / Completed). Use it to see who is behind and who is on track.
+
+**Email reminders (at-risk and overdue)**
+
+To send reminder emails to learners who have path assignments that are **at-risk** (due within 7 days) or **overdue**, call the cron endpoint on a schedule (e.g. daily).
+
+- **Endpoint**: `POST <Studio base URL>/api/cron/compliance-reminders`
+- **Auth**: `Authorization: Bearer <CRON_SECRET>` or query `?secret=<CRON_SECRET>`
+- **Env**: Set `CRON_SECRET`, `RESEND_API_KEY`, and optionally `RESEND_FROM` (see [ENV_REFERENCE.md](ENV_REFERENCE.md)).
+
+Example (cron or external scheduler):
+
+```bash
+curl -X POST "https://your-studio.example.com/api/cron/compliance-reminders" \
+  -H "Authorization: Bearer YOUR_CRON_SECRET"
+```
+
+Each learner with at least one at-risk or overdue path receives one email listing those assignments and a prompt to log in to the learning dashboard.
+
+---
+
+## 6. Visual guide (in-app)
+
+On the **Integrations** page, the **"Visual guide — How integrations work"** section (at the top, below the page title) gives you:
+
+- **High-level flow** — Your LMS/ERP → ALP → Digital Learner Twin.
+- **Lego-style blocks** — SudarMemory (events), SudarChat (tutor), SudarRecommend (next-action), Embed (iframe).
+- **4-step checklist** — Create key → Send events → Add tutor/next-action → Map users.
+
+You can expand or collapse this section. A link at the bottom opens the **full integration guide** (`docs/INTEGRATION_GUIDE.md`) with Mermaid diagrams and detailed steps for LMS, ERP, and other ecosystems.
+
+---
+
+## 7. Quick reference
 
 
 | What you want to do                              | Where in Studio                                                               | More detail                       |
@@ -176,15 +211,17 @@ Events are written to `learning_events` and drive the same side-effects as inter
 | Give an external LMS access to ALP               | Integrations → Create key, share base URL + key                               | `docs/ALP_API.md`                 |
 | Embed Sudar chat in your site                    | Integrations → Embed Sudar → Generate embed link                              | §4.2, ALP_API.md §7 (embed token) |
 | Send LMS events into Sudar                       | Integrations → Event ingestion; implement `POST …/api/alp/events` in your LMS | §4.3, ALP_API.md §2               |
+| See visual diagrams and LMS/ERP integration patterns | Integrations → Visual guide → Full integration guide                     | `docs/INTEGRATION_GUIDE.md`       |
 | See exact request/response for all ALP endpoints | Integrations → “ALP API documentation” link                                   | `docs/ALP_API.md`                 |
 
 
 ---
 
-## 6. Related docs
+## 8. Related docs
 
 - **ECOSYSTEM.md** — Architecture, schema, and how Studio, Learn, and Intelligence fit together.
 - **ALP_API.md** — Full ALP API: event ingestion, learner Twin, next-action, tutor, embed token, SCORM/xAPI.
+- **INTEGRATION_GUIDE.md** — Visual integration guide: Lego-style blocks, Mermaid diagrams, LMS/ERP/ecosystem patterns.
 - **LAMP_BUILD_PLAN.md** / **LAMP_BUILD_TRACKER.md** — Build-first plan and task status for LAMP/ALP work.
 
 ---

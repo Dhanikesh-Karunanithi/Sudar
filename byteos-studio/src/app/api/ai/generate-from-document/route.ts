@@ -2,21 +2,17 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getOrCreateOrg } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import type { RichContent } from '@/types/content'
+import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
 
-const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
-const MODEL = 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
 const MAX_DOC_CHARS = 45000
 
 async function callAI(messages: { role: string; content: string }[], maxTokens = 1200) {
-  const apiKey = process.env.TOGETHER_API_KEY!
-  const res = await fetch(TOGETHER_API_URL, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: MODEL, messages, max_tokens: maxTokens, temperature: 0.7 }),
+  const { content } = await chatCompletion({
+    messages: messages as { role: 'system' | 'user' | 'assistant'; content: string }[],
+    max_tokens: maxTokens,
+    temperature: 0.7,
   })
-  if (!res.ok) throw new Error(`AI error: ${await res.text()}`)
-  const data = await res.json()
-  return data.choices?.[0]?.message?.content?.trim() ?? ''
+  return content ?? ''
 }
 
 const RICH_CONTENT_JSON_SCHEMA = `
@@ -74,7 +70,8 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!process.env.TOGETHER_API_KEY) return NextResponse.json({ error: 'TOGETHER_API_KEY not configured' }, { status: 500 })
+  const configError = getChatConfigError()
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
   const admin = createAdminClient()
   const orgId = await getOrCreateOrg(user.id)

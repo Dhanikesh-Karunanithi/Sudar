@@ -1,4 +1,3 @@
-import dynamic from 'next/dynamic'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import {
@@ -12,11 +11,7 @@ import {
   GraduationCap,
 } from 'lucide-react'
 import { BentoCard } from '@/components/ui/BentoCard'
-
-const ProgressPieChart = dynamic(
-  () => import('@/components/progress/ProgressPieChart').then((m) => m.ProgressPieChart),
-  { ssr: false }
-)
+import { ProgressPieChartClient } from '@/components/progress/ProgressPieChartClient'
 
 export default async function ProgressPage() {
   const supabase = await createClient()
@@ -110,14 +105,14 @@ export default async function ProgressPage() {
         </div>
         <div className="kpi-card flex flex-col" id="certifications">
           <h3 className="font-display text-xl font-bold text-card-foreground mb-4">Distribution</h3>
-          <ProgressPieChart
+          <ProgressPieChartClient
             data={[
               { name: 'Courses in progress', value: inProgressCourses.length, color: 'var(--primary)' },
               { name: 'Courses completed', value: completedCourses.length, color: 'var(--success)' },
               { name: 'Paths in progress', value: inProgressPaths.length, color: 'var(--accent)' },
               { name: 'Certificates', value: certifications?.length ?? 0, color: 'var(--warning)' },
             ].filter((d) => d.value > 0)}
-          />
+        />
         </div>
       </div>
 

@@ -3,25 +3,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getOneImage } from '@/lib/media/imageSearch'
 import { selectComponentsForModule, toInteractiveElements, type ModuleRole } from '@/lib/ai/componentSelector'
 import { LESSON_ARCHETYPES, type LessonArchetype, selectArchetype, getArchetypeStructuralRule } from '@/lib/ai/archetypeSelector'
+import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
 
-const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
-const MODEL = 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
-
-async function callAI(
-  apiKey: string,
-  messages: { role: string; content: string }[],
-  maxTokens = 1500
-) {
-  const res = await fetch(TOGETHER_API_URL, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: MODEL, messages, max_tokens: maxTokens, temperature: 0.7, top_p: 0.9 }),
+async function callAI(messages: { role: string; content: string }[], maxTokens = 1500) {
+  const { content } = await chatCompletion({
+    messages: messages as { role: 'system' | 'user' | 'assistant'; content: string }[],
+    max_tokens: maxTokens,
+    temperature: 0.7,
+    top_p: 0.9,
   })
-  if (!res.ok) throw new Error(`AI provider error: ${await res.text()}`)
-  const data = await res.json()
-  const text = data.choices?.[0]?.message?.content?.trim() ?? ''
-  if (!text) throw new Error('AI returned empty response')
-  return text
+  if (!content) throw new Error('AI returned empty response')
+  return content
 }
 
 interface CurriculumEntry {
@@ -264,8 +256,8 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const apiKey = process.env.TOGETHER_API_KEY
-  if (!apiKey) return NextResponse.json({ error: 'TOGETHER_API_KEY not configured' }, { status: 500 })
+  const configError = getChatConfigError()
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
   const { course_id } = await request.json()
   if (!course_id) return NextResponse.json({ error: 'course_id required' }, { status: 400 })
@@ -308,7 +300,7 @@ export async function POST(request: NextRequest) {
     const planMessages = buildCurriculumPlanPrompt(
       course.title, course.description, difficulty, allTitles
     )
-    const raw = await callAI(apiKey, planMessages, 2000)
+    const raw = await callAI(planMessages, 2000)
     const match = raw.match(/\[[\s\S]*\]/)
     if (!match) throw new Error('Curriculum plan response did not contain a JSON array')
     curriculum = JSON.parse(match[0]) as CurriculumEntry[]
@@ -381,7 +373,7 @@ export async function POST(request: NextRequest) {
     )
 
     try {
-      const content = await callAI(apiKey, contentMessages, 1800)
+      const content = await callAI(contentMessages, 1800)
 
       const imageResult = await getOneImage(mod.title, course.title)
 
@@ -397,16 +389,9 @@ export async function POST(request: NextRequest) {
                 ? 'deep-dive'
                 : 'core'
       let interactiveElements: { type: string; data: Record<string, unknown> }[] = []
-      if (apiKey) {
-        const selected = await selectComponentsForModule(
-          mod.title,
-          contentSummary,
-          role,
-          apiKey
-        )
-        if (selected.length > 0) {
-          interactiveElements = toInteractiveElements(selected, resolvedEntry.bloomLevel)
-        }
+      const selected = await selectComponentsForModule(mod.title, contentSummary, role)
+      if (selected.length > 0) {
+        interactiveElements = toInteractiveElements(selected, resolvedEntry.bloomLevel)
       }
 
       const parsedSections = parseMarkdownSections(content)
@@ -426,7 +411,7 @@ export async function POST(request: NextRequest) {
           content,
           (resolvedEntry.archetype ?? 'cold-open') as string
         )
-        const envelopeRaw = await callAI(apiKey, envelopeMessages, 800)
+        const envelopeRaw = await callAI(envelopeMessages, 800)
         const envelope = parseEnvelope(envelopeRaw)
         if (envelope) {
           entryState = envelope.entryState

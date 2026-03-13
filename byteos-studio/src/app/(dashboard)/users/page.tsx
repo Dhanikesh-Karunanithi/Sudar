@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { Users, Loader2, AlertCircle, UserPlus, ChevronRight, Mail, Upload } from 'lucide-react'
+import { Users, Loader2, AlertCircle, UserPlus, ChevronRight, Mail, Upload, FileDown, UserMinus, Shield, Ban, CheckSquare, Square } from 'lucide-react'
 
 interface UserRow {
   id: string
@@ -12,14 +12,26 @@ interface UserRow {
   status: string
 }
 
+interface PathOption {
+  id: string
+  title: string
+}
+
 export default function UsersPage() {
   const [list, setList] = useState<UserRow[]>([])
   const [loading, setLoading] = useState(true)
   const [forbidden, setForbidden] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [showInvite, setShowInvite] = useState(false)
   const [showBulk, setShowBulk] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showAssignPath, setShowAssignPath] = useState(false)
+  const [showBulkRole, setShowBulkRole] = useState(false)
+  const [showBulkDisable, setShowBulkDisable] = useState(false)
+  const [showBulkRemove, setShowBulkRemove] = useState(false)
+  const [bulkActionLoading, setBulkActionLoading] = useState(false)
 
   const fetchUsers = useCallback(async () => {
     const res = await fetch('/api/users')
@@ -34,6 +46,24 @@ export default function UsersPage() {
     fetchUsers().then(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [fetchUsers])
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+  const selectAll = () => {
+    if (selectedIds.size === list.length) setSelectedIds(new Set())
+    else setSelectedIds(new Set(list.map((u) => u.id)))
+  }
+  const clearSelection = () => setSelectedIds(new Set())
+  const selectedCount = selectedIds.size
+  const selectedList = list.filter((u) => selectedIds.has(u.id))
+
+  const showBulkBar = selectedCount > 0
 
   if (loading) {
     return (
@@ -106,6 +136,92 @@ export default function UsersPage() {
           {error}
         </div>
       )}
+      {success && (
+        <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-4 text-emerald-400 text-sm">
+          {success}
+        </div>
+      )}
+
+      {showBulkBar && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-3">
+          <span className="text-sm text-slate-300">
+            <strong className="text-white">{selectedCount}</strong> selected
+          </span>
+          <button
+            type="button"
+            onClick={clearSelection}
+            className="text-sm text-slate-400 hover:text-white"
+          >
+            Clear
+          </button>
+          <span className="text-slate-600">|</span>
+          <button
+            type="button"
+            onClick={() => setShowBulkRole(true)}
+            disabled={bulkActionLoading}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-700 px-3 py-1.5 text-sm font-medium text-slate-200 hover:bg-slate-600 disabled:opacity-50"
+          >
+            <Shield className="w-4 h-4" />
+            Change role
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowBulkDisable(true)}
+            disabled={bulkActionLoading}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-700 px-3 py-1.5 text-sm font-medium text-slate-200 hover:bg-slate-600 disabled:opacity-50"
+          >
+            <Ban className="w-4 h-4" />
+            Disable / Enable
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAssignPath(true)}
+            disabled={bulkActionLoading}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-700 px-3 py-1.5 text-sm font-medium text-slate-200 hover:bg-slate-600 disabled:opacity-50"
+          >
+            Assign to path
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const header = 'Name,Email,Role,Status\n'
+              const rows = selectedList
+                .map((u) =>
+                  [
+                    (u.full_name ?? '').replace(/"/g, '""'),
+                    (u.email ?? '').replace(/"/g, '""'),
+                    u.org_role,
+                    u.status,
+                  ].join(',')
+                )
+                .join('\n')
+              const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = `users-export-${new Date().toISOString().slice(0, 10)}.csv`
+              a.click()
+              URL.revokeObjectURL(url)
+              clearSelection()
+              setSuccess(`Exported ${selectedCount} user(s)`)
+              setTimeout(() => setSuccess(null), 3000)
+            }}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-700 px-3 py-1.5 text-sm font-medium text-slate-200 hover:bg-slate-600"
+          >
+            <FileDown className="w-4 h-4" />
+            Export CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowBulkRemove(true)}
+            disabled={bulkActionLoading}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/30 disabled:opacity-50"
+          >
+            <UserMinus className="w-4 h-4" />
+            Remove from org
+          </button>
+        </div>
+      )}
 
       <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
         {list.length === 0 ? (
@@ -118,6 +234,20 @@ export default function UsersPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                <th className="w-10 px-4 py-3">
+                  <button
+                    type="button"
+                    onClick={selectAll}
+                    className="text-slate-400 hover:text-white"
+                    aria-label={selectedIds.size === list.length ? 'Deselect all' : 'Select all'}
+                  >
+                    {selectedIds.size === list.length ? (
+                      <CheckSquare className="w-5 h-5 text-indigo-400" />
+                    ) : (
+                      <Square className="w-5 h-5" />
+                    )}
+                  </button>
+                </th>
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Role</th>
@@ -129,8 +259,22 @@ export default function UsersPage() {
               {list.map((u) => (
                 <tr
                   key={u.id}
-                  className="border-b border-slate-800/80 hover:bg-slate-800/30 transition-colors"
+                  className={`border-b border-slate-800/80 transition-colors ${selectedIds.has(u.id) ? 'bg-indigo-500/10' : 'hover:bg-slate-800/30'}`}
                 >
+                  <td className="px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleSelect(u.id)}
+                      className="text-slate-400 hover:text-white"
+                      aria-label={selectedIds.has(u.id) ? 'Deselect' : 'Select'}
+                    >
+                      {selectedIds.has(u.id) ? (
+                        <CheckSquare className="w-5 h-5 text-indigo-400" />
+                      ) : (
+                        <Square className="w-5 h-5" />
+                      )}
+                    </button>
+                  </td>
                   <td className="px-4 py-3">
                     <span className="font-medium text-white">
                       {u.full_name || '—'}
@@ -185,6 +329,67 @@ export default function UsersPage() {
         <BulkImportModal
           onClose={() => setShowBulk(false)}
           onSuccess={() => { setShowBulk(false); fetchUsers(); }}
+        />
+      )}
+      {showAssignPath && (
+        <AssignToPathModal
+          userIds={Array.from(selectedIds)}
+          onClose={() => setShowAssignPath(false)}
+          onSuccess={() => {
+            setShowAssignPath(false)
+            clearSelection()
+            fetchUsers()
+            setSuccess(`Assigned users to path`)
+            setTimeout(() => setSuccess(null), 3000)
+          }}
+          setBulkActionLoading={setBulkActionLoading}
+          setError={setError}
+        />
+      )}
+      {showBulkRole && (
+        <BulkRoleModal
+          userIds={Array.from(selectedIds)}
+          onClose={() => setShowBulkRole(false)}
+          onSuccess={(msg) => {
+            setShowBulkRole(false)
+            clearSelection()
+            fetchUsers()
+            setSuccess(msg)
+            setTimeout(() => setSuccess(null), 3000)
+          }}
+          setBulkActionLoading={setBulkActionLoading}
+          setError={setError}
+        />
+      )}
+      {showBulkDisable && (
+        <BulkDisableModal
+          userIds={Array.from(selectedIds)}
+          selectedList={selectedList}
+          onClose={() => setShowBulkDisable(false)}
+          onSuccess={(msg) => {
+            setShowBulkDisable(false)
+            clearSelection()
+            fetchUsers()
+            setSuccess(msg)
+            setTimeout(() => setSuccess(null), 3000)
+          }}
+          setBulkActionLoading={setBulkActionLoading}
+          setError={setError}
+        />
+      )}
+      {showBulkRemove && (
+        <BulkRemoveModal
+          userIds={Array.from(selectedIds)}
+          onClose={() => setShowBulkRemove(false)}
+          onSuccess={(msg) => {
+            setShowBulkRemove(false)
+            clearSelection()
+            fetchUsers()
+            setSuccess(msg)
+            setTimeout(() => setSuccess(null), 3000)
+          }}
+          setBulkActionLoading={setBulkActionLoading}
+          setError={setError}
         />
       )}
     </div>
@@ -328,6 +533,21 @@ function BulkImportModal({ onClose, onSuccess }: { onClose: () => void; onSucces
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [results, setResults] = useState<{ email: string; ok: boolean; error?: string; temp_password?: string }[] | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setError(null)
+    const reader = new FileReader()
+    reader.onload = () => {
+      const text = typeof reader.result === 'string' ? reader.result : ''
+      setCsv(text)
+    }
+    reader.onerror = () => setError('Failed to read file')
+    reader.readAsText(file, 'UTF-8')
+    e.target.value = ''
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -394,12 +614,303 @@ function BulkImportModal({ onClose, onSuccess }: { onClose: () => void; onSucces
       <div className="bg-slate-900 border border-slate-800 rounded-xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-semibold text-white mb-2">Bulk import</h2>
         <p className="text-slate-500 text-sm mb-4">CSV with header: email, name (or full_name), role (optional). Max 100 rows.</p>
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <a href="/users-import-template.csv" download="users-import-template.csv" className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300">
+            <FileDown className="w-4 h-4" />
+            Download template
+          </a>
+          <span className="text-slate-600">|</span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.txt"
+            onChange={handleFileChange}
+            className="hidden"
+            aria-label="Upload CSV file"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300"
+          >
+            <Upload className="w-4 h-4" />
+            Upload CSV file
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <textarea value={csv} onChange={(e) => setCsv(e.target.value)} rows={8} placeholder="email, name, role&#10;user1@example.com, John, LEARNER&#10;user2@example.com, Jane, CREATOR" className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white text-sm font-mono placeholder-slate-500 resize-y" />
+          <textarea value={csv} onChange={(e) => setCsv(e.target.value)} rows={8} placeholder="Paste CSV here or upload a file above. Header: email, name, role&#10;user1@example.com, John, LEARNER&#10;user2@example.com, Jane, CREATOR" className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white text-sm font-mono placeholder-slate-500 resize-y" />
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <div className="flex gap-2">
             <button type="button" onClick={onClose} className="flex-1 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm font-medium">Cancel</button>
             <button type="submit" disabled={loading} className="flex-1 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium disabled:opacity-50">{loading ? 'Importing…' : 'Import'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function AssignToPathModal({
+  userIds,
+  onClose,
+  onSuccess,
+  setBulkActionLoading,
+  setError,
+}: {
+  userIds: string[]
+  onClose: () => void
+  onSuccess: () => void
+  setBulkActionLoading: (v: boolean) => void
+  setError: (v: string | null) => void
+}) {
+  const [paths, setPaths] = useState<PathOption[]>([])
+  const [pathId, setPathId] = useState('')
+  const [dueDate, setDueDate] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/paths')
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => setPaths(Array.isArray(data) ? data : []))
+  }, [])
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!pathId.trim()) return
+    setError(null)
+    setBulkActionLoading(true)
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/paths/${pathId}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_ids: userIds, due_date: dueDate || undefined }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError((data as { error?: string }).error || res.statusText)
+        return
+      }
+      onSuccess()
+    } finally {
+      setBulkActionLoading(false)
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
+      <div className="bg-slate-900 border border-slate-800 rounded-xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-lg font-semibold text-white mb-2">Assign to path</h2>
+        <p className="text-slate-400 text-sm mb-4">Assign {userIds.length} user(s) to a learning path.</p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Path</label>
+            <select required value={pathId} onChange={(e) => setPathId(e.target.value)} className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white text-sm">
+              <option value="">Select path</option>
+              {paths.map((p) => (
+                <option key={p.id} value={p.id}>{p.title}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Due date (optional)</label>
+            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white text-sm" />
+          </div>
+          <div className="flex gap-2">
+            <button type="button" onClick={onClose} className="flex-1 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm font-medium">Cancel</button>
+            <button type="submit" disabled={loading} className="flex-1 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium disabled:opacity-50">{loading ? 'Assigning…' : 'Assign'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function BulkRoleModal({
+  userIds,
+  onClose,
+  onSuccess,
+  setBulkActionLoading,
+  setError,
+}: {
+  userIds: string[]
+  onClose: () => void
+  onSuccess: (msg: string) => void
+  setBulkActionLoading: (v: boolean) => void
+  setError: (v: string | null) => void
+}) {
+  const [role, setRole] = useState('LEARNER')
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setBulkActionLoading(true)
+    setLoading(true)
+    try {
+      const res = await fetch('/api/users/bulk', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_ids: userIds, org_role: role }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError((data as { error?: string }).error || res.statusText)
+        return
+      }
+      const updated = (data as { updated?: number }).updated ?? 0
+      onSuccess(`Updated role for ${updated} user(s)`)
+    } finally {
+      setBulkActionLoading(false)
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
+      <div className="bg-slate-900 border border-slate-800 rounded-xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-lg font-semibold text-white mb-2">Change role</h2>
+        <p className="text-slate-400 text-sm mb-4">Set role for {userIds.length} selected user(s).</p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Role</label>
+            <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white text-sm">
+              <option value="LEARNER">Learner</option>
+              <option value="CREATOR">Creator</option>
+              <option value="MANAGER">Manager</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <button type="button" onClick={onClose} className="flex-1 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm font-medium">Cancel</button>
+            <button type="submit" disabled={loading} className="flex-1 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium disabled:opacity-50">{loading ? 'Updating…' : 'Update'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function BulkDisableModal({
+  userIds,
+  selectedList,
+  onClose,
+  onSuccess,
+  setBulkActionLoading,
+  setError,
+}: {
+  userIds: string[]
+  selectedList: UserRow[]
+  onClose: () => void
+  onSuccess: (msg: string) => void
+  setBulkActionLoading: (v: boolean) => void
+  setError: (v: string | null) => void
+}) {
+  const [action, setAction] = useState<'disable' | 'enable'>('disable')
+  const [loading, setLoading] = useState(false)
+  const activeCount = selectedList.filter((u) => u.status === 'active').length
+  const disabledCount = selectedList.filter((u) => u.status !== 'active').length
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setBulkActionLoading(true)
+    setLoading(true)
+    try {
+      const res = await fetch('/api/users/bulk', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_ids: userIds, banned: action === 'disable' }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError((data as { error?: string }).error || res.statusText)
+        return
+      }
+      const updated = (data as { updated?: number }).updated ?? 0
+      onSuccess(action === 'disable' ? `Disabled ${updated} user(s)` : `Enabled ${updated} user(s)`)
+    } finally {
+      setBulkActionLoading(false)
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
+      <div className="bg-slate-900 border border-slate-800 rounded-xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-lg font-semibold text-white mb-2">Disable / Enable</h2>
+        <p className="text-slate-400 text-sm mb-4">
+          {userIds.length} selected ({activeCount} active, {disabledCount} disabled).
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Action</label>
+            <select value={action} onChange={(e) => setAction(e.target.value as 'disable' | 'enable')} className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-white text-sm">
+              <option value="disable">Disable access</option>
+              <option value="enable">Enable access</option>
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <button type="button" onClick={onClose} className="flex-1 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm font-medium">Cancel</button>
+            <button type="submit" disabled={loading} className="flex-1 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium disabled:opacity-50">{loading ? 'Updating…' : 'Update'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function BulkRemoveModal({
+  userIds,
+  onClose,
+  onSuccess,
+  setBulkActionLoading,
+  setError,
+}: {
+  userIds: string[]
+  onClose: () => void
+  onSuccess: (msg: string) => void
+  setBulkActionLoading: (v: boolean) => void
+  setError: (v: string | null) => void
+}) {
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setBulkActionLoading(true)
+    setLoading(true)
+    try {
+      const res = await fetch('/api/users/bulk', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_ids: userIds }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError((data as { error?: string }).error || res.statusText)
+        return
+      }
+      const removed = (data as { removed?: number }).removed ?? 0
+      onSuccess(`Removed ${removed} user(s) from organization`)
+    } finally {
+      setBulkActionLoading(false)
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
+      <div className="bg-slate-900 border border-slate-800 rounded-xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-lg font-semibold text-white mb-2">Remove from organization</h2>
+        <p className="text-slate-400 text-sm mb-4">
+          Remove {userIds.length} user(s) from this organization? They can be re-invited later.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex gap-2">
+            <button type="button" onClick={onClose} className="flex-1 py-2 rounded-lg border border-slate-600 text-slate-300 text-sm font-medium">Cancel</button>
+            <button type="submit" disabled={loading} className="flex-1 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-500 disabled:opacity-50">{loading ? 'Removing…' : 'Remove'}</button>
           </div>
         </form>
       </div>

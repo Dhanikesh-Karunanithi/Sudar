@@ -28,6 +28,7 @@ export async function GET() {
   const settings = (org?.settings as Record<string, unknown>) ?? {}
   const performance_config = settings.performance_config ?? null
   const ai_models = (settings.ai_models as Record<string, string | null> | undefined) ?? {}
+  const sso_config = (settings.sso_config as Record<string, unknown> | undefined) ?? null
 
   return NextResponse.json({
     performance_config,
@@ -40,6 +41,7 @@ export async function GET() {
       content_generation_model: ai_models.content_generation_model ?? null,
       tutor_model: ai_models.tutor_model ?? null,
     },
+    sso_config,
   })
 }
 
@@ -86,6 +88,13 @@ export async function PATCH(request: Request) {
       ...(ai.tts_voice !== undefined && { tts_voice: ai.tts_voice }),
       ...(ai.content_generation_model !== undefined && { content_generation_model: ai.content_generation_model }),
       ...(ai.tutor_model !== undefined && { tutor_model: ai.tutor_model }),
+    }
+  }
+
+  if (body.sso_config !== undefined) {
+    const raw = body.sso_config
+    if (raw === null || (typeof raw === 'object' && !Array.isArray(raw))) {
+      updatedSettings.sso_config = raw as Record<string, unknown> | null
     }
   }
 

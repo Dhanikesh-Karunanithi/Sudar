@@ -29,10 +29,19 @@ Sudar IS:
 
 ---
 
+## Branding & Repositories (Important)
+
+- **Product name is Sudar.** The project started as ByteOS but has been **rebranded to Sudar**. All focus, docs, and communication use **Sudar** — not ByteOS.
+- **Canonical repo**: **https://github.com/Dhanikesh-Karunanithi/Sudar** (official account). This is the main, public repo. Push default is to this repo.
+- **ByteOS repo** (lorddannykay/ByteOS) is **legacy** and will be made private; it has no major purpose going forward. Do not treat it as the primary target or confuse it with Sudar.
+- Folder names in this codebase (`byteos-studio`, `byteos-learn`, etc.) are **legacy directory names**; the product and all user-facing references are **Sudar** (Sudar Studio, Sudar Learn, Sudar Intelligence).
+
+---
+
 ## Project Structure (Always Check ECOSYSTEM.md First)
 
 ```
-ByteOS/
+Sudar/  (repo: Dhanikesh-Karunanithi/Sudar — legacy dir names byteos-* kept for now)
 ├── ECOSYSTEM.md              ← AUTHORITATIVE CONTEXT — read this first
 ├── AGENTS.md                 ← This file
 ├── .cursorrules              ← Coding rules
@@ -178,7 +187,7 @@ Instead, it silently powers ALL personalization decisions behind the scenes.
 - Do NOT hardcode organization IDs, user IDs, or course IDs in any logic
 - Do NOT create new npm packages/pip packages without a clear reason
 - Do NOT rename "Sudar" (the AI tutor) to anything else
-- Do NOT refer to the platform as "ByteLab", "ByteVerse", or any old name — it is "Sudar"
+- Do NOT refer to the platform as "ByteOS", "ByteLab", "ByteVerse", or any old name — it is **Sudar**. (ByteOS was the original name; the project is rebranded to Sudar; only the Sudar repo and branding are used going forward.)
 - Do NOT break the separation between Studio (admin) and Learn (learner) surfaces
 - Do NOT store AI model responses in a way that can't be updated when models improve
 

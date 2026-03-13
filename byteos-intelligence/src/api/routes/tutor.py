@@ -1,6 +1,7 @@
 """
 ByteOS Intelligence — AI Tutor Routes
 Handles reactive Q&A and proactive nudge generation for "Sudar", the AI tutor.
+Uses provider-agnostic AI client (see src.core.ai_client).
 """
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -51,7 +52,7 @@ async def tutor_query(request: TutorQueryRequest):
     # 1. Embed the user's question
     # 2. Retrieve relevant chunks from context_text
     # 3. Build prompt with context + session history
-    # 4. Call AI provider (Together AI → OpenAI fallback)
+    # 4. Call src.core.ai_client.chat_completion() (provider-agnostic)
     # 5. Log to Supabase ai_interactions table
     # 6. Return response
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import {
   Settings,
   Building2,
@@ -341,6 +342,10 @@ export default function SettingsPage() {
         </div>
         <p className="text-slate-500 text-sm">
           Default models for course generation and Listen (audio) modality. Learners can override TTS voice in Learn.
+        </p>
+        <p className="text-slate-500 text-xs">
+          To configure API keys for AI providers (OpenRouter, Together, OpenAI, etc.), go to{' '}
+          <Link href="/settings/keys" className="text-indigo-400 hover:text-indigo-300">AI &amp; API Keys</Link>.
         </p>
         <div className="space-y-6">
           <ModelPicker

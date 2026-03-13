@@ -36,17 +36,17 @@ Every new feature or fix should map to at least one of these pillars. If it does
 - **Learner polish**: Certificate page has reliable “Print / Save as PDF” (client component + print CSS); Learn dashboard shows “Upcoming deadlines” and “Required by your organisation” when relevant.  
 - **Compliance**: Studio “Compliance” page lists path assignments with due date, progress, and status (Overdue / At risk / On track / Completed); Learn dashboard surfaces required paths and due-soon items.
 
-**Built and documented (shipped or ready)**  
+**Built and documented (shipped)** — see [docs/SHIPPED_FEATURES.md](SHIPPED_FEATURES.md) for details.  
 - **Flashcards modality**: FlashcardsCard in Learn course viewer; generate-flashcards API.  
 - **Document-to-course**: Studio generate-from-document API (PDF/DOCX/URL → course outline + modules).  
 - **SCORM 1.2 import**: Studio import-scorm API (ZIP → courses + modules).  
+- **Listen (Audio TTS) modality**: Listen tab in Learn course viewer; AudioCard + generate-audio API (proxies to Intelligence or returns use_browser_tts).  
+- **Compliance email reminders**: Studio cron endpoint `POST /api/cron/compliance-reminders` (CRON_SECRET, RESEND_API_KEY); at-risk/overdue path assignments.  
 - **RAG (Learn)**: content_chunks, ingest API, tutor uses it for course search.  
 - **Floating Sudar Chat**, structured tutor responses, outcome logging, validate-memory quick preferences, memory insights, SCORM delivery proxy, change-password flow (see UPDATES.md 2026-03-08).
 
 **Remaining gaps vs. ultimate goal**  
-- **Creator velocity**: Document/URL import and SCORM import built; RAG-from-docs optional follow-on.  
-- **Modality**: Text + Flashcards live; Video/Audio/MindMap/Feed/Play still placeholders.  
-- **Compliance**: No email reminders for at-risk/overdue yet.  
+- **Modality**: Text, Flashcards, and Listen (Audio TTS) live; Video/Podcast/MindMap use pre-generated or on-demand content; SudarFeed/SudarPlay still placeholders.  
 - **Polish**: No server-generated certificate PDF.  
 - **Scale**: No white-label, SSO, or HRIS hooks yet (explicitly later phase).
 
@@ -56,13 +56,13 @@ Every new feature or fix should map to at least one of these pillars. If it does
 
 **Next 3 (concrete outcomes)** — update after each milestone:
 1. **Visibility**: Record Sudar memory demo video (1–2 min); add 2–4 screenshots to docs/screenshots and link from README.
-2. **Ship recent work**: Commit and document Flashcards modality, document-to-course (generate-from-document), and SCORM 1.2 import; update current state in Section 2.
-3. **One more win**: Either ship one more modality end-to-end (e.g. Audio TTS for current module) or add compliance email reminders for at-risk/overdue.
+2. ~~**Ship recent work**: Commit and document Flashcards, document-to-course, SCORM 1.2 import; update current state in Section 2.~~ **Done** — see docs/SHIPPED_FEATURES.md and §2 above.
+3. ~~**One more win**: Ship Audio TTS (Listen tab) and document compliance email reminders.~~ **Done** — Listen modality + compliance-reminders cron documented.
 
 **Pending phases (from ECOSYSTEM §8)**  
 - **Phase 3 remaining**: Video modality (wire to bytetexttovid / Remotion).  
 - **Phase 5 — Engagement & Scale**: SudarPlay, SudarFeed, SudarMind modalities; white-label per org; HRIS integration hooks.  
-- **Compliance**: Email reminders for at-risk/overdue learners.  
+- **Compliance**: Email reminders shipped (cron endpoint; see SHIPPED_FEATURES.md).  
 - **Polish**: Server-generated certificate PDF.
 
 ---
@@ -121,4 +121,4 @@ Priorities are chosen to maximise progress toward the four pillars without overb
 
 ---
 
-*Last updated: Current state updated with RAG, Floating Sudar Chat, memory insights, SCORM delivery, change password (UPDATES.md 2026-03-08). Flashcards, document-to-course, SCORM 1.2 import documented as shipped (UPDATES.md ship recent work 2026-03-08).*
+*Last updated: Ship recent work (Flashcards, document-to-course, SCORM 1.2) and one more win (Listen modality, compliance email reminders) documented; STRATEGIC_PATH §2 and docs/SHIPPED_FEATURES.md updated. Pilot (LAMP Phase 3) after build complete.*

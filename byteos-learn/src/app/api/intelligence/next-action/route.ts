@@ -20,8 +20,8 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
 
-const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
 const STALE_HOURS = 4
 
 interface CourseCandidate {
@@ -180,23 +180,15 @@ export async function POST(request: NextRequest) {
     ? `This course ${best.reasons[0]}.`
     : `A strong next step based on your learning profile.`
 
-  if (process.env.TOGETHER_API_KEY && best.reasons.length > 0) {
+  if (!getChatConfigError() && best.reasons.length > 0) {
     try {
       const prompt = `Write one sentence (max 25 words) explaining to a learner why they should take the course "${best.course.title}" next. Reasons: ${best.reasons.join('; ')}. Be warm and specific. No fluff.`
-      const res = await fetch(TOGETHER_API_URL, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${process.env.TOGETHER_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 60, temperature: 0.6,
-        }),
+      const { content: gen } = await chatCompletion({
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 60,
+        temperature: 0.6,
       })
-      if (res.ok) {
-        const d = await res.json()
-        const gen = d.choices?.[0]?.message?.content?.trim()
-        if (gen) reason = gen
-      }
+      if (gen) reason = gen
     } catch { /* use heuristic reason */ }
   }
 

@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from src.api.routes import tutor, learner, content, modality, health, audio
+from src.sudarplay.router import router as sudarplay_router
 
 
 @asynccontextmanager
@@ -51,3 +52,4 @@ app.include_router(learner.router, prefix="/api/learner", tags=["Learner"])
 app.include_router(content.router, prefix="/api/content", tags=["Content Generation"])
 app.include_router(modality.router, prefix="/api/modality", tags=["Modality"])
 app.include_router(audio.router, prefix="/api/audio", tags=["Audio TTS"])
+app.include_router(sudarplay_router, prefix="/api/sudarplay", tags=["sudarplay"])

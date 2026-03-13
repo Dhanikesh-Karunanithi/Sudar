@@ -147,13 +147,14 @@ Or execute sequentially: A → B → C; then Phase 1 → Phase 2 → Phase 3 for
 - [x] **C1** Compliance view (Studio)
 - [x] **C2** Required / Due soon on Learn dashboard
 
-**Plan D — LAMP / ALP (build-first; track in docs/LAMP_BUILD_TRACKER.md)**
-- [ ] **B1** ALP API documentation
-- [ ] **B2** SudarMemory — event ingestion
-- [ ] **B3** SudarChat — tutor in Moodle
-- [ ] **B4** SudarRecommend — next-action in Moodle
-- [ ] **B5** Pilot plan (docs/PILOT_PLAN.md)
-- [ ] **P1–P8** Paper revisions (see LAMP_BUILD_PLAN.md)
+**Plan D — LAMP / ALP (build-first; track in docs/LAMP_BUILD_TRACKER.md)**  
+*Pilot (O1, O2) to be done after build is complete.*
+- [x] **B1** ALP API documentation
+- [x] **B2** SudarMemory — event ingestion
+- [x] **B3** SudarChat — tutor in Moodle
+- [x] **B4** SudarRecommend — next-action in Moodle
+- [x] **B5** Pilot plan (docs/PILOT_PLAN.md)
+- [x] **P1–P8** Paper revisions (see LAMP_BUILD_PLAN.md)
 - [ ] **O1** Pilot with partner(s); **O2** Claude-for-OSS application
 
 ---

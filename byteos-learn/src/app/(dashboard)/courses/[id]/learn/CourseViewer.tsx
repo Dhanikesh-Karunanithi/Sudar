@@ -7,7 +7,7 @@ import {
   ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight,
   BookOpen, List, X, Sparkles, Send, Loader2,
   ChevronDown, FileText, Video, Network,
-  Layers, Zap, MessageSquarePlus, Code, Quote, Pin, PinOff, PanelLeftClose, Mic, Maximize2, Minimize2
+  Layers, Zap, MessageSquarePlus, Code, Quote, Pin, PinOff, PanelLeftClose, Mic, Maximize2, Minimize2, Headphones
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { QuizCard } from './QuizCard'
@@ -15,6 +15,7 @@ import { FlashcardsCard, type FlashcardPair } from './FlashcardsCard'
 import { CourseVideoCard } from './CourseVideoCard'
 import { CoursePodcastCard } from './CoursePodcastCard'
 import { MindMapCard, type MindMapNode } from './MindMapCard'
+import { AudioCard } from './AudioCard'
 import { RichModuleContent } from '@/components/learn/RichModuleContent'
 import { ReadAlongControls } from '@/components/learn/ReadAlongControls'
 import { CourseThemeProvider } from '@/components/learn/CourseThemeProvider'
@@ -585,6 +586,9 @@ export function CourseViewer({
   const [mindmapScope, setMindmapScope] = useState<'module' | 'course'>('module')
   const [mindmapCourse, setMindmapCourse] = useState<MindMapNode | null>(null)
   const [mindmapCourseLoading, setMindmapCourseLoading] = useState(false)
+  const [listeningAudioByModule, setListeningAudioByModule] = useState<Record<string, string>>({})
+  const [listeningUnavailableByModule, setListeningUnavailableByModule] = useState<Record<string, boolean>>({})
+  const [listeningLoading, setListeningLoading] = useState(false)
 
   // Tutor state
   const [tutorOpen, setTutorOpen] = useState(false)
@@ -770,6 +774,41 @@ export function CourseViewer({
       .catch(() => {})
       .finally(() => setMindmapCourseLoading(false))
   }, [activeModality, mindmapScope, mindmapCourse, course.id, course.title, course.modules])
+
+  // Fetch audio for Listen modality when switching to listening and we don't have it for this module
+  useEffect(() => {
+    if (activeModality !== 'listening' || !currentModuleId) return
+    const body = getContentBodyForFlashcards(currentModule?.content ?? null)
+    if (!body.trim()) return
+    if (listeningAudioByModule[currentModuleId] || listeningUnavailableByModule[currentModuleId]) return
+    setListeningLoading(true)
+    fetch('/api/ai/generate-audio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: body.slice(0, 15000) }),
+    })
+      .then(async (res) => {
+        const contentType = (res.headers.get('content-type') || '').toLowerCase()
+        if (contentType.includes('application/json')) {
+          const data = await res.json()
+          if (data.use_browser_tts) {
+            setListeningUnavailableByModule((prev) => ({ ...prev, [currentModuleId]: true }))
+            return
+          }
+          setListeningUnavailableByModule((prev) => ({ ...prev, [currentModuleId]: true }))
+          return
+        }
+        return res.blob()
+      })
+      .then((blob) => {
+        if (blob && blob instanceof Blob) {
+          const url = URL.createObjectURL(blob)
+          setListeningAudioByModule((prev) => ({ ...prev, [currentModuleId]: url }))
+        }
+      })
+      .catch(() => setListeningUnavailableByModule((prev) => ({ ...prev, [currentModuleId]: true })))
+      .finally(() => setListeningLoading(false))
+  }, [activeModality, currentModuleId, currentModule?.content, listeningAudioByModule, listeningUnavailableByModule])
 
   // Fetch learner context when tutor panel opens (for "What Sudar knows" summary)
   useEffect(() => {
@@ -1240,7 +1279,7 @@ export function CourseViewer({
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-1.5 rounded-md hover:bg-muted transition-colors">
             <List className="w-4 h-4 text-muted-foreground" />
           </button>
-          <span className="text-xs text-muted-foreground">{currentIndex + 1} / {modules.length}</span>
+          <span className="text-xs text-muted-foreground">{currentIndex + 1}{' / '}{modules.length}</span>
           <div className="h-4 w-px bg-muted" />
           <h1 className="text-sm font-semibold text-card-foreground truncate flex-1 min-w-0">{currentModule?.title}</h1>
 
@@ -1253,6 +1292,7 @@ export function CourseViewer({
                 (course.settings?.podcast_dialogue?.length ?? 0) > 0
               const modalities = [
                 { id: 'text', icon: FileText, label: 'Read' },
+                { id: 'listening', icon: Headphones, label: 'Listen' },
                 { id: 'video', icon: Video, label: 'Watch', soon: !hasVideo },
                 ...(hasPodcast ? [{ id: 'podcast', icon: Mic, label: 'Podcast', soon: false }] : []),
                 { id: 'mindmap', icon: Network, label: 'Map' },
@@ -1385,6 +1425,7 @@ export function CourseViewer({
                   activeModality !== 'podcast' &&
                   activeModality !== 'mindmap' &&
                   activeModality !== 'flashcards' &&
+                  activeModality !== 'listening' &&
                   currentModule && (
                   <ReadAlongControls
                     plainText={getContentBodyForFlashcards(currentModule.content ?? null)}
@@ -1523,6 +1564,54 @@ export function CourseViewer({
                           setFlashcardsByModule((prev) => ({ ...prev, [currentModuleId]: cards }))
                         })
                         .finally(() => setFlashcardsLoading(false))
+                    }}
+                  />
+                ) : activeModality === 'listening' ? (
+                  <AudioCard
+                    text={getContentBodyForFlashcards(currentModule?.content ?? null)}
+                    moduleTitle={currentModule?.title ?? ''}
+                    loading={listeningLoading}
+                    audioUrl={listeningAudioByModule[currentModuleId] ?? null}
+                    audioUnavailable={listeningUnavailableByModule[currentModuleId]}
+                    onRetry={() => {
+                      setListeningAudioByModule((prev) => {
+                        const next = { ...prev }
+                        delete next[currentModuleId]
+                        return next
+                      })
+                      setListeningUnavailableByModule((prev) => {
+                        const next = { ...prev }
+                        delete next[currentModuleId]
+                        return next
+                      })
+                      setListeningLoading(true)
+                      const body = getContentBodyForFlashcards(currentModule?.content ?? null)
+                      fetch('/api/ai/generate-audio', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: body.slice(0, 15000) }),
+                      })
+                        .then(async (res) => {
+                          const contentType = (res.headers.get('content-type') || '').toLowerCase()
+                          if (contentType.includes('application/json')) {
+                            const data = await res.json()
+                            if (data.use_browser_tts) {
+                              setListeningUnavailableByModule((prev) => ({ ...prev, [currentModuleId]: true }))
+                              return
+                            }
+                            setListeningUnavailableByModule((prev) => ({ ...prev, [currentModuleId]: true }))
+                            return
+                          }
+                          return res.blob()
+                        })
+                        .then((blob) => {
+                          if (blob && blob instanceof Blob) {
+                            const url = URL.createObjectURL(blob)
+                            setListeningAudioByModule((prev) => ({ ...prev, [currentModuleId]: url }))
+                          }
+                        })
+                        .catch(() => setListeningUnavailableByModule((prev) => ({ ...prev, [currentModuleId]: true })))
+                        .finally(() => setListeningLoading(false))
                     }}
                   />
                 ) : isRichContent(currentModule?.content) ? (

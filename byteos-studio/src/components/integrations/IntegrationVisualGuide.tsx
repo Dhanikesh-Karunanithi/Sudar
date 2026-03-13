@@ -16,7 +16,6 @@ import {
   Layers,
   Box,
 } from 'lucide-react'
-import Link from 'next/link'
 
 const steps = [
   {
@@ -174,16 +173,16 @@ export function IntegrationVisualGuide() {
 
           {/* Link to full guide */}
           <div className="pt-2 border-t border-slate-700">
-            <Link
-              href="https://github.com/Dhanikesh-Karunanithi/Sudar/blob/main/docs/INTEGRATION_GUIDE.md"
+            <a
+              href="https://github.com/Dhanikesh-Karunanithi/Sudar"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300"
             >
               <ExternalLink className="w-4 h-4" />
               Full integration guide (diagrams, LMS/ERP/ecosystem patterns)
-            </Link>
-            <span className="text-slate-500 text-xs ml-1">— Mermaid diagrams, Moodle/Canvas/ERP examples</span>
+            </a>
+            <span className="text-slate-500 text-xs ml-1">— <code className="text-slate-400">docs/INTEGRATION_GUIDE.md</code> · Mermaid diagrams, Moodle/Canvas/ERP examples</span>
           </div>
         </div>
       )}

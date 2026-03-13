@@ -1,5 +1,5 @@
-% From course hosting to adaptive learning: ALP — a reference platform and plugin architecture for learner memory and multimodal delivery
-% arXiv-ready draft
+% Learning That Remembers You — Sudar / ALP Paper v2
+% Updated to match enhanced markdown draft (March 2026)
 \documentclass[10pt,twocolumn]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -11,176 +11,803 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{tikz}
 \usetikzlibrary{positioning,shapes.geometric,arrows.meta,fit,backgrounds}
+\usepackage{placeins}
+\usepackage{dblfloatfix}
 \hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
 
-\title{From Course Hosting to Adaptive Learning: An AI-Native Platform and Plugin Architecture for Learner Memory and Multimodal Delivery}
+\title{Learning That Remembers You: An AI-Native Ecosystem\\
+for Adaptive, Memory-Aware, and Multimodal Education at Scale}
 \author{
   Dhanikesh Karunanithi\\
   \texttt{Sudar / ALP Project}\\
-  \url{https://github.com/lorddannykay/ByteOS}
+  \url{https://github.com/Dhanikesh-Karunanithi/Sudar}
 }
 \date{2026}
 
 \begin{document}
 \maketitle
 
+% ---------------------------------------------------------------
 \begin{abstract}
-Traditional learning management systems (LMSs) deliver static content with no longitudinal learner model or adaptive tutoring, while intelligent tutoring systems (ITS) that do adapt remain research prototypes or narrow-domain tools. We present an AI-native learning system with two contributions: (1) a full reference platform that combines authoring, delivery, and intelligence with a persistent Digital Learner Twin, adaptive sequencing, multimodal delivery (text, video, audio, mindmap, flashcards, and more), and an AI tutor with longitudinal memory; and (2) an architecture---which we call the Adaptive Learning Layer (ALP)---by which these components can be deployed as standalone plugins to turn existing LMSs into adaptive, memory-aware learning experience platforms. The reference implementation is open source and evidence-informed by learning sciences. We describe the design, implementation, and evaluation strategy, and we invite institutions and organizations to collaborate on pilots and plugin integrations so that learning can become accessible and adaptive at scale.
+% ---------------------------------------------------------------
+Traditional learning management systems (LMSs) deliver static,
+one-size-fits-all content with no longitudinal learner model and no
+adaptive tutoring. Intelligent tutoring systems (ITS) that do adapt
+remain either narrow-domain research prototypes or products
+disconnected from the course-hosting infrastructure most organisations
+already use. We present \textbf{Sudar}, an AI-native learning system
+with three main contributions: (1)~a full open-source reference
+platform that unifies authoring, delivery, and intelligence around a
+persistent \textbf{Digital Learner Twin}, adaptive sequencing, a
+complete multimodal delivery stack (text with read-along TTS, video,
+audio podcast, mindmap, flashcards, and SCORM), and an AI tutor with
+longitudinal cross-session memory; (2)~the \textbf{Adaptive Learning
+Layer (ALP)}, an architecture by which these capabilities can be
+deployed as standalone plugins on top of existing LMSs---turning them
+into adaptive, memory-aware learning experience platforms without full
+platform replacement; and (3)~a demonstrated \textbf{radical cost
+efficiency} enabled by open-weight inference models and zero-cost TTS,
+making world-class AI-native learning economically viable at a
+per-learner infrastructure cost of less than \$0.02 per month---a
+reduction of over 99\% compared to both incumbent commercial LMS
+licensing fees and proprietary AI provider stacks. The reference
+implementation is open source under the MIT licence
+\cite{sudar2026}, evidence-informed by the learning sciences, and
+designed as an extensible bedrock platform on which the community can
+build additional modalities, intelligence plugins, and LMS connectors.
 \end{abstract}
 
+% ---------------------------------------------------------------
 \section{Introduction}
 \label{sec:intro}
+% ---------------------------------------------------------------
 
-Learning management systems used by most organizations and universities deliver one-size-fits-all content: the same course for every learner, no memory of who the learner is, and no adaptation of sequence, difficulty, or support based on behavior or prior knowledge. Research consistently shows that adaptive instruction and intelligent tutoring outperform fixed instruction \cite{vanlehn2011,aleven2016}, yet mainstream LMS products do not maintain a longitudinal learner model or provide personalized, memory-aware tutoring \cite{zawacki2019,adnan2023}. ITS that do adapt are typically not integrated into the same platform that hosts courses, paths, and compliance.
+Learning management systems used by most organisations and universities
+deliver one-size-fits-all content: the same course for every learner,
+no memory of who the learner is, and no adaptation of sequence,
+difficulty, or support based on behaviour or prior knowledge. Research
+consistently shows that adaptive instruction and intelligent tutoring
+outperform fixed instruction \cite{vanlehn2011,aleven2016}, yet
+mainstream LMS products do not maintain a longitudinal learner model
+or provide personalised, memory-aware tutoring
+\cite{zawacki2019,adnan2023}. ITS that do adapt are typically not
+integrated into the same platform that hosts courses, compliance paths,
+and certifications.
 
-We address this gap with an AI-native system that (1) implements a complete reference platform with learner memory, adaptive paths, and multimodal delivery, and (2) is designed so its core components can be deployed as a layer on top of existing LMSs---the \textbf{Adaptive Learning Layer (ALP)}---enabling incumbent systems to gain longitudinal learner modeling, memory-aware tutoring, and modality choice without full replacement.
+We address this gap with Sudar, an AI-native learning system that
+(1)~implements a complete reference platform with learner memory,
+adaptive paths, and a fully realised multimodal delivery stack;
+(2)~is designed so its core components can be deployed as a layer on
+top of existing LMSs---the \textbf{Adaptive Learning Layer
+(ALP)}---enabling incumbent systems to gain longitudinal learner
+modelling, memory-aware tutoring, and modality choice without full
+platform replacement; and (3)~demonstrates that this entire capability
+set can be delivered at infrastructure costs that approach zero,
+removing the economic barrier that has historically made AI-native
+learning a privilege of well-funded institutions.
 
-The rest of the paper is organized as follows. Section~\ref{sec:related} reviews related work and contrasts our approach with textbook augmentation and typical LMS+AI. Section~\ref{sec:design} describes the system design: architecture, Digital Learner Twin, AI tutor with memory, modality-agnostic delivery, adaptive sequencing, and the ALP plugin architecture. Section~\ref{sec:impl} summarizes implementation and reproducibility. Section~\ref{sec:eval} outlines evidence and evaluation strategy, including a call for collaboration. Section~\ref{sec:discussion} discusses limitations and future work, and Section~\ref{sec:conclusion} concludes.
+The economic dimension deserves particular attention. In 2026, AI
+inference costs have fallen approximately 1,000-fold since 2022
+\cite{a16z2024llmflation}. Delivering a full personalised learning
+session with AI tutoring, content generation, and TTS narration now
+costs less than a fraction of a US cent on open-weight model providers.
+Yet commercial LMS vendors continue to charge \$5--\$20 per user per
+month, with AI features offered as credits-based add-ons requiring
+enterprise contracts with annual commitments of \$30,000 or more. This
+pricing structure excludes the very institutions---community colleges,
+NGOs, corporate L\&D teams at mid-market companies, and educational
+organisations in the Global South---that would benefit most from
+adaptive, personalised learning. Sudar is an explicit response to this
+gap.
 
+This paper presents a \emph{system and architecture contribution} with
+an embedded economic analysis. Empirical efficacy data from a
+controlled study are not yet available; a pilot study has not yet been
+initiated; however, implementation is planned in collaboration with
+educational, university, and corporate institutions currently under
+negotiation, and corresponding outcomes will be documented in a
+subsequent publication. Our claims here concern design, implementation
+completeness, economic evidence, and the evidence-informed rationale
+for each component.
+
+% ---------------------------------------------------------------
 \section{Background and Related Work}
 \label{sec:related}
+% ---------------------------------------------------------------
 
 \paragraph{Adaptive instruction and ITS.}
-Adaptive learning systems that tailor content and difficulty to the learner improve outcomes compared to one-size-fits-all instruction \cite{vanlehn2011,aleven2016}. Persistent learner models allow systems to adapt over time \cite{self1988,bull2016}. Our system implements adaptation through learner profiles, next-best-action recommendations, and adaptive path ordering.
+Adaptive learning systems that tailor content and difficulty to the
+learner improve outcomes compared to one-size-fits-all instruction
+\cite{vanlehn2011,aleven2016}. Persistent learner models allow systems
+to adapt over time \cite{self1988,bull2016}. Sudar implements
+adaptation through learner profiles, next-best-action recommendations,
+and adaptive path ordering.
 
-\paragraph{Multimodal and dual coding.}
-Dual coding and multimodal presentation support different learners and deepen encoding \cite{mayer2009,clark2016}. We adopt a modality-agnostic design: content is authored once and delivered in multiple formats (text, video, audio, mindmap, flashcards, feed, game), with a modality dispatcher that can recommend formats per learner.
+\paragraph{Multimodal learning and dual coding.}
+Dual coding and multimodal presentation support different learners and
+deepen encoding \cite{mayer2009,clark2016}. Content is authored once
+and delivered in multiple formats (text with read-along narration,
+animated video, audio podcast, interactive mindmap, flashcards, and
+SCORM), with a modality dispatcher that recommends formats per learner
+profile.
+
+\paragraph{Self-regulated learning and metacognition.}
+Self-regulated learning and metacognitive scaffolding improve
+persistence and transfer \cite{zimmerman2002}. Sudar supports this
+through progress visibility (streaks, completion rates), next-best-action
+surfacing, deadline awareness, and the tutor's ``Your context'' panel---a
+live view of what Sudar knows about the learner's goals and
+preferences---enabling learners to reflect on and correct their own
+model.
+
+\paragraph{Structured curricula and prerequisite ordering.}
+Structured curricula and prerequisite sequencing help learners build
+knowledge coherently \cite{gagne1985}. Sudar supports learning paths
+with mandatory and optional courses, unlock rules, and adaptive
+reordering of optional content by the Intelligence engine.
+
+\paragraph{Formative assessment and retrieval practice.}
+Retrieval practice and formative assessment with feedback improve
+long-term retention \cite{roediger2006,black1998}. Sudar uses
+in-module quizzes with immediate feedback and low-stakes struggle
+detection that feeds directly into the learner model. Five quiz mode
+archetypes---standard, predict-then-learn, confidence-tagged,
+scenario-fork, and peer-contrast---are implemented to vary the
+retrieval modality and reduce habituation effects.
 
 \paragraph{AI in higher education and LMS.}
-Reviews of AI in HE note a gap between ITS research and mainstream LMS adoption \cite{zawacki2019}. Recent work on AI-augmented textbooks, e.g., Learn Your Way \cite{learnyourway2025}, transforms source material with personalization (grade level, interests), multiple views (immersive text, slides, audio, mind maps), and formative assessment. A randomized trial showed gains over a digital reader. Learn Your Way focuses on augmenting a single textbook or chapter within one product; it does not claim a longitudinal learner model across sessions and courses, nor an architecture to augment existing LMSs.
+Reviews of AI in HE note a persistent gap between ITS research and
+mainstream LMS adoption \cite{zawacki2019}. Recent work on
+AI-augmented textbooks---e.g., \emph{Learn Your Way}
+\cite{learnyourway2025}---transforms source material with
+personalisation (grade level, interests), multiple views (immersive
+text, slides, audio, mind maps), and formative assessment; a
+randomised trial showed gains over a digital reader. However,
+\emph{Learn Your Way} focuses on augmenting a single textbook or
+chapter within one product; it does not claim a longitudinal learner
+model across sessions and courses, nor does it provide an architecture
+to augment existing LMSs. Table~\ref{tab:comparison} contrasts our
+system with \emph{Learn Your Way} and a typical LMS+AI add-on.
 
-Table~\ref{tab:comparison} contrasts our system with Learn Your Way and a typical LMS with an AI add-on.
+\paragraph{Proactive and predictive AI tutoring.}
+A growing body of 2025--2026 research focuses on AI tutors that move
+beyond reactive Q\&A toward predictive intervention.
+\emph{AgentTutor} \cite{liu2026agenttutor} demonstrated multi-turn
+personalised teaching with dynamic strategy adjustment using curriculum
+decomposition and knowledge memory modules. Reinforcement
+learning-driven ITS research \cite{meng2025rltutor} showed 28.6\%
+better intervention adaptability, 31.2\% reduction in recurring student
+errors, and 24.8\% lower dropout rates compared to traditional
+ITS---achieved by learning optimal intervention policies from
+behavioural data rather than hand-coding rules. Sudar's Intelligence
+layer is designed as a foundation for this trajectory.
 
-\begin{table}[t]
+\paragraph{Inference cost economics and accessibility.}
+The cost of AI inference has fallen approximately 1,000-fold from 2022
+to 2026, at a rate of roughly 10$\times$ per year---faster than
+Moore's Law and faster than the bandwidth cost curves observed during
+the internet expansion of the early 2000s \cite{a16z2024llmflation}.
+This collapse makes AI-native learning economically viable at
+population scale for the first time, yet no major LMS vendor has
+restructured its pricing model to reflect it.
+
+\begin{table}[tbp]
 \centering
-\caption{Contrast: our system vs.\ Learn Your Way and typical LMS.}
+\caption{Contrast: Sudar + ALP vs.\ \emph{Learn Your Way} and a
+typical LMS with AI add-on.}
 \label{tab:comparison}
 \small
-\begin{tabular}{@{}llll@{}}
+\begin{tabular}{@{}p{1.55cm}p{2.2cm}p{1.5cm}p{1.55cm}@{}}
 \toprule
- & Our platform + ALP & Learn Your Way & Typical LMS + AI \\
+ & \textbf{Sudar + ALP} & \textbf{Learn Your Way} & \textbf{Typical LMS + AI} \\
 \midrule
-Scope & Full platform + plugin layer & Single-product reader & Course host + chatbot \\
-Learner model & Longitudinal (Digital Twin) & Per-session / material & None or stateless \\
-Tutor memory & Cross-session, cross-course & Not claimed & Stateless \\
-Modalities & Text, video, audio, mindmap, flashcards, feed, game & Text, slides, audio, mind map & Usually text/video only \\
-Authoring & Integrated (Studio) & N/A (ingests material) & Separate tools \\
-Augment existing LMS & Yes (ALP plugins) & No & N/A \\
+Scope          & Full platform + plugin layer        & Single-product reader    & Course host + chatbot \\
+Learner model  & Longitudinal (Digital Twin)         & Per-session / material   & None or stateless \\
+Tutor memory   & Cross-session, cross-course         & Not claimed              & Stateless \\
+Modalities     & Text+TTS, video, podcast, mindmap, flashcards, SCORM & Text, slides, audio, mind map & Usually text/video only \\
+Authoring      & Integrated (Studio)                 & N/A (ingests material)   & Separate tools \\
+Augment LMS    & Yes (ALP plugins)                   & No                       & N/A \\
+Open source    & Yes (MIT)                           & No                       & Rarely \\
+Cost (1,000 learners/mo) & $\sim$\$21 & N/A & \$3,400--\$44,000 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
+\FloatBarrier
+
+% ---------------------------------------------------------------
 \section{System Design}
 \label{sec:design}
+% ---------------------------------------------------------------
 
-\subsection{Architecture}
+\subsection{Platform Architecture}
 \label{sec:arch}
 
-Figure~\ref{fig:arch} shows the reference platform architecture. The reference platform has three surfaces and one shared data layer. (1) \textbf{Studio} (admin/creator): course and path creation, AI-powered generation from documents or URLs, analytics, compliance. (2) \textbf{Learn} (learner): personalized dashboard, course viewer with modality switching, AI tutor sidebar, progress and certificates. (3) \textbf{Intelligence} (backend): adaptive engine, AI tutor engine, modality dispatcher, next-best-action, event processing. All share a single source of truth (Supabase/PostgreSQL) for auth, learner profiles, content, and events. Studio and Learn are Next.js 14 applications; Intelligence is Python FastAPI. Event flow: learner actions and tutor exchanges write to \texttt{learning\_events} and \texttt{ai\_interactions}; the Intelligence layer updates the learner profile and next-best-action.
+The system has three surfaces sharing one data layer:
 
-\begin{figure}[t]
+\begin{enumerate}
+  \item \textbf{Studio} (admin/creator): course and path creation,
+    AI-powered generation from documents or URLs, analytics, compliance
+    management.
+  \item \textbf{Learn} (learner): personalised dashboard, course viewer
+    with modality switching, AI tutor sidebar (\textit{Sudar}), progress
+    tracking, and certificates.
+  \item \textbf{Intelligence} (backend): adaptive engine, AI tutor
+    engine, modality dispatcher, next-best-action computation,
+    learning-event processing, and TTS audio generation.
+\end{enumerate}
+
+All three surfaces share a single source of truth (Supabase /
+PostgreSQL) for authentication, learner profiles, content, and events.
+Studio and Learn are Next.js~14 applications; Intelligence is a
+Python~3.11+ FastAPI service. Learner actions and tutor exchanges write
+to \texttt{learning\_events} and \texttt{ai\_interactions}; the
+Intelligence layer then asynchronously updates the learner profile and
+next-best-action.
+
+\begin{figure}[b]
 \centering
-\resizebox{\columnwidth}{!}{%
-\begin{tikzpicture}[node distance=0.35cm and 0.5cm, every node/.style={font=\scriptsize},
-  layer/.style={rectangle, draw, rounded corners, minimum height=0.55cm, inner sep=3pt}]
-  \node[layer, fill=black!8, minimum width=2.4cm] (studio) {Studio};
-  \node[layer, fill=black!8, minimum width=2.4cm, right=1.2cm of studio] (learn) {Learn};
-  \node[layer, fill=black!12, minimum width=2.4cm, below=0.5cm of studio] (intel) {Intelligence};
-  \node[layer, fill=black!5, minimum width=5.2cm, below=0.4cm of intel] (data) {Supabase};
-  \draw[->] (studio.south) -- (intel.north west);
-  \draw[->] (learn.south) -- (intel.north east);
-  \draw[->] (intel.south) -- (data.north);
-\end{tikzpicture}%
-}
-\caption{Reference platform: Studio, Learn, Intelligence, shared data.}
+\begin{tikzpicture}[
+  node distance=0.5cm,
+  every node/.style={font=\scriptsize},
+  surface/.style={rectangle, draw, rounded corners, minimum height=0.65cm,
+    minimum width=2.5cm, inner sep=4pt, text centered},
+  wide/.style={rectangle, draw, rounded corners, minimum height=0.65cm,
+    minimum width=5.4cm, inner sep=4pt, text centered}
+]
+  \node[surface, fill=blue!8]  (studio) {Studio (Creator)};
+  \node[surface, fill=blue!8, right=0.4cm of studio] (learn) {Learn (Learner)};
+  \node[wide, fill=orange!12, below=0.55cm of studio, xshift=1.45cm] (intel)
+        {Intelligence (Adaptive Engine $\cdot$ Tutor $\cdot$ TTS)};
+  \node[wide, fill=gray!8, below=0.45cm of intel] (data)
+        {Supabase / PostgreSQL (Auth $\cdot$ Profiles $\cdot$ Content $\cdot$ Events)};
+
+  \draw[->] (studio.south) -- ++(0,-0.28) -- (intel.north west);
+  \draw[->] (learn.south)  -- ++(0,-0.28) -- (intel.north east);
+  \draw[->] (intel.south)  -- (data.north);
+  \draw[->, dashed] (data.west) -- ++(-0.3,0) |- (intel.west);
+\end{tikzpicture}
+\caption{Sudar reference platform: three surfaces (Studio, Learn,
+Intelligence) over a shared Supabase data layer. Solid arrows show
+write/query flow; dashed arrow shows async profile update.}
 \label{fig:arch}
 \end{figure}
+
 
 \subsection{Digital Learner Twin and Learner Model}
 \label{sec:twin}
 
-A persistent \textbf{Digital Learner Twin} is stored in \texttt{learner\_profiles}. It includes: modality affinity scores (per format), learning pace and difficulty comfort, behavioral signals (session duration, completion rate, streak), and an \texttt{ai\_tutor\_context} JSON field holding known concepts, struggles, learning-style notes, goals, and interaction summaries. This context is updated asynchronously from tutor interactions and quiz outcomes (e.g., struggle detection). The design aligns with open learner model principles \cite{bull2016} and supports personalization across courses and sessions.
+A persistent \textbf{Digital Learner Twin} is stored in
+\texttt{learner\_profiles}. It includes: modality affinity scores
+(per format, 0.0--1.0), learning pace and difficulty comfort,
+behavioural signals (session duration, completion rate, streak), a
+\texttt{preferences} field (JSONB) holding TTS voice selection,
+response length preference (concise / one-line / detailed), and
+modality preference notes, and an \texttt{ai\_tutor\_context} JSON
+field holding known concepts, struggles, learning-style notes, goals,
+and interaction summaries. This context is updated asynchronously from
+tutor interactions and quiz outcomes. The design aligns with open
+learner model principles \cite{bull2016} and supports personalisation
+across courses and sessions. Crucially, the learner can inspect and
+correct their own model at any time via the tutor's ``Your context''
+panel, supporting metacognitive engagement \cite{zimmerman2002}.
 
 \subsection{AI Tutor with Longitudinal Memory}
 \label{sec:tutor}
 
-The AI tutor (named Sudar in the reference implementation) is reactive (RAG over course content, answers questions) and proactive (nudges when struggle or long pause is inferred). Every exchange is logged in \texttt{ai\_interactions}. The tutor's system prompt includes the learner's memory summary from \texttt{ai\_tutor\_context}, so responses can reference prior struggles, match explanation style, and connect to prior learning. Most ``AI in LMS'' implementations are stateless; ours is not.
+The AI tutor, \textit{Sudar}, is both \emph{reactive}
+(retrieval-augmented generation over course content to answer learner
+questions) and \emph{proactive} (generating nudges when struggle or a
+prolonged pause is inferred from behavioural signals). Every exchange
+is logged in \texttt{ai\_interactions}. The tutor's system prompt
+includes the learner's memory summary drawn from
+\texttt{ai\_tutor\_context}, so responses reference prior struggles,
+match the learner's preferred explanation style, and explicitly connect
+new material to prior learning. Most AI in LMS implementations are
+stateless \cite{zawacki2019}; Sudar is not.
+
+Additional tutor capabilities include: a \textbf{text-selection
+popup} that lets learners highlight any passage and invoke one of six
+pre-built actions (``Explain this'', ``Give me an example'', ``Why
+does this matter?'', ``Simplify this'', ``Summarise'', ``How does this
+connect\ldots'') or a custom question; a \textbf{resizable overlay
+panel}; and a \textbf{generative block renderer} that allows the tutor
+to respond with structured artefacts---quiz questions, course
+recommendation cards, multi-step workflow trackers, and action
+groups---enriching interaction beyond simple Q\&A.
 
 \subsection{Modality-Agnostic Delivery}
 \label{sec:modality}
 
-Content is authored once (courses and modules with structured content). The delivery layer can present the same material as text, video, audio, mindmap, flashcards, a feed-style view, or a game. A modality dispatcher (in Intelligence) can recommend the next modality from the learner's profile and behavior. This supports dual coding and learner agency \cite{mayer2009,clark2016}. Text and flashcards are fully implemented; video, audio, mindmap, feed, and game are in progress or planned.
+Content is authored once. The delivery layer presents the same
+material in six fully implemented modalities, selectable per learner
+in real time:
+
+\textbf{Text with Read-Along.} A server-side TTS read-along system
+calls \texttt{/api/ai/generate-audio} per sentence, receiving
+high-quality neural voice audio from Edge-TTS (40+ languages, 300+
+voices, zero cost). Each sentence is highlighted in-place as it plays,
+via \texttt{ReadingBodyWithSentences}. A collapsible transcript strip
+and sentence counter support both visual and auditory learners
+simultaneously.
+
+\textbf{Listen (standalone audio TTS).} A dedicated Listen modality tab
+(\texttt{AudioCard}) offers on-demand full-module TTS: the learner
+selects the Listen tab and receives generated audio for the current
+module, with optional regeneration. This complements the sentence-level
+read-along in the Text modality.
+
+\textbf{Animated Video.} Renders course content as scene-by-scene
+animation entirely in-browser (no video generation API). Four
+animation styles---kinetic, word-reveal, fade, and list---are applied
+per scene. If scenes carry a \texttt{audioDataURL} field, playback is
+audio-driven; otherwise a configurable scene timer advances
+automatically.
+
+\textbf{Audio Podcast.} Presents content as a two-voice dialogue
+(host and domain expert) through \texttt{DialogueSegment[]} objects.
+A live transcript highlights the active segment; learners can click
+any segment to jump playback.
+
+\textbf{MindMap (SudarMind).} Generates an interactive concept map
+via \texttt{POST /api/ai/generate-mindmap} using a custom SVG layout
+engine. Eight colour families distinguish top-level branches; node
+styles vary by depth; smooth B\'{e}zier curves connect parent--child
+pairs. A scope switcher shows either the current module or the full
+course.
+
+\textbf{Flashcards.} Generates a set of review cards on demand via
+\texttt{POST /api/ai/generate-flashcards}, supporting spaced
+repetition workflows and retrieval practice \cite{roediger2006,black1998}.
+
+\textbf{SCORM.} Existing SCORM packages render in a sandboxed iframe
+with a \texttt{postMessage} API shim; session time, suspend data, and
+scores write to \texttt{learning\_events}. The
+\texttt{scorm\_text\_content} field feeds Sudar's RAG knowledge base
+so the AI tutor can answer questions about SCORM content.
+
+A modality dispatcher in the Intelligence layer recommends the next
+modality from the learner's affinity scores and recent behaviour,
+supporting dual-coding principles \cite{mayer2009,clark2016}.
 
 \subsection{Adaptive Sequencing and Next-Best Action}
 \label{sec:adaptive}
 
-Learning paths support mandatory and optional courses and unlock rules (complete previous before next). For optional courses, the order can be adapted by the engine from the learner profile and gaps. A next-best-action algorithm suggests the next course or module and explains why, surfacing required and due-soon items. Formative assessment (in-module quizzes with immediate feedback) and struggle detection feed the learner model \cite{black1998,roediger2006}.
+Learning paths support mandatory and optional courses and unlock rules.
+For optional courses, the ordering is adapted by the Intelligence
+engine from the learner profile and inferred knowledge gaps. A
+next-best-action algorithm suggests the next course or module with a
+human-readable explanation, surfacing required items and due-soon
+deadlines. Formative assessment and struggle detection feed the learner
+model \cite{black1998,roediger2006}.
 
-\subsection{Plugin Architecture for Existing LMSs (ALP)}
+Five quiz mode archetypes---standard closed-response, predict-then-learn,
+confidence-tagged, scenario-fork, and peer-contrast---vary the
+retrieval modality and support metacognitive calibration.
+
+% ---------------------------------------------------------------
+\subsection{Plugin Architecture for Existing LMSs: The Adaptive
+Learning Layer (ALP)}
 \label{sec:alp}
+% ---------------------------------------------------------------
 
-The \textbf{Adaptive Learning Layer (ALP)} is the design by which the same capabilities can be offered to existing LMSs without replacing them. Conceptually, ALP comprises: (1) a \textbf{learner model API} that maintains or syncs a longitudinal profile from LMS events; (2) a \textbf{tutor service} that uses that profile and course content for memory-aware Q\&A and nudges; (3) a \textbf{modality layer} that can deliver or recommend alternative formats for content already in the LMS. Integration points: the LMS sends learning events and (optionally) content references to ALP; ALP returns next-best-action, tutor responses, and modality recommendations. To our knowledge, no widely adopted technology today adds longitudinal learner model and memory-aware tutoring to incumbent LMSs in a pluggable way; ALP is designed to fill that gap. The reference platform serves as the proof-of-concept and open-source reference for ALP.\footnote{Reference implementation: Sudar (repository: \url{https://github.com/lorddannykay/ByteOS}).} Figure~\ref{fig:alp} illustrates the ALP concept: existing LMSs keep hosting content and enrollments; ALP adds learner model, tutor, and modality layer via APIs and events.
+The most novel architectural contribution is the \textbf{Adaptive
+Learning Layer (ALP)}: a plugin layer that packages Sudar's
+capabilities as independently deployable services for existing LMSs.
+Organisations running Moodle, Canvas, Blackboard, or a proprietary LMS
+need not abandon their investment to gain learner memory and adaptive
+tutoring---ALP attaches these capabilities via APIs and event hooks.
+Moodle~4.5 introduced a dedicated AI subsystem with a formal
+separation between Provider plugins and Placement plugins
+\cite{moodleai2025}; ALP is architecturally aligned with this model.
+
+\paragraph{Five independently deployable ALP plugins.}
+
+\begin{enumerate}
+  \item \textbf{SudarMemory.} The foundational layer. Intercepts the
+    host LMS's xAPI or webhook event stream (quiz scores, content
+    completions, time-on-task) and maintains a Digital Learner Twin
+    for each user. Zero disruption to existing LMS workflows.
+  \item \textbf{SudarChat.} Embeds the Sudar AI tutor as a sidebar or
+    modal inside any LMS course page. Every message queries the
+    learner's Twin from SudarMemory, so the tutor knows history,
+    preferences, and prior struggles \emph{across all courses} on the
+    LMS---not just the current one.
+  \item \textbf{SudarStudio Embed.} Adds ``Generate with AI'' to the
+    host LMS's course editor. Instructors generate mindmaps, flashcard
+    sets, audio narration, or animated video storyboards from any
+    module text and embed output as native LMS resources.
+  \item \textbf{SudarRecommend.} A next-best-action widget for the LMS
+    dashboard. Queries \texttt{/api/intelligence/next-action} and
+    returns a personalised recommendation card with no schema changes
+    to the host database.
+  \item \textbf{SudarAdapt.} The most advanced plugin. Integrates with
+    the LMS's conditional activity system to dynamically unlock or
+    reorder optional content based on ALP's adaptive sequencing
+    recommendations.
+\end{enumerate}
+
+\paragraph{Integration flow.}
+Figure~\ref{fig:alp} illustrates the integration. The host LMS
+continues to own content, enrolments, and grading. ALP sits alongside
+it, enriching the experience without replacing infrastructure. No data
+migration is required.
+
+\paragraph{Addressable scale.}
+Moodle alone has over 500 million registered users across 233 countries
+and holds approximately 28\% of the global LMS market
+\cite{moodle2025stats}. ALP connectors for Moodle, Canvas, Blackboard,
+and Sakai collectively address the largest possible deployment channel
+for Sudar's intelligence layer without requiring a single institution
+to change its LMS.
+
+\paragraph{Novelty.}
+To our knowledge, no widely adopted technology today adds a
+\emph{longitudinal} learner model and memory-aware tutoring to
+incumbent LMSs in a pluggable, LMS-agnostic way. SCORM and xAPI
+standardise event reporting but provide no intelligence layer.
+Commercial LMS AI add-ons are typically stateless within a session.
+
 \begin{figure}[t]
 \centering
-\resizebox{0.85\columnwidth}{!}{%
-\begin{tikzpicture}[node distance=0.3cm, every node/.style={font=\scriptsize},
-  layer/.style={rectangle, draw, rounded corners, inner sep=3pt}]
-  \node[layer, fill=blue!10, minimum width=2.2cm] (lms) {Existing LMS};
-  \node[layer, fill=green!15, minimum width=2.2cm, below=0.3cm of lms] (alp) {ALP};
-  \draw[<->, thick] (lms.south) -- (alp.north);
-\end{tikzpicture}%
-}
-\caption{ALP as a layer on top of an existing LMS.}
+\begin{tikzpicture}[
+  node distance=0.45cm,
+  every node/.style={font=\scriptsize},
+  box/.style={rectangle, draw, rounded corners, inner sep=5pt,
+    minimum width=3.6cm, minimum height=0.6cm, text centered}
+]
+  \node[box, fill=blue!8] (lms)
+    {Existing LMS (content, enrolments, grades)};
+  \node[box, fill=green!18, below=0.6cm of lms] (api)
+    {SudarMemory (Learner Model API)};
+  \node[box, fill=green!18, below=0.45cm of api] (tutor)
+    {SudarChat (Tutor Service)};
+  \node[box, fill=green!18, below=0.45cm of tutor] (modal)
+    {SudarStudio / Recommend / Adapt};
+
+  \begin{scope}[on background layer]
+    \node[draw, rounded corners, fill=green!5,
+          fit=(api)(tutor)(modal),
+          inner sep=6pt,
+          label={[font=\scriptsize\bfseries]above:ALP}] {};
+  \end{scope}
+
+  \draw[->, thick] (lms.south) -- node[right, font=\scriptsize]{events} (api.north);
+  \draw[->, dashed] (modal.north) -- (tutor.south);
+  \draw[->, dashed] (tutor.north) -- (api.south);
+  \draw[->, thick, bend left=50]
+    (api.east) to node[right, font=\scriptsize, align=left]
+      {next-best-action,\\tutor response,\\modality rec.}
+    (lms.east);
+\end{tikzpicture}
+\caption{ALP integration architecture. The host LMS sends learning
+events to SudarMemory; ALP returns next-best-action, tutor responses,
+and modality recommendations. The LMS retains ownership of content and
+enrolments.}
 \label{fig:alp}
 \end{figure}
 
+\subsection{Open-Source Extensibility and the Modality Upgrade Path}
+\label{sec:extensibility}
+
+A distinguishing property of Sudar is that its modality delivery stack
+is explicitly designed for community extension and backend substitution.
+The \texttt{VideoScene[]}, \texttt{DialogueSegment[]}, and
+\texttt{ModalityVariants} types are provider-agnostic interfaces; any
+modality backend can be swapped without touching the delivery layer.
+
+\paragraph{Video backend upgrade path.}
+The current in-browser renderer delivers animated typographic video at
+zero infrastructure cost. Organisations requiring higher production
+value can connect any of the following backends to the same
+\texttt{VideoScene[]} interface: \textbf{Higgsfield}
+\cite{higgsfield2026}, a multi-model creative platform aggregating
+Sora~2, Kling~2.6, and Google Veo~3.1 with cinema-grade camera
+simulation; \textbf{Wan~2.1} \cite{wan2025} (Alibaba, MIT
+open-source), a text-to-video suite from 1.3B to 14B parameters
+enabling 480p generation on a consumer GPU; and
+\textbf{HunyuanVideo} \cite{hunyuan2025} (Tencent, open-source), a
+Diffusion Transformer model suited for instructor avatar generation in
+corporate training contexts.
+
+The principle is: Sudar is the authoring and delivery operating system;
+the generation backend is a plugin. A school in Sub-Saharan Africa
+self-hosts Wan~2.1 on a local GPU server at zero per-call cost. A
+Fortune~500 L\&D team connects Higgsfield for cinematic course
+introductions. The learner experience---the Digital Learner Twin,
+adaptive sequencing, AI tutor, and modality switching---is identical.
+
+\paragraph{Community extension patterns.}
+The MIT licence enables: new modality plugins (VR, AR, 3D simulation);
+new LLM backends (any OpenAI-compatible API endpoint via environment
+variable); new language and voice packs (Sarvam AI Indian English
+neural voices are already integrated alongside Edge-TTS); and
+vertical-specific forks for medical education, software engineering
+bootcamps, and regulated-industry compliance.
+
+\subsection{The Evolution of Sudar Intelligence}
+\label{sec:intelligence}
+
+The Intelligence layer described above reflects the current
+implementation: reactive Q\&A via RAG, rule-based proactive nudges,
+and a longitudinal memory updated from quiz outcomes and tutor
+exchanges. This is a substantial advance over stateless LMS AI; it is
+also, architecturally, only the beginning.
+
+As the \texttt{learning\_events} table accumulates interaction data,
+the Intelligence engine transitions from rule-based heuristics to
+\emph{learned} intervention policies. The research frontier demonstrates
+what becomes possible: reinforcement learning-driven ITS achieves 28.6\%
+better intervention adaptability, 31.2\% reduction in recurring errors,
+and 24.8\% lower dropout rates compared to rule-based systems
+\cite{meng2025rltutor}.
+
+Sudar's architecture anticipates this transition explicitly, with the
+Digital Learner Twin and \texttt{learning\_events} stream serving as
+the shared substrate for future first-party and community-built
+Intelligence plugins: \textbf{SudarCoach} (career pathway advisor),
+\textbf{SudarAssess} (item response theory psychometric layer),
+\textbf{SudarSocial} (peer learning orchestrator),
+\textbf{SudarCompliance} (automated evidence collection for regulated
+industries), and \textbf{SudarTranslate} (real-time multilingual
+delivery).
+
+% ---------------------------------------------------------------
 \section{Implementation and Reproducibility}
 \label{sec:impl}
+% ---------------------------------------------------------------
 
-The reference platform is implemented with Next.js~14 (Studio, Learn), Python~3.11+ FastAPI (Intelligence), and Supabase (PostgreSQL, auth, storage). AI providers include Together AI (primary), OpenAI, and Anthropic. The schema and event model are documented in the repository (ECOSYSTEM.md, RESEARCH\_FOUNDATION.md). Key tables: \texttt{learner\_profiles}, \texttt{learning\_events}, \texttt{ai\_interactions}, \texttt{enrollments}, \texttt{certifications}. The project is open source (Apache 2.0). We provide a citation in the repository and in Section~\ref{sec:eval} for reproducibility and derivative work.
+The reference platform is implemented with Next.js~14 (Studio, Learn;
+TypeScript strict mode, App Router, Tailwind CSS),
+Python~3.11+ FastAPI (Intelligence; async handlers, Pydantic v2), and
+Supabase (PostgreSQL + pgvector, auth, storage). AI providers include
+Together AI (primary; open-weight models), OpenAI, and Anthropic.
+TTS uses Edge-TTS (default; zero cost, 40+ languages, 300+ voices)
+with optional Sarvam AI Indian English neural voices. The schema and
+event model are fully documented in the repository
+(\texttt{ECOSYSTEM.md}, \texttt{RESEARCH\_FOUNDATION.md}).
 
-\section{Evidence and Evaluation Strategy}
-\label{sec:eval}
+Currently implemented: shared authentication and schema; course and
+learning path CRUD and publish; document-to-course AI generation;
+learner dashboard with streak, time-on-task, Sudar recommendations,
+and upcoming deadlines; six modalities (text with sentence-level
+read-along TTS, standalone Listen (audio TTS) tab, animated video,
+audio podcast, interactive mindmap, flashcards, SCORM delivery); AI
+tutor with longitudinal memory, RAG, text-selection popup, resizable
+overlay, ``Your context'' live memory panel, and generative block
+rendering; five quiz mode archetypes and five lesson archetypes;
+next-best-action and adaptive path ordering; learning paths with
+unlock rules and shareable certification links with PDF generation;
+compliance view (overdue / at-risk / on-track), compliance email
+reminders (cron for at-risk/overdue path assignments); analytics
+(completions, quiz scores, struggle topics, time per section); and
+learner preferences page. The project is open source under the MIT
+licence \cite{sudar2026}.
 
-\paragraph{Research foundation.}
-The design is evidence-informed. RESEARCH\_FOUNDATION.md in the repository maps each capability to learning-science references (adaptive instruction, dual coding, self-regulated learning, formative assessment, ITS, learner modeling).
+% ---------------------------------------------------------------
+\section{Economic Accessibility: The Radical Cost Case}
+\label{sec:economics}
+% ---------------------------------------------------------------
 
-\paragraph{Proof of concept.}
-The reference platform currently implements: shared auth and schema; course and path CRUD and publish; learner dashboard with streak, time, and Sudar recommends; course viewer with markdown, quizzes, and AI tutor with longitudinal memory (My Memory page, text selection to tutor); next-best-action and adaptive path ordering; learning paths with unlock rules and certifications with shareable links; compliance view (overdue, at-risk, on-track); analytics (completions, quiz scores, struggle topics, time per section). Flashcards modality and document-to-course generation are implemented; SCORM import is in progress. Additional modalities (video, audio, mindmap, feed, game) are planned.
+The economic dimension of Sudar is not incidental to its design---it
+is one of its three primary contributions.
+
+\paragraph{Observed infrastructure cost.}
+Operating Sudar at full engagement---10 courses generated, 20 learner
+review sessions with AI tutor chat, adaptive personalisation, mindmap
+generation, flashcard generation, and TTS narration---costs
+approximately \textbf{\$0.20 per week} on the Together AI + Edge-TTS
+stack. At organisational scale with 1,000 learners and 50 sessions per
+month, the contrast is:
 
 \begin{center}
-\fbox{\parbox{0.9\columnwidth}{
-\textbf{Call for collaboration.} We invite institutions and organizations to collaborate on pilots and plugin integrations with the reference platform or with ALP components for existing LMSs. We are open to reporting anonymized early adopters and aggregate outcomes in a follow-up or extended version of this work. Contact and collaboration details are available in the repository: \url{https://github.com/lorddannykay/ByteOS}.
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Stack & Per month & Annual \\
+\midrule
+Sudar (Together AI + Edge-TTS) & \$21 & \$252 \\
+GPT-4o + OpenAI TTS-1 & \$3,405 & \$40,860 \\
+Claude 3.5 Sonnet + Azure TTS & \$3,735 & \$44,820 \\
+Docebo (platform licence) & \$5,830+ & \$69,960+ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+At 10,000 learners, Sudar's open-weight stack costs approximately
+\$210/month. The delta versus a closed-model stack---over \$400,000
+per year---is the economic value of open-weight inference returned to
+the institution rather than captured by AI API providers.
+
+\paragraph{The inference cost collapse.}
+AI inference costs have fallen approximately 1,000-fold from 2022 to
+2026 at roughly 10$\times$ per year \cite{a16z2024llmflation}, driven
+by GPU efficiency gains, software optimisation (vLLM, TensorRT-LLM),
+Mixture-of-Experts architectures, and quantisation. GPT-3-class
+performance costs \$0.06 per million tokens today versus \$60 in 2021.
+The cost of delivering a world-class personalised tutor interaction to
+one learner is now less than \$0.02 per month---below the cost of a
+single SMS message. The economic argument against AI-native learning at
+scale has expired.
+
+\paragraph{The education access crisis.}
+As of 2024, 251 million children and youth remain out of school
+globally \cite{unesco2024}. 2.6 billion people remain offline
+\cite{itu2024}, with mobile internet in Africa costing 14$\times$ more
+than in Europe. An annual financing gap of \$39 billion exists for
+basic education in low- and lower-middle-income countries through 2030
+\cite{unesco2024}. The average corporate training spend per employee in
+the United States is \$1,283 per year \cite{statista2023}; Sudar's
+infrastructure cost of \$0.21/user/month (\$2.52/year) represents a
+99.8\% cost reduction for the AI infrastructure layer relative to
+this benchmark.
+
+High-end AI learning platforms priced at \$12--\$20 per user per month
+are not deployable in this context. A platform whose full AI
+infrastructure costs \$0.02 per learner per month---and whose stack is
+open-source, self-hostable, and runnable on open-weight models---is.
+
+% ---------------------------------------------------------------
+\section{Evidence and Evaluation Strategy}
+\label{sec:eval}
+% ---------------------------------------------------------------
+
+\paragraph{Research foundation.}
+The design is evidence-informed. \texttt{RESEARCH\_FOUNDATION.md}
+maps each capability to learning-science references: adaptive
+instruction \cite{vanlehn2011,aleven2016}, dual coding
+\cite{mayer2009,clark2016}, self-regulated learning
+\cite{zimmerman2002}, formative assessment \cite{black1998,roediger2006},
+intelligent tutoring \cite{self1988,vanlehn2011}, and learner
+modelling \cite{bull2016,self1988}.
+
+\paragraph{Scope of current claims.}
+This is a system and architecture paper. Current claims are:
+(a)~the platform implements all described components to the level of a
+working proof of concept; (b)~each component is grounded in
+established learning-science evidence; (c)~the ALP architecture
+addresses a gap that no widely adopted technology currently fills; and
+(d)~the economic cost structure has been empirically observed in
+practice and validated against current provider pricing.
+
+\paragraph{Pilot study.}
+A pilot evaluation is planned, to be initiated after the current build
+phase, and will be conducted in partnership with an organisational
+partner to assess adoption, engagement, and early learning outcomes.
+Results will be reported in a subsequent paper when available.
+
+\paragraph{Future controlled studies.}
+Plans include randomised or quasi-experimental comparisons of Sudar
+versus a standard LMS on learning outcomes, learner satisfaction, and
+time-to-competency, as well as studies isolating the contribution of
+the longitudinal tutor memory component and the cost-per-outcome metric
+versus incumbent platforms.
+
+% ---------------------------------------------------------------
+\section{Discussion}
+\label{sec:discussion}
+% ---------------------------------------------------------------
+
+\paragraph{Limitations.}
+Production ALP plugin connectors for Moodle, Canvas, and Blackboard
+are not yet built; the API surface is defined but LMS-specific adapter
+layers require additional engineering. Controlled efficacy data are not
+yet available; claims about learning gains remain grounded in the
+underlying learning-science evidence rather than Sudar-specific trials.
+The Digital Learner Twin relies on inferred signals that may not fully
+capture a learner's actual knowledge state \cite{self1988,bull2016}.
+Edge-TTS accesses Microsoft's Azure Neural Voice infrastructure without
+a formal commercial licence; production deployments with paying
+customers should provision Azure AI Speech or an equivalent licensed
+TTS service. The predictive intelligence capabilities described in
+Section~\ref{sec:intelligence} require longitudinal event data to train
+effectively; early deployments will rely on rule-based proactive nudges
+until sufficient behavioural data accumulates.
+
+\paragraph{Future work.}
+Planned work includes: LMS-specific connectors for ALP (Moodle, Canvas,
+Blackboard); completing SudarPlay (gamified modality) and SudarFeed
+(social feed modality); developing the predictive intervention layer
+with RL-based policy learning; running controlled efficacy studies;
+releasing SudarCoach, SudarAssess, and SudarCompliance as first-party
+Intelligence plugins; building the community plugin ecosystem; and
+supporting enterprise features (SSO, HRIS integration) and an
+offline-first variant for connectivity-constrained environments.
+
+% ---------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+% ---------------------------------------------------------------
+
+We presented Sudar, an AI-native learning platform with three
+contributions: (1)~a reference platform combining authoring, delivery,
+and intelligence around a Digital Learner Twin, adaptive sequencing, a
+complete multimodal delivery stack, and an AI tutor with longitudinal
+cross-session memory; (2)~the Adaptive Learning Layer (ALP), an
+architecture for deploying these capabilities as a plugin layer on top
+of existing LMSs---with the potential to reach the hundreds of millions
+of Moodle, Canvas, Blackboard, and Sakai users \cite{moodle2025stats}
+without requiring LMS replacement; and (3)~a demonstrated economic
+model that reduces the infrastructure cost of AI-native personalised
+learning to less than \$0.02 per learner per month, making it viable
+at the scale of national education systems and accessible in contexts
+where \$12--\$20/user/month platforms are structurally excluded.
+
+The inference cost collapse is the macro condition that makes all of
+this possible \cite{a16z2024llmflation}. Platforms built on open-weight
+models and open-source infrastructure are positioned to pass this
+economic gain directly to learners---particularly the 251 million
+children currently out of school \cite{unesco2024} and the 2.6 billion
+people currently offline \cite{itu2024}.
+
+Together, these contributions offer a path to making adaptive,
+memory-aware learning accessible both through a standalone platform and
+as an augmentation of the LMSs that organisations already rely on. The
+reference implementation is open source, grounded in a broad
+learning-science evidence base
+\cite{vanlehn2011,aleven2016,mayer2009,clark2016,zimmerman2002,%
+gagne1985,bull2016,black1998,roediger2006}, and designed as a bedrock
+upon which the community can build modalities, intelligence plugins,
+and LMS connectors.
+
+% ---------------------------------------------------------------
+\section*{Acknowledgments}
+% ---------------------------------------------------------------
+
+The system and research are the author's project. The reference
+implementation is available at
+\url{https://github.com/Dhanikesh-Karunanithi/Sudar} with
+documentation (\texttt{ECOSYSTEM.md}, \texttt{RESEARCH\_FOUNDATION.md},
+\texttt{docs/sudar-memory.md}).
+
+\begin{center}
+\fbox{\parbox{0.9\columnwidth}{\small
+\textbf{Call for collaboration.} Institutions, organisations, and
+open-source contributors are invited to collaborate on pilots, plugin
+integrations, and community extensions.
+Contact: \texttt{connect@dhanikeshkarunanithi.com} or
+\url{https://github.com/Dhanikesh-Karunanithi/Sudar}.
 }}
 \end{center}
 
-\paragraph{Pilot in progress.}
-A pilot evaluation is being conducted in partnership with an organizational partner to assess adoption and learning outcomes. The pilot is independent of the design and ownership of the system; the system and research remain the authors' project. Results will be reported in a subsequent paper when available.
-
-\section{Discussion}
-\label{sec:discussion}
-
-\paragraph{Limitations.}
-Not all modalities are yet fully implemented; plugin integrations with specific LMSs are not yet in production. Efficacy data from the reference platform and from ALP deployments will strengthen the claims in future work.
-
-\paragraph{Future work.}
-We plan to extend modalities, add LMS-specific connectors for ALP, run controlled efficacy studies, and support more organizational features (e.g., SSO, HRIS hooks) where needed.
-
-\paragraph{Goal.}
-Our goal is to make learning accessible and adaptive at scale---both through the reference platform and by enabling existing LMSs to become adaptive, memory-aware learning experience platforms via ALP.
-
-\section{Conclusion}
-\label{sec:conclusion}
-
-We presented an AI-native learning system with two contributions: a reference platform that combines authoring, delivery, and intelligence with a Digital Learner Twin, adaptive sequencing, multimodal delivery, and an AI tutor with longitudinal memory; and the Adaptive Learning Layer (ALP), an architecture for deploying these capabilities as a layer on top of existing LMSs. The reference implementation is open source and evidence-informed. We invite collaboration from institutions and organizations so that learning can become accessible and adaptive for everyone.
-
-\section*{Acknowledgments}
-The system and research are the authors' project. The reference implementation is available at \url{https://github.com/lorddannykay/ByteOS} with documentation (ECOSYSTEM.md, RESEARCH\_FOUNDATION.md, docs/sudar-memory.md). The platform is named Sudar.
-
+% ---------------------------------------------------------------
 \appendix
-\section{Schema summary}
-Key tables for reproducibility: \texttt{learner\_profiles} (Digital Learner Twin: \texttt{ai\_tutor\_context}, \texttt{next\_best\_action}, modality scores, behavioral signals); \texttt{learning\_events} (event\_type, payload, modality, duration); \texttt{ai\_interactions} (user\_message, ai\_response, context\_used); \texttt{enrollments} (path/course, progress, due\_date); \texttt{certifications}. Full schema: ECOSYSTEM.md in the repository.
+\section{Schema Summary}
+% ---------------------------------------------------------------
 
+Key tables for reproducibility:
+\texttt{learner\_profiles} (Digital Learner Twin:
+\texttt{ai\_tutor\_context}, \texttt{next\_best\_action}, modality
+affinity scores, behavioural signals, \texttt{preferences} JSONB);
+\texttt{learning\_events} (\texttt{event\_type}, payload, modality,
+duration);
+\texttt{ai\_interactions} (\texttt{user\_message},
+\texttt{ai\_response}, \texttt{context\_used});
+\texttt{enrollments} (path/course, progress, \texttt{due\_date});
+\texttt{certifications}.
+Full schema: \texttt{ECOSYSTEM.md} in the repository.
+
+\section{Infrastructure Cost Reference}
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{3.2cm}rr@{}}
+\toprule
+Stack & /learner/mo & Annual (1k) \\
+\midrule
+Together AI 8B + Edge-TTS   & \$0.021  & \$252 \\
+Together AI 70B + Edge-TTS  & \$0.105  & \$1,260 \\
+GPT-4o + OpenAI TTS-1       & \$3.41   & \$40,860 \\
+Claude 3.5 + Azure TTS      & \$3.74   & \$44,820 \\
+Docebo (licence, low end)   & \$5.83   & \$69,960 \\
+Sana Labs (est., min.\ 300) & $\approx$\$15 & $\approx$\$180k \\
+\bottomrule
+\end{tabular}
+\end{center}
+\noindent\small{AI infrastructure only; excludes hosting (Supabase free
+tier: \$0; Pro: \$25/month).}
+
+% ---------------------------------------------------------------
 \bibliographystyle{plain}
 \bibliography{references}
 \end{document}

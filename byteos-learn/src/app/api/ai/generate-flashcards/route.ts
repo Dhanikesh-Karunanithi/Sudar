@@ -1,8 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-
-const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
-const MODEL = 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo'
+import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
 
 export interface FlashcardPair {
   front: string
@@ -13,7 +11,8 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!process.env.TOGETHER_API_KEY) return NextResponse.json({ error: 'AI not configured' }, { status: 500 })
+  const configError = getChatConfigError()
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
   const { content, module_title } = await request.json()
   const text = (content ?? '').trim().slice(0, 4000)
@@ -28,27 +27,18 @@ ${text}
 
 JSON array:`
 
-  const res = await fetch(TOGETHER_API_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.TOGETHER_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 1200,
-      temperature: 0.3,
-    }),
+  const { content: raw } = await chatCompletion({
+    messages: [{ role: 'user', content: prompt }],
+    max_tokens: 1200,
+    temperature: 0.3,
+  }).catch((err) => {
+    throw new Error(err instanceof Error ? err.message : String(err))
   })
-  if (!res.ok) return NextResponse.json({ error: await res.text() }, { status: 502 })
-
-  const data = await res.json()
-  const raw = data.choices?.[0]?.message?.content?.trim() ?? ''
+  const rawStr = raw ?? ''
 
   // Parse JSON array from response (may be wrapped in markdown code block)
-  let jsonStr = raw
-  const match = raw.match(/\[[\s\S]*\]/)
+  let jsonStr = rawStr
+  const match = rawStr.match(/\[[\s\S]*\]/)
   if (match) jsonStr = match[0]
 
   let cards: FlashcardPair[] = []

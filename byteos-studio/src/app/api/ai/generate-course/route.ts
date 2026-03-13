@@ -4,9 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { RichContent } from '@/types/content'
 import { getImagesForSections } from '@/lib/media/imageSearch'
 import { selectComponentsForModule, toInteractiveElements, type ModuleRole } from '@/lib/ai/componentSelector'
-
-const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions'
-const MODEL = 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
+import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
 
 /** Strip markdown code fences and extract/repair JSON for parsing. */
 function extractJson(raw: string): string {
@@ -50,17 +48,13 @@ function repairJson(s: string): string {
 }
 
 async function callAI(messages: { role: string; content: string }[], maxTokens = 1200) {
-  const apiKey = process.env.TOGETHER_API_KEY!
-  const res = await fetch(TOGETHER_API_URL, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: MODEL, messages, max_tokens: maxTokens, temperature: 0.7 }),
+  const { content } = await chatCompletion({
+    messages: messages as { role: 'system' | 'user' | 'assistant'; content: string }[],
+    max_tokens: maxTokens,
+    temperature: 0.7,
   })
-  if (!res.ok) throw new Error(`AI error: ${await res.text()}`)
-  const data = await res.json()
-  const text = data.choices?.[0]?.message?.content?.trim() ?? ''
-  if (!text) throw new Error('AI returned empty response')
-  return text
+  if (!content) throw new Error('AI returned empty response')
+  return content
 }
 
 const RICH_CONTENT_JSON_SCHEMA = `
@@ -85,7 +79,8 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!process.env.TOGETHER_API_KEY) return NextResponse.json({ error: 'TOGETHER_API_KEY not configured' }, { status: 500 })
+  const configError = getChatConfigError()
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
   const admin = createAdminClient()
   const { title, description, difficulty = 'intermediate', num_modules = 5 } = await request.json()
@@ -122,7 +117,7 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     return NextResponse.json(
-      { error: `AI outline generation failed: ${message}. Check TOGETHER_API_KEY and try again.` },
+      { error: `AI outline generation failed: ${message}. See AI & API Keys in Settings.` },
       { status: 502 }
     )
   }
@@ -166,23 +161,15 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
         moduleTitle
       const role: ModuleRole =
         i === 0 ? 'intro' : i === moduleTitles.length - 1 ? 'capstone' : 'core'
-      const apiKey = process.env.TOGETHER_API_KEY
-      if (apiKey) {
-        const selected = await selectComponentsForModule(
-          moduleTitle,
-          contentSummary,
-          role,
-          apiKey
-        )
-        if (selected.length > 0) {
-          const extra = toInteractiveElements(selected)
-          rich.interactiveElements = [...(rich.interactiveElements ?? []), ...extra]
-        }
+      const selected = await selectComponentsForModule(moduleTitle, contentSummary, role)
+      if (selected.length > 0) {
+        const extra = toInteractiveElements(selected)
+        rich.interactiveElements = [...(rich.interactiveElements ?? []), ...extra]
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       return NextResponse.json(
-        { error: `AI content failed for module "${moduleTitle}": ${message}. Check TOGETHER_API_KEY and try again.` },
+        { error: `AI content failed for module "${moduleTitle}": ${message}. See AI & API Keys in Settings.` },
         { status: 502 }
       )
     }
