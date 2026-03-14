@@ -1244,7 +1244,8 @@ export function CourseViewer({
               <span className="text-xs font-semibold text-primary">{progress}%</span>
             </div>
             <div className="w-full bg-muted rounded-full h-1.5">
-              <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}
+              <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: `${progress}%` }
+              }
               />
             </div>
           </div>
@@ -1346,7 +1347,8 @@ export function CourseViewer({
                     courseId={course.id}
                     moduleId={currentModuleId}
                     moduleTitle={currentModule.title}
-                    onComplete={() => { if (!isCompleted) handleMarkComplete() }}
+                    onComplete={() => { if (!isCompleted) handleMarkComplete() }
+                  }
                   />
                 </div>
                 {/* Compact SCORM bottom bar: prev / completion status / next */}
@@ -1458,7 +1460,8 @@ export function CourseViewer({
                           duration_secs: durationSecs,
                         }),
                       }).catch(() => {})
-                    }}
+                    }
+                  }
                   />
                 )}
 
@@ -1540,7 +1543,8 @@ export function CourseViewer({
                           })
                           .finally(() => setMindmapLoading(false))
                       }
-                    }}
+                    }
+                  }
                   />
                 ) : activeModality === 'flashcards' ? (
                   <FlashcardsCard
@@ -1567,7 +1571,8 @@ export function CourseViewer({
                           setFlashcardsByModule((prev) => ({ ...prev, [currentModuleId]: cards }))
                         })
                         .finally(() => setFlashcardsLoading(false))
-                    }}
+                    }
+                  }
                   />
                 ) : activeModality === 'listening' ? (
                   <AudioCard
@@ -1615,7 +1620,8 @@ export function CourseViewer({
                         })
                         .catch(() => setListeningUnavailableByModule((prev) => ({ ...prev, [currentModuleId]: true })))
                         .finally(() => setListeningLoading(false))
-                    }}
+                    }
+                  }
                   />
                 ) : isRichContent(currentModule?.content) ? (
                   <RichModuleContent
@@ -1649,7 +1655,8 @@ export function CourseViewer({
                       learnerName={learnerName}
                       onComplete={handleQuizComplete}
                       onAskByte={handleQuizAskByte}
-                      onSkip={() => { setShowQuiz(false); if (nextModule) setTimeout(() => navigateTo(nextModule.id), 300) }}
+                      onSkip={() => { setShowQuiz(false); if (nextModule) setTimeout(() => navigateTo(nextModule.id), 300) }
+                    }
                     />
                   </div>
                 )}
@@ -1920,7 +1927,8 @@ export function CourseViewer({
                     <div className="bg-card border border-border rounded-xl rounded-tl-sm px-3 py-2.5">
                       <div className="flex gap-1">
                         {[0, 1, 2].map((i) => (
-                          <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${i * 0.15}s` }}
+                          <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${i * 0.15}s` }
+                          }
                           />
                         ))}
                       </div>
@@ -1964,7 +1972,8 @@ export function CourseViewer({
                     placeholder="Ask Sudar anything, or highlight text above..."
                     rows={1}
                     className="flex-1 bg-muted border border-border rounded-xl px-3 py-2 text-xs text-card-foreground placeholder-muted-foreground focus:outline-none focus:border-primary resize-none leading-relaxed"
-                    style={{ maxHeight: '80px' }}
+                    style={{ maxHeight: '80px' }
+                    }
                   />
                   <button
                     id="byte-send-btn"
