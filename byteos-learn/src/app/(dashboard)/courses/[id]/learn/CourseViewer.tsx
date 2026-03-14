@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight,
@@ -541,6 +541,7 @@ export function CourseViewer({
   learnerName,
 }: Props) {
   const router = useRouter()
+  const pathname = usePathname()
   const [currentModuleId, setCurrentModuleId] = useState(activeModuleId)
   const [completed, setCompleted] = useState(new Set(completedModuleIds))
   const [progress, setProgress] = useState(enrollmentProgress)
@@ -1009,6 +1010,7 @@ export function CourseViewer({
           course_id: course.id,
           module_id: currentModuleId,
           conversation_history: messages,
+          route: pathname ?? undefined,
           selected_text: selectedText,
           active_modality: activeModality,
           available_modalities: {
@@ -1957,7 +1959,8 @@ export function CourseViewer({
                   <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTutorSend() } }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTutorSend() } }
+                    }
                     placeholder="Ask Sudar anything, or highlight text above..."
                     rows={1}
                     className="flex-1 bg-muted border border-border rounded-xl px-3 py-2 text-xs text-card-foreground placeholder-muted-foreground focus:outline-none focus:border-primary resize-none leading-relaxed"
@@ -1976,7 +1979,8 @@ export function CourseViewer({
               </div>
             </div>
             </div>
-          )}
+          )
+          }
         </div>
       </div>
     </div>
