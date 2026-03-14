@@ -322,6 +322,7 @@ export async function POST(request: NextRequest) {
         audio_generated?: boolean
         mindmap_generated?: boolean
       }
+      route?: string
     }
     try {
       body = await request.json()
@@ -329,7 +330,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
 
-    const { message, course_id, module_id, conversation_history = [], pasted_text, selected_text, active_modality, available_modalities } = body
+    const { message, course_id, module_id, conversation_history = [], pasted_text, selected_text, active_modality, available_modalities, route: routeParam } = body
     if (!message?.trim()) return NextResponse.json({ error: 'message required' }, { status: 400 })
 
     // ── Input guardrail: refuse off-topic / harmful requests ─────────────────
@@ -631,6 +632,7 @@ Formatting & Engagement (always apply):
 Reasoning: When answering, think step by step (what did they ask → what context is relevant → best answer/action), then give your direct answer. Use the course content and learner context below to personalize every response.
 ${SUDAR_PLATFORM_KNOWLEDGE}
 
+Current route (where the learner is in the app): ${typeof routeParam === 'string' && routeParam ? routeParam : course_id ? '/courses/[id]/learn' : '/dashboard'}
 Current course: "${courseTitle}"
 Current module: "${currentModuleTitle}"
 ${selectedContentBlock}

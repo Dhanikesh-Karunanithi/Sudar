@@ -272,7 +272,7 @@ function ScormViewer({ launchUrl, courseId, moduleId, moduleTitle, onComplete }:
         <iframe
           src={scormProxyUrl(launchUrl)}
           className="w-full h-full block"
-          style={{ border: 'none' }}
+          style={{ border: 'none' } }
           allow="fullscreen"
           title="SCORM content"
         />
@@ -1128,6 +1128,8 @@ export function CourseViewer({
     }
   }
 
+  const tutorPanelStyle = { width: tutorPanelWidth }
+
   return (
     <div className="flex bg-background overflow-hidden -mx-6 -mt-8 -mb-8 h-[calc(100vh-64px)]">
       {/* Mobile sidebar overlay */}
@@ -1135,18 +1137,18 @@ export function CourseViewer({
 
       {/* Selection popup — fires on text selection (mouseup) or right-click on selection */}
       {selectionPopup && (() => {
-        // Flip below the cursor if we're in the top 120px of the viewport
         const flipBelow = selectionPopup.y < 120
+        const selectionPopupStyle = {
+          left: selectionPopup.x,
+          top: selectionPopup.y,
+          transform: flipBelow ? 'translate(-50%, 8px)' : 'translate(-50%, -100%)',
+          minWidth: '280px',
+          maxWidth: '460px',
+        }
         return (
           <div
             className="fixed z-[9999] bg-card border border-border rounded-xl shadow-2xl overflow-hidden"
-            style={{
-              left: selectionPopup.x,
-              top: selectionPopup.y,
-              transform: flipBelow ? 'translate(-50%, 8px)' : 'translate(-50%, -100%)',
-              minWidth: '280px',
-              maxWidth: '460px',
-            }}
+            style={selectionPopupStyle}
             onMouseDown={(e) => e.preventDefault()} // keep selection alive while clicking buttons
           >
             {/* Selected text preview */}
@@ -1181,7 +1183,7 @@ export function CourseViewer({
                   setInput('About "' + excerpt + '": ')
                   setTutorOpen(true)
                   setSelectionPopup(null)
-                }}
+                } }
                 className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-primary/10 rounded-lg text-xs text-primary font-medium transition-colors w-full"
               >
                 <MessageSquarePlus className="w-3.5 h-3.5" />Ask Sudar a custom question about this
@@ -1244,8 +1246,7 @@ export function CourseViewer({
               <span className="text-xs font-semibold text-primary">{progress}%</span>
             </div>
             <div className="w-full bg-muted rounded-full h-1.5">
-              <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: `${progress}%` }
-              }
+              <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: `${progress}%` } }
               />
             </div>
           </div>
@@ -1324,7 +1325,7 @@ export function CourseViewer({
           )}
 
           {/* Ask Sudar button */}
-          <button onClick={() => { setTutorOpen(!tutorOpen); setSelectionPopup(null) }}
+          <button onClick={() => { setTutorOpen(!tutorOpen); setSelectionPopup(null) } }
             className={cn(
               'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0',
               tutorOpen ? 'bg-primary text-white shadow-md shadow-md' : 'bg-primary/5 text-primary hover:bg-primary/10 border border-primary/20'
@@ -1347,8 +1348,7 @@ export function CourseViewer({
                     courseId={course.id}
                     moduleId={currentModuleId}
                     moduleTitle={currentModule.title}
-                    onComplete={() => { if (!isCompleted) handleMarkComplete() }
-                  }
+                    onComplete={() => { if (!isCompleted) handleMarkComplete() } }
                   />
                 </div>
                 {/* Compact SCORM bottom bar: prev / completion status / next */}
@@ -1447,7 +1447,7 @@ export function CourseViewer({
                           modality: 'reading',
                         }),
                       }).catch(() => {})
-                    }}
+                    } }
                     onReadAlongComplete={(durationSecs) => {
                       fetch('/api/events', {
                         method: 'POST',
@@ -1460,8 +1460,7 @@ export function CourseViewer({
                           duration_secs: durationSecs,
                         }),
                       }).catch(() => {})
-                    }
-                  }
+                    } }
                   />
                 )}
 
@@ -1542,9 +1541,7 @@ export function CourseViewer({
                             }
                           })
                           .finally(() => setMindmapLoading(false))
-                      }
-                    }
-                  }
+                      } } }
                   />
                 ) : activeModality === 'flashcards' ? (
                   <FlashcardsCard
@@ -1571,8 +1568,7 @@ export function CourseViewer({
                           setFlashcardsByModule((prev) => ({ ...prev, [currentModuleId]: cards }))
                         })
                         .finally(() => setFlashcardsLoading(false))
-                    }
-                  }
+                    } }
                   />
                 ) : activeModality === 'listening' ? (
                   <AudioCard
@@ -1620,8 +1616,7 @@ export function CourseViewer({
                         })
                         .catch(() => setListeningUnavailableByModule((prev) => ({ ...prev, [currentModuleId]: true })))
                         .finally(() => setListeningLoading(false))
-                    }
-                  }
+                    } }
                   />
                 ) : isRichContent(currentModule?.content) ? (
                   <RichModuleContent
@@ -1630,7 +1625,7 @@ export function CourseViewer({
                     onExplain={(context) => {
                       setInput(context)
                       setTutorOpen(true)
-                    }}
+                    } }
                     courseId={course.id}
                     moduleId={currentModuleId}
                     moduleTitle={currentModule?.title ?? ''}
@@ -1655,8 +1650,7 @@ export function CourseViewer({
                       learnerName={learnerName}
                       onComplete={handleQuizComplete}
                       onAskByte={handleQuizAskByte}
-                      onSkip={() => { setShowQuiz(false); if (nextModule) setTimeout(() => navigateTo(nextModule.id), 300) }
-                    }
+                      onSkip={() => { setShowQuiz(false); if (nextModule) setTimeout(() => navigateTo(nextModule.id), 300) } }
                     />
                   </div>
                 )}
@@ -1691,21 +1685,19 @@ export function CourseViewer({
             )}
             </>
             )} {/* end non-SCORM branch */}
-          </div>
-        </div>
 
         {/* Sudar overlay — floats over content, does not push or resize the course area */}
         {tutorOpen && (
           <div
             className="fixed top-16 right-0 bottom-0 z-50 flex flex-col border-l border-border bg-muted shadow-2xl transition-[width] duration-200"
-            style={{ width: tutorPanelWidth }}
+            style={tutorPanelStyle}
           >
             {/* Draggable resize handle on left edge */}
             <div
               role="separator"
               aria-orientation="vertical"
               aria-valuenow={tutorPanelWidth}
-              onMouseDown={(e) => { e.preventDefault(); setTutorPanelResizing(true) }}
+              onMouseDown={(e) => { e.preventDefault(); setTutorPanelResizing(true) } }
               className={cn(
                 'absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-10',
                 tutorPanelResizing && 'bg-primary/50'
@@ -1725,7 +1717,7 @@ export function CourseViewer({
                   onClick={() => {
                     setTutorPanelExpanded((e) => !e)
                     setTutorPanelWidth((w) => (w >= 500 ? 384 : 560))
-                  }}
+                  } }
                   className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-card-foreground"
                   aria-label={tutorPanelExpanded ? 'Collapse chat' : 'Expand chat'}
                   title={tutorPanelExpanded ? 'Collapse chat' : 'Expand chat for full engagement'}
@@ -1795,7 +1787,7 @@ export function CourseViewer({
                     </div>
                     <div className="space-y-1.5 pl-8">
                       {['Give me a quick summary', 'Explain this with an example', 'What are the key takeaways?', 'Quiz me on this module', 'How does this connect to what I\'ve learned before?'].map((prompt) => (
-                        <button key={prompt} onClick={() => { setInput(prompt); setTimeout(() => handleTutorSend(prompt), 50) }}
+                        <button key={prompt} onClick={() => { setInput(prompt); setTimeout(() => handleTutorSend(prompt), 50) } }
                           className="w-full text-left px-2.5 py-1.5 bg-card border border-border hover:border-primary/30 hover:bg-primary/10 text-muted-foreground hover:text-primary text-xs rounded-lg transition-all">
                           {prompt}
                         </button>
@@ -1853,7 +1845,7 @@ export function CourseViewer({
                                 action_label: action.label,
                               }),
                             }).catch(() => {})
-                          }}
+                          } }
                           onQuizRetry={() => handleTutorSend('Give me another quiz question')}
                         />
                       ) : (
@@ -1905,7 +1897,7 @@ export function CourseViewer({
                                     action_label: action.label,
                                   }),
                                 }).catch(() => {})
-                              }}
+                              } }
                               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-primary/20 text-primary hover:bg-primary/30 transition-colors"
                             >
                               {action.label}
@@ -1927,8 +1919,7 @@ export function CourseViewer({
                     <div className="bg-card border border-border rounded-xl rounded-tl-sm px-3 py-2.5">
                       <div className="flex gap-1">
                         {[0, 1, 2].map((i) => (
-                          <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${i * 0.15}s` }
-                          }
+                          <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${i * 0.15}s` } }
                           />
                         ))}
                       </div>
@@ -1967,13 +1958,11 @@ export function CourseViewer({
                   <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTutorSend() } }
-                    }
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleTutorSend() } } }
                     placeholder="Ask Sudar anything, or highlight text above..."
                     rows={1}
                     className="flex-1 bg-muted border border-border rounded-xl px-3 py-2 text-xs text-card-foreground placeholder-muted-foreground focus:outline-none focus:border-primary resize-none leading-relaxed"
-                    style={{ maxHeight: '80px' }
-                    }
+                    style={{ maxHeight: '80px' } }
                   />
                   <button
                     id="byte-send-btn"
@@ -1988,10 +1977,11 @@ export function CourseViewer({
               </div>
             </div>
             </div>
-          )
-          }
+          )}
+        {/* end tutor overlay */}
         </div>
       </div>
+    </div>
     </div>
   )
 }

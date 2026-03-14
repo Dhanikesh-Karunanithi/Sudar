@@ -58,6 +58,7 @@ export function FloatingSudarChat() {
         body: JSON.stringify({
           message: trimmed,
           conversation_history: newMessages.slice(0, -1),
+          route: pathname ?? undefined,
           ...(pastedText.trim() ? { pasted_text: pastedText.trim().slice(0, 15000) } : {}),
         }),
       })

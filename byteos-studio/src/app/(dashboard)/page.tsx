@@ -87,7 +87,7 @@ export default async function DashboardPage() {
             {greeting}, {firstName}
           </h1>
           <p className="text-slate-400 text-sm">
-            Here&apos;s an overview of your ByteOS Studio workspace.
+            Here&apos;s an overview of your Sudar Studio workspace.
           </p>
         </div>
         <Link
@@ -138,7 +138,7 @@ export default async function DashboardPage() {
             <div className="space-y-2">
               <h2 className="text-xl font-semibold text-white">Create your first course</h2>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Build a course, add modules, and publish it to ByteOS Learn. Learners can
+                Build a course, add modules, and publish it to Sudar Learn. Learners can
                 enroll, track progress, and have every event recorded for analytics.
               </p>
             </div>

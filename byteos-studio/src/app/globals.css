@@ -32,3 +32,15 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+/* Translucent glass panel (matches Learn chat) */
+.liquid-glass {
+  @apply backdrop-blur-2xl shadow-2xl;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2rem;
+}
+
+.chat-bubble {
+  @apply p-4 rounded-3xl text-sm font-medium max-w-[80%];
+}

@@ -2,6 +2,7 @@
 
 import { Sidebar } from '@/components/layout/Sidebar'
 import { SidebarContentProvider } from '@/contexts/SidebarContentContext'
+import { SudarStudioChat } from '@/components/agent/SudarStudioChat'
 
 interface DashboardShellProps {
   user: { email: string; full_name?: string | null; avatar_url?: string | null }
@@ -18,6 +19,7 @@ export function DashboardShell({ user, orgRole = 'LEARNER', children }: Dashboar
           {children}
         </main>
       </div>
+      <SudarStudioChat orgRole={orgRole} />
     </SidebarContentProvider>
   )
 }
