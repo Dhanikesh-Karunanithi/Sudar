@@ -98,7 +98,7 @@ export function TopNav({ user, showOnboardingNudge }: TopNavProps) {
                 'relative flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]',
                 isActive
                   ? 'text-primary-foreground'
-                  : 'text-muted-foreground hover:text-card-foreground hover:bg-card/70'
+                  : 'text-card-foreground/80 hover:text-card-foreground hover:bg-card'
               )}
             >
               {isActive && (
@@ -119,7 +119,7 @@ export function TopNav({ user, showOnboardingNudge }: TopNavProps) {
               'relative flex items-center justify-center gap-1 px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]',
               moreOpen
                 ? 'text-primary-foreground bg-primary'
-                : 'text-muted-foreground hover:text-card-foreground hover:bg-card/70'
+                : 'text-card-foreground/80 hover:text-card-foreground hover:bg-card'
             )}
           >
             <span className="relative z-10 flex items-center gap-1">

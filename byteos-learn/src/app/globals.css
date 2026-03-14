@@ -33,10 +33,10 @@
   --card: #ffffff;
   --card-foreground: #1f2937;
   --border: #e5e7eb;      /* grey-200 */
-  --success: #22c55e;     /* green-500 - completed, positive */
+  --success: #15803d;     /* green-700 - WCAG AA on white/card */
   --success-foreground: #ffffff;
   --success-muted: #dcfce7; /* green-100 - reference lime/green */
-  --warning: #ea580c;    /* BARBR orange - streaks, alerts */
+  --warning: #c2410c;     /* orange-700 - WCAG AA on white/card */
   --warning-foreground: #ffffff;
   --warning-muted: #ffedd5; /* orange-100 */
   --destructive: #dc2626;

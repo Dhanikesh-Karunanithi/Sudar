@@ -346,6 +346,7 @@ export default function CourseCatalogClient({ courses, enrollments }: Props) {
       </div>
 
       {/* ── Results ── */}
+      <h2 className="sr-only">Course list</h2>
       {filtered.length === 0 ? (
         <div className="bg-card rounded-card-lg border border-border p-10 text-center space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mx-auto">

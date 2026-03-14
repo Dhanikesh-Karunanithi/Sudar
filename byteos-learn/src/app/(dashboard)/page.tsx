@@ -325,7 +325,7 @@ export default async function DashboardPage() {
               <Activity className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-display text-lg font-bold text-card-foreground">Activity</h3>
+              <h2 className="font-display text-lg font-bold text-card-foreground">Activity</h2>
               <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Last 7 days</p>
             </div>
           </div>
