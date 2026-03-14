@@ -72,12 +72,14 @@ This guide walks you through connecting the Sudar repo to Vercel and hosting **S
 
 Vercel runs **Node.js/Next.js** only. The **Sudar Intelligence** service (Python FastAPI in `byteos-intelligence/`) must be hosted elsewhere and its URL used as `BYTEOS_INTELLIGENCE_URL` in both Studio and Learn.
 
-**Options:**
+**Full step-by-step:** See **[docs/INTELLIGENCE_DEPLOYMENT.md](INTELLIGENCE_DEPLOYMENT.md)** for Railway, Render, and Fly.io.
+
+**Options (summary):**
 
 | Option   | Notes |
 |----------|--------|
-| **Railway** | Add `byteos-intelligence` (or repo + root dir `byteos-intelligence`), set env vars, deploy. Gives a URL like `https://xxx.up.railway.app`. |
-| **Render**  | New Web Service, connect repo, root `byteos-intelligence`, build `pip install -r requirements.txt`, start `uvicorn src.api.main:app --host 0.0.0.0`. |
+| **Railway** | Add `byteos-intelligence` (or repo + root dir `byteos-intelligence`), set env vars (including `CORS_ORIGINS`), deploy. Gives a URL like `https://xxx.up.railway.app`. |
+| **Render**  | New Web Service, connect repo, root `byteos-intelligence`, build `pip install -r requirements.txt`, start `uvicorn src.api.main:app --host 0.0.0.0 --port $PORT`. |
 | **Fly.io**  | Use Docker or `fly launch` in `byteos-intelligence` and expose port 8000. |
 
 Then set **BYTEOS_INTELLIGENCE_URL** in both Vercel projects to that URL (e.g. `https://sudar-intelligence.up.railway.app`).

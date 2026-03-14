@@ -2,12 +2,18 @@
 ByteOS Intelligence — FastAPI Entry Point
 The AI brain of ByteOS: adaptive engine, AI tutor, content generation, modality dispatch.
 """
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from src.api.routes import tutor, learner, content, modality, health, audio
 from src.sudarplay.router import router as sudarplay_router
+
+# CORS: default localhost; in production set CORS_ORIGINS (comma-separated) e.g. https://sudar-studio.vercel.app,https://sudar-learn.vercel.app
+_default_origins = ["http://localhost:3000", "http://localhost:3001"]
+_cors_origins_env = os.getenv("CORS_ORIGINS", "")
+CORS_ORIGINS = [o.strip() for o in _cors_origins_env.split(",") if o.strip()] or _default_origins
 
 
 @asynccontextmanager
@@ -26,10 +32,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # byteos-studio
-        "http://localhost:3001",  # byteos-learn
-    ],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
