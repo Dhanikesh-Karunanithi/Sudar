@@ -10,7 +10,7 @@ const ACTIONS_REGEX = /\nACTIONS:\s*([\s\S]+)$/
 function parseActionsFromResponse(raw: string): { text: string; rawActions: Array<Record<string, unknown>> } {
   const actMatch = raw.match(ACTIONS_REGEX)
   if (!actMatch) return { text: raw.trim(), rawActions: [] }
-  let text = raw.slice(0, actMatch.index).trim().replace(/\n+$/, '')
+  const text = raw.slice(0, actMatch.index).trim().replace(/\n+$/, '')
   let rawActions: Array<Record<string, unknown>> = []
   try {
     const parsed = JSON.parse(actMatch[1].trim())

@@ -69,7 +69,7 @@ export async function PATCH(request: Request) {
     .single()
 
   const currentSettings = (org?.settings as Record<string, unknown>) ?? {}
-  let updatedSettings: Record<string, unknown> = { ...currentSettings }
+  const updatedSettings: Record<string, unknown> = { ...currentSettings }
 
   if (body.performance_config !== undefined) {
     const parsed = performanceConfigSchema.safeParse(body.performance_config)

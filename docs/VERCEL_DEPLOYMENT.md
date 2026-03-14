@@ -82,7 +82,7 @@ Vercel runs **Node.js/Next.js** only. The **Sudar Intelligence** service (Python
 | **Render**  | New Web Service, connect repo, root `byteos-intelligence`, build `pip install -r requirements.txt`, start `uvicorn src.api.main:app --host 0.0.0.0 --port $PORT`. |
 | **Fly.io**  | Use Docker or `fly launch` in `byteos-intelligence` and expose port 8000. |
 
-Then set **BYTEOS_INTELLIGENCE_URL** in both Vercel projects to that URL (e.g. `https://sudar-intelligence.up.railway.app`).
+Then set **BYTEOS_INTELLIGENCE_URL** in both Vercel projects to that URL (e.g. `https://sudar-intelligence.up.railway.app` for the canonical Railway deployment).
 
 ---
 

@@ -52,9 +52,9 @@ Sudar Intelligence is a **Python FastAPI** service. It cannot run on Vercel (Nod
    | `WA_INSTANCE_URL` | WorkAdventure instance URL |
    | `SUDARPLAY_MAPS_BUCKET` | Supabase bucket for maps |
 
-5. **Deploy**: Railway builds and deploys. Open **Settings** → **Networking** → **Generate Domain** to get a URL like `https://sudar-intelligence-production-xxxx.up.railway.app`.
+5. **Deploy**: Railway builds and deploys. Open **Settings** → **Networking** → **Generate Domain** to get a URL (e.g. `https://sudar-intelligence.up.railway.app`).
 
-6. **Verify**: Open `https://your-railway-url.up.railway.app/api/health` — should return healthy.
+6. **Verify**: Open `https://sudar-intelligence.up.railway.app/api/health` (or your generated URL) — should return healthy.
 
 7. **Wire Vercel**:
    - **Sudar Studio** (Vercel) → Settings → Environment Variables → set `BYTEOS_INTELLIGENCE_URL` = your Railway URL.

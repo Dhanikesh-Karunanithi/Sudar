@@ -10,7 +10,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 function extractSemanticText(html: string): string {
-  let text = html
+  const text = html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
