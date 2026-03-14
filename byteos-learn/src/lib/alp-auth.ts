@@ -22,7 +22,13 @@ export async function validateAlpKey(
   const admin = createAdminClient()
 
   // integration_api_keys lives in shared Supabase; table not in Learn's generated types
-  const db = admin as unknown as { from: (t: string) => { select: (c: string) => { eq: (a: string, v: string) => { limit: (n: number) => { maybeSingle: () => Promise<{ data: { id: string } | null }> } } }; update: (u: { last_used_at: string }) => { eq: (a: string, v: string) => Promise<unknown> } } } }
+  type IntegrationDb = {
+    from: (t: string) => {
+      select: (c: string) => { eq: (a: string, v: string) => { limit: (n: number) => { maybeSingle: () => Promise<{ data: { id: string } | null }> } } }
+      update: (u: { last_used_at: string }) => { eq: (a: string, v: string) => Promise<unknown> }
+    }
+  }
+  const db = admin as unknown as IntegrationDb
   const { data: row } = await db.from('integration_api_keys').select('id').eq('key_hash', keyHash).limit(1).maybeSingle()
 
   if (row?.id) {

@@ -1242,7 +1242,8 @@ export function CourseViewer({
               <span className="text-xs font-semibold text-primary">{progress}%</span>
             </div>
             <div className="w-full bg-muted rounded-full h-1.5">
-              <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+              <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}
+              />
             </div>
           </div>
         </div>
@@ -1917,7 +1918,8 @@ export function CourseViewer({
                     <div className="bg-card border border-border rounded-xl rounded-tl-sm px-3 py-2.5">
                       <div className="flex gap-1">
                         {[0, 1, 2].map((i) => (
-                          <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                          <div key={i} className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${i * 0.15}s` }}
+                          />
                         ))}
                       </div>
                     </div>
