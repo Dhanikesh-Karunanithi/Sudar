@@ -302,8 +302,8 @@ function renderMarkdown(body: string): React.ReactNode {
   // Inline formatting: bold, italic, inline code, links
   function parseInline(text: string): React.ReactNode {
     const parts: React.ReactNode[] = []
-    // Regex: **bold**, *italic*, `code`
-    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g
+    // Regex: **bold**, *italic*, `code` (use RegExp to avoid parser issues with literal)
+    const regex = new RegExp('(\\*\\*(.+?)\\*\\*|\\*(.+?)\\*|`(.+?)`)', 'g')
     let last = 0
     let match: RegExpExecArray | null
 
@@ -1962,7 +1962,7 @@ export function CourseViewer({
                     placeholder="Ask Sudar anything, or highlight text above..."
                     rows={1}
                     className="flex-1 bg-muted border border-border rounded-xl px-3 py-2 text-xs text-card-foreground placeholder-muted-foreground focus:outline-none focus:border-primary resize-none leading-relaxed"
-                    style={{ maxHeight: '80px' } }
+                    style={{ maxHeight: '80px' }}
                   />
                   <button
                     id="byte-send-btn"
