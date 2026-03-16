@@ -19,12 +19,13 @@ export default async function DashboardLayout({
   const orgId = await getOrCreateOrg(user.id)
 
   const [{ data: profile }, { data: membership }] = await Promise.all([
-    supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single(),
+    supabase.from('profiles').select('full_name, avatar_url, role').eq('id', user.id).single(),
     supabase.from('org_members').select('role').eq('org_id', orgId).eq('user_id', user.id).single(),
   ])
 
   const role = (membership as { role?: string } | null)?.role ?? 'LEARNER'
   const orgRole = ['ADMIN', 'MANAGER', 'CREATOR', 'LEARNER'].includes(role) ? role as 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER' : 'LEARNER'
+  const isSuperAdmin = (profile as { role?: string } | null)?.role === 'super_admin'
 
   return (
     <DashboardShell
@@ -34,6 +35,7 @@ export default async function DashboardLayout({
         avatar_url: profile?.avatar_url,
       }}
       orgRole={orgRole}
+      isSuperAdmin={isSuperAdmin}
     >
       {children}
     </DashboardShell>

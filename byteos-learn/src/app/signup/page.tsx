@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { CheckCircle2 } from 'lucide-react'
+import { GoogleIcon } from '@/components/ui/GoogleIcon'
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState('')
@@ -13,6 +15,7 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const supabase = createClient()
+  const searchParams = useSearchParams()
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
@@ -39,6 +42,26 @@ export default function SignupPage() {
       setLoading(false)
     } else {
       setSuccess(true)
+    }
+  }
+
+  async function handleGoogleSignUp() {
+    try {
+      setLoading(true)
+      setError(null)
+      const nextParam = searchParams?.get('next') ?? '/'
+      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextParam)}`
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo },
+      })
+      if (error) {
+        setError('Unable to sign up with Google. Please try again.')
+        setLoading(false)
+      }
+    } catch {
+      setError('Something went wrong. Please try again.')
+      setLoading(false)
     }
   }
 
@@ -157,6 +180,22 @@ export default function SignupPage() {
               {loading ? 'Creating account...' : 'Create account'}
             </button>
           </form>
+
+          <div className="flex items-center gap-3 my-2">
+            <div className="h-px flex-1 bg-slate-200" />
+            <span className="text-xs text-slate-400">or</span>
+            <div className="h-px flex-1 bg-slate-200" />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignUp}
+            disabled={loading}
+            className="w-full inline-flex items-center justify-center gap-2 py-2.5 bg-white hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed border border-slate-300 rounded-lg text-slate-800 text-sm font-medium transition-colors"
+          >
+            <GoogleIcon size={18} className="shrink-0" />
+            <span>Sign up with Google</span>
+          </button>
 
           <p className="text-center text-slate-500 text-sm">
             Already have an account?{' '}

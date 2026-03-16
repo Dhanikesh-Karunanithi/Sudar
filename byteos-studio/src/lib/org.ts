@@ -57,6 +57,17 @@ export async function getOrCreateOrg(userId: string): Promise<string> {
 
 export type OrgRole = 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER'
 
+export async function isSuperAdmin(userId: string): Promise<boolean> {
+  const supabase = await createClient()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .single()
+
+  return (profile as { role?: string } | null)?.role === 'super_admin'
+}
+
 /**
  * Returns org_id and the current user's role in that org.
  * Use after getOrCreateOrg so membership exists.
@@ -79,9 +90,20 @@ export async function getOrgIdAndRole(userId: string): Promise<{ orgId: string; 
  * Use in API routes that manage users or org settings.
  */
 export async function requireOrgAdmin(userId: string): Promise<string> {
+  if (await isSuperAdmin(userId)) {
+    // Super admins are allowed to act as org admins; ensure they have an org for features that require one.
+    return getOrCreateOrg(userId)
+  }
+
   const { orgId, role } = await getOrgIdAndRole(userId)
   if (role !== 'ADMIN' && role !== 'MANAGER') {
     throw new Error('Forbidden: requires Admin or Manager role')
   }
   return orgId
+}
+
+export async function requireSuperAdmin(userId: string): Promise<void> {
+  if (!(await isSuperAdmin(userId))) {
+    throw new Error('Forbidden: requires Super Admin')
+  }
 }

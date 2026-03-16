@@ -29,6 +29,7 @@ interface SidebarProps {
     avatar_url?: string | null
   }
   orgRole?: 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER'
+  isSuperAdmin?: boolean
 }
 
 const contentNavItems = [
@@ -47,7 +48,12 @@ const organizationNavItems = [
   { label: 'Help & Guides', href: '/help', icon: HelpCircle },
 ]
 
-export function Sidebar({ user, orgRole = 'LEARNER' }: SidebarProps) {
+const superAdminNavItems = [
+  { label: 'Platform users', href: '/admin/system', icon: Users },
+  { label: 'Organisations', href: '/admin/system?tab=orgs', icon: Shield },
+]
+
+export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: SidebarProps) {
   const canManageOrg = orgRole === 'ADMIN' || orgRole === 'MANAGER'
   const pathname = usePathname()
   const router = useRouter()
@@ -156,6 +162,43 @@ export function Sidebar({ user, orgRole = 'LEARNER' }: SidebarProps) {
                   return (
                     <Link
                       key={item.href}
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group',
+                        isActive
+                          ? 'bg-indigo-600/15 text-indigo-300 border border-indigo-500/20'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                      )}
+                    >
+                      <item.icon
+                        className={cn(
+                          'w-4 h-4 shrink-0',
+                          isActive ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-300'
+                        )}
+                        strokeWidth={isActive ? 2.5 : 2}
+                      />
+                      <span className="flex-1">{item.label}</span>
+                      {isActive && (
+                        <ChevronRight className="w-3 h-3 text-indigo-500" />
+                      )}
+                    </Link>
+                  )
+                })}
+              </>
+            )}
+
+            {isSuperAdmin && (
+              <>
+                <p className="px-3 mt-4 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  Platform
+                </p>
+                {superAdminNavItems.map((item) => {
+                  const isActive = pathname.startsWith('/admin/system') && (item.href === '/admin/system'
+                    ? !pathname.includes('orgs')
+                    : pathname.startsWith('/admin/system'))
+                  return (
+                    <Link
+                      key={item.label}
                       href={item.href}
                       className={cn(
                         'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group',
