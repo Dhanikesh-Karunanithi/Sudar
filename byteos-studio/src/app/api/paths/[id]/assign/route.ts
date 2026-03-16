@@ -2,7 +2,8 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getOrCreateOrg } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: pathId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -15,8 +16,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   if (!Array.isArray(user_ids) || user_ids.length === 0) {
     return NextResponse.json({ error: 'user_ids array required' }, { status: 400 })
   }
-
-  const pathId = params.id
 
   const { data: path, error: pathError } = await admin
     .from('learning_paths')

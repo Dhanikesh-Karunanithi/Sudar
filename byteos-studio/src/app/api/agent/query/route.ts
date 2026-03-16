@@ -109,10 +109,10 @@ Use only IDs that appear in the context below. You may output multiple actions i
 Context:
 ${ctx.contextPrompt}`
 
-    const conversationHistory = Array.isArray(body.conversation_history) ? body.conversation_history : []
+    const conversationHistory = (Array.isArray(body.conversation_history) ? body.conversation_history : []) as Array<{ role?: string; content?: string }>
     const messages = [
       { role: 'system' as const, content: systemPrompt },
-      ...conversationHistory.slice(-8).map((m: { role?: string; content?: string }) => ({
+      ...conversationHistory.slice(-8).map((m) => ({
         role: (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
         content: String(m.content ?? ''),
       })),
@@ -198,13 +198,14 @@ ${ctx.contextPrompt}`
       } else if (action.type === 'get_analytics_summary') {
         actionResults.push({ type: 'get_analytics_summary', message: ctx.analyticsSummaryText })
       } else if (action.type === 'export_users_csv') {
-        const { data: members } = await admin.from('org_members').select('user_id, role').eq('org_id', orgId).limit(50)
-        if (!members?.length) {
+        const { data: membersData } = await admin.from('org_members').select('user_id, role').eq('org_id', orgId).limit(50)
+        const members = (membersData ?? []) as Array<{ user_id: string; role: string }>
+        if (!members.length) {
           actionResults.push({ type: 'export_users_csv', message: 'No users to export.' })
           continue
         }
         const { data: profiles } = await admin.from('profiles').select('id, full_name').in('id', members.map((m) => m.user_id))
-        const profileMap = new Map((profiles ?? []).map((p) => [p.id, p.full_name ?? '']))
+        const profileMap = new Map((profiles ?? []).map((p: { id: string; full_name: string | null }) => [p.id, p.full_name ?? '']))
         const roleMap = new Map(members.map((m) => [m.user_id, m.role]))
         const authUsers = await Promise.all(members.map((m) => admin.auth.admin.getUserById(m.user_id)))
         const rows = members.map((m, i) => {

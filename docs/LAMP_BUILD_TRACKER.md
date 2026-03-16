@@ -8,7 +8,7 @@
 - Leave **Status** as `Not started` until work begins. Do not remove or rename task IDs.
 - When a completed task affects what the **paper** claims (e.g. a new shipped feature): update [docs/research/paper.tex](research/paper.tex) and/or [docs/LAMP-Updated-Draft.md](LAMP-Updated-Draft.md) per [docs/research/PAPER_SYNC.md](research/PAPER_SYNC.md) so the paper stays aligned with the build.
 
-**Last updated**: 2026-03-13
+**Last updated**: 2026-03-15
 
 ---
 

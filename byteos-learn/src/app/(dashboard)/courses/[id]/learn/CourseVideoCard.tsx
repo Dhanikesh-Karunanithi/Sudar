@@ -40,9 +40,6 @@ function SceneContent({ scene, animType, animKey }: { scene: VideoScene; animTyp
       <div key={animKey} className="scene-kinetic space-y-4 text-center px-4">
         <h2 className="scene-title kinetic-heading">{scene.title || `Scene ${scene.sceneNumber}`}</h2>
         <p className="scene-narration kinetic-body">{scene.narration}</p>
-        {scene.visuals && (
-          <p className="scene-visuals">Visuals: {scene.visuals}</p>
-        )}
       </div>
     )
   }
@@ -54,9 +51,6 @@ function SceneContent({ scene, animType, animKey }: { scene: VideoScene; animTyp
         <p className="scene-narration text-lg leading-relaxed">
           <WordReveal text={scene.narration ?? ''} delay={300} />
         </p>
-        {scene.visuals && (
-          <p className="scene-visuals" style={{ animationDelay: '600ms' }}>Visuals: {scene.visuals}</p>
-        )}
       </div>
     )
   }
@@ -94,11 +88,6 @@ function SceneContent({ scene, animType, animKey }: { scene: VideoScene; animTyp
           {line}
         </p>
       ))}
-      {scene.visuals && (
-        <p className="scene-visuals fade-para" style={{ animationDelay: `${200 + lines.length * 200}ms` }}>
-          Visuals: {scene.visuals}
-        </p>
-      )}
     </div>
   )
 }
@@ -482,7 +471,7 @@ export function CourseVideoCard({ scenes, courseTitle }: { scenes: VideoScene[];
         {/* Audio indicator */}
         {!hasAudio && phase === 'playing' && (
           <div className="absolute top-4 left-4 z-10 px-2 py-1 rounded text-xs text-amber-700 bg-amber-50/80 border border-amber-200">
-            No audio — generate in Studio
+            Audio for this module isn&apos;t available yet.
           </div>
         )}
 

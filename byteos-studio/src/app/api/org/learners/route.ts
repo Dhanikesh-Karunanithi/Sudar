@@ -14,12 +14,13 @@ export async function GET() {
   const admin = createAdminClient()
   const orgId = await getOrCreateOrg(user.id)
 
-  const { data: members } = await admin
+  const { data: membersData } = await admin
     .from('org_members')
     .select('user_id')
     .eq('org_id', orgId)
 
-  if (!members?.length) return NextResponse.json([])
+  const members = (membersData ?? []) as Array<{ user_id: string }>
+  if (!members.length) return NextResponse.json([])
 
   const userIds = members.map((m) => m.user_id)
   const { data: profiles } = await admin

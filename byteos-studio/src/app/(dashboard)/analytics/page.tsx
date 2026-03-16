@@ -1,19 +1,39 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { getOrCreateOrg } from '@/lib/org'
 import {
   BarChart2, Users, BookOpen, CheckCircle2, TrendingUp,
-  Clock, Brain, AlertTriangle, ArrowRight, Zap
+  Clock, Brain, AlertTriangle, Zap
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { CourseTimeSection } from '@/components/analytics/CourseTimeSection'
+import { DateRangeFilter } from '@/components/analytics/DateRangeFilter'
+
+export const metadata: Metadata = { title: 'Analytics' }
 
 function pct(n: number, d: number) {
   return d === 0 ? 0 : Math.round((n / d) * 100)
 }
 
-export default async function AnalyticsPage() {
+function getRangeStart(range: string | undefined): Date | null {
+  const now = Date.now()
+  const day = 86400000
+  if (range === 'week') return new Date(now - 7 * day)
+  if (range === 'month') return new Date(now - 30 * day)
+  if (range === 'quarter') return new Date(now - 90 * day)
+  return null
+}
+
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string }>
+}) {
+  const { range } = await searchParams
+  const rangeStart = getRangeStart(range)
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -37,8 +57,14 @@ export default async function AnalyticsPage() {
   ])
 
   const orgCourseIds = new Set((courses ?? []).map((c) => c.id))
-  const orgEnrollments = (allEnrollments ?? []).filter((e) => e.course_id && orgCourseIds.has(e.course_id))
-  const orgEvents = (allEvents ?? []).filter((e) => e.course_id && orgCourseIds.has(e.course_id))
+  let orgEnrollments = (allEnrollments ?? []).filter((e) => e.course_id && orgCourseIds.has(e.course_id))
+  let orgEvents = (allEvents ?? []).filter((e) => e.course_id && orgCourseIds.has(e.course_id))
+
+  if (rangeStart) {
+    const startStr = rangeStart.toISOString()
+    orgEvents = orgEvents.filter((e) => e.created_at >= startStr)
+    orgEnrollments = orgEnrollments.filter((e) => (e.created_at ?? '') >= startStr)
+  }
 
   // ── Org-level stats ─────────────────────────────────────────────────
   const totalLearners = new Set(orgEnrollments.map((e) => e.user_id)).size
@@ -115,11 +141,14 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-10">
-      <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-          <BarChart2 className="w-6 h-6 text-indigo-400" />Analytics
-        </h1>
-        <p className="text-slate-400 text-sm mt-1">Organisation-wide learning intelligence</p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+            <BarChart2 className="w-6 h-6 text-indigo-400" />Analytics
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">Organisation-wide learning intelligence</p>
+        </div>
+        <DateRangeFilter />
       </div>
 
       {/* Org overview */}

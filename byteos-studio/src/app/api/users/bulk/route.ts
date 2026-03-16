@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
     }
 
     const password = randomPassword(14)
-    const role = ['ADMIN', 'MANAGER', 'CREATOR', 'LEARNER'].includes(row.org_role ?? '') ? row.org_role : 'LEARNER'
+    const roleRaw = ['ADMIN', 'MANAGER', 'CREATOR', 'LEARNER'].includes(row.org_role ?? '') ? row.org_role : 'LEARNER'
+    const role = roleRaw as 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER'
 
     const { data: authUser, error: authError } = await admin.auth.admin.createUser({
       email,
@@ -105,7 +106,10 @@ export async function PATCH(request: NextRequest) {
   if (userIds.length === 0) return NextResponse.json({ error: 'user_ids array required' }, { status: 400 })
   if (userIds.length > BULK_MAX) return NextResponse.json({ error: `Max ${BULK_MAX} users per request` }, { status: 400 })
 
-  const orgRole = body.org_role != null && ROLES.includes(body.org_role as (typeof ROLES)[number]) ? body.org_role : undefined
+  const orgRole: 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER' | undefined =
+    body.org_role != null && ROLES.includes(body.org_role as (typeof ROLES)[number])
+      ? (body.org_role as 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER')
+      : undefined
   const banned = typeof body.banned === 'boolean' ? body.banned : undefined
   if (orgRole === undefined && banned === undefined) {
     return NextResponse.json({ error: 'At least one of org_role or banned is required' }, { status: 400 })

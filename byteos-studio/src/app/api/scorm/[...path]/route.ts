@@ -42,9 +42,10 @@ const MIME: Record<string, string> = {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  const storagePath = params.path.join('/')
+  const { path: pathSegments } = await params
+  const storagePath = pathSegments.join('/')
 
   const admin = createAdminClient()
   const { data, error } = await admin.storage

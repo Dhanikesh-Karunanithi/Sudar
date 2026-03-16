@@ -1,7 +1,8 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const { data: course } = await admin
     .from('courses')
     .select('id')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('created_by', user.id)
     .single()
 
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const { data: lastModule } = await admin
     .from('modules')
     .select('order_index')
-    .eq('course_id', params.id)
+    .eq('course_id', id)
     .order('order_index', { ascending: false })
     .limit(1)
     .single()
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const { data, error } = await admin
     .from('modules')
     .insert({
-      course_id: params.id,
+      course_id: id,
       title: body.title ?? 'Untitled Module',
       content: body.content ?? { type: 'text', body: '' },
       order_index: nextIndex,

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, X, Send, Loader2, ExternalLink, Maximize2, Minimize2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, stripTutorActionsFromText } from '@/lib/utils'
 import type { TutorAction, TutorBlock } from '@/types/tutor'
 import { GenerativeBlockRenderer } from './GenerativeBlockRenderer'
 import { ChatMarkdown } from './ChatMarkdown'
@@ -233,7 +233,7 @@ export function FloatingSudarChat() {
                         />
                       ) : (
                         <>
-                          {m.role === 'assistant' ? <ChatMarkdown text={m.content} /> : m.content}
+                          {m.role === 'assistant' ? <ChatMarkdown text={stripTutorActionsFromText(m.content)} /> : m.content}
                           {m.role === 'assistant' && m.actions && m.actions.length > 0 && (
                             <div className="flex flex-wrap gap-2">
                               {m.actions.map((action, aIdx) => (

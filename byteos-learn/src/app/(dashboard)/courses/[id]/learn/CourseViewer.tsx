@@ -7,9 +7,9 @@ import {
   ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight,
   BookOpen, List, X, Sparkles, Send, Loader2,
   ChevronDown, FileText, Video, Network,
-  Layers, Zap, MessageSquarePlus, Code, Quote, Pin, PinOff, PanelLeftClose, Mic, Maximize2, Minimize2, Headphones
+  Layers, Zap, MessageSquarePlus, Code, Quote, Pin, PinOff, PanelLeftClose, Mic, Maximize2, Minimize2, Headphones, Gamepad2
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, stripTutorActionsFromText } from '@/lib/utils'
 import { QuizCard } from './QuizCard'
 import { FlashcardsCard, type FlashcardPair } from './FlashcardsCard'
 import { CourseVideoCard } from './CourseVideoCard'
@@ -41,6 +41,8 @@ interface Module {
   content: ({ type: string; body?: string } & Partial<RichContent>) | null
   order_index: number
   quiz?: { questions: QuizQuestion[] } | null
+  sudarplay_map_url?: string | null
+  sudarplay_map_id?: string | null
 }
 
 interface Course {
@@ -1213,9 +1215,22 @@ export function CourseViewer({
       )}>
         <div className="p-4 border-b border-border space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <Link href={`/courses/${course.id}`} className="flex items-center gap-2 text-muted-foreground hover:text-card-foreground text-xs transition-colors shrink-0">
-              <ArrowLeft className="w-3.5 h-3.5" />Course details
-            </Link>
+            <nav className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 min-w-0" aria-label="Breadcrumb">
+              <Link href="/courses" className="hover:text-card-foreground transition-colors">Courses</Link>
+              <span aria-hidden>/</span>
+              <Link href={`/courses/${course.id}`} className="truncate hover:text-card-foreground transition-colors flex items-center gap-1">
+                <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+                {course.title}
+              </Link>
+              {currentModuleId && (
+                <>
+                  <span aria-hidden>/</span>
+                  <span className="truncate text-card-foreground font-medium">
+                    {modules.find((m) => m.id === currentModuleId)?.title ?? 'Module'}
+                  </span>
+                </>
+              )}
+            </nav>
             <div className="flex items-center gap-0.5">
               <button
                 onClick={() => setSidebarPinned(!sidebarPinned)}
@@ -1288,13 +1303,19 @@ export function CourseViewer({
           <div className="h-4 w-px bg-muted" />
           <h1 className="text-sm font-semibold text-card-foreground truncate flex-1 min-w-0">{currentModule?.title}</h1>
 
-          {/* Modality switcher — hidden for SCORM modules */}
-          <div className={cn('hidden sm:flex items-center gap-0.5 bg-muted rounded-lg p-0.5 shrink-0', isScormContent(currentModule?.content) && '!hidden')}>
+          {/* Modality switcher — hidden for SCORM modules; WAI-ARIA tabs for accessibility */}
+          <div
+            id="content-format-tabs"
+            role="tablist"
+            aria-label="Content format"
+            className={cn('hidden sm:flex items-center gap-0.5 bg-muted rounded-lg p-0.5 shrink-0', isScormContent(currentModule?.content) && '!hidden')}
+          >
             {(() => {
               const hasVideo = (course.settings?.include_video ?? false) &&
                 (course.settings?.video_scenes?.length ?? 0) > 0
               const hasPodcast = (course.settings?.include_podcast ?? false) &&
                 (course.settings?.podcast_dialogue?.length ?? 0) > 0
+              const hasSudarPlay = Boolean(currentModule?.sudarplay_map_url)
               const modalities = [
                 { id: 'text', icon: FileText, label: 'Read' },
                 { id: 'listening', icon: Headphones, label: 'Listen' },
@@ -1302,19 +1323,40 @@ export function CourseViewer({
                 ...(hasPodcast ? [{ id: 'podcast', icon: Mic, label: 'Podcast', soon: false }] : []),
                 { id: 'mindmap', icon: Network, label: 'Map' },
                 { id: 'flashcards', icon: Layers, label: 'Cards' },
+                ...(hasSudarPlay ? [{ id: 'sudarplay', icon: Gamepad2, label: 'Play', soon: false, href: `/sudarplay/launch?module_id=${currentModuleId}` }] : []),
               ]
-              return modalities.map(({ id, icon: Icon, label, soon }) => (
-                <button key={id} onClick={() => !soon && setActiveModality(id)}
-                  title={soon ? `${label} — coming soon` : label}
-                  className={cn(
-                    'flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all',
-                    soon ? 'opacity-40 cursor-not-allowed' : '',
-                    activeModality === id && !soon ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-card-foreground'
-                  )}>
-                  <Icon className="w-3 h-3" />
-                  <span className="hidden md:inline">{label}</span>
-                </button>
-              ))
+              return modalities.map(({ id, icon: Icon, label, soon, href }) => {
+                if (href) {
+                  return (
+                    <Link key={id} href={href}
+                      title={label}
+                      className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-muted-foreground hover:text-card-foreground transition-all focus-visible:outline focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    >
+                      <Icon className="w-3 h-3" />
+                      <span className="hidden md:inline">{label}</span>
+                    </Link>
+                  )
+                }
+                return (
+                  <button
+                    key={id}
+                    role="tab"
+                    aria-selected={activeModality === id && !soon}
+                    aria-label={label}
+                    tabIndex={activeModality === id && !soon ? 0 : -1}
+                    onClick={() => !soon && setActiveModality(id)}
+                    title={soon ? `${label} — coming soon` : label}
+                    className={cn(
+                      'flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all focus-visible:outline focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+                      soon ? 'opacity-40 cursor-not-allowed' : '',
+                      activeModality === id && !soon ? 'bg-background text-primary shadow-sm' : 'text-muted-foreground hover:text-card-foreground'
+                    )}
+                  >
+                    <Icon className="w-3 h-3" />
+                    <span className="hidden md:inline">{label}</span>
+                  </button>
+                )
+              })
             })()}
           </div>
 
@@ -1335,7 +1377,7 @@ export function CourseViewer({
           </button>
         </div>
 
-        <div className="flex flex-1 min-h-0 overflow-hidden">
+        <div className="flex flex-1 min-h-0 overflow-hidden" role="tabpanel" id="modality-panel" aria-labelledby="content-format-tabs">
           {/* Module content + quiz — only flex child so it always uses full width */}
           <div className="flex flex-col min-h-0 overflow-hidden flex-1 min-w-0">
 
@@ -1472,7 +1514,7 @@ export function CourseViewer({
                     <div className="max-w-xl mx-auto py-12 text-center space-y-3">
                       <Video className="w-10 h-10 text-muted-foreground mx-auto" />
                       <p className="text-sm text-muted-foreground">No video overview for this course.</p>
-                      <p className="text-xs text-muted-foreground">Creators can add one in Sudar Studio.</p>
+                      <p className="text-xs text-muted-foreground">It isn&apos;t available for this course yet.</p>
                     </div>
                   )
                 ) : activeModality === 'podcast' ? (
@@ -1482,7 +1524,7 @@ export function CourseViewer({
                     <div className="max-w-xl mx-auto py-12 text-center space-y-3">
                       <Mic className="w-10 h-10 text-muted-foreground mx-auto" />
                       <p className="text-sm text-muted-foreground">No podcast for this course.</p>
-                      <p className="text-xs text-muted-foreground">Creators can add one in Sudar Studio.</p>
+                      <p className="text-xs text-muted-foreground">It isn&apos;t available for this course yet.</p>
                     </div>
                   )
                 ) : activeModality === 'mindmap' ? (
@@ -1851,7 +1893,7 @@ export function CourseViewer({
                       ) : (
                         <span className="contents block">
                       {msg.role === 'assistant' ? (
-                        <ChatMarkdown text={msg.content} />
+                        <ChatMarkdown text={stripTutorActionsFromText(msg.content)} />
                       ) : (
                         <>
                           {msg.content}

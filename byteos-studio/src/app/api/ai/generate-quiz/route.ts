@@ -6,6 +6,7 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import type { Json } from '@/types/database'
 import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
 
 export async function POST(request: NextRequest) {
@@ -73,7 +74,7 @@ Return ONLY valid JSON in this exact structure:
   // Save to module
   const { error: updateError } = await admin
     .from('modules')
-    .update({ quiz })
+    .update({ quiz: quiz as Json })
     .eq('id', module_id)
 
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })

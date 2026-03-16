@@ -58,6 +58,7 @@ Every new feature or fix should map to at least one of these pillars. If it does
 1. **Visibility**: Record Sudar memory demo video (1–2 min); add 2–4 screenshots to docs/screenshots and link from README.
 2. ~~**Ship recent work**: Commit and document Flashcards, document-to-course, SCORM 1.2 import; update current state in Section 2.~~ **Done** — see docs/SHIPPED_FEATURES.md and §2 above.
 3. ~~**One more win**: Ship Audio TTS (Listen tab) and document compliance email reminders.~~ **Done** — Listen modality + compliance-reminders cron documented.
+4. **Production deployment documented**: Studio and Learn deploy to Vercel; Intelligence deploys to Railway, Render, or Fly.io. See docs/VERCEL_DEPLOYMENT.md and docs/INTELLIGENCE_DEPLOYMENT.md.
 
 **Pending phases (from ECOSYSTEM §8)**  
 - **Phase 3 remaining**: Video modality (wire to bytetexttovid / Remotion).  
@@ -121,4 +122,4 @@ Priorities are chosen to maximise progress toward the four pillars without overb
 
 ---
 
-*Last updated: Ship recent work (Flashcards, document-to-course, SCORM 1.2) and one more win (Listen modality, compliance email reminders) documented; STRATEGIC_PATH §2 and docs/SHIPPED_FEATURES.md updated. Pilot (LAMP Phase 3) after build complete.*
+*Last updated: 2026-03-15. Production deployment (Vercel + Intelligence hosting) documented in docs/VERCEL_DEPLOYMENT.md and docs/INTELLIGENCE_DEPLOYMENT.md. Pilot (LAMP Phase 3) after build complete.*

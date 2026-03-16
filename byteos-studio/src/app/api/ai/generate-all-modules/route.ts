@@ -1,4 +1,5 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import type { Json } from '@/types/database'
 import { NextRequest, NextResponse } from 'next/server'
 import { getOneImage } from '@/lib/media/imageSearch'
 import { selectComponentsForModule, toInteractiveElements, type ModuleRole } from '@/lib/ai/componentSelector'
@@ -283,14 +284,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ completed: true, modules_generated: 0 })
   }
 
-  const emptyModules = modules.filter(
-    (m: { content: { body?: string } | null }) => !m.content || !(m.content as { body?: string })?.body?.trim()
-  )
+  const emptyModules = modules.filter((m) => {
+    const content = m.content as { body?: string } | null
+    return !content || !content.body?.trim()
+  })
   if (emptyModules.length === 0) {
     return NextResponse.json({ completed: true, modules_generated: 0 })
   }
 
-  const allTitles = modules.map((m: { title: string }) => m.title)
+  const allTitles = modules.map((m) => m.title)
   const difficulty = course.difficulty ?? 'intermediate'
 
   // ─── Phase 1: Curriculum plan ───────────────────────────────────────────
@@ -312,7 +314,7 @@ export async function POST(request: NextRequest) {
     for (let i = 0; i < curriculum.length; i++) {
       const e = curriculum[i]
       const raw = e.archetype?.trim().toLowerCase()
-      const valid = LESSON_ARCHETYPES.includes(raw as LessonArchetype)
+      const valid: LessonArchetype = LESSON_ARCHETYPES.includes(raw as LessonArchetype)
         ? (raw as LessonArchetype)
         : selectArchetype(e.bloomLevel, e.pedagogicalRole ?? '', i, prevArchetype)
       e.archetype = valid
@@ -434,7 +436,7 @@ export async function POST(request: NextRequest) {
 
       await admin
         .from('modules')
-        .update({ content: richContent })
+        .update({ content: richContent as unknown as Json })
         .eq('id', mod.id)
 
       priorSummaries.push({ title: mod.title, summary: extractSummary(content, mod.title) })

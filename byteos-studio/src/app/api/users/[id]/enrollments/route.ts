@@ -40,7 +40,7 @@ export async function GET(
     .eq('user_id', userId)
     .not('path_id', 'is', null)
 
-  const pathIds = [...new Set((enrollments ?? []).map((e) => e.path_id).filter(Boolean))]
+  const pathIds: string[] = [...new Set((enrollments ?? []).map((e) => e.path_id).filter((id): id is string => id != null))]
   if (pathIds.length === 0) {
     return NextResponse.json([])
   }

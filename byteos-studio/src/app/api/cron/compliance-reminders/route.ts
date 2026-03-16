@@ -34,7 +34,6 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient()
-  const today = new Date().toISOString().slice(0, 10)
 
   // Path enrollments with due dates (only path-based for compliance)
   const { data: enrollments } = await admin

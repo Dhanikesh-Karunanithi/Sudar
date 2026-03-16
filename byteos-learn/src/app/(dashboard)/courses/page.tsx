@@ -1,6 +1,9 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import type { Metadata } from 'next'
 import { getCachedPublishedCourses } from '@/lib/cache'
 import CourseCatalogClient from './CourseCatalogClient'
+
+export const metadata: Metadata = { title: 'Courses' }
 
 export default async function CourseCatalogPage() {
   const supabase = await createClient()

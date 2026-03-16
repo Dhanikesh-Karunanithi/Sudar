@@ -9,7 +9,6 @@ import type {
   RichContentSection,
   RichInteractiveElement,
   EditorBlock,
-  EditorBlockText,
   EditorBlockImage,
   EditorBlockExpandable,
   EditorBlockQuiz,

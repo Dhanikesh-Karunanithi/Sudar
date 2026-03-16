@@ -90,8 +90,10 @@ export async function PATCH(
   if (body.full_name !== undefined) {
     await admin.from('profiles').update({ full_name: body.full_name }).eq('id', targetId)
   }
-  if (body.org_role !== undefined && ['ADMIN', 'MANAGER', 'CREATOR', 'LEARNER'].includes(body.org_role)) {
-    await admin.from('org_members').update({ role: body.org_role }).eq('org_id', orgId).eq('user_id', targetId)
+  const validRoles: Array<'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER'> = ['ADMIN', 'MANAGER', 'CREATOR', 'LEARNER']
+  if (body.org_role !== undefined && validRoles.includes(body.org_role as 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER')) {
+    const role = body.org_role as 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER'
+    await admin.from('org_members').update({ role }).eq('org_id', orgId).eq('user_id', targetId)
   }
   if (body.banned !== undefined) {
     await admin.auth.admin.updateUserById(targetId, {

@@ -1,11 +1,15 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import type { Metadata } from 'next'
 import Link from 'next/link'
+
+export const metadata: Metadata = { title: 'Learn' }
 import { BookOpen, ArrowRight, GraduationCap, CheckCircle2, Flame, Clock, TrendingUp, Zap, Calendar, Route, Lock, ChevronRight, Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { headers } from 'next/headers'
 import { BentoCard } from '@/components/ui/BentoCard'
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
 import { ActivityChartClient } from '@/components/dashboard/ActivityChartClient'
+import { Greeting } from '@/components/dashboard/Greeting'
 
 // Compute streak from event dates
 function computeStreak(eventDates: string[]): number {
@@ -60,15 +64,17 @@ export default async function DashboardPage() {
     { data: enrollments },
     { data: allEvents },
     { data: enrollmentsWithDue },
+    { data: lastVisitedEvent },
   ] = await Promise.all([
     admin.from('profiles').select('full_name, org_id').eq('id', user!.id).single(),
     admin.from('learner_profiles').select('ai_tutor_context, next_best_action').eq('user_id', user!.id).single(),
     admin.from('enrollments').select('course_id, status, progress_pct, created_at').eq('user_id', user!.id).order('created_at', { ascending: false }),
     admin.from('learning_events').select('event_type, created_at, duration_secs').eq('user_id', user!.id).order('created_at', { ascending: false }).limit(500),
     admin.from('enrollments').select('id, course_id, path_id, due_date, status').eq('user_id', user!.id).not('due_date', 'is', null).gte('due_date', today).order('due_date', { ascending: true }).limit(10),
+    admin.from('learning_events').select('course_id, module_id, created_at').eq('user_id', user!.id).not('course_id', 'is', null).not('module_id', 'is', null).order('created_at', { ascending: false }).limit(1).maybeSingle(),
   ])
 
-  const courseIds = enrollments?.map((e) => e.course_id) ?? []
+  const courseIds = enrollments?.filter((e) => e.course_id).map((e) => e.course_id as string) ?? []
   const pathIds = [...new Set((enrollmentsWithDue ?? []).map((e) => e.path_id).filter(Boolean))]
   const courseIdsDue = [...new Set((enrollmentsWithDue ?? []).map((e) => e.course_id).filter(Boolean))]
 
@@ -94,6 +100,24 @@ export default async function DashboardPage() {
 
   const courseMap = new Map(coursesData.map((c) => [c.id, c]))
   const pathMap = new Map(pathsData.map((p) => [p.id, p]))
+
+  let lastVisited: { courseId: string; courseTitle: string; moduleId: string; moduleTitle: string } | null = null
+  if (lastVisitedEvent?.course_id && lastVisitedEvent?.module_id) {
+    const lvCourseId = lastVisitedEvent.course_id as string
+    const lvModuleId = lastVisitedEvent.module_id as string
+    const [{ data: lvCourse }, { data: lvModule }] = await Promise.all([
+      admin.from('courses').select('id, title').eq('id', lvCourseId).single(),
+      admin.from('modules').select('id, title').eq('id', lvModuleId).eq('course_id', lvCourseId).single(),
+    ])
+    if (lvCourse && lvModule) {
+      lastVisited = {
+        courseId: lvCourseId,
+        courseTitle: lvCourse.title,
+        moduleId: lvModuleId,
+        moduleTitle: lvModule.title,
+      }
+    }
+  }
 
   const enrolledCourses: Array<{ id: string; title: string; description: string | null; progress_pct: number; enrollStatus: string }> = courseIds.map((id) => {
     const c = courseMap.get(id)
@@ -126,7 +150,9 @@ export default async function DashboardPage() {
   const eventDates = (allEvents ?? []).map((e) => e.created_at)
   const streakDays = computeStreak(eventDates)
 
-  const totalSecs = (allEvents ?? []).reduce((sum, e) => sum + (e.duration_secs ?? 0), 0)
+  const MAX_SESSION_SECS = 60 * 60
+  const cappedEventSecs = (allEvents ?? []).map((e) => Math.min(e.duration_secs ?? 0, MAX_SESSION_SECS))
+  const totalSecs = cappedEventSecs.reduce((sum, s) => sum + s, 0)
   const totalMins = Math.round(totalSecs / 60)
 
   const completed = enrolledCourses.filter((c) => c.enrollStatus === 'completed')
@@ -164,17 +190,17 @@ export default async function DashboardPage() {
   const safeRound = (n: number) => Math.round(Number(n) || 0)
   const periodStats = {
     thisWeek: {
-      totalMins: safeRound(events.filter((e) => inPeriod(e.created_at, thisWeekStart)).reduce((s, e) => s + (e.duration_secs ?? 0), 0) / 60),
+      totalMins: safeRound(events.filter((e) => inPeriod(e.created_at, thisWeekStart)).reduce((s, e) => s + Math.min(e.duration_secs ?? 0, MAX_SESSION_SECS), 0) / 60),
       sessions: new Set(events.filter((e) => inPeriod(e.created_at, thisWeekStart)).map((e) => e.created_at?.slice(0, 10)).filter(Boolean)).size,
       modulesCompleted: events.filter((e) => e.event_type === 'module_complete' && inPeriod(e.created_at, thisWeekStart)).length,
     },
     thisMonth: {
-      totalMins: safeRound(events.filter((e) => inPeriod(e.created_at, thisMonthStart)).reduce((s, e) => s + (e.duration_secs ?? 0), 0) / 60),
+      totalMins: safeRound(events.filter((e) => inPeriod(e.created_at, thisMonthStart)).reduce((s, e) => s + Math.min(e.duration_secs ?? 0, MAX_SESSION_SECS), 0) / 60),
       sessions: new Set(events.filter((e) => inPeriod(e.created_at, thisMonthStart)).map((e) => e.created_at?.slice(0, 10)).filter(Boolean)).size,
       modulesCompleted: events.filter((e) => e.event_type === 'module_complete' && inPeriod(e.created_at, thisMonthStart)).length,
     },
     last30: {
-      totalMins: safeRound(events.filter((e) => inPeriod(e.created_at, last30Start)).reduce((s, e) => s + (e.duration_secs ?? 0), 0) / 60),
+      totalMins: safeRound(events.filter((e) => inPeriod(e.created_at, last30Start)).reduce((s, e) => s + Math.min(e.duration_secs ?? 0, MAX_SESSION_SECS), 0) / 60),
       sessions: new Set(events.filter((e) => inPeriod(e.created_at, last30Start)).map((e) => e.created_at?.slice(0, 10)).filter(Boolean)).size,
       modulesCompleted: events.filter((e) => e.event_type === 'module_complete' && inPeriod(e.created_at, last30Start)).length,
     },
@@ -194,7 +220,7 @@ export default async function DashboardPage() {
       const minsByUser = (orgEvents ?? []).reduce((acc, e) => {
         const id = e.user_id
         if (!acc[id]) acc[id] = 0
-        acc[id] += (e.duration_secs ?? 0) / 60
+        acc[id] += Math.min(e.duration_secs ?? 0, MAX_SESSION_SECS) / 60
         return acc
       }, {} as Record<string, number>)
       const sorted = Object.entries(minsByUser)
@@ -230,8 +256,6 @@ export default async function DashboardPage() {
   const interactionCount = (memory.interaction_count as number) ?? 0
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   const nba = learnerProfile?.next_best_action as Record<string, unknown> | null
 
@@ -253,7 +277,7 @@ export default async function DashboardPage() {
         <section className="hero-block min-h-[280px] flex flex-col justify-between p-6 md:p-10">
           <div className="relative z-10">
             <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-card-foreground leading-tight tracking-tighter mb-2">
-              {greeting}, {firstName}.
+              <Greeting firstName={firstName} />
             </h1>
             <p className="text-muted-foreground text-base md:text-lg max-w-xl mb-4">
               {nba?.course_title
@@ -287,10 +311,19 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="relative z-10 flex flex-wrap items-center justify-between gap-4 mt-6">
+            {lastVisited && (
+              <Link
+                href={`/courses/${lastVisited.courseId}/learn?module=${lastVisited.moduleId}`}
+                className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-button transition-all"
+              >
+                <BookOpen className="w-4 h-4" /> Continue: {lastVisited.courseTitle} — {lastVisited.moduleTitle}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            )}
             <Link href="/courses" className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-button transition-all">
               <BookOpen className="w-4 h-4" /> Browse courses
             </Link>
-            {nba?.course_id && (
+            {nba?.course_id && !lastVisited && (
               <Link href={`/courses/${nba.course_id}`} className="action-button">
                 Next Best Action <ChevronRight size={20} />
               </Link>

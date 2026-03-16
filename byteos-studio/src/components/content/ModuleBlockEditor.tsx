@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import NextImage from 'next/image'
 import {
   DndContext,
   closestCenter,
@@ -18,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, Trash2, Image, FileText, ChevronDown, CircleHelp, Sparkles, Loader2, Search, X, Upload, Video, ListOrdered, LayoutList, Mic, Layers, Shuffle, ImageIcon, AlignLeft, AlignCenter, AlignRight, Maximize2, ExternalLink } from 'lucide-react'
+import { GripVertical, Trash2, FileText, ChevronDown, CircleHelp, Sparkles, Loader2, Search, X, Upload, Video, ListOrdered, LayoutList, Mic, Layers, Shuffle, ImageIcon, AlignLeft, AlignCenter, AlignRight, Maximize2, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ModuleContent, EditorBlock, EditorBlockType, ImageAlignment, ImageSize } from '@/types/content'
 import {
@@ -62,9 +63,10 @@ function BlockRow({
   onRequestAudioUpload?: (onSelected: (url: string) => void) => void
   uploadLoading?: boolean
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: block.id,
-  })
+  const sortable = useSortable({ id: block.id })
+  const { setNodeRef, transform, transition, isDragging } = sortable
+  const attributes = sortable.attributes as unknown as Record<string, unknown>
+  const listeners = sortable.listeners as unknown as Record<string, unknown>
   const style = { transform: CSS.Transform.toString(transform), transition }
 
   if (block.type === 'text') {
@@ -140,7 +142,7 @@ function BlockRow({
         </button>
         <div className="flex-1 min-w-0 space-y-2">
           <div className="flex items-center gap-2">
-            <Image className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <ImageIcon className="w-3.5 h-3.5 text-slate-500 shrink-0" aria-hidden />
             <span className="text-xs text-slate-500">Image</span>
           </div>
           {/* Preview: show media thumbnail and link to view */}
@@ -153,10 +155,13 @@ function BlockRow({
                 className="shrink-0 block w-20 h-20 rounded-md overflow-hidden bg-slate-800 border border-slate-700 relative"
                 title="View full image"
               >
-                <img
+                <NextImage
                   src={block.data.url}
-                  alt={block.data.alt ?? 'Preview'}
+                  alt={block.data.alt?.trim() ? String(block.data.alt) : 'Image block preview'}
+                  width={80}
+                  height={80}
                   className="w-full h-full object-cover"
+                  unoptimized
                   onError={(e) => {
                     const el = e.target as HTMLImageElement
                     el.style.display = 'none'
@@ -165,7 +170,7 @@ function BlockRow({
                   }}
                 />
                 <div className="image-block-fallback absolute inset-0 flex items-center justify-center bg-slate-800 hidden">
-                  <Image className="w-8 h-8 text-slate-600" />
+                  <ImageIcon className="w-8 h-8 text-slate-600" aria-hidden />
                 </div>
               </a>
               <div className="flex-1 min-w-0 flex flex-col gap-1">
@@ -885,7 +890,7 @@ export function ModuleBlockEditor({
           {(
             [
               { type: 'text' as const, label: 'Text', icon: FileText },
-              { type: 'image' as const, label: 'Image', icon: Image },
+              { type: 'image' as const, label: 'Image', icon: ImageIcon },
               { type: 'expandable' as const, label: 'Expandable', icon: ChevronDown },
               { type: 'quiz' as const, label: 'Quiz', icon: CircleHelp },
               { type: 'video' as const, label: 'Video', icon: Video },
@@ -1008,10 +1013,13 @@ export function ModuleBlockEditor({
                     }}
                     className="aspect-square rounded-lg border-2 border-slate-700 hover:border-indigo-500 overflow-hidden bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
-                    <img
+                    <NextImage
                       src={img.thumbnailUrl ?? img.url}
-                      alt={img.alt ?? ''}
+                      alt={img.alt?.trim() ? String(img.alt) : (img.attribution ?? 'Search result image')}
+                      width={200}
+                      height={200}
                       className="w-full h-full object-cover"
+                      unoptimized
                     />
                   </button>
                 ))}
@@ -1065,9 +1073,15 @@ export function ModuleBlockEditor({
                     }}
                     className="rounded-lg border-2 border-slate-700 hover:border-indigo-500 overflow-hidden bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-left"
                   >
-                    <div className="aspect-video bg-slate-800">
+                    <div className="aspect-video bg-slate-800 relative">
                       {v.thumbnailUrl ? (
-                        <img src={v.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                        <NextImage
+                          src={v.thumbnailUrl}
+                          alt={v.title ? `Thumbnail for ${v.title}` : 'Video thumbnail'}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Video className="w-8 h-8 text-slate-600" />

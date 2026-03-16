@@ -16,7 +16,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Sudar Learn",
+  title: { default: 'Sudar Learn', template: '%s | Sudar Learn' },
   description: "Your personalized AI-powered learning experience.",
 };
 

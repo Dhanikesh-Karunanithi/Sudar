@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 
 const MAX_USERS = 200
-const BULK_MAX = 100
 
 function randomPassword(length = 14): string {
   const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789!@#$%'
@@ -114,10 +113,12 @@ export async function POST(request: NextRequest) {
     require_password_change: requirePasswordChange,
   }, { onConflict: 'id' })
 
+  const orgRole: 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER' =
+    ['ADMIN', 'MANAGER', 'CREATOR', 'LEARNER'].includes(body.org_role ?? '') ? (body.org_role as 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER') : 'LEARNER'
   await admin.from('org_members').insert({
     org_id: orgId,
     user_id: userId,
-    role: ['ADMIN', 'MANAGER', 'CREATOR', 'LEARNER'].includes(body.org_role ?? '') ? body.org_role : 'LEARNER',
+    role: orgRole,
   })
 
   const { data: _lp } = await admin.from('learner_profiles').select('id').eq('user_id', userId).single()

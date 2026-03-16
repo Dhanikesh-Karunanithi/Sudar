@@ -47,6 +47,29 @@ export type Database = {
         }
         Relationships: []
       }
+      org_members: {
+        Row: {
+          id: string
+          org_id: string
+          user_id: string
+          role: Database['public']['Enums']['org_role']
+          joined_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          user_id: string
+          role?: Database['public']['Enums']['org_role']
+          joined_at?: string
+        }
+        Update: {
+          org_id?: string
+          user_id?: string
+          role?: Database['public']['Enums']['org_role']
+          joined_at?: string
+        }
+        Relationships: []
+      }
       organisations: {
         Row: {
           id: string

@@ -58,4 +58,13 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## Production deployment (documented)
+
+- **Where**: Repo docs; no single “deploy” button — step-by-step guides.
+- **What**: Sudar Studio and Sudar Learn deploy to **Vercel** (separate projects, same repo, root dirs `byteos-studio` and `byteos-learn`). Sudar Intelligence (Python FastAPI) is deployed separately to **Railway**, **Render**, or **Fly.io**; its URL is set as `BYTEOS_INTELLIGENCE_URL` in both Vercel projects.
+- **Key files**: [docs/VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) — Studio + Learn on Vercel; [docs/INTELLIGENCE_DEPLOYMENT.md](INTELLIGENCE_DEPLOYMENT.md) — Intelligence on Railway/Render/Fly.io, env vars, CORS, health check.
+- **Flow**: Connect GitHub repo to Vercel (two projects), set root dir and env vars; deploy Intelligence to chosen host, set `CORS_ORIGINS` and `BYTEOS_INTELLIGENCE_URL`; redeploy Studio and Learn.
+
+---
+
 *Last updated: March 2026. For roadmap and next priorities, see [STRATEGIC_PATH.md](STRATEGIC_PATH.md) and [ACTION_PLANS.md](ACTION_PLANS.md).*

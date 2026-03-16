@@ -1,8 +1,12 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import type { Metadata } from 'next'
 import { getOrCreateOrg } from '@/lib/org'
-import { BookOpen, Route, Users, BarChart2, Plus, ArrowRight, Sparkles, Globe, FileText } from 'lucide-react'
+import { BookOpen, Users, BarChart2, Plus, ArrowRight, Sparkles, Globe } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { Greeting } from '@/components/dashboard/Greeting'
+
+export const metadata: Metadata = { title: 'Dashboard' }
 
 function StatCard({
   label,
@@ -75,8 +79,6 @@ export default async function DashboardPage() {
   ])
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
@@ -84,7 +86,7 @@ export default async function DashboardPage() {
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-white">
-            {greeting}, {firstName}
+            <Greeting firstName={firstName} />
           </h1>
           <p className="text-slate-400 text-sm">
             Here&apos;s an overview of your Sudar Studio workspace.
@@ -99,33 +101,41 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {/* Stats */}
+      {/* Stats — clickable to navigate */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total courses"
-          value={totalCourses ?? 0}
-          icon={BookOpen}
-          description={publishedCourses ? `${publishedCourses} published` : 'No courses yet'}
-          accent={(totalCourses ?? 0) > 0}
-        />
-        <StatCard
-          label="Published"
-          value={publishedCourses ?? 0}
-          icon={Globe}
-          description="Live in Learn"
-        />
-        <StatCard
-          label="Learners"
-          value={totalLearners ?? 0}
-          icon={Users}
-          description="Across all courses"
-        />
-        <StatCard
-          label="Completions"
-          value={completions ?? 0}
-          icon={BarChart2}
-          description="Total course completions"
-        />
+        <Link href="/courses" className="block transition-opacity hover:opacity-90">
+          <StatCard
+            label="Total courses"
+            value={totalCourses ?? 0}
+            icon={BookOpen}
+            description={publishedCourses ? `${publishedCourses} published` : 'No courses yet'}
+            accent={(totalCourses ?? 0) > 0}
+          />
+        </Link>
+        <Link href="/courses" className="block transition-opacity hover:opacity-90">
+          <StatCard
+            label="Published"
+            value={publishedCourses ?? 0}
+            icon={Globe}
+            description="Live in Learn"
+          />
+        </Link>
+        <Link href="/users" className="block transition-opacity hover:opacity-90">
+          <StatCard
+            label="Learners"
+            value={totalLearners ?? 0}
+            icon={Users}
+            description="Across all courses"
+          />
+        </Link>
+        <Link href="/analytics" className="block transition-opacity hover:opacity-90">
+          <StatCard
+            label="Completions"
+            value={completions ?? 0}
+            icon={BarChart2}
+            description="Total course completions"
+          />
+        </Link>
       </div>
 
       {/* CTA or recent courses */}

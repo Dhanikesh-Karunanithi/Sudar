@@ -268,7 +268,7 @@ export function CoursePodcastCard({
               style={{ background: `linear-gradient(to right, #a977b8 ${isMuted ? 0 : Math.round(volume * 100)}%, rgba(0,0,0,0.12) ${isMuted ? 0 : Math.round(volume * 100)}%)` }}
             />
             {!hasAudio && (
-              <span className="text-xs text-amber-600 shrink-0">No audio — generate in Studio</span>
+              <span className="text-xs text-amber-600 shrink-0">Audio for this module isn&apos;t available yet.</span>
             )}
           </div>
         </div>

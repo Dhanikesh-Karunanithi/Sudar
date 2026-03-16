@@ -150,13 +150,15 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
         )}
       </div>
 
-      {/* Enroll CTA */}
+      {/* Primary CTA: Enrol / Start / Continue / Review */}
       <div className="flex justify-center pb-8">
         <EnrollButton
           courseId={course.id}
           isEnrolled={!!enrollment}
           hasModules={(course.modules?.length ?? 0) > 0}
           firstModuleId={course.modules?.[0]?.id}
+          progressPct={enrollment?.progress_pct ?? 0}
+          enrollmentStatus={enrollment?.status}
         />
       </div>
     </div>

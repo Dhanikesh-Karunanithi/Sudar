@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, Plus, Trash2, GripVertical, Globe, FileText,
-  Lock, Unlock, Zap, Award, Loader2, CheckCircle2, BookOpen, Route, UserPlus, Calendar, Users
+  Lock, Unlock, Zap, Award, Loader2, CheckCircle2, BookOpen, UserPlus, Users
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -44,7 +44,7 @@ export default function PathEditorPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [publishing, setPublishing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error] = useState<string | null>(null)
   const [availableCourses, setAvailableCourses] = useState<AvailableCourse[]>([])
   const [showCoursePicker, setShowCoursePicker] = useState(false)
   const [courseSearch, setCourseSearch] = useState('')
@@ -54,6 +54,8 @@ export default function PathEditorPage() {
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set())
   const [assignDueDate, setAssignDueDate] = useState('')
   const [assigning, setAssigning] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deletingPath, setDeletingPath] = useState(false)
 
   const fetchPath = useCallback(async () => {
     const [pathRes, coursesRes, enrollmentsRes] = await Promise.all([
@@ -92,6 +94,23 @@ export default function PathEditorPage() {
     const newStatus = path.status === 'published' ? 'draft' : 'published'
     await savePath({ status: newStatus })
     setPublishing(false)
+  }
+
+  async function handleDeletePath() {
+    if (!id) return
+    setDeletingPath(true)
+    try {
+      const res = await fetch(`/api/paths/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        router.push('/paths')
+        return
+      }
+      const data = await res.json()
+      alert(data.error ?? 'Could not delete path')
+    } finally {
+      setDeletingPath(false)
+      setShowDeleteConfirm(false)
+    }
   }
 
   function addCourse(course: AvailableCourse) {
@@ -194,6 +213,23 @@ export default function PathEditorPage() {
             {publishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isPublished ? <FileText className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
             {isPublished ? 'Unpublish' : 'Publish'}
           </button>
+          {showDeleteConfirm ? (
+            <span className="flex items-center gap-2">
+              <span className="text-slate-400 text-sm">Delete path?</span>
+              <button type="button" onClick={handleDeletePath} disabled={deletingPath}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-500 text-white disabled:opacity-50">
+                {deletingPath ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                {deletingPath ? 'Deleting...' : 'Yes, delete'}
+              </button>
+              <button type="button" onClick={() => setShowDeleteConfirm(false)} disabled={deletingPath}
+                className="px-3 py-1.5 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800">Cancel</button>
+            </span>
+          ) : (
+            <button type="button" onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all">
+              <Trash2 className="w-3.5 h-3.5" /> Delete path
+            </button>
+          )}
         </div>
       </div>
 

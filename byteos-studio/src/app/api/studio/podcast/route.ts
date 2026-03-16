@@ -2,6 +2,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { getCourseContentForGeneration } from '@/lib/courseContentForGeneration'
 import type { DialogueSegment } from '@/types/content'
+import type { Json } from '@/types/database'
 import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
 
 export async function POST(request: NextRequest) {
@@ -79,7 +80,7 @@ Remember: ONLY output the JSON object. Start your response with { and end with }
 
       segments = rawSegments
         .filter((s) => typeof s.text === 'string' && s.text.trim().length > 0)
-        .map((s, i): DialogueSegment => ({
+        .map((s): DialogueSegment => ({
           // Strict: only "expert" maps to expert, everything else is host
           // Additionally enforce alternation if the LLM broke it
           speaker: (s.speaker ?? '').toLowerCase() === 'expert' ? 'expert' : 'host',
@@ -119,7 +120,7 @@ Remember: ONLY output the JSON object. Start your response with { and end with }
         podcast_dialogue: segments,
         podcast_generation_status: 'script_ready' as const,
       }
-      await admin.from('courses').update({ settings: nextSettings }).eq('id', courseId).eq('created_by', user.id)
+      await admin.from('courses').update({ settings: nextSettings as unknown as Json }).eq('id', courseId).eq('created_by', user.id)
     }
 
     return NextResponse.json({

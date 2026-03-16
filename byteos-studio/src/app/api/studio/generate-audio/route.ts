@@ -7,6 +7,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import type { VideoScene, DialogueSegment } from '@/types/content'
+import type { Json } from '@/types/database'
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 const OPENAI_TTS_URL = 'https://api.openai.com/v1/audio/speech'
@@ -151,7 +152,7 @@ export async function POST(request: NextRequest) {
       updated.push({ ...scene, audioDataURL: dataURL ?? undefined })
     }
     const nextSettings = { ...settings, video_scenes: updated }
-    await admin.from('courses').update({ settings: nextSettings }).eq('id', courseId).eq('created_by', user.id)
+    await admin.from('courses').update({ settings: nextSettings as unknown as Json }).eq('id', courseId).eq('created_by', user.id)
     return NextResponse.json({ type: 'video', count: updated.length })
   }
 
@@ -171,6 +172,6 @@ export async function POST(request: NextRequest) {
     updated.push({ ...seg, audioDataURL: dataURL ?? undefined })
   }
   const nextSettings = { ...settings, podcast_dialogue: updated }
-  await admin.from('courses').update({ settings: nextSettings }).eq('id', courseId).eq('created_by', user.id)
+  await admin.from('courses').update({ settings: nextSettings as unknown as Json }).eq('id', courseId).eq('created_by', user.id)
   return NextResponse.json({ type: 'podcast', count: updated.length })
 }

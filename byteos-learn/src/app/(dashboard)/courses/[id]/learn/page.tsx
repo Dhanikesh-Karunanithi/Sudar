@@ -28,7 +28,7 @@ export default async function CourseLearnPage({
 
   const { data: course } = await admin
     .from('courses')
-    .select('id, title, template, settings, modules(id, title, content, modality_variants, order_index, quiz)')
+    .select('id, title, template, settings, modules(id, title, content, modality_variants, order_index, quiz, sudarplay_map_url, sudarplay_map_id)')
     .eq('id', params.id)
     .eq('status', 'published')
     .order('order_index', { referencedTable: 'modules', ascending: true })

@@ -23,7 +23,8 @@ export default async function DashboardLayout({
     supabase.from('org_members').select('role').eq('org_id', orgId).eq('user_id', user.id).single(),
   ])
 
-  const orgRole = membership?.role ?? 'LEARNER'
+  const role = (membership as { role?: string } | null)?.role ?? 'LEARNER'
+  const orgRole = ['ADMIN', 'MANAGER', 'CREATOR', 'LEARNER'].includes(role) ? role as 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER' : 'LEARNER'
 
   return (
     <DashboardShell

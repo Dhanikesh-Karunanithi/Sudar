@@ -1,7 +1,8 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -11,7 +12,7 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
   const { data: enrollments, error } = await admin
     .from('enrollments')
     .select('id, user_id, status, progress_pct, due_date, completed_at, created_at')
-    .eq('path_id', params.id)
+    .eq('path_id', id)
     .not('path_id', 'is', null)
     .order('created_at', { ascending: false })
 

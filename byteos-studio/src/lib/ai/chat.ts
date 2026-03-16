@@ -41,7 +41,6 @@ function getProvider(): string {
 
 function getApiKeyAndUrl(provider: string): { key: string; url: string } {
   const customBase = process.env.AI_CHAT_BASE_URL?.replace(/\/$/, '')
-  const defaultModel = process.env.AI_CHAT_DEFAULT_MODEL?.trim() || DEFAULT_MODEL_BY_PROVIDER[provider] || DEFAULT_MODEL_BY_PROVIDER.together
   switch (provider) {
     case 'openrouter': {
       const key = process.env.OPENROUTER_API_KEY?.trim()
@@ -131,8 +130,7 @@ async function chatAnthropic(apiKey: string, options: ChatCompletionOptions): Pr
  * Call the configured AI chat provider. Throws if no provider is configured.
  */
 export async function chatCompletion(
-  options: ChatCompletionOptions,
-  _opts?: { orgId?: string }
+  options: ChatCompletionOptions
 ): Promise<ChatCompletionResult> {
   const provider = getProvider()
   const { key, url } = getApiKeyAndUrl(provider)

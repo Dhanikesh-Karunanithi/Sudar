@@ -2,6 +2,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getOrCreateOrg } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import type { RichContent } from '@/types/content'
+import type { Json } from '@/types/database'
 import { getImagesForSections } from '@/lib/media/imageSearch'
 import { selectComponentsForModule, toInteractiveElements, type ModuleRole } from '@/lib/ai/componentSelector'
 import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
@@ -176,7 +177,7 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
 
     await admin
       .from('modules')
-      .insert({ course_id: course.id, title: moduleTitle, content: rich as unknown as Record<string, unknown>, order_index: i })
+      .insert({ course_id: course.id, title: moduleTitle, content: rich as unknown as Json, order_index: i })
   }
 
   const moduleResults = moduleTitles.map((t, idx) => ({ title: t, order_index: idx }))

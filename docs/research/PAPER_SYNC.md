@@ -71,4 +71,22 @@
 
 ---
 
+## When you're ready to continue writing the paper
+
+Use this as a quick re-entry checklist:
+
+1. **Source of truth for “what’s built”**: [docs/SHIPPED_FEATURES.md](../SHIPPED_FEATURES.md) and [docs/STRATEGIC_PATH.md](../STRATEGIC_PATH.md) §2. Ensure nothing new you shipped is missing from either.
+
+2. **Paper artifacts to edit**:
+   - **LaTeX**: [docs/research/paper.tex](paper.tex) — §Implementation (currently implemented list), §Evidence (proof of concept, pilot sentence), §Discussion (limitations) if needed.
+   - **Markdown draft**: [docs/LAMP-Updated-Draft.md](../LAMP-Updated-Draft.md) — §4 “Currently implemented features” and “Remaining planned items”.
+
+3. **Sync steps** (from checklist above): Update the “Currently implemented” paragraph in paper.tex to match SHIPPED_FEATURES; move any “in progress” to “implemented” in LAMP-Updated-Draft; keep pilot wording consistent (“planned … to be initiated after the current build phase” until O1 starts).
+
+4. **Build status**: Phase 1 (Build) and Phase 2 (Paper) are complete per [docs/LAMP_BUILD_TRACKER.md](../LAMP_BUILD_TRACKER.md). Phase 3 (Pilot O1, Claude-for-OSS O2) is not started — paper should say “pilot planned” not “pilot in progress”.
+
+5. **Deployment**: Production deployment (Vercel for Studio/Learn, Railway/Render/Fly for Intelligence) is documented and reflected in SHIPPED_FEATURES; add a sentence in paper.tex §Implementation if you want the paper to explicitly mention production hosting options.
+
+---
+
 *Last updated: March 2026. Keep this file in the repo so agents and contributors know how to keep the paper aligned with the build.*

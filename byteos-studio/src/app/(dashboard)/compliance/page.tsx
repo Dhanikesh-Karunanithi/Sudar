@@ -65,7 +65,6 @@ export default async function CompliancePage() {
   const pathTitleMap = new Map((paths ?? []).map((p) => [p.id, p.title]))
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p.full_name ?? 'Learner']))
 
-  const today = new Date().toISOString().slice(0, 10)
   const rows = (pathEnrollments ?? []).map((e) => {
     const status = statusFromDue(e.due_date, e.status === 'completed')
     return {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Key, ExternalLink, ChevronDown, ChevronUp, Copy, Check, FileText, Info } from 'lucide-react'
+import { Key, ExternalLink, ChevronDown, ChevronUp, Copy, Check, Info } from 'lucide-react'
 import { PROVIDER_KEYS } from '@/lib/ai/providerConfig'
 
 type KeyStatus = { id: string; name: string; envVar: string; category: string; status: 'configured' | 'not_set'; signupUrl: string; steps: string[]; description?: string }

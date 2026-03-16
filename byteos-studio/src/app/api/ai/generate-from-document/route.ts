@@ -2,6 +2,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getOrCreateOrg } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import type { RichContent } from '@/types/content'
+import type { Json } from '@/types/database'
 import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
 
 const MAX_DOC_CHARS = 45000
@@ -178,7 +179,7 @@ Return ONLY a JSON array of ${numModules} module titles. Example: ["Introduction
 
     await admin
       .from('modules')
-      .insert({ course_id: course.id, title: moduleTitle, content: rich as unknown as Record<string, unknown>, order_index: i })
+      .insert({ course_id: course.id, title: moduleTitle, content: rich as unknown as Json, order_index: i })
   }
 
   return NextResponse.json({ course_id: course.id })

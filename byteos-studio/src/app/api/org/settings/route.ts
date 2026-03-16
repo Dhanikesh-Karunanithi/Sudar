@@ -2,6 +2,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { NextResponse } from 'next/server'
 import { performanceConfigSchema } from '@/types/performance'
+import type { Json } from '@/types/database'
 
 /**
  * GET /api/org/settings — Return current org settings (performance_config, etc.). Admin/Manager only.
@@ -100,7 +101,7 @@ export async function PATCH(request: Request) {
 
   const { error } = await admin
     .from('organisations')
-    .update({ settings: updatedSettings })
+    .update({ settings: updatedSettings as Json })
     .eq('id', orgId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

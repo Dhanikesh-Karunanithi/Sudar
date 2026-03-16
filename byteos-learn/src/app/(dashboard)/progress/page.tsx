@@ -1,4 +1,5 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   BarChart2,
@@ -12,6 +13,8 @@ import {
 } from 'lucide-react'
 import { BentoCard } from '@/components/ui/BentoCard'
 import { ProgressPieChartClient } from '@/components/progress/ProgressPieChartClient'
+
+export const metadata: Metadata = { title: 'Progress' }
 
 export default async function ProgressPage() {
   const supabase = await createClient()

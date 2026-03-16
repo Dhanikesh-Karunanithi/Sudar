@@ -64,9 +64,9 @@ export function TopNav({ user, showOnboardingNudge }: TopNavProps) {
     : user.email.slice(0, 2).toUpperCase()
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-6 px-6 py-3 border-b border-border bg-card">
-      {/* Logo */}
-      <Link href="/" className="flex items-center gap-3 shrink-0">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-6 pl-6 pr-4 md:px-6 py-3 border-b border-border bg-card">
+      {/* Logo — adequate left padding so logo isn't clipped */}
+      <Link href="/" className="flex items-center gap-3 shrink-0 min-w-0">
         <div className="relative h-12 w-12 shrink-0">
           <span className="sr-only">Sudar</span>
           <div
@@ -129,7 +129,7 @@ export function TopNav({ user, showOnboardingNudge }: TopNavProps) {
           {moreOpen && (
             <>
               <div className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[2px]" onClick={() => setMoreOpen(false)} aria-hidden />
-              <div className="absolute left-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-card/98 shadow-xl shadow-black/5 dark:shadow-black/20 py-1">
+              <div className="absolute right-0 left-auto top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-card/98 shadow-xl shadow-black/5 dark:shadow-black/20 py-1">
                 <Link
                   href="/progress"
                   onClick={() => setMoreOpen(false)}
@@ -151,12 +151,13 @@ export function TopNav({ user, showOnboardingNudge }: TopNavProps) {
                 >
                   <Brain className="h-4 w-4" /> Sudar&apos;s Memory
                 </Link>
-                <button
+                <Link
+                  href="/settings"
                   onClick={() => setMoreOpen(false)}
-                  className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
+                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
                 >
                   <Settings className="h-4 w-4" /> Preferences
-                </button>
+                </Link>
               </div>
             </>
           )}
@@ -247,6 +248,14 @@ export function TopNav({ user, showOnboardingNudge }: TopNavProps) {
                       ))}
                     </div>
                   </div>
+                  <Link
+                    href="/settings"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex w-full items-center gap-2.5 rounded-button px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Preferences
+                  </Link>
                   <Link
                     href="/memory"
                     onClick={() => setUserMenuOpen(false)}

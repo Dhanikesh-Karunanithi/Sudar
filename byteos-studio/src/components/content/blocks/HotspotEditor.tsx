@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
 import { GripVertical, Trash2, Plus, ImageIcon, Search, Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { EditorBlockHotspot } from '@/types/content'
@@ -29,7 +30,8 @@ function HotspotEditorInner({
 
   const updateSpot = (index: number, patch: Partial<{ x: number; y: number; label: string; content: string }>) => {
     const next = [...spots]
-    next[index] = { ...next[index], x: 0, y: 0, label: '', content: '', ...next[index], ...patch }
+    const existing = next[index] ?? { x: 0, y: 0, label: '', content: '' }
+    next[index] = { ...existing, ...patch }
     onUpdate({ ...data, spots: next })
   }
 
@@ -121,10 +123,13 @@ function HotspotEditorInner({
             className="relative w-full cursor-crosshair"
             style={{ minHeight: 120 }}
           >
-            <img
+            <Image
               src={data.imageUrl}
-              alt="Hotspot"
+              alt="Hotspot image"
+              width={640}
+              height={288}
               className="w-full h-auto max-h-48 object-contain block pointer-events-none"
+              unoptimized
             />
             {!disabled && (
               <div

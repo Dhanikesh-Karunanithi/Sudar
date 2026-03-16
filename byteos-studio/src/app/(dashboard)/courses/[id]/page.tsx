@@ -6,7 +6,7 @@ import Link from 'next/link'
 import {
   ArrowLeft, Plus, Trash2, GripVertical, Globe, FileText,
   ChevronDown, ChevronUp, Loader2, CheckCircle2, Sparkles, Wand2, LayoutList, Zap,
-  CircleHelp, RefreshCcw, Eye, Timer, Palette, Video, Mic, X
+  CircleHelp, RefreshCcw, Eye, Timer, Palette, Video, X
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSidebarContent } from '@/contexts/SidebarContentContext'
@@ -50,7 +50,7 @@ interface Course {
     include_podcast?: boolean
     video_scenes?: VideoScene[]
     podcast_dialogue?: DialogueSegment[]
-    video_generation_status?: 'idle' | 'generating' | 'complete' | 'failed'
+    video_generation_status?: 'idle' | 'generating' | 'script_ready' | 'complete' | 'failed'
     podcast_generation_status?: 'idle' | 'generating' | 'complete' | 'failed'
   } | null
   modules: Module[]
@@ -83,6 +83,8 @@ export default function CourseEditorPage() {
   const [generatingPodcast, setGeneratingPodcast] = useState(false)
   const [videoGenStep, setVideoGenStep] = useState<'script' | 'audio' | null>(null)
   const [podcastGenStep, setPodcastGenStep] = useState<'script' | 'audio' | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deletingCourse, setDeletingCourse] = useState(false)
 
   const fetchCourse = useCallback(async () => {
     const res = await fetch(`/api/courses/${id}`)
@@ -108,15 +110,7 @@ export default function CourseEditorPage() {
   const [autoFillProgress, setAutoFillProgress] = useState<string>('')
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  useEffect(() => {
-    if (!course || course.modules.length === 0 || hasAutoFilledRef.current) return
-    const emptyModules = course.modules.filter((m) => !getModuleBodyText(m.content)?.trim())
-    if (emptyModules.length === 0) return
-    hasAutoFilledRef.current = true
-    generateAllEmptyModules(course)
-  }, [course])
-
-  async function generateAllEmptyModules(courseToUse: Course) {
+  const generateAllEmptyModules = useCallback(async (courseToUse: Course) => {
     const empty = courseToUse.modules.filter((m) => !getModuleBodyText(m.content)?.trim())
     if (empty.length === 0) return
     setGeneratingAllModules(true)
@@ -181,7 +175,7 @@ export default function CourseEditorPage() {
       }
       // Final fetch to ensure all content is up to date
       await fetchCourse()
-    } catch (err) {
+    } catch {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
       pollIntervalRef.current = null
       setError('Generation request failed. Check your connection and try again.')
@@ -194,7 +188,15 @@ export default function CourseEditorPage() {
     pollIntervalRef.current = null
     setGeneratingAllModules(false)
     setAutoFillProgress('')
-  }
+  }, [fetchCourse, expandedModule])
+
+  useEffect(() => {
+    if (!course || course.modules.length === 0 || hasAutoFilledRef.current) return
+    const emptyModules = course.modules.filter((m) => !getModuleBodyText(m.content)?.trim())
+    if (emptyModules.length === 0) return
+    hasAutoFilledRef.current = true
+    generateAllEmptyModules(course)
+  }, [course, generateAllEmptyModules])
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -203,11 +205,45 @@ export default function CourseEditorPage() {
     }
   }, [])
 
+  const addModule = useCallback(async (title = 'Untitled Module') => {
+    const res = await fetch(`/api/courses/${id}/modules`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, content: { type: 'text', body: '' } }),
+    })
+    const mod = await res.json()
+    setCourse((c) => c ? { ...c, modules: [...c.modules, mod] } : c)
+    setExpandedModule(mod.id)
+    return mod
+  }, [id])
+
+  const generateOutline = useCallback(async () => {
+    if (!course) return
+    setGeneratingOutline(true); setError(null)
+    const res = await fetch('/api/ai/generate-outline', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        course_title: course.title,
+        description: course.description,
+        difficulty: course.difficulty,
+        num_modules: 5,
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.error); setGeneratingOutline(false); return }
+
+    for (const title of data.modules) {
+      await addModule(title)
+    }
+    setGeneratingOutline(false)
+  }, [course, addModule])
+
   // Inject content development panel into sidebar while on this page
-  const { setSidebarContent } = useSidebarContent()
+  const sidebarContent = useSidebarContent()
   useEffect(() => {
-    if (!setSidebarContent || !course) return
-    setSidebarContent(
+    if (!sidebarContent?.setSidebarContent || !course) return
+    sidebarContent.setSidebarContent(
       <ContentToolsPanel
         onGenerateOutline={generateOutline}
         onAddModule={() => addModule()}
@@ -229,10 +265,10 @@ export default function CourseEditorPage() {
         onOpenMediaPeek={() => setShowMediaPeek(true)}
       />
     )
-    return () => { setSidebarContent(null) }
-  }, [setSidebarContent, course, generatingOutline, expandedModule])
+    return () => { sidebarContent?.setSidebarContent(null) }
+  }, [sidebarContent, course, generatingOutline, expandedModule, generateOutline, addModule])
 
-  async function saveCourse(updates: Partial<Course>) {
+  async function saveCourse(updates: Partial<Course>): Promise<void> {
     if (!course) return
     setSaving(true); setSaved(false)
     await fetch(`/api/courses/${id}`, {
@@ -243,18 +279,6 @@ export default function CourseEditorPage() {
     setCourse((c) => c ? { ...c, ...updates } : c)
     setSaving(false); setSaved(true)
     setTimeout(() => setSaved(false), 2000)
-  }
-
-  async function addModule(title = 'Untitled Module') {
-    const res = await fetch(`/api/courses/${id}/modules`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content: { type: 'text', body: '' } }),
-    })
-    const mod = await res.json()
-    setCourse((c) => c ? { ...c, modules: [...c.modules, mod] } : c)
-    setExpandedModule(mod.id)
-    return mod
   }
 
   async function saveModule(moduleId: string, updates: Partial<Module>) {
@@ -285,28 +309,22 @@ export default function CourseEditorPage() {
     setPublishing(false)
   }
 
-  // ─── AI: Generate course outline ─────────────────────────────────────────
-  async function generateOutline() {
-    if (!course) return
-    setGeneratingOutline(true); setError(null)
-    const res = await fetch('/api/ai/generate-outline', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        course_title: course.title,
-        description: course.description,
-        difficulty: course.difficulty,
-        num_modules: 5,
-      }),
-    })
-    const data = await res.json()
-    if (!res.ok) { setError(data.error); setGeneratingOutline(false); return }
-
-    // Create all modules from the outline
-    for (const title of data.modules) {
-      await addModule(title)
+  async function handleDeleteCourse() {
+    if (!id) return
+    setDeletingCourse(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/courses/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        router.push('/courses')
+        return
+      }
+      const data = await res.json()
+      setError(data.error ?? 'Could not delete course')
+    } finally {
+      setDeletingCourse(false)
+      setShowDeleteConfirm(false)
     }
-    setGeneratingOutline(false)
   }
 
   // ─── AI: Generate module content (single, with prior module context) ─────
@@ -565,6 +583,36 @@ export default function CourseEditorPage() {
             {publishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isPublished ? <FileText className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
             {isPublished ? 'Unpublish' : 'Publish'}
           </button>
+          {showDeleteConfirm ? (
+            <span className="flex items-center gap-2">
+              <span className="text-slate-400 text-sm">Delete course?</span>
+              <button
+                type="button"
+                onClick={handleDeleteCourse}
+                disabled={deletingCourse}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-500 text-white disabled:opacity-50"
+              >
+                {deletingCourse ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                {deletingCourse ? 'Deleting...' : 'Yes, delete'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deletingCourse}
+                className="px-3 py-1.5 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Delete course
+            </button>
+          )}
         </div>
       </div>
 

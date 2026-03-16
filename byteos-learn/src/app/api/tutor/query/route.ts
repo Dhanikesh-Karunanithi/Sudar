@@ -146,18 +146,34 @@ async function runInputGuardrail(message: string, hasConversationHistory: boolea
   }
 }
 
-/** Parse ACTIONS: [...] from the end of the model response; return { text, rawActions }. */
+/** Parse ACTIONS: [...] from the model response; return { text, rawActions }. Strips the ACTIONS line so it is never shown as raw code. */
 function parseActionsFromResponse(raw: string): { text: string; rawActions: Array<{ type?: string; course_id?: string; path_id?: string; label?: string }> } {
-  const actMatch = raw.match(/\nACTIONS:\s*([\s\S]+)$/)
-  if (!actMatch) return { text: raw.trim(), rawActions: [] }
-  let text = raw.slice(0, actMatch.index).trim()
-  text = text.replace(/\n+$/, '')
+  const trimmed = raw.trim()
+  // Prefer: newline then ACTIONS: then rest of string (instruction format)
+  let actMatch = trimmed.match(/\nACTIONS:\s*([\s\S]+)$/)
+  let text: string
+  let jsonStr: string | null = null
+  if (actMatch) {
+    text = trimmed.slice(0, actMatch.index).trim().replace(/\n+$/, '')
+    jsonStr = actMatch[1].trim()
+  } else {
+    // Fallback: ACTIONS: ... at end without leading newline (so raw line is never shown)
+    const fallback = trimmed.match(/ACTIONS:\s*([\s\S]+)$/)
+    if (fallback && typeof fallback.index === 'number') {
+      text = trimmed.slice(0, fallback.index).trim().replace(/\n+$/, '')
+      jsonStr = fallback[1].trim()
+    } else {
+      return { text: trimmed, rawActions: [] }
+    }
+  }
   let rawActions: Array<{ type?: string; course_id?: string; path_id?: string; label?: string }> = []
-  try {
-    const parsed = JSON.parse(actMatch[1].trim())
-    rawActions = Array.isArray(parsed) ? parsed : []
-  } catch {
-    rawActions = []
+  if (jsonStr) {
+    try {
+      const parsed = JSON.parse(jsonStr)
+      rawActions = Array.isArray(parsed) ? parsed : []
+    } catch {
+      rawActions = []
+    }
   }
   return { text, rawActions }
 }

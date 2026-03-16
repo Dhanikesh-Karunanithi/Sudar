@@ -241,6 +241,7 @@ The schema and event model are fully documented in the repository (`ECOSYSTEM.md
 - Learner preferences page (TTS voice, response style, modality preferences stored in learner profile)
 - SCORM import with text content extraction for AI tutor RAG knowledge base
 - Listen (Audio TTS) modality: standalone Listen tab in course viewer with on-demand TTS per module (generate-audio API, AudioCard)
+- Production deployment: Studio and Learn on Vercel; Intelligence on Railway, Render, or Fly.io (docs/VERCEL_DEPLOYMENT.md, docs/INTELLIGENCE_DEPLOYMENT.md)
 
 **Remaining planned items:** SudarPlay (gamified modality), SudarFeed (social/TikTok-style learning feed), white-label configuration, SSO/HRIS integration, additional reminder channels (e.g. push), and ALP LMS connectors for Moodle, Canvas, and Blackboard. Pilot (O1) and Claude-for-OSS application (O2) to follow build completion.
 

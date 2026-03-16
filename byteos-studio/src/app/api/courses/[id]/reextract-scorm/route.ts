@@ -39,14 +39,14 @@ function extractSemanticText(html: string): string {
 
 export async function POST(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: courseId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createAdminClient()
-  const courseId = params.id
 
   // Verify the course belongs to this user's org
   const { data: course } = await admin
@@ -58,7 +58,14 @@ export async function POST(
 
   if (!course) return NextResponse.json({ error: 'Course not found' }, { status: 404 })
 
-  const modules = (course.modules as Array<{
+  type CourseRow = { id: string; title: string; modules?: Array<{
+    id: string
+    title: string
+    content: { type?: string; launch_url?: string; scorm_text_content?: string } | null
+    order_index: number
+  }> }
+  const c = course as CourseRow
+  const modules = (c.modules as Array<{
     id: string
     title: string
     content: { type?: string; launch_url?: string; scorm_text_content?: string } | null

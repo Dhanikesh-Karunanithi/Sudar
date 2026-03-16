@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useEffect } from 'react'
+import Image from 'next/image'
 import { X, Image as ImageIcon, Video, Mic, ExternalLink } from 'lucide-react'
 import { getCourseMedia, type CourseMedia, type CourseForMedia } from '@/lib/courseMedia'
 import { cn } from '@/lib/utils'
@@ -122,10 +123,12 @@ function ImagesTab({ media }: { media: CourseMedia }) {
           className="rounded-lg border border-slate-700 bg-slate-800/60 overflow-hidden group"
         >
           <div className="aspect-square bg-slate-800 relative">
-            <img
+            <Image
               src={img.url}
-              alt={img.alt ?? ''}
-              className="w-full h-full object-cover"
+              alt={img.alt ?? img.moduleTitle ?? 'Course image'}
+              fill
+              className="object-cover"
+              unoptimized
               onError={(e) => {
                 const target = e.target as HTMLImageElement
                 target.style.display = 'none'

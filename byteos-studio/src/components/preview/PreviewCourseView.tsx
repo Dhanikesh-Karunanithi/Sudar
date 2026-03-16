@@ -2,27 +2,28 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowLeft, BookOpen, ChevronDown, ChevronRight, Code } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { RichContent, RichContentSection, RichInteractiveElement } from '@/types/content'
 import { isRichContent, isScormContent } from '@/types/content'
 
-interface Module {
+export interface PreviewModule {
   id: string
   title: string
   content: { type: string; body?: string; sections?: RichContentSection[]; introduction?: string; summary?: string; interactiveElements?: RichInteractiveElement[]; sideCard?: unknown } | null
   order_index: number
 }
 
-interface Course {
+export interface PreviewCourse {
   id: string
   title: string
   description: string | null
-  modules: Module[]
+  modules: PreviewModule[]
 }
 
 interface Props {
-  course: Course
+  course: PreviewCourse
 }
 
 function renderMarkdown(body: string): React.ReactNode {
@@ -99,7 +100,7 @@ function ExpandablePreview({ title, content }: { title: string; content: string 
   )
 }
 
-function ModuleContentDisplay({ module }: { module: Module }) {
+function ModuleContentDisplay({ module }: { module: PreviewModule }) {
   const content = module.content
   if (!content) {
     return (
@@ -145,11 +146,14 @@ function ModuleContentDisplay({ module }: { module: Module }) {
             {section.heading ? <h3 className="text-lg font-semibold text-slate-200 mt-6 mb-2 first:mt-0">{section.heading}</h3> : null}
             <div className="text-slate-400 text-sm leading-relaxed">{renderMarkdown(section.content)}</div>
             {section.image?.url && (
-              <figure className="my-4">
-                <img
+              <figure className="my-4 relative w-full">
+                <Image
                   src={section.image.url}
-                  alt={section.image.alt ?? section.heading}
+                  alt={section.image.alt ?? section.heading ?? 'Section image'}
+                  width={800}
+                  height={450}
                   className="rounded-lg border border-slate-700 max-w-full h-auto"
+                  unoptimized
                 />
                 {section.image.attribution && (
                   <figcaption className="text-xs text-slate-500 mt-1">{section.image.attribution}</figcaption>
@@ -253,7 +257,14 @@ function ModuleContentDisplay({ module }: { module: Module }) {
             const spots = (el.data.spots as { label?: string }[]) ?? []
             return (
               <div key={idx} className="my-4 rounded-xl border border-slate-700 bg-slate-800/50 overflow-hidden">
-                <img src={String(el.data.imageUrl)} alt="Hotspot" className="w-full max-h-48 object-contain bg-slate-900" />
+                <Image
+                  src={String(el.data.imageUrl)}
+                  alt="Hotspot image"
+                  width={640}
+                  height={288}
+                  className="w-full max-h-48 object-contain bg-slate-900"
+                  unoptimized
+                />
                 <p className="px-4 py-2 text-xs text-slate-500">Image hotspot ({spots.length} spots)</p>
               </div>
             )
@@ -263,7 +274,7 @@ function ModuleContentDisplay({ module }: { module: Module }) {
             return (
               <div key={idx} className="my-4 rounded-xl border border-slate-700 bg-slate-800/50 p-4">
                 <p className="text-xs font-medium text-slate-500 mb-2">Matching ({pairs.length} pairs)</p>
-                {el.data?.instruction && <p className="text-sm text-slate-400 mb-2">{String(el.data.instruction)}</p>}
+                {el.data?.instruction != null && String(el.data.instruction) !== '' ? <p className="text-sm text-slate-400 mb-2">{String(el.data.instruction)}</p> : null}
               </div>
             )
           }

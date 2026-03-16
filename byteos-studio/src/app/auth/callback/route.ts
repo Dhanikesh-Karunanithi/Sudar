@@ -39,7 +39,11 @@ export async function GET(request: NextRequest) {
           await admin.from('profiles').update({ org_id: inv.org_id }).eq('id', data.user.id)
           const { data: existing } = await admin.from('org_members').select('id').eq('org_id', inv.org_id).eq('user_id', data.user.id).single()
           if (!existing) {
-            await admin.from('org_members').insert({ org_id: inv.org_id, user_id: data.user.id, role: inv.role })
+            await admin.from('org_members').insert({
+              org_id: inv.org_id,
+              user_id: data.user.id,
+              role: (['ADMIN', 'MANAGER', 'CREATOR', 'LEARNER'].includes(inv.role) ? inv.role : 'LEARNER') as 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER',
+            })
           }
           const { data: lp } = await admin.from('learner_profiles').select('id').eq('user_id', data.user.id).single()
           if (!lp) await admin.from('learner_profiles').insert({ user_id: data.user.id })

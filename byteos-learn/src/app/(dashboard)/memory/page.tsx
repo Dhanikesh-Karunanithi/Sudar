@@ -87,12 +87,6 @@ export default async function MemoryPage() {
         </div>
       </section>
 
-      {/* Header (kept for semantics, content is in hero) */}
-      <div className="sr-only">
-        <h1>Sudar&apos;s Memory</h1>
-        <p>What Sudar knows about you — built from {interactionCount} interaction{interactionCount !== 1 ? 's' : ''}.</p>
-      </div>
-
       {/* Info banner */}
       <BentoCard padding="md" className="bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 flex items-start gap-3 rounded-5xl">
         <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
