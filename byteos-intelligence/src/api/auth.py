@@ -7,11 +7,10 @@ import os
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, HTTPException, Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, HTTPHeader
+from fastapi import Depends, Header, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 HTTPBearerOptional = HTTPBearer(auto_error=False)
-ServiceSecretHeader = HTTPHeader(alias="X-Intelligence-Service-Secret")
 
 
 def _get_supabase_jwt_secret() -> str | None:
@@ -25,7 +24,7 @@ def _get_service_secret() -> str | None:
 async def verify_supabase_jwt_or_service(
     request: Request,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(HTTPBearerOptional)] = None,
-    service_secret: Annotated[str | None, Depends(ServiceSecretHeader)] = None,
+    service_secret: Annotated[str | None, Header(alias="X-Intelligence-Service-Secret")] = None,
 ) -> str | None:
     """
     Validates request auth. Sets request.state.auth_user_id and request.state.auth_method.
