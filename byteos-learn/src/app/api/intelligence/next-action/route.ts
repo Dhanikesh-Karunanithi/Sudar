@@ -21,6 +21,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { checkAndIncrementUsage } from '@/lib/usage-limits'
 
 const STALE_HOURS = 4
 
@@ -39,6 +40,14 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createAdminClient()
+  const usage = await checkAndIncrementUsage(admin, user.id, 'next_action')
+  if (!usage.allowed) {
+    return NextResponse.json(
+      { error: `Daily next-action limit (${usage.limit}) reached. Try again tomorrow.` },
+      { status: 429 }
+    )
+  }
+
   const body = await request.json().catch(() => ({}))
   const force = body.force === true
 

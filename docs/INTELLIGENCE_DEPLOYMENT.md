@@ -38,9 +38,11 @@ Sudar Intelligence is a **Python FastAPI** service. It cannot run on Vercel (Nod
    |----------|-------------|
    | `SUPABASE_URL` | Your Supabase project URL |
    | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
+   | `SUPABASE_JWT_SECRET` | Supabase JWT secret (for validating user JWTs server-side) |
    | `TOGETHER_API_KEY` and/or `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` | At least one AI provider |
    | `CORS_ORIGINS` | `https://sudar-studio.vercel.app,https://sudar-learn.vercel.app` |
-   | `ENVIRONMENT` | `production` |
+   | `ENV` | `production` (disables Swagger/ReDoc) |
+   | `INTELLIGENCE_SERVICE_SECRET` | Optional: shared secret for server-to-server proxy calls (e.g. ALP tutor) via `X-Intelligence-Service-Secret` |
 
    Optional (for full features):
 

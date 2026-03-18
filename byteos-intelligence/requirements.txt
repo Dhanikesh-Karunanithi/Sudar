@@ -13,5 +13,6 @@ numpy==1.26.4
 tiktoken==0.7.0
 python-multipart==0.0.12
 PyJWT>=2.8.0
+slowapi>=0.1.9
 edge-tts>=6.1.0
 pydub>=0.25.0

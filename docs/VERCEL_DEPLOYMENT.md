@@ -31,6 +31,7 @@ This guide walks you through connecting the Sudar repo to Vercel and hosting **S
    - `NEXTAUTH_URL` → set to your Studio URL, e.g. `https://sudar-studio.vercel.app`
    - `NEXTAUTH_SECRET` (generate with `openssl rand -base64 32`)
    - `BYTEOS_INTELLIGENCE_URL` → your Intelligence API URL (e.g. Railway/Render URL or tunnel)
+   - `INTELLIGENCE_SERVICE_SECRET` → optional, must match Railway `INTELLIGENCE_SERVICE_SECRET` if using ALP tutor proxy (server-to-server)
    - At least one AI key: `TOGETHER_API_KEY` and/or `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`
    - `NEXT_PUBLIC_LEARN_APP_URL` → your Learn app URL (e.g. `https://sudar-learn.vercel.app`)
 5. Click **Deploy**. After the first deploy, set **NEXTAUTH_URL** to the actual Vercel URL (e.g. `https://sudar-studio-xxx.vercel.app`) and redeploy if you used a placeholder.
@@ -54,6 +55,7 @@ This guide walks you through connecting the Sudar repo to Vercel and hosting **S
    - `NEXTAUTH_SECRET` (same as Studio for shared auth if desired, or separate)
    - `BYTEOS_INTELLIGENCE_URL` → same Intelligence API URL as Studio
    - `NEXT_PUBLIC_APP_URL` → same as NEXTAUTH_URL for Learn
+   - `INTELLIGENCE_SERVICE_SECRET` → optional, must match Railway `INTELLIGENCE_SERVICE_SECRET` for ALP tutor proxy
 5. Click **Deploy**.
 
 ---

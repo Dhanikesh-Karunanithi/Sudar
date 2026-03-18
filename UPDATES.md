@@ -16,6 +16,14 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-03-17 — Security hardening: IDOR fixes, JWT validation, RLS, rate limits, CSP, logging
+- **Authorization & IDOR**: Hardened ALP endpoints to enforce org scope; Intelligence now validates Supabase JWT (subject must match learner_id/user_id) and supports an optional server-to-server secret for ALP proxy calls.
+- **Supabase RLS**: Added migrations to enable RLS + ownership policies on learner-scoped tables (learner_profiles, learning_events, ai_interactions, enrollments, certifications) and RAG `content_chunks`.
+- **AI cost abuse protection**: Added `usage_limits` (per-user/day) and an atomic increment RPC; Learn now enforces daily limits for tutor and next-action requests. Intelligence adds per-IP rate limiting for tutor and next-action.
+- **Input validation & prompt injection**: Tutor message length capped (2000 chars) and basic prompt-override line filtering; Intelligence adds Pydantic validators for tutor inputs.
+- **Deployment hardening**: CSP headers added in both Next.js apps; Intelligence disables Swagger/ReDoc in production; `.env` added to Learn .gitignore.
+- **Logging**: Added structured JSON logging for auth events, AI provider failures, and FastAPI 4xx/5xx responses (no JWT/PII).
+
 ### 2026-03-13 — Ship recent work + one more win (Listen modality, compliance reminders)
 - **Ship recent work**: Documented Flashcards, document-to-course (generate-from-document), and SCORM 1.2 import in [docs/SHIPPED_FEATURES.md](docs/SHIPPED_FEATURES.md). Updated STRATEGIC_PATH §2 (current state) and §3 (Next 3: ship recent work and one more win marked done).
 - **Listen (Audio TTS) modality**: Added **Listen** tab to Learn course viewer (CourseViewer). Learners can switch to Listen to hear the current module via TTS; AudioCard + generate-audio API; cache per module, retry when unavailable. Same completion rules (e.g. min time) apply.

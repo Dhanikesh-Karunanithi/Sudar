@@ -5,8 +5,11 @@ import { TUTOR_ACTION_TYPES } from '@/types/tutor'
 import { retrieveChunks } from '@/lib/rag/retrieve'
 import { getCachedPublishedCourses, getCachedPublishedPaths } from '@/lib/cache'
 import { chatCompletion, getChatConfigError, getDefaultTutorModel, getDefaultMemoryModel } from '@/lib/ai/chat'
+import { checkAndIncrementUsage } from '@/lib/usage-limits'
+import { logAiError } from '@/lib/logger'
 const GUARDRAIL_REFUSAL_MESSAGE = "I'm here to help with your courses and learning. I can't help with that. What would you like to learn today?"
 const PLATFORM_CONTEXT_CATALOG_LIMIT = 25
+const MAX_TUTOR_MESSAGE_LENGTH = 2000
 
 // Static, factual description of the Sudar Learn UI — injected into every prompt so Sudar
 // can guide navigation accurately instead of hallucinating steps.
@@ -324,6 +327,15 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (!process.env.TOGETHER_API_KEY) return NextResponse.json({ error: 'AI tutor not configured' }, { status: 500 })
 
+    const admin = createAdminClient()
+    const usage = await checkAndIncrementUsage(admin, user.id, 'tutor')
+    if (!usage.allowed) {
+      return NextResponse.json(
+        { error: `Daily tutor request limit (${usage.limit}) reached. Try again tomorrow.` },
+        { status: 429 }
+      )
+    }
+
     let body: {
       message?: string
       course_id?: string
@@ -346,8 +358,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
 
-    const { message, course_id, module_id, conversation_history = [], pasted_text, selected_text, active_modality, available_modalities, route: routeParam } = body
-    if (!message?.trim()) return NextResponse.json({ error: 'message required' }, { status: 400 })
+    const { message: rawMessage, course_id, module_id, conversation_history = [], pasted_text, selected_text, active_modality, available_modalities, route: routeParam } = body
+    if (!rawMessage?.trim()) return NextResponse.json({ error: 'message required' }, { status: 400 })
+    if (rawMessage.length > MAX_TUTOR_MESSAGE_LENGTH) {
+      return NextResponse.json({ error: `Message too long. Max ${MAX_TUTOR_MESSAGE_LENGTH} characters.` }, { status: 400 })
+    }
+    // Strip lines that could override system/assistant role (prompt injection mitigation)
+    const message = rawMessage
+      .replace(/^\s*(system|assistant|user):\s*/gim, '[filtered]: ')
+      .trim()
+      .slice(0, MAX_TUTOR_MESSAGE_LENGTH)
 
     // ── Input guardrail: refuse off-topic / harmful requests ─────────────────
     const hasConversationHistory = Array.isArray(conversation_history) && conversation_history.length > 0
@@ -401,8 +421,6 @@ export async function POST(request: NextRequest) {
         })
       }
     }
-
-    const admin = createAdminClient()
 
   // ── 1. Load full course context (all modules) ──────────────────────────
   let courseContext = ''
@@ -686,7 +704,7 @@ How to personalize:
     aiResponse = await callAI(messages, maxTokens)
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'AI service error'
-    console.error('[tutor] callAI error:', msg)
+    logAiError('together', msg, { route: '/api/tutor/query' })
     return NextResponse.json(
       { error: msg.includes('401') || msg.includes('429') ? 'AI tutor is temporarily unavailable. Please try again later.' : 'Failed to get a response from Sudar. Please try again.' },
       { status: 502 }

@@ -1,16 +1,34 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const eventBodySchema = z.object({
+  event_type: z.string().min(1).max(80),
+  course_id: z.string().uuid().optional().nullable(),
+  module_id: z.string().uuid().optional().nullable(),
+  payload: z.record(z.unknown()).optional().nullable(),
+  modality: z.string().max(30).optional().default('text'),
+  duration_secs: z.number().int().min(0).optional().nullable(),
+})
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const admin = createAdminClient()
-  const body = await request.json()
-  const { event_type, course_id, module_id, payload, modality, duration_secs } = body
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
+  const parsed = eventBodySchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
+  const { event_type, course_id, module_id, payload, modality, duration_secs } = parsed.data
 
-  if (!event_type) return NextResponse.json({ error: 'event_type required' }, { status: 400 })
+  const admin = createAdminClient()
 
   await admin.from('learning_events').insert({
     user_id: user.id,

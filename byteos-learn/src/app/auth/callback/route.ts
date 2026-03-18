@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { logAuth } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error && data?.user?.email) {
+      logAuth('sign_in')
       const admin = createAdminClient()
       const { data: invites } = await admin
         .from('org_invites')
@@ -48,6 +50,7 @@ export async function GET(request: NextRequest) {
       }
       return NextResponse.redirect(`${origin}${next}`)
     }
+    if (error) logAuth('failed_login', { reason: error.message?.slice(0, 100) })
   }
 
   return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)

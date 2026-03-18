@@ -2,11 +2,12 @@
  * ALP — Tutor query for external LMS (SudarChat).
  * Auth: x-alp-api-key or Authorization: Bearer (env ALP_API_KEY or org key from integration_api_keys).
  * Body: { user_id, message, context_text, course_id?, module_id? }.
+ * When using an org-scoped key, user_id must be a member of that org.
  * Forwards to Intelligence /api/tutor/query; logs to ai_interactions; returns response.
  * See docs/ALP_API.md.
  */
 import { createAdminClient } from '@/lib/supabase/server'
-import { validateAlpKey, getAlpKeyFromRequest, validateEmbedToken } from '@/lib/alp-auth'
+import { validateAlpKey, getAlpKeyFromRequest, validateEmbedToken, isUserInOrg } from '@/lib/alp-auth'
 import { NextRequest, NextResponse } from 'next/server'
 
 const INTELLIGENCE_URL = process.env.BYTEOS_INTELLIGENCE_URL?.replace(/\/$/, '')
@@ -16,6 +17,7 @@ export async function POST(request: NextRequest) {
   let user_id: string | null = null
   let course_id: string | undefined
   let module_id: string | undefined
+  let orgId: string | undefined
 
   if (authHeader?.includes('.')) {
     const payload = validateEmbedToken(authHeader)
@@ -28,6 +30,7 @@ export async function POST(request: NextRequest) {
   if (!user_id) {
     const auth = await validateAlpKey(authHeader)
     if (!auth.valid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (auth.valid && auth.orgId) orgId = auth.orgId
   }
 
   let body: { user_id?: string; message: string; context_text?: string; course_id?: string; module_id?: string }
@@ -46,14 +49,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'user_id and message required' }, { status: 400 })
   }
 
+  const admin = createAdminClient()
+  if (orgId) {
+    const inOrg = await isUserInOrg(admin, user_id, orgId)
+    if (!inOrg) return NextResponse.json({ error: 'Forbidden: user not in key organisation' }, { status: 403 })
+  }
+
   let responseText = "I'm still being set up — check back soon!"
   let sourcesUsed: string[] = []
+
+  const intelligenceHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
+  const serviceSecret = process.env.INTELLIGENCE_SERVICE_SECRET
+  if (serviceSecret) intelligenceHeaders['X-Intelligence-Service-Secret'] = serviceSecret
 
   if (INTELLIGENCE_URL) {
     try {
       const res = await fetch(`${INTELLIGENCE_URL}/api/tutor/query`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: intelligenceHeaders,
         body: JSON.stringify({
           user_id,
           module_id: module_id ?? '',
@@ -73,7 +86,6 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const admin = createAdminClient()
   try {
     await admin.from('ai_interactions').insert({
       user_id,

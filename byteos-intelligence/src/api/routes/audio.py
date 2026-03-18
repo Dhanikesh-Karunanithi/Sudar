@@ -2,6 +2,7 @@
 ByteOS Intelligence — Audio (TTS) Routes
 Uses Edge-TTS (default) or optional Sarvam AI for speech from module text (Listen modality).
 Supports configurable voice, rate, and chunking for long text.
+Requires Supabase JWT or X-Intelligence-Service-Secret.
 """
 import base64
 import io
@@ -10,10 +11,13 @@ import re
 import tempfile
 import asyncio
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel
+
+from src.api.auth import verify_supabase_jwt_or_service
 
 router = APIRouter()
 
@@ -112,7 +116,10 @@ def _split_into_chunks(text: str, max_chars: int = CHUNK_MAX_CHARS) -> list[str]
 
 
 @router.post("/generate")
-async def generate_audio(request: AudioGenerateRequest):
+async def generate_audio(
+    request: AudioGenerateRequest,
+    _auth: Annotated[str | None, Depends(verify_supabase_jwt_or_service)] = None,
+):
     """
     Generate speech audio from text using Edge-TTS (default) or Sarvam AI when voice is sarvam_* and SARVAM_API_KEY is set.
     Returns audio/mpeg bytes for use in the Learn Listen modality.

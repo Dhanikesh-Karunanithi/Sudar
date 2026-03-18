@@ -33,15 +33,19 @@ export async function POST(request: NextRequest) {
 
   if (!INTELLIGENCE_URL) {
     return NextResponse.json(
-      { use_browser_tts: true, text: text.slice(0, 12000) },
+      { use_browser_tts: true, error: 'tts_unavailable', text: text.slice(0, 12000) },
       { status: 200 }
     )
   }
 
+  const { data: { session } } = await supabase.auth.getSession()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+
   try {
     const res = await fetch(`${INTELLIGENCE_URL}/api/audio/generate`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         text: text.slice(0, 15000),
         voice: voice ?? undefined,
@@ -53,7 +57,7 @@ export async function POST(request: NextRequest) {
       const detail = await res.text()
       if (res.status === 501) {
         return NextResponse.json(
-          { use_browser_tts: true, text: text.slice(0, 12000) },
+          { use_browser_tts: true, error: 'tts_unavailable', text: text.slice(0, 12000) },
           { status: 200 }
         )
       }
@@ -71,7 +75,7 @@ export async function POST(request: NextRequest) {
     })
   } catch {
     return NextResponse.json(
-      { use_browser_tts: true, text: text.slice(0, 12000) },
+      { use_browser_tts: true, error: 'tts_unavailable', text: text.slice(0, 12000) },
       { status: 200 }
     )
   }

@@ -1,18 +1,21 @@
 """
 SudarPlay launch token endpoint.
 Called by Learn app before redirecting to WorkAdventure. Returns short-lived JWT.
+Requires Supabase JWT or X-Intelligence-Service-Secret; body.learner_id must match JWT sub when JWT is used.
 """
 import os
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
+from typing import Annotated
 
 try:
     import jwt as pyjwt
 except ImportError:
     pyjwt = None  # type: ignore
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
+from src.api.auth import require_learner_match, verify_supabase_jwt_or_service
 from .schemas import LaunchTokenRequest
 
 router = APIRouter()
@@ -76,11 +79,16 @@ async def _create_sudarplay_session(learner_id: UUID, map_id: UUID, module_id: U
 
 
 @router.post("/launch-token")
-async def launch_token(req: LaunchTokenRequest):
+async def launch_token(
+    request: Request,
+    req: LaunchTokenRequest,
+    _auth: Annotated[str | None, Depends(verify_supabase_jwt_or_service)] = None,
+):
     """
     Issue a short-lived JWT for WorkAdventure → Sudar API calls.
-    Learn app calls this (with Supabase session auth) then redirects to WA with token.
+    Learn app calls this with Supabase JWT; body.learner_id must match JWT sub.
     """
+    require_learner_match(request, str(req.learner_id))
     if pyjwt is None:
         raise HTTPException(
             status_code=503,

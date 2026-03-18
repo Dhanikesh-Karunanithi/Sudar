@@ -95,7 +95,7 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 
 ## Intelligence (Python) — summary
 
-Same Supabase and AI provider keys as above. See `byteos-intelligence/.env.example`. Key vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `TOGETHER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AI_CHAT_PROVIDER` (when implemented), `PORT`, `ENVIRONMENT`.
+Same Supabase and AI provider keys as above. See `byteos-intelligence/.env.example`. Key vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `TOGETHER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AI_CHAT_PROVIDER` (when implemented), `PORT`, `ENV`.\n+\n+Security hardening vars:\n+- `SUPABASE_JWT_SECRET` (Intelligence): validates Supabase JWTs from Learn/Studio.\n+- `INTELLIGENCE_SERVICE_SECRET` (Intelligence + Learn): optional shared secret used for ALP server-to-server proxy calls via `X-Intelligence-Service-Secret`.\n*** End Patch}
 
 ---
 
