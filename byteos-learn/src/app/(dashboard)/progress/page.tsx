@@ -1,5 +1,6 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import {
   BarChart2,
@@ -19,6 +20,7 @@ export const metadata: Metadata = { title: 'Progress' }
 export default async function ProgressPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
   const admin = createAdminClient()
 
   const [
@@ -29,23 +31,34 @@ export default async function ProgressPage() {
     admin
       .from('enrollments')
       .select('id, course_id, status, progress_pct, completed_at')
-      .eq('user_id', user!.id)
+      .eq('user_id', user.id)
       .not('course_id', 'is', null)
       .order('updated_at', { ascending: false }),
     admin
       .from('enrollments')
       .select('id, path_id, status, progress_pct, completed_at, personalized_sequence')
-      .eq('user_id', user!.id)
+      .eq('user_id', user.id)
       .not('path_id', 'is', null)
       .order('created_at', { ascending: false }),
     admin
       .from('certifications')
       .select('id, path_id, path_title, issued_at, verification_code')
-      .eq('user_id', user!.id)
+      .eq('user_id', user.id)
       .order('issued_at', { ascending: false }),
   ])
 
-  const courseIds = [...new Set((courseEnrollments ?? []).map((e) => e.course_id).filter(Boolean))]
+  // Deduplicate enrollments by course_id (keep most recently updated first due to order above)
+  const courseEnrollmentsDeduped = (() => {
+    const byCourse = new Map<string, (typeof courseEnrollments extends Array<infer T> ? T : any)>()
+    for (const e of courseEnrollments ?? []) {
+      const cid = e.course_id as string | null
+      if (!cid) continue
+      if (!byCourse.has(cid)) byCourse.set(cid, e)
+    }
+    return Array.from(byCourse.values())
+  })()
+
+  const courseIds = [...new Set(courseEnrollmentsDeduped.map((e) => e.course_id).filter(Boolean))]
   const pathIds = [...new Set((pathEnrollments ?? []).map((e) => e.path_id).filter(Boolean))]
 
   let courses: Array<{ id: string; title: string; description: string | null }> = []
@@ -60,7 +73,7 @@ export default async function ProgressPage() {
     paths = data ?? []
   }
 
-  const courseProgress = (courseEnrollments ?? []).map((e) => {
+  const courseProgress = courseEnrollmentsDeduped.map((e) => {
     const c = courses.find((x) => x.id === e.course_id)
     return { ...e, title: c?.title ?? 'Course', description: c?.description }
   })

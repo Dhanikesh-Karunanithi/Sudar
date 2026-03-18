@@ -16,7 +16,12 @@ export async function POST(request: NextRequest) {
 
   const { content, module_title } = await request.json()
   const text = (content ?? '').trim().slice(0, 4000)
-  if (!text) return NextResponse.json({ error: 'content required' }, { status: 400 })
+  if (!text) {
+    return NextResponse.json(
+      { cards: [], error: 'empty_content', message: 'No module text was provided to generate flashcards.' },
+      { status: 400 }
+    )
+  }
 
   const prompt = `You are a learning designer. From the following module content, extract 4–8 flashcard pairs for study. Each pair: front = question or term (short), back = answer or definition (1–3 sentences). Output ONLY a JSON array of objects with keys "front" and "back". No markdown, no explanation.
 
@@ -51,6 +56,14 @@ JSON array:`
       .filter((c) => c.front.trim() && c.back.trim())
   } catch {
     cards = []
+  }
+
+  if (!cards.length) {
+    return NextResponse.json({
+      cards: [],
+      error: 'generation_failed',
+      message: 'Flashcards could not be generated from this content. Try again or switch to a different modality.',
+    })
   }
 
   return NextResponse.json({ cards })

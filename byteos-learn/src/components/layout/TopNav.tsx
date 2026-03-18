@@ -114,6 +114,7 @@ export function TopNav({ user, showOnboardingNudge }: TopNavProps) {
         })}
         <div className="relative">
           <button
+            type="button"
             onClick={() => setMoreOpen((v) => !v)}
             className={cn(
               'relative flex items-center justify-center gap-1 px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]',
@@ -185,6 +186,7 @@ export function TopNav({ user, showOnboardingNudge }: TopNavProps) {
         </div>
         <div className="relative">
           <button
+            type="button"
             onClick={() => setUserMenuOpen((v) => !v)}
             className="flex items-center gap-2 rounded-button px-2.5 py-1.5 hover:bg-muted transition-colors"
           >

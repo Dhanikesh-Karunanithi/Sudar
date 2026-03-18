@@ -412,7 +412,7 @@ export function MindMapCard({
   }
 
   // ── Empty ──
-  if (!root || (!root.label && (!root.children || root.children.length === 0))) {
+  if (!root || !root.label || !root.children || root.children.length === 0) {
     return (
       <div className="w-full max-w-6xl mx-auto py-12 flex flex-col items-center gap-4">
         <ScopeSwitcher scope={scope} onScopeChange={onScopeChange} />

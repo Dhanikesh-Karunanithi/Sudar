@@ -207,14 +207,6 @@ export function FloatingSudarChat() {
                           : 'bg-muted/80 text-card-foreground border border-border'
                       )}
                     >
-                      {/* #region agent log */}
-                      {m.role === 'assistant' && (() => {
-                        const hasBlocks = (m.blocks?.length ?? 0) > 0
-                        const firstBlockType = m.blocks?.[0]?.type
-                        fetch('http://127.0.0.1:7701/ingest/4305abd0-a887-4162-9fa9-777888adc8ea', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'a39da6' }, body: JSON.stringify({ sessionId: 'a39da6', location: 'FloatingSudarChat.tsx:render', message: 'chat_render', data: { hasBlocks, blocksLength: m.blocks?.length ?? 0, firstBlockType, contentLength: m.content?.length ?? 0 }, timestamp: Date.now(), hypothesisId: 'B' }) }).catch(() => {})
-                        return null
-                      })()}
-                      {/* #endregion */}
                       {m.role === 'assistant' && m.blocks?.length ? (
                         <GenerativeBlockRenderer
                           blocks={m.blocks}

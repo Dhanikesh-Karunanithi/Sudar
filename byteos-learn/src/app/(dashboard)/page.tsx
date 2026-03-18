@@ -74,7 +74,8 @@ export default async function DashboardPage() {
     admin.from('learning_events').select('course_id, module_id, created_at').eq('user_id', user!.id).not('course_id', 'is', null).not('module_id', 'is', null).order('created_at', { ascending: false }).limit(1).maybeSingle(),
   ])
 
-  const courseIds = enrollments?.filter((e) => e.course_id).map((e) => e.course_id as string) ?? []
+  // Deduplicate by course_id so we never show duplicated course cards
+  const courseIds = [...new Set(enrollments?.filter((e) => e.course_id).map((e) => e.course_id as string) ?? [])]
   const pathIds = [...new Set((enrollmentsWithDue ?? []).map((e) => e.path_id).filter(Boolean))]
   const courseIdsDue = [...new Set((enrollmentsWithDue ?? []).map((e) => e.course_id).filter(Boolean))]
 
@@ -119,11 +120,22 @@ export default async function DashboardPage() {
     }
   }
 
-  const enrolledCourses: Array<{ id: string; title: string; description: string | null; progress_pct: number; enrollStatus: string }> = courseIds.map((id) => {
-    const c = courseMap.get(id)
-    const e = enrollments?.find((en) => en.course_id === id)
-    return c ? { ...c, progress_pct: e?.progress_pct ?? 0, enrollStatus: e?.status ?? 'not_started' } : null
-  }).filter(Boolean) as Array<{ id: string; title: string; description: string | null; progress_pct: number; enrollStatus: string }>
+  const enrollmentByCourseId = new Map<string, { status: string; progress_pct: number }>()
+  for (const e of enrollments ?? []) {
+    if (!e.course_id) continue
+    const courseId = e.course_id as string
+    if (!enrollmentByCourseId.has(courseId)) {
+      enrollmentByCourseId.set(courseId, { status: e.status ?? 'not_started', progress_pct: e.progress_pct ?? 0 })
+    }
+  }
+
+  const enrolledCourses: Array<{ id: string; title: string; description: string | null; progress_pct: number; enrollStatus: string }> = courseIds
+    .map((id) => {
+      const c = courseMap.get(id)
+      const e = enrollmentByCourseId.get(id)
+      return c ? { ...c, progress_pct: e?.progress_pct ?? 0, enrollStatus: e?.status ?? 'not_started' } : null
+    })
+    .filter(Boolean) as Array<{ id: string; title: string; description: string | null; progress_pct: number; enrollStatus: string }>
 
   const pathTitles: Record<string, string> = Object.fromEntries(pathIds.map((id) => [id, pathMap.get(id)?.title ?? 'Learning path']))
   const courseTitles: Record<string, string> = Object.fromEntries(courseIdsDue.map((id) => [id, courseMap.get(id)?.title ?? 'Course']))

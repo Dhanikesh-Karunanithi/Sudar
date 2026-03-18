@@ -286,13 +286,17 @@ function ScormViewer({ launchUrl, courseId, moduleId, moduleTitle, onComplete }:
 // --- Markdown renderer -------------------------------------------------------
 // Converts the AI-generated markdown text to clean, styled React elements.
 
-function renderMarkdown(body: string): React.ReactNode {
-  if (!body?.trim()) return (
+function renderMarkdown(body: string, opts?: { showEmptyState?: boolean }): React.ReactNode {
+  const showEmptyState = opts?.showEmptyState !== false
+  if (!body?.trim()) {
+    if (!showEmptyState) return null
+    return (
     <div className="flex flex-col items-center justify-center py-20 text-muted-foreground space-y-3">
       <BookOpen className="w-10 h-10 opacity-50" />
       <p className="text-sm">This module has no content yet.</p>
     </div>
   )
+  }
 
   const lines = body.split('\n')
   const elements: React.ReactNode[] = []
@@ -612,6 +616,11 @@ export function CourseViewer({
 
   const modules = course.modules
   const currentModule = modules.find((m) => m.id === currentModuleId) ?? modules[0]
+  const currentModuleTitleRaw = modules.find((m) => m.id === currentModuleId)?.title ?? 'Module'
+  const currentModuleTitle =
+    currentModuleTitleRaw.toLowerCase().startsWith(`${course.title.toLowerCase()}:`)
+      ? currentModuleTitleRaw.slice(course.title.length + 1).trim()
+      : currentModuleTitleRaw
   const currentIndex = modules.findIndex((m) => m.id === currentModuleId)
   const prevModule = modules[currentIndex - 1]
   const nextModule = modules[currentIndex + 1]
@@ -703,25 +712,30 @@ export function CourseViewer({
 
   // Fetch flashcards when switching to flashcards modality and we don't have cards for this module
   useEffect(() => {
-    if (activeModality !== 'flashcards' || !currentModuleId || !currentModule?.content?.body) return
+    if (activeModality !== 'flashcards' || !currentModuleId) return
     if (flashcardsByModule[currentModuleId]) return
+    const contentBody = getContentBodyForFlashcards(currentModule?.content ?? null)
+    if (!contentBody.trim()) return
     setFlashcardsLoading(true)
     fetch('/api/ai/generate-flashcards', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: currentModule.content.body,
+        content: contentBody,
         module_title: currentModule.title,
       }),
     })
-      .then((r) => r.json())
+      .then(async (r) => {
+        const data = await r.json().catch(() => ({}))
+        return { ok: r.ok, data }
+      })
       .then((data) => {
-        const cards = Array.isArray(data.cards) ? data.cards : []
+        const cards = Array.isArray(data.data?.cards) ? data.data.cards : []
         setFlashcardsByModule((prev) => ({ ...prev, [currentModuleId]: cards }))
       })
       .catch(() => setFlashcardsByModule((prev) => ({ ...prev, [currentModuleId]: [] })))
       .finally(() => setFlashcardsLoading(false))
-  }, [activeModality, currentModuleId, currentModule?.content?.body, currentModule?.title])
+  }, [activeModality, currentModuleId, currentModule?.content, currentModule?.title])
 
   // Fetch mindmap when switching to mindmap modality (module scope)
   useEffect(() => {
@@ -741,8 +755,10 @@ export function CourseViewer({
       .then((r) => r.json())
       .then((data) => {
         const root = data?.root
-        if (root && typeof root === 'object') {
+        if (root && typeof root === 'object' && Array.isArray((root as { children?: unknown }).children) && (root as { children: unknown[] }).children.length > 0) {
           setMindmapByModule((prev) => ({ ...prev, [currentModuleId]: root as MindMapNode }))
+        } else {
+          setMindmapByModule((prev) => ({ ...prev, [currentModuleId]: null }))
         }
       })
       .catch(() => {})
@@ -770,8 +786,10 @@ export function CourseViewer({
       .then((r) => r.json())
       .then((data) => {
         const root = data?.root
-        if (root && typeof root === 'object') {
+        if (root && typeof root === 'object' && Array.isArray((root as { children?: unknown }).children) && (root as { children: unknown[] }).children.length > 0) {
           setMindmapCourse(root as MindMapNode)
+        } else {
+          setMindmapCourse(null)
         }
       })
       .catch(() => {})
@@ -1226,7 +1244,7 @@ export function CourseViewer({
                 <>
                   <span aria-hidden>/</span>
                   <span className="truncate text-card-foreground font-medium">
-                    {modules.find((m) => m.id === currentModuleId)?.title ?? 'Module'}
+                    {currentModuleTitle}
                   </span>
                 </>
               )}

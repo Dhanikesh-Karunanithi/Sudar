@@ -16,6 +16,13 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-03-18 — Vercel builds: login/signup Suspense; Learn UX; marketing site; docs
+- **Next.js 15 / Vercel**: Learn and Studio `/login` and `/signup` now use a **Server Component page** + **client `*Client.tsx`** wrapped in `<Suspense>` so `useSearchParams()` no longer fails static generation on Vercel.
+- **Learn**: Signup split to match login; removed temporary debug ingest calls from tutor API and chat UI.
+- **Learn UX**: Dashboard/progress loading states, greeting/top-nav tweaks, course viewer and modality cards refinements; flashcards API touch-up.
+- **teachwithsudar**: Marketing Next.js site (Teach with Sudar) added under repo root.
+- **Docs & audit**: LAMP draft, research paper/bib updates; Learn audit notes in `audit/Learn/`.
+
 ### 2026-03-17 — Security hardening: IDOR fixes, JWT validation, RLS, rate limits, CSP, logging
 - **Authorization & IDOR**: Hardened ALP endpoints to enforce org scope; Intelligence now validates Supabase JWT (subject must match learner_id/user_id) and supports an optional server-to-server secret for ALP proxy calls.
 - **Supabase RLS**: Added migrations to enable RLS + ownership policies on learner-scoped tables (learner_profiles, learning_events, ai_interactions, enrollments, certifications) and RAG `content_chunks`.

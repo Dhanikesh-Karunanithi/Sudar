@@ -715,31 +715,6 @@ How to personalize:
   const { text: responseText, rawActions } = parseActionsFromResponse(aiResponse)
   const actions = validateActions(rawActions, allowedCourseIds, allowedPathIds, enrollmentByCourseId)
 
-  // #region agent log
-  const _logPayload = {
-    sessionId: 'a39da6',
-    location: 'route.ts:tutor-response',
-    message: 'tutor_response',
-    data: {
-      maxTokens,
-      preferredResponseLength,
-      responseLengthChars: aiResponse.length,
-      responseTextLengthChars: responseText.length,
-      endsWithPeriod: /[.!?]\s*$/.test(responseText.trim()),
-      last50: responseText.slice(-50),
-    },
-    timestamp: Date.now(),
-    hypothesisId: 'A',
-  }
-  try {
-    await fetch('http://127.0.0.1:7701/ingest/4305abd0-a887-4162-9fa9-777888adc8ea', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'a39da6' },
-      body: JSON.stringify(_logPayload),
-    })
-  } catch { /* ignore */ }
-  // #endregion
-
   // ── 5. Save interaction (non-blocking; don't fail the request) ───────────
   if (course_id) {
     try {

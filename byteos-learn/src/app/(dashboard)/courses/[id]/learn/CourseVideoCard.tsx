@@ -115,6 +115,7 @@ export function CourseVideoCard({ scenes, courseTitle }: { scenes: VideoScene[];
 
   const scene = scenes[currentIndex]
   const hasAudio = scenes.some((s) => s.audioDataURL)
+  const [hideAudioNotice, setHideAudioNotice] = useState(false)
 
   // Cursor-follow handler — updates orb position as percentage of container
   useEffect(() => {
@@ -469,9 +470,18 @@ export function CourseVideoCard({ scenes, courseTitle }: { scenes: VideoScene[];
         )}
 
         {/* Audio indicator */}
-        {!hasAudio && phase === 'playing' && (
-          <div className="absolute top-4 left-4 z-10 px-2 py-1 rounded text-xs text-amber-700 bg-amber-50/80 border border-amber-200">
-            Audio for this module isn&apos;t available yet.
+        {!hasAudio && phase === 'playing' && !hideAudioNotice && (
+          <div className="absolute top-4 left-4 z-10 px-2 py-1 rounded text-xs text-amber-700 bg-amber-50/80 border border-amber-200 flex items-center gap-2">
+            <span>Audio for this module isn&apos;t available yet.</span>
+            <button
+              type="button"
+              onClick={() => setHideAudioNotice(true)}
+              className="text-amber-700/80 hover:text-amber-900 font-semibold leading-none"
+              aria-label="Dismiss audio notice"
+              title="Dismiss"
+            >
+              ×
+            </button>
           </div>
         )}
 

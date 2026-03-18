@@ -15,7 +15,7 @@ import { FlashcardBlock } from '@/components/learn/blocks/FlashcardBlock'
 
 interface RichModuleContentProps {
   content: RichContent
-  renderMarkdown: (body: string) => React.ReactNode
+  renderMarkdown: (body: string, opts?: { showEmptyState?: boolean }) => React.ReactNode
   onExplain?: (context: string) => void
   courseId: string
   moduleId: string
@@ -33,7 +33,7 @@ function ExpandableBlock({
 }: {
   title: string
   content: string
-  renderMarkdown: (body: string) => React.ReactNode
+  renderMarkdown: (body: string, opts?: { showEmptyState?: boolean }) => React.ReactNode
   defaultOpen?: boolean
 }) {
   const [open, setOpen] = useState(defaultOpen)
@@ -49,7 +49,7 @@ function ExpandableBlock({
       </button>
       {open && (
         <div className="px-4 pb-4 pt-0 border-t border-border text-sm text-muted-foreground">
-          {renderMarkdown(content)}
+          {renderMarkdown(content, { showEmptyState: false })}
         </div>
       )}
     </div>
@@ -175,7 +175,7 @@ function SideCardBlock({ title, content, tips, noteType }: { title: string; cont
   )
 }
 
-function EntryStateBlock({ entry, renderMarkdown }: { entry: EntryState; renderMarkdown: (body: string) => React.ReactNode }) {
+function EntryStateBlock({ entry, renderMarkdown }: { entry: EntryState; renderMarkdown: (body: string, opts?: { showEmptyState?: boolean }) => React.ReactNode }) {
   const isProvocation = entry.type === 'provocation'
   const isDataDrop = entry.type === 'data-drop'
   const isScenario = entry.type === 'scenario-fragment'
@@ -199,13 +199,13 @@ function EntryStateBlock({ entry, renderMarkdown }: { entry: EntryState; renderM
         isProvocation && 'text-lg text-card-foreground font-medium',
         (isDataDrop || isScenario || isContrarian) && 'text-muted-foreground'
       )}>
-        {renderMarkdown(entry.content)}
+        {renderMarkdown(entry.content, { showEmptyState: false })}
       </div>
     </div>
   )
 }
 
-function ExitStateBlock({ exit, renderMarkdown }: { exit: ExitState; renderMarkdown: (body: string) => React.ReactNode }) {
+function ExitStateBlock({ exit, renderMarkdown }: { exit: ExitState; renderMarkdown: (body: string, opts?: { showEmptyState?: boolean }) => React.ReactNode }) {
   const isReflection = exit.type === 'reflection'
   const isApply24h = exit.type === 'apply-24h'
   const isTeaser = exit.type === 'next-conflict-teaser'
@@ -224,7 +224,7 @@ function ExitStateBlock({ exit, renderMarkdown }: { exit: ExitState; renderMarkd
       {isTeaser && <ArrowRight className="w-5 h-5 text-violet-600 dark:text-violet-400 mb-2 opacity-80" />}
       {isWhatChanged && <Lightbulb className="w-5 h-5 text-sky-600 dark:text-sky-400 mb-2 opacity-80" />}
       <div className="text-sm text-muted-foreground leading-relaxed">
-        {renderMarkdown(exit.content)}
+        {renderMarkdown(exit.content, { showEmptyState: false })}
       </div>
     </div>
   )
@@ -249,7 +249,7 @@ export function RichModuleContent({
         <EntryStateBlock entry={content.entryState} renderMarkdown={renderMarkdown} />
       ) : content.introduction ? (
         <div className="text-sm text-muted-foreground leading-relaxed">
-          {renderMarkdown(content.introduction)}
+          {renderMarkdown(content.introduction, { showEmptyState: false })}
         </div>
       ) : null}
 
@@ -273,7 +273,7 @@ export function RichModuleContent({
                 />
               ) : (
                 <div className="text-sm text-muted-foreground leading-relaxed">
-                  {renderMarkdown(section.content)}
+                  {renderMarkdown(section.content, { showEmptyState: false })}
                 </div>
               )}
               {section.image?.url && (() => {
@@ -304,6 +304,9 @@ export function RichModuleContent({
                     <li key={i}>{item}</li>
                   ))}
                 </ul>
+              )}
+              {idx < content.sections.length - 1 && (
+                <hr className="border-border/70 my-6" />
               )}
             </section>
           ))}
@@ -494,7 +497,7 @@ export function RichModuleContent({
             <ExitStateBlock exit={content.exitState} renderMarkdown={renderMarkdown} />
           ) : content.summary ? (
             <div className="text-sm text-muted-foreground leading-relaxed">
-              {renderMarkdown(content.summary)}
+              {renderMarkdown(content.summary, { showEmptyState: false })}
             </div>
           ) : null}
         </div>

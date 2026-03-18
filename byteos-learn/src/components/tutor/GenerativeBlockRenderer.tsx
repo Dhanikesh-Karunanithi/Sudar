@@ -46,11 +46,6 @@ function renderTextContent(text: string): React.ReactNode {
 
 function TextBlock({ payload }: { payload: Record<string, unknown> }) {
   const content = (payload.content as string) ?? ''
-  // #region agent log
-  if (typeof window !== 'undefined') {
-    fetch('http://127.0.0.1:7701/ingest/4305abd0-a887-4162-9fa9-777888adc8ea', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'a39da6' }, body: JSON.stringify({ sessionId: 'a39da6', location: 'GenerativeBlockRenderer.tsx:TextBlock', message: 'text_block_render', data: { contentLength: content.length, hasMarkdownTable: content.includes('|'), hasHeading: /^#{1,4}\s/m.test(content) }, timestamp: Date.now(), hypothesisId: 'B' }) }).catch(() => {})
-  }
-  // #endregion
   return <div className="text-sm">{content.trim() ? <ChatMarkdown text={content} /> : null}</div>
 }
 

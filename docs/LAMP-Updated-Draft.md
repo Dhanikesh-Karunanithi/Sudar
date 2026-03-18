@@ -57,7 +57,7 @@ Recent work on AI-augmented textbooks — e.g., *Learn Your Way* [8] — transfo
 | Modalities | Text+TTS, video, podcast, mindmap, flashcards, SCORM | Text, slides, audio, mind map | Usually text/video only |
 | Authoring | Integrated (Studio) | N/A (ingests material) | Separate tools |
 | Augment LMS | Yes (ALP plugins) | No | N/A |
-| Open source | Yes (MIT) | No | Rarely |
+| Open source | Yes (Apache-2.0) | No | Rarely |
 | Infrastructure cost (1,000 learners/month) | ~$21 | N/A | ~$3,400–$44,000 |
 | Self-serve, no minimum | Yes | N/A | No (enterprise sales) |
 
@@ -178,7 +178,7 @@ A distinguishing property of Sudar as a platform is that its modality delivery s
 
 The principle is: **Sudar is the authoring and delivery operating system; the generation backend is a plugin.** A school in Sub-Saharan Africa self-hosts Wan 2.1 on a local GPU server and generates all course videos with zero per-call cost. A Fortune 500 L&D team connects Higgsfield for cinematic course introductions. The learner experience — the Digital Learner Twin, adaptive sequencing, AI tutor, and modality switching — is identical. Quality scales with available budget; the platform itself is the constant.
 
-**Community extension patterns enabled by the MIT licence:**
+**Community extension patterns enabled by the Apache-2.0 licence:**
 
 - **New modality plugins:** A community developer can add a VR walkthrough modality, a 3D simulation renderer, or an AR overlay layer, all consuming the existing module content schema with no changes to the core platform.
 - **New LLM backends:** The Intelligence service is provider-agnostic by design. Any OpenAI-compatible API endpoint — Together AI, Groq, Cerebras, Ollama (local), or a fine-tuned domain-specific model — can replace the default provider via environment variable.
@@ -245,7 +245,7 @@ The schema and event model are fully documented in the repository (`ECOSYSTEM.md
 
 **Remaining planned items:** SudarPlay (gamified modality), SudarFeed (social/TikTok-style learning feed), white-label configuration, SSO/HRIS integration, additional reminder channels (e.g. push), and ALP LMS connectors for Moodle, Canvas, and Blackboard. Pilot (O1) and Claude-for-OSS application (O2) to follow build completion.
 
-The project is open source under the MIT licence. Self-deployment requires a Supabase project (free tier supports approximately 500–700 learners before the 500 MB database limit), a Together AI API key, and a standard Node.js and Python 3.11 environment. No proprietary infrastructure is required to run a fully functional deployment.
+The project is open source under the Apache-2.0 licence. Self-deployment requires a Supabase project (free tier supports approximately 500–700 learners before the 500 MB database limit), a Together AI API key, and a standard Node.js and Python 3.11 environment. No proprietary infrastructure is required to run a fully functional deployment.
 
 ---
 
@@ -383,7 +383,7 @@ The system and research are the author's project. Development was assisted by AI
 
 **Call for collaboration.** Institutions, organisations, and open-source contributors are invited to collaborate on pilots, plugin integrations, and community extensions. Contact: connect@dhanikeshkarunanithi.com or https://github.com/Dhanikesh-Karunanithi/Sudar.
 
-**Statements for Claude for OSS application (if applicable).** (1) **Project value:** Sudar delivers an AI-native learning platform with a persistent Digital Learner Twin, adaptive sequencing, and an AI tutor with cross-session memory, at infrastructure cost under $0.02 per learner per month — enabling enterprises and institutions to deploy personalised learning without vendor lock-in. (2) **Enterprises:** The Adaptive Learning Layer (ALP) allows existing LMSs (Moodle, Canvas, Blackboard) to gain Sudar’s intelligence via a plugin layer, reaching hundreds of millions of learners without replacing incumbent systems. (3) **OSS impact:** The reference implementation is MIT-licensed and documented for reproducibility; it establishes a public baseline for cost, privacy, and evidence-based design that the EdTech and OSS community can extend and compare against.
+**Statements for Claude for OSS application (if applicable).** (1) **Project value:** Sudar delivers an AI-native learning platform with a persistent Digital Learner Twin, adaptive sequencing, and an AI tutor with cross-session memory, at infrastructure cost under $0.02 per learner per month — enabling enterprises and institutions to deploy personalised learning without vendor lock-in. (2) **Enterprises:** The Adaptive Learning Layer (ALP) allows existing LMSs (Moodle, Canvas, Blackboard) to gain Sudar’s intelligence via a plugin layer, reaching hundreds of millions of learners without replacing incumbent systems. (3) **OSS impact:** The reference implementation is Apache-2.0-licensed and documented for reproducibility; it establishes a public baseline for cost, privacy, and evidence-based design that the EdTech and OSS community can extend and compare against.
 
 ---
 
@@ -424,7 +424,7 @@ Full schema: `ECOSYSTEM.md` in the repository.
 4. Susan Bull and Judy Kay. SMILI: A framework for interfaces to learning data in open learner models, learning analytics and related fields. *International Journal of Artificial Intelligence in Education*, 26(1):293–331, 2016.
 5. Ruth Colvin Clark and Richard E. Mayer. *E-Learning and the Science of Instruction*. Wiley, Hoboken, NJ, 4th edition, 2016.
 6. Robert M. Gagné. *The Conditions of Learning and Theory of Instruction*. Holt, Rinehart and Winston, New York, 4th edition, 1985.
-7. Dhanikesh Karunanithi and Sudar Contributors. Sudar: An AI-native adaptive learning platform. https://github.com/dhanikeshkarunanithi/Sudar, 2026. MIT Licence.
+7. Dhanikesh Karunanithi and Sudar Contributors. Sudar: An AI-native adaptive learning platform. https://github.com/dhanikeshkarunanithi/Sudar, 2026. Apache-2.0 Licence.
 8. LearnLM Team, Google. Towards an AI-augmented textbook, 2025. arXiv preprint arXiv:2509.13348.
 9. Richard E. Mayer. *Multimedia Learning*. Cambridge University Press, New York, 2nd edition, 2009.
 10. Henry L. Roediger and Jeffrey D. Karpicke. Test-enhanced learning: Taking memory tests improves long-term retention. *Psychological Science*, 17(3):249–255, 2006.

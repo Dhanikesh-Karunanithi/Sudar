@@ -17,5 +17,6 @@ export function Greeting({ firstName }: { firstName: string }) {
     setGreeting(getGreeting())
   }, [])
 
-  return <>{greeting}, {firstName}.</>
+  const safeName = (firstName || '').trim() || 'there'
+  return <>{greeting}, {safeName}.</>
 }
