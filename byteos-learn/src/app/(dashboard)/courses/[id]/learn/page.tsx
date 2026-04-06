@@ -1,6 +1,9 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { CourseViewer } from './CourseViewer'
+import type { ComponentProps } from 'react'
+
+type CourseForViewer = ComponentProps<typeof CourseViewer>['course']
 
 export default async function CourseLearnPage({
   params,
@@ -53,7 +56,7 @@ export default async function CourseLearnPage({
 
   return (
     <CourseViewer
-      course={course as any}
+      course={course as unknown as CourseForViewer}
       activeModuleId={activeModuleId}
       completedModuleIds={Array.from(completedModuleIds)}
       enrollmentProgress={Math.round(enrollment.progress_pct)}

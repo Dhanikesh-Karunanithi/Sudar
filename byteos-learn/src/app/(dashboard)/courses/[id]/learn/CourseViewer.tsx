@@ -16,6 +16,7 @@ import { CourseVideoCard } from './CourseVideoCard'
 import { CoursePodcastCard } from './CoursePodcastCard'
 import { MindMapCard, type MindMapNode } from './MindMapCard'
 import { AudioCard } from './AudioCard'
+import { SudarVidCard } from './SudarVidCard'
 import { RichModuleContent } from '@/components/learn/RichModuleContent'
 import { ReadAlongControls } from '@/components/learn/ReadAlongControls'
 import { CourseThemeProvider } from '@/components/learn/CourseThemeProvider'
@@ -1337,7 +1338,7 @@ export function CourseViewer({
               const modalities = [
                 { id: 'text', icon: FileText, label: 'Read' },
                 { id: 'listening', icon: Headphones, label: 'Listen' },
-                { id: 'video', icon: Video, label: 'Watch', soon: !hasVideo },
+                { id: 'video', icon: Video, label: 'Watch' },
                 ...(hasPodcast ? [{ id: 'podcast', icon: Mic, label: 'Podcast', soon: false }] : []),
                 { id: 'mindmap', icon: Network, label: 'Map' },
                 { id: 'flashcards', icon: Layers, label: 'Cards' },
@@ -1529,11 +1530,12 @@ export function CourseViewer({
                   (course.settings?.video_scenes?.length ?? 0) > 0 ? (
                     <CourseVideoCard scenes={course.settings!.video_scenes!} courseTitle={course.title} />
                   ) : (
-                    <div className="max-w-xl mx-auto py-12 text-center space-y-3">
-                      <Video className="w-10 h-10 text-muted-foreground mx-auto" />
-                      <p className="text-sm text-muted-foreground">No video overview for this course.</p>
-                      <p className="text-xs text-muted-foreground">It isn&apos;t available for this course yet.</p>
-                    </div>
+                    <SudarVidCard
+                      moduleId={currentModuleId}
+                      moduleTitle={currentModule?.title ?? ''}
+                      contentBody={getContentBodyForFlashcards(currentModule?.content ?? null)}
+                      courseId={course.id}
+                    />
                   )
                 ) : activeModality === 'podcast' ? (
                   (course.settings?.podcast_dialogue?.length ?? 0) > 0 ? (

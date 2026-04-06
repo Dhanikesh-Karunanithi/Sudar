@@ -112,8 +112,7 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
   - Event processing (ingests learner events and updates profiles)
 
 ### 3.4 Microservices (standalone, called by Intelligence layer)
-- **byteos-video** (`/byteos-video`) — bytetexttovid: Python, FFmpeg, Edge-TTS
-- **byteos-renderer** (`/byteos-renderer`) — Remotion: TypeScript, React, MP4 render server
+- **sudar-vid** (`/sudar_vid`) — SudarVid: Python FastAPI, Together AI (slide planning + image generation), Edge-TTS, FFmpeg, Playwright. Canonical video generation microservice for the Watch modality. Replaces the earlier `byteos-video` / `byteos-renderer` placeholders. Runs on port 8000 (separate from Intelligence); Learn proxies to it via `SUDARVID_URL`. Standalone creator UI is preserved at `/` for direct use outside Sudar.
 - **byteos-feed** — shayshay (TikTok-style feed): absorbed into Sudar Learn as a modality
 - **byteos-play** — SudarPlay (game generator): Phaser.js, called as modality from Learn
 - **byteos-mind** — SudarMind (mindmap): embedded as modality component in Learn
@@ -138,8 +137,7 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
 | State management | Zustand | Lightweight, already used in SudarMind & ByteVerse-LMS |
 | AI providers | Together AI (primary), OpenAI (secondary), Anthropic (tertiary) | Cost-effective, multi-model |
 | Backend AI engine | Python FastAPI | Best for ML/AI operations, fine-tuning |
-| Video generation | Python + FFmpeg + Edge-TTS | bytetexttovid |
-| Programmatic video | Remotion 4.0 | MP4 render server |
+| Video generation | SudarVid — Python FastAPI + Together AI + Edge-TTS + FFmpeg + Playwright | Slide deck + TTS narration; HTML-first (iframe), optional MP4 |
 | Game engine | Phaser.js | SudarPlay |
 | Auth | Supabase Auth | Shared across Studio + Learn |
 | File storage | Supabase Storage | RAG source docs, media assets |

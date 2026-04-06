@@ -153,7 +153,7 @@ async function runInputGuardrail(message: string, hasConversationHistory: boolea
 function parseActionsFromResponse(raw: string): { text: string; rawActions: Array<{ type?: string; course_id?: string; path_id?: string; label?: string }> } {
   const trimmed = raw.trim()
   // Prefer: newline then ACTIONS: then rest of string (instruction format)
-  let actMatch = trimmed.match(/\nACTIONS:\s*([\s\S]+)$/)
+  const actMatch = trimmed.match(/\nACTIONS:\s*([\s\S]+)$/)
   let text: string
   let jsonStr: string | null = null
   if (actMatch) {

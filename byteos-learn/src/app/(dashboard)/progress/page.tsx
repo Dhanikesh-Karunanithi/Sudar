@@ -48,12 +48,19 @@ export default async function ProgressPage() {
   ])
 
   // Deduplicate enrollments by course_id (keep most recently updated first due to order above)
+  type CourseEnrollmentRow = {
+    id: string
+    course_id: string | null
+    status: string
+    progress_pct: number | null
+    completed_at: string | null
+  }
   const courseEnrollmentsDeduped = (() => {
-    const byCourse = new Map<string, (typeof courseEnrollments extends Array<infer T> ? T : any)>()
+    const byCourse = new Map<string, CourseEnrollmentRow>()
     for (const e of courseEnrollments ?? []) {
       const cid = e.course_id as string | null
       if (!cid) continue
-      if (!byCourse.has(cid)) byCourse.set(cid, e)
+      if (!byCourse.has(cid)) byCourse.set(cid, e as CourseEnrollmentRow)
     }
     return Array.from(byCourse.values())
   })()

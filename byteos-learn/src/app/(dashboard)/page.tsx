@@ -11,19 +11,37 @@ import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
 import { ActivityChartClient } from '@/components/dashboard/ActivityChartClient'
 import { Greeting } from '@/components/dashboard/Greeting'
 
-// Compute streak from event dates
-function computeStreak(eventDates: string[]): number {
-  if (!eventDates.length) return 0
-  const days = [...new Set(eventDates.map((d) => d.slice(0, 10)))].sort().reverse()
-  const today = new Date().toISOString().slice(0, 10)
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
-  if (days[0] !== today && days[0] !== yesterday) return 0
+function toLocalDateKey(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function toLocalDateKeyFromISO(iso: string): string {
+  return toLocalDateKey(new Date(iso))
+}
+
+function parseLocalDateKey(key: string): Date {
+  const [y, m, d] = key.split('-').map((x) => Number(x))
+  return new Date(y, (m ?? 1) - 1, d ?? 1, 0, 0, 0, 0)
+}
+
+// Compute streak from local day keys (avoids UTC slicing mismatches).
+function computeStreak(dayKeys: string[]): number {
+  if (!dayKeys.length) return 0
+  const uniqueSorted = [...new Set(dayKeys)].sort() // YYYY-MM-DD lex sort == chronological
+  const todayKey = toLocalDateKey(new Date())
+  const yesterdayKey = toLocalDateKey(new Date(Date.now() - 86400000))
+  const lastKey = uniqueSorted[uniqueSorted.length - 1]
+  if (lastKey !== todayKey && lastKey !== yesterdayKey) return 0
+
   let streak = 1
-  for (let i = 1; i < days.length; i++) {
-    const prev = new Date(days[i - 1])
-    const curr = new Date(days[i])
-    const diff = Math.round((prev.getTime() - curr.getTime()) / 86400000)
-    if (diff === 1) streak++
+  for (let i = uniqueSorted.length - 2; i >= 0; i--) {
+    const curr = parseLocalDateKey(uniqueSorted[i])
+    const next = parseLocalDateKey(uniqueSorted[i + 1])
+    const diffDays = Math.round((next.getTime() - curr.getTime()) / 86400000)
+    if (diffDays === 1) streak++
     else break
   }
   return streak
@@ -69,7 +87,7 @@ export default async function DashboardPage() {
     admin.from('profiles').select('full_name, org_id').eq('id', user!.id).single(),
     admin.from('learner_profiles').select('ai_tutor_context, next_best_action').eq('user_id', user!.id).single(),
     admin.from('enrollments').select('course_id, status, progress_pct, created_at').eq('user_id', user!.id).order('created_at', { ascending: false }),
-    admin.from('learning_events').select('event_type, created_at, duration_secs').eq('user_id', user!.id).order('created_at', { ascending: false }).limit(500),
+    admin.from('learning_events').select('event_type, created_at, duration_secs, module_id').eq('user_id', user!.id).order('created_at', { ascending: false }).limit(500),
     admin.from('enrollments').select('id, course_id, path_id, due_date, status').eq('user_id', user!.id).not('due_date', 'is', null).gte('due_date', today).order('due_date', { ascending: true }).limit(10),
     admin.from('learning_events').select('course_id, module_id, created_at').eq('user_id', user!.id).not('course_id', 'is', null).not('module_id', 'is', null).order('created_at', { ascending: false }).limit(1).maybeSingle(),
   ])
@@ -159,8 +177,10 @@ export default async function DashboardPage() {
     })
 
   // ── Compute real-time stats from events ──────────────────────────
-  const eventDates = (allEvents ?? []).map((e) => e.created_at)
-  const streakDays = computeStreak(eventDates)
+  const eventDayKeys = (allEvents ?? [])
+    .map((e) => (e.created_at ? toLocalDateKeyFromISO(e.created_at) : null))
+    .filter((k): k is string => !!k)
+  const streakDays = computeStreak(eventDayKeys)
 
   const MAX_SESSION_SECS = 60 * 60
   const cappedEventSecs = (allEvents ?? []).map((e) => Math.min(e.duration_secs ?? 0, MAX_SESSION_SECS))
@@ -171,21 +191,32 @@ export default async function DashboardPage() {
   const inProgress = enrolledCourses.filter((c) => c.enrollStatus !== 'completed')
 
   // Engagement = ratio of active days in the last 30 days
-  const last30Days = new Set(eventDates.filter((d) => {
-    const diff = (Date.now() - new Date(d).getTime()) / 86400000
-    return diff <= 30
-  }).map((d) => d.slice(0, 10))).size
+  const last30Days = new Set((allEvents ?? [])
+    .filter((e) => {
+      const createdAt = e.created_at
+      if (!createdAt) return false
+      const diff = (Date.now() - new Date(createdAt).getTime()) / 86400000
+      return diff <= 30
+    })
+    .map((e) => (e.created_at ? toLocalDateKeyFromISO(e.created_at) : null))
+    .filter((k): k is string => !!k)
+  ).size
   const engagementPct = Math.round((last30Days / 30) * 100)
 
   // Activity by day for chart (last 7 days)
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
+  const last7DayKeys = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() - (6 - i))
-    return d.toISOString().slice(0, 10)
+    return toLocalDateKey(d)
   })
-  const countByDay = last7Days.map((day) => {
-    const count = (allEvents ?? []).filter((e) => e.created_at?.slice(0, 10) === day).length
-    const label = new Date(day).toLocaleDateString('en-US', { weekday: 'short' })
+  const eventDayCounts = (eventDayKeys ?? []).reduce((acc, dayKey) => {
+    acc.set(dayKey, (acc.get(dayKey) ?? 0) + 1)
+    return acc
+  }, new Map<string, number>())
+  const countByDay = last7DayKeys.map((dayKey) => {
+    const count = eventDayCounts.get(dayKey) ?? 0
+    const [y, m, d] = dayKey.split('-').map((x) => Number(x))
+    const label = new Date(y, (m ?? 1) - 1, d ?? 1).toLocaleDateString('en-US', { weekday: 'short' })
     return { name: label, count }
   })
 
@@ -203,18 +234,48 @@ export default async function DashboardPage() {
   const periodStats = {
     thisWeek: {
       totalMins: safeRound(events.filter((e) => inPeriod(e.created_at, thisWeekStart)).reduce((s, e) => s + Math.min(e.duration_secs ?? 0, MAX_SESSION_SECS), 0) / 60),
-      sessions: new Set(events.filter((e) => inPeriod(e.created_at, thisWeekStart)).map((e) => e.created_at?.slice(0, 10)).filter(Boolean)).size,
-      modulesCompleted: events.filter((e) => e.event_type === 'module_complete' && inPeriod(e.created_at, thisWeekStart)).length,
+      sessions: new Set(
+        events
+          .filter((e) => inPeriod(e.created_at, thisWeekStart))
+          .map((e) => (e.created_at ? toLocalDateKeyFromISO(e.created_at) : null))
+          .filter((k): k is string => !!k)
+      ).size,
+      modulesCompleted: new Set(
+        events
+          .filter((e) => e.event_type === 'module_complete' && inPeriod(e.created_at, thisWeekStart))
+          .map((e) => e.module_id)
+          .filter((id): id is string => !!id)
+      ).size,
     },
     thisMonth: {
       totalMins: safeRound(events.filter((e) => inPeriod(e.created_at, thisMonthStart)).reduce((s, e) => s + Math.min(e.duration_secs ?? 0, MAX_SESSION_SECS), 0) / 60),
-      sessions: new Set(events.filter((e) => inPeriod(e.created_at, thisMonthStart)).map((e) => e.created_at?.slice(0, 10)).filter(Boolean)).size,
-      modulesCompleted: events.filter((e) => e.event_type === 'module_complete' && inPeriod(e.created_at, thisMonthStart)).length,
+      sessions: new Set(
+        events
+          .filter((e) => inPeriod(e.created_at, thisMonthStart))
+          .map((e) => (e.created_at ? toLocalDateKeyFromISO(e.created_at) : null))
+          .filter((k): k is string => !!k)
+      ).size,
+      modulesCompleted: new Set(
+        events
+          .filter((e) => e.event_type === 'module_complete' && inPeriod(e.created_at, thisMonthStart))
+          .map((e) => e.module_id)
+          .filter((id): id is string => !!id)
+      ).size,
     },
     last30: {
       totalMins: safeRound(events.filter((e) => inPeriod(e.created_at, last30Start)).reduce((s, e) => s + Math.min(e.duration_secs ?? 0, MAX_SESSION_SECS), 0) / 60),
-      sessions: new Set(events.filter((e) => inPeriod(e.created_at, last30Start)).map((e) => e.created_at?.slice(0, 10)).filter(Boolean)).size,
-      modulesCompleted: events.filter((e) => e.event_type === 'module_complete' && inPeriod(e.created_at, last30Start)).length,
+      sessions: new Set(
+        events
+          .filter((e) => inPeriod(e.created_at, last30Start))
+          .map((e) => (e.created_at ? toLocalDateKeyFromISO(e.created_at) : null))
+          .filter((k): k is string => !!k)
+      ).size,
+      modulesCompleted: new Set(
+        events
+          .filter((e) => e.event_type === 'module_complete' && inPeriod(e.created_at, last30Start))
+          .map((e) => e.module_id)
+          .filter((id): id is string => !!id)
+      ).size,
     },
   }
 
@@ -273,10 +334,10 @@ export default async function DashboardPage() {
 
   // Hero insights: active days this week, last active, next deadline
   const activeDaysThisWeek = periodStats.thisWeek.sessions
-  const lastEventDate = eventDates[0] ? eventDates[0].slice(0, 10) : null
-  const todayStr = new Date().toISOString().slice(0, 10)
-  const lastActiveLabel = !lastEventDate ? null : lastEventDate === todayStr ? 'Active today' : (() => {
-    const diff = Math.round((Date.now() - new Date(lastEventDate).getTime()) / dayMs)
+  const lastEventDayKey = eventDayKeys[0] ?? null
+  const todayKey = toLocalDateKey(new Date())
+  const lastActiveLabel = !lastEventDayKey ? null : lastEventDayKey === todayKey ? 'Active today' : (() => {
+    const diff = Math.round((Date.now() - parseLocalDateKey(lastEventDayKey).getTime()) / dayMs)
     return diff === 1 ? 'Active yesterday' : `Last active ${diff} days ago`
   })()
   const nextDeadline = upcomingDeadlines[0]
@@ -347,7 +408,7 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: 'Day streak', value: streakDays, suffix: streakDays === 1 ? 'day' : 'days', icon: Flame, color: streakDays > 0 ? 'text-warning' : 'text-muted-foreground' },
-            { label: 'Learning time', value: totalMins < 60 ? totalMins : Math.round(totalMins / 60), suffix: totalMins < 60 ? 'mins' : 'hrs', icon: Clock, color: 'text-primary' },
+            { label: 'Learning time', value: periodStats.thisWeek.totalMins < 60 ? periodStats.thisWeek.totalMins : Math.round(periodStats.thisWeek.totalMins / 60), suffix: periodStats.thisWeek.totalMins < 60 ? 'mins' : 'hrs', icon: Clock, color: 'text-primary' },
             { label: 'Courses done', value: completed.length, suffix: '', icon: CheckCircle2, color: 'text-success' },
             { label: 'Monthly activity', value: engagementPct, suffix: '%', icon: TrendingUp, color: 'text-accent' },
           ].map(({ label, value, suffix, icon: Icon, color }) => (

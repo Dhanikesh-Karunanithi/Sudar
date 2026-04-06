@@ -39,7 +39,7 @@ export function MemoryEditor({ initialBackground, initialGoals, initialPreferenc
     <div className="bg-card border border-border rounded-card-lg p-5 space-y-5">
       <div className="space-y-1.5">
         <label className="text-sm font-medium text-card-foreground">Your background</label>
-        <p className="text-xs text-muted-foreground">What's your experience level? What do you already know?</p>
+        <p className="text-xs text-muted-foreground">What&apos;s your experience level? What do you already know?</p>
         <textarea
           value={background}
           onChange={(e) => setBackground(e.target.value)}
