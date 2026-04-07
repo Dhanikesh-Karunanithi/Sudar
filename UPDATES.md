@@ -16,6 +16,13 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-04-07 — SudarVid overhaul: loader UX, timeline editor, media generation pipeline
+- **SudarVid frontend**: Refined UI/UX in `frontend/index.html`, `frontend/assets/main.css`, and `frontend/assets/main.js` with improved timeline editing flow and richer controls for creator-side video building.
+- **Playback and loader experience**: Updated `static/js/sudarvid.js`, added dedicated loader assets (`loader.html`, `sudar_loading_v3.html`), and intro/outro template support (`sudarvid-intro-outro.html`).
+- **Generation pipeline**: Expanded backend logic across `sudarvid/core.py`, `sudarvid/server.py`, `sudarvid/media.py`, `sudarvid/content_planner.py`, and `sudarvid/image_gen.py` for stronger planning/media orchestration and model handling (`sudarvid/image_models.py`).
+- **Themes and templates**: Enhanced render templates (`templates/base.html.j2`) and theme/type wiring (`sudarvid/themes.py`, `sudarvid/types.py`) for higher quality output composition.
+- **Config/docs**: Updated `sudar_vid` README, `.env.example`, and dependency set in `requirements.txt` to match the refreshed workflow.
+
 ### 2026-03-18 — Vercel builds: login/signup Suspense; Learn UX; marketing site; docs
 - **Next.js 15 / Vercel**: Learn and Studio `/login` and `/signup` now use a **Server Component page** + **client `*Client.tsx`** wrapped in `<Suspense>` so `useSearchParams()` no longer fails static generation on Vercel.
 - **Learn**: Signup split to match login; removed temporary debug ingest calls from tutor API and chat UI.
