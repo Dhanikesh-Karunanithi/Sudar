@@ -1,6 +1,7 @@
 'use client'
 
-import { Sparkles, Plus, Loader2, FileText, ImageIcon } from 'lucide-react'
+import { Sparkles, Plus, FileText, ImageIcon } from 'lucide-react'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
 
 const AI_PROMPT_IDEAS = [
@@ -57,7 +58,7 @@ export function ContentToolsPanel({
             )}
           >
             {generatingOutline ? (
-              <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" />
+              <SudarInlineLoader size="sm" className="h-3.5 w-auto shrink-0 text-violet-400" starFill="var(--background)" />
             ) : (
               <Sparkles className="w-3.5 h-3.5 shrink-0" />
             )}

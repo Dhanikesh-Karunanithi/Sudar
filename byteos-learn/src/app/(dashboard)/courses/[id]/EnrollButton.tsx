@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { GraduationCap, PlayCircle, Loader2, BookOpen } from 'lucide-react'
+import { GraduationCap, PlayCircle, BookOpen } from 'lucide-react'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 
 interface Props {
   courseId: string
@@ -88,7 +89,7 @@ export function EnrollButton({
         className="w-full flex items-center justify-center gap-2.5 px-8 py-3 bg-primary hover:opacity-90 disabled:bg-muted disabled:cursor-not-allowed text-primary-foreground font-semibold rounded-button transition-colors shadow-lg"
       >
         {loading ? (
-          <Loader2 className="w-5 h-5 animate-spin" />
+          <SudarInlineLoader size="md" className="text-primary-foreground" starFill="var(--primary)" />
         ) : (
           <GraduationCap className="w-5 h-5" />
         )}

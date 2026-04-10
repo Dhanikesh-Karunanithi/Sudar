@@ -3,7 +3,8 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Plus, BookOpen, Clock, Globe, FileText, Search, Trash2, Loader2 } from 'lucide-react'
+import { Plus, BookOpen, Clock, Globe, FileText, Search, Trash2 } from 'lucide-react'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
 
 const statusConfig = {
@@ -152,7 +153,7 @@ export function CourseListClient({ courses: initialCourses }: { courses: CourseR
                         disabled={isDeleting}
                         className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-medium flex items-center gap-1.5"
                       >
-                        {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                        {isDeleting ? <SudarInlineLoader size="sm" className="h-3.5 w-auto text-white" starFill="#dc2626" /> : <Trash2 className="w-3.5 h-3.5" />}
                         {isDeleting ? 'Deleting...' : 'Delete'}
                       </button>
                       <button

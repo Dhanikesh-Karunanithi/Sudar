@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight,
-  BookOpen, List, X, Sparkles, Send, Loader2,
+  BookOpen, List, X, Sparkles, Send,
   ChevronDown, FileText, Video, Network,
   Layers, Zap, MessageSquarePlus, Code, Quote, Pin, PinOff, PanelLeftClose, Mic, Maximize2, Minimize2, Headphones, Gamepad2,
   User, Clock,
@@ -22,6 +22,7 @@ import { RichModuleContent } from '@/components/learn/RichModuleContent'
 import { ReadAlongControls } from '@/components/learn/ReadAlongControls'
 import { CourseThemeProvider } from '@/components/learn/CourseThemeProvider'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { GenerativeBlockRenderer } from '@/components/tutor/GenerativeBlockRenderer'
 import { ChatMarkdown } from '@/components/tutor/ChatMarkdown'
 import { isRichContent, isScormContent, type RichContent } from '@/types/content'
@@ -1656,7 +1657,9 @@ export function CourseViewer({
                       disabled={consentLoading}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60"
                     >
-                      {consentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                      {consentLoading ? (
+                        <SudarInlineLoader size="sm" className="text-primary-foreground" starFill="var(--primary)" />
+                      ) : null}
                       I understand — enable personalization
                     </button>
                   </div>
@@ -1686,7 +1689,7 @@ export function CourseViewer({
                     >
                       {personalizeLoading ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <SudarInlineLoader size="sm" className="text-primary-foreground" starFill="var(--primary)" />
                           Personalizing…
                         </>
                       ) : (
@@ -1958,7 +1961,7 @@ export function CourseViewer({
                               className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-background text-sm hover:bg-muted/80 disabled:opacity-50"
                             >
                               {modulePersonalizeLoading && modulePersonalizeMode === 'role_explain' ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <SudarInlineLoader size="sm" />
                               ) : (
                                 <User className="w-4 h-4" />
                               )}
@@ -1973,7 +1976,7 @@ export function CourseViewer({
                               className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-background text-sm hover:bg-muted/80 disabled:opacity-50"
                             >
                               {modulePersonalizeLoading && modulePersonalizeMode === 'brief_3min' ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <SudarInlineLoader size="sm" />
                               ) : (
                                 <Clock className="w-4 h-4" />
                               )}
@@ -2369,7 +2372,7 @@ export function CourseViewer({
                     disabled={!input.trim() || thinking}
                     className="p-2 bg-primary hover:bg-primary/100 disabled:bg-muted disabled:cursor-not-allowed text-white rounded-xl transition-all shrink-0"
                   >
-                    {thinking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    {thinking ? <SudarInlineLoader size="sm" /> : <Send className="w-4 h-4" />}
                   </button>
                 </div>
                 <p className="text-center text-muted-foreground text-[10px] mt-1.5">Sudar knows the full course + your learning history</p>

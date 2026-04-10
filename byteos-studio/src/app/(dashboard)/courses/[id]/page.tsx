@@ -5,10 +5,11 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, Plus, Trash2, GripVertical, Globe, FileText,
-  ChevronDown, ChevronUp, Loader2, CheckCircle2, Sparkles, Wand2, LayoutList, Zap,
+  ChevronDown, ChevronUp, CheckCircle2, Sparkles, Wand2, LayoutList, Zap,
   CircleHelp, RefreshCcw, Eye, Timer, Palette, Video, X, Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SudarInlineLoader, SudarLoadingFrost } from '@/components/branding/SudarBrandLoader'
 import { useSidebarContent } from '@/contexts/SidebarContentContext'
 import { ContentToolsPanel } from '@/components/content/ContentToolsPanel'
 import { ProjectMediaPeek } from '@/components/content/ProjectMediaPeek'
@@ -592,11 +593,13 @@ export default function CourseEditorPage() {
     }
   }
 
-  if (loading) return (
-    <div className="flex items-center justify-center h-full">
-      <Loader2 className="w-6 h-6 text-slate-500 animate-spin" />
-    </div>
-  )
+  if (loading) {
+    return (
+      <div className="relative flex min-h-[min(50vh,420px)] items-stretch justify-center p-8 overflow-hidden rounded-2xl">
+        <SudarLoadingFrost layout="block" label="Loading course…" className="min-h-[280px] w-full max-w-lg border-slate-800/80" />
+      </div>
+    )
+  }
   if (!course) return null
 
   const isPublished = course.status === 'published'
@@ -610,7 +613,7 @@ export default function CourseEditorPage() {
         </Link>
         <div className="flex items-center gap-2">
           {saved && <span className="flex items-center gap-1.5 text-green-400 text-xs"><CheckCircle2 className="w-3.5 h-3.5" />Saved</span>}
-          {saving && <Loader2 className="w-3.5 h-3.5 text-slate-500 animate-spin" />}
+          {saving && <SudarInlineLoader size="sm" className="h-3.5 w-auto text-slate-500" starFill="var(--background)" />}
           {course.modules.length > 0 && (
             <>
               <button
@@ -637,7 +640,7 @@ export default function CourseEditorPage() {
               isPublished ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-green-600 hover:bg-green-500 text-white'
             )}
           >
-            {publishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isPublished ? <FileText className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+            {publishing ? <SudarInlineLoader size="sm" className="h-3.5 w-auto text-slate-500" starFill="var(--background)" /> : isPublished ? <FileText className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
             {isPublished ? 'Unpublish' : 'Publish'}
           </button>
           {showDeleteConfirm ? (
@@ -649,7 +652,7 @@ export default function CourseEditorPage() {
                 disabled={deletingCourse}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-500 text-white disabled:opacity-50"
               >
-                {deletingCourse ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                {deletingCourse ? <SudarInlineLoader size="sm" className="h-3.5 w-auto text-slate-500" starFill="var(--background)" /> : <Trash2 className="w-3.5 h-3.5" />}
                 {deletingCourse ? 'Deleting...' : 'Yes, delete'}
               </button>
               <button
@@ -974,7 +977,7 @@ export default function CourseEditorPage() {
               <div className="ml-6 text-[11px]">
                 {generatingVideo ? (
                   <span className="flex items-center gap-1.5 text-indigo-400">
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <SudarInlineLoader size="sm" className="h-3 w-auto text-slate-500" starFill="var(--background)" />
                     {videoGenStep === 'script' ? 'Generating script…' : 'Generating audio…'}
                   </span>
                 ) : (course.settings?.video_scenes?.length ?? 0) > 0 ? (
@@ -1026,7 +1029,7 @@ export default function CourseEditorPage() {
               <div className="ml-6 text-[11px]">
                 {generatingPodcast ? (
                   <span className="flex items-center gap-1.5 text-indigo-400">
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <SudarInlineLoader size="sm" className="h-3 w-auto text-slate-500" starFill="var(--background)" />
                     {podcastGenStep === 'script' ? 'Generating script…' : 'Generating audio…'}
                   </span>
                 ) : (course.settings?.podcast_dialogue?.length ?? 0) > 0 ? (
@@ -1068,7 +1071,7 @@ export default function CourseEditorPage() {
       <div className="space-y-3">
         {generatingAllModules && (
           <div className="flex items-center gap-3 px-4 py-3 bg-violet-950/30 border border-violet-500/20 rounded-xl text-violet-200 text-sm">
-            <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+            <SudarInlineLoader size="sm" className="shrink-0 text-slate-500" starFill="var(--background)" />
             <div className="flex flex-col gap-0.5">
               <span className="font-medium">Generating curriculum-aware content…</span>
               {autoFillProgress && (
@@ -1088,7 +1091,7 @@ export default function CourseEditorPage() {
                 disabled={generatingOutline}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 text-violet-300 text-xs font-medium rounded-lg transition-all"
               >
-                {generatingOutline ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                {generatingOutline ? <SudarInlineLoader size="sm" className="h-3.5 w-auto text-violet-400" starFill="var(--background)" /> : <Sparkles className="w-3.5 h-3.5" />}
                 {generatingOutline ? 'Generating outline...' : 'Generate outline with AI'}
               </button>
             )}
@@ -1113,7 +1116,7 @@ export default function CourseEditorPage() {
                 disabled={generatingOutline}
                 className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors"
               >
-                {generatingOutline ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                {generatingOutline ? <SudarInlineLoader size="sm" className="text-violet-400" starFill="var(--background)" /> : <Sparkles className="w-4 h-4" />}
                 {generatingOutline ? 'Generating...' : 'Generate outline with AI'}
               </button>
               <button onClick={() => addModule()} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors">
@@ -1208,7 +1211,7 @@ export default function CourseEditorPage() {
                         )}
                       >
                         {generatingModule === mod.id ? (
-                          <><Loader2 className="w-3.5 h-3.5 animate-spin" />Generating...</>
+                          <><SudarInlineLoader size="sm" className="h-3.5 w-auto text-violet-400" starFill="var(--background)" />Generating...</>
                         ) : includeWebResearch ? (
                           <><Sparkles className="w-3.5 h-3.5" />Research &amp; generate</>
                         ) : (
@@ -1282,7 +1285,7 @@ export default function CourseEditorPage() {
                     {generatingModule === mod.id && (
                       <div className="absolute inset-0 bg-slate-900/80 rounded-lg flex items-center justify-center z-10">
                         <div className="flex items-center gap-2 text-violet-300 text-sm">
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <SudarInlineLoader size="sm" className="text-violet-400" starFill="var(--background)" />
                           Writing module content...
                         </div>
                       </div>
@@ -1376,7 +1379,7 @@ export default function CourseEditorPage() {
                         className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 border border-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-all"
                       >
                         {generatingQuiz === mod.id
-                          ? <><Loader2 className="w-3 h-3 animate-spin" />Generating...</>
+                          ? <><SudarInlineLoader size="sm" className="h-3 w-auto text-violet-400" starFill="var(--background)" />Generating...</>
                           : mod.quiz?.questions?.length
                             ? <><RefreshCcw className="w-3 h-3" />Regenerate quiz</>
                             : <><CircleHelp className="w-3 h-3" />Generate quiz</>}

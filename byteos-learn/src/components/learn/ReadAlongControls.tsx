@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Volume2, Square, Loader2 } from 'lucide-react'
+import { Volume2, Square } from 'lucide-react'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
 import { splitSentences } from './ReadingBodyWithSentences'
 
@@ -178,7 +179,7 @@ export function ReadAlongControls({
         )}
       >
         {loading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <SudarInlineLoader size="sm" />
         ) : playing ? (
           <Square className="w-4 h-4" />
         ) : (

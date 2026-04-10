@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Settings, Loader2, Volume2, Save } from 'lucide-react'
+import { Settings, Volume2, Save } from 'lucide-react'
+import { SudarInlineLoader, SudarLoadingFrost } from '@/components/branding/SudarBrandLoader'
 import { ModelPicker, type ModelPickerOption } from '@/components/ui/ModelPicker'
 import { trackMascotEvent } from '@/lib/mascot/tracking'
 import type { MascotId, MascotIntensity, MascotMode, MascotSupportStyle } from '@/types/mascot'
@@ -83,8 +84,8 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[200px]">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <div className="relative p-8 min-h-[min(50vh,420px)] overflow-hidden rounded-2xl">
+        <SudarLoadingFrost label="Loading preferences…" className="rounded-2xl" />
       </div>
     )
   }
@@ -109,7 +110,11 @@ export default function SettingsPage() {
           disabled={saving}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground text-sm font-medium transition-colors"
         >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {saving ? (
+            <SudarInlineLoader size="sm" className="text-primary-foreground" starFill="var(--primary)" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
           {saved ? 'Saved' : 'Save'}
         </button>
       </div>

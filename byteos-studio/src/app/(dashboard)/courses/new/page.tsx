@@ -3,9 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, Sparkles, LayoutList, CheckCircle2, Loader2, Package, FileText, Upload } from 'lucide-react'
+import { ArrowLeft, BookOpen, Sparkles, LayoutList, CheckCircle2, Package, FileText, Upload } from 'lucide-react'
+import { SudarInlineLoader, SudarBrandLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
-import { SudarBrandLoader } from '@/components/branding/SudarBrandLoader'
 
 const difficulties = [
   { value: 'beginner', label: 'Beginner', desc: 'No prior knowledge required' },
@@ -183,7 +183,7 @@ export default function NewCoursePage() {
                 {i < aiStep ? (
                   <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
                 ) : (
-                  <Loader2 className="w-4 h-4 text-violet-400 animate-spin shrink-0" />
+                  <SudarInlineLoader size="sm" className="shrink-0 text-violet-400" starFill="var(--background)" />
                 )}
                 {step}
               </div>
@@ -362,7 +362,7 @@ export default function NewCoursePage() {
               <div className="flex items-center gap-3 pt-2">
                 <button type="submit" disabled={loading || (!documentFile && !documentUrl.trim())}
                   className="flex-1 py-2.5 font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-sm flex items-center justify-center gap-2">
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {loading ? <SudarInlineLoader size="sm" className="text-slate-500" starFill="var(--background)" /> : <Upload className="w-4 h-4" />}
                   {loading ? 'Generating course...' : 'Generate course from document'}
                 </button>
                 <Link href="/courses" className="px-4 py-2.5 text-slate-400 hover:text-slate-200 text-sm font-medium rounded-lg hover:bg-slate-800 transition-all">Cancel</Link>
@@ -385,7 +385,7 @@ export default function NewCoursePage() {
               <div className="flex items-center gap-3 pt-2">
                 <button type="submit" disabled={loading || !scormFile}
                   className="flex-1 py-2.5 font-medium rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-sm flex items-center justify-center gap-2">
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" />}
+                  {loading ? <SudarInlineLoader size="sm" className="text-slate-500" starFill="var(--background)" /> : <Package className="w-4 h-4" />}
                   {loading ? 'Importing...' : 'Import SCORM'}
                 </button>
                 <Link href="/courses" className="px-4 py-2.5 text-slate-400 hover:text-slate-200 text-sm font-medium rounded-lg hover:bg-slate-800 transition-all">Cancel</Link>
@@ -456,7 +456,7 @@ export default function NewCoursePage() {
                     ? 'bg-violet-600 hover:bg-violet-500 disabled:bg-slate-800 disabled:text-slate-600 text-white'
                     : 'bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white'
                 )}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : mode === 'ai' ? <Sparkles className="w-4 h-4" /> : <BookOpen className="w-4 h-4" />}
+                {loading ? <SudarInlineLoader size="sm" className="text-white" starFill="#4f46e5" /> : mode === 'ai' ? <Sparkles className="w-4 h-4" /> : <BookOpen className="w-4 h-4" />}
                 {loading ? 'Creating...' : mode === 'ai' ? `Generate ${numModules}-module course` : 'Create course'}
               </button>
               <Link href="/courses" className="px-4 py-2.5 text-slate-400 hover:text-slate-200 text-sm font-medium rounded-lg hover:bg-slate-800 transition-all">

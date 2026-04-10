@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { Users, Loader2, AlertCircle, UserPlus, ChevronRight, Mail, Upload, FileDown, UserMinus, Shield, Ban, CheckSquare, Square } from 'lucide-react'
+import { Users, AlertCircle, UserPlus, ChevronRight, Mail, Upload, FileDown, UserMinus, Shield, Ban, CheckSquare, Square } from 'lucide-react'
+import { SudarLoadingFrost } from '@/components/branding/SudarBrandLoader'
 
 interface UserRow {
   id: string
@@ -67,8 +68,8 @@ export default function UsersPage() {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[200px]">
-        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+      <div className="relative p-8 min-h-[min(50vh,420px)] overflow-hidden rounded-2xl">
+        <SudarLoadingFrost label="Loading users…" className="rounded-2xl" />
       </div>
     )
   }

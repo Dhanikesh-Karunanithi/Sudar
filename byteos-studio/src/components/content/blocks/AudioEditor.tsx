@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { GripVertical, Trash2, Mic, Upload, Loader2, Search, X } from 'lucide-react'
+import { GripVertical, Trash2, Mic, Upload, Search, X } from 'lucide-react'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
 import type { EditorBlockAudio } from '@/types/content'
 
@@ -96,7 +97,7 @@ export function AudioBlockRow({
             disabled={uploadLoading}
             className="flex items-center gap-1.5 px-2 py-1 rounded text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 disabled:opacity-60"
           >
-            {uploadLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+            {uploadLoading ? <SudarInlineLoader size="sm" className="h-3 w-auto text-slate-500" starFill="var(--background)" /> : <Upload className="w-3 h-3" />}
             Upload audio
           </button>
         )}
@@ -179,7 +180,7 @@ export function AudioBlockRow({
                   disabled={audioSearchLoading || !audioQuery.trim()}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white"
                 >
-                  {audioSearchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  {audioSearchLoading ? <SudarInlineLoader size="sm" className="text-slate-500" starFill="var(--background)" /> : <Search className="w-4 h-4" />}
                   Search
                 </button>
               </div>

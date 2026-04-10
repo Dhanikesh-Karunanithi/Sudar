@@ -1,81 +1,103 @@
+'use client'
+
 import { cn } from '@/lib/utils'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
+import { SudarLoadingFrost, SudarPremiumMark } from '@/components/branding/SudarPremiumLoader'
 
+export { SudarLoadingFrost } from '@/components/branding/SudarPremiumLoader'
+
+/** Brand inline wait (replaces spinner icons in buttons and compact UI) */
+export function SudarInlineLoader({
+  className,
+  starFill,
+  size = 'sm',
+}: {
+  className?: string
+  /** Match surface behind the star “hole” (e.g. `var(--primary)` on primary buttons) */
+  starFill?: string
+  size?: 'sm' | 'md' | 'lg'
+}) {
+  const dim = size === 'lg' ? 'h-6 w-auto' : size === 'md' ? 'h-5 w-auto' : 'h-4 w-auto'
+  return (
+    <SudarLogoMark
+      className={cn(dim, 'shrink-0 text-primary', className)}
+      starFill={starFill ?? 'var(--background)'}
+      motion="loading"
+      aria-hidden
+    />
+  )
+}
+
+/** Compact row for `loading.tsx` — scaled premium mark + frost bar */
 export function SudarLoadingStrip({
   label = 'Loading…',
   className,
-  starFill = 'var(--background)',
-  markClassName,
 }: {
   label?: string
   className?: string
-  starFill?: string
-  markClassName?: string
 }) {
   return (
     <div
-      className={cn('flex items-center gap-3 text-muted-foreground', className)}
+      className={cn(
+        'flex items-center gap-4 rounded-xl px-4 py-3',
+        'bg-background/45 dark:bg-background/55 backdrop-blur-xl backdrop-saturate-150',
+        'border border-border/30',
+        className
+      )}
       role="status"
       aria-live="polite"
       aria-busy="true"
     >
-      <SudarLogoMark
-        className={cn('h-7 w-auto shrink-0 text-primary', markClassName)}
-        starFill={starFill}
-        motion="loading"
-      />
-      <span className="text-sm font-medium">{label}</span>
+      <div className="relative h-11 w-[100px] shrink-0 overflow-hidden flex items-center justify-center">
+        <div className="absolute left-1/2 top-1/2 w-[360px] h-[220px] -translate-x-1/2 -translate-y-1/2 scale-[0.22]">
+          <SudarPremiumMark className="min-h-0 min-w-0 [&_.sudar-premium-scene]:max-w-none" />
+        </div>
+      </div>
+      <span className="text-sm font-medium text-muted-foreground">{label}</span>
     </div>
   )
 }
 
 type Size = 'sm' | 'md' | 'lg'
 
-const logoSize: Record<Size, string> = {
-  sm: 'h-8 w-auto',
-  md: 'h-11 w-auto',
-  lg: 'h-14 w-auto',
+const sceneScale: Record<Size, string> = {
+  sm: 'scale-[0.72]',
+  md: 'scale-[0.88]',
+  lg: 'scale-[1]',
 }
 
 export function SudarBrandLoader({
   message,
   className,
   size = 'md',
-  starFill = 'var(--background)',
-  markClassName,
-  glowClassName,
+  frostClassName,
 }: {
   message?: string
   className?: string
   size?: Size
-  starFill?: string
-  markClassName?: string
-  glowClassName?: string
+  /** Extra classes on the outer wrapper */
+  frostClassName?: string
 }) {
   return (
     <div
-      className={cn('flex flex-col items-center justify-center gap-3', className)}
+      className={cn(
+        'relative flex flex-col items-stretch overflow-hidden rounded-2xl min-h-[260px] w-full',
+        frostClassName
+      )}
       role="status"
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="relative grid place-items-center">
-        <div
-          className={cn(
-            'pointer-events-none absolute inset-[-12px] rounded-[1.75rem] bg-primary/25 motion-safe:animate-sudar-loader-glow blur-md motion-reduce:hidden',
-            glowClassName
-          )}
-          aria-hidden
-        />
-        <SudarLogoMark
-          className={cn('relative text-primary', logoSize[size], markClassName)}
-          starFill={starFill}
-          motion="loading"
-        />
-      </div>
-      {message ? (
-        <p className="text-sm text-muted-foreground text-center max-w-xs">{message}</p>
-      ) : null}
+      <SudarLoadingFrost
+        variant="section"
+        layout="block"
+        label={message}
+        className={cn('min-h-[260px] border-border/30', className)}
+      >
+        <div className={cn('origin-center motion-reduce:scale-100', sceneScale[size])}>
+          <SudarPremiumMark className="min-h-0" />
+        </div>
+      </SudarLoadingFrost>
     </div>
   )
 }

@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Video, Loader2, RotateCcw, Sparkles, AlertCircle, Maximize2, Minimize2 } from 'lucide-react'
+import { Video, RotateCcw, Sparkles, AlertCircle, Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SudarLoadingFrost, SudarPremiumMark } from '@/components/branding/SudarPremiumLoader'
 
 type Phase = 'idle' | 'checking' | 'generating' | 'done' | 'error'
 
@@ -213,9 +214,8 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
 
   if (phase === 'checking') {
     return (
-      <div className="max-w-xl mx-auto py-12 flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        <p className="text-sm text-muted-foreground">Checking previous video…</p>
+      <div className="relative max-w-xl mx-auto min-h-[280px] overflow-hidden rounded-2xl py-12">
+        <SudarLoadingFrost layout="block" label="Checking previous video…" className="min-h-[280px] border-border/30" />
       </div>
     )
   }
@@ -224,22 +224,26 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
 
   if (phase === 'generating') {
     return (
-      <div className="max-w-xl mx-auto py-12 flex flex-col items-center justify-center gap-6">
-        <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-          <Loader2 className="w-7 h-7 text-primary animate-spin" />
-        </div>
-        <div className="w-full space-y-3">
-          <p className="text-sm font-medium text-card-foreground text-center">{progressStep}</p>
-          <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full transition-all duration-700"
-              style={{ width: `${progressPct}%` }}
-            />
+      <div className="relative max-w-xl mx-auto min-h-[320px] overflow-hidden rounded-2xl py-10">
+        <SudarLoadingFrost
+          layout="block"
+          className="min-h-[320px] gap-6 border-border/30 !justify-start pt-10"
+          ariaLabel="Generating your Sudar video"
+        >
+          <SudarPremiumMark className="min-h-0 scale-90 sm:scale-100" />
+          <div className="w-full max-w-md space-y-3 px-2">
+            <p className="text-sm font-medium text-card-foreground text-center">{progressStep}</p>
+            <div className="w-full h-2 rounded-full bg-muted/80 overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-700"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              Generating a slide deck for <span className="font-medium text-card-foreground">{moduleTitle}</span>…
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground text-center">
-            Generating a slide deck for <span className="font-medium text-card-foreground">{moduleTitle}</span>…
-          </p>
-        </div>
+        </SudarLoadingFrost>
       </div>
     )
   }

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Plug, Key, Code, Copy, Check, ExternalLink, MessageSquare, LayoutDashboard, Plus, Trash2, Loader2, Building2, Users, Database, Shield, ListOrdered } from 'lucide-react'
+import { Plug, Key, Code, Copy, Check, ExternalLink, MessageSquare, LayoutDashboard, Plus, Trash2, Building2, Users, Database, Shield, ListOrdered } from 'lucide-react'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { IntegrationVisualGuide } from '@/components/integrations/IntegrationVisualGuide'
 
 const LEARN_BASE_URL =
@@ -237,7 +238,7 @@ export default function IntegrationsPage() {
                 disabled={creating}
                 className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 disabled:opacity-50"
               >
-                {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                {creating ? <SudarInlineLoader size="sm" className="text-white" starFill="#4f46e5" /> : <Plus className="w-4 h-4" />}
                 Create key
               </button>
             </div>
@@ -391,7 +392,7 @@ export default function IntegrationsPage() {
               disabled={embedLoading}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 disabled:opacity-50"
             >
-              {embedLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {embedLoading ? <SudarInlineLoader size="sm" className="text-violet-400" starFill="var(--background)" /> : null}
               Get embed URL
             </button>
             {embedError && <p className="text-red-400 text-sm mt-2">{embedError}</p>}

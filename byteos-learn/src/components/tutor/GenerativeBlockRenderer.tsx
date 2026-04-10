@@ -5,7 +5,8 @@ import Link from 'next/link'
 import type { TutorBlock, TutorAction } from '@/types/tutor'
 import type { QuizBlockPayload, QuizOption } from '@/types/tutor'
 import { TUTOR_BLOCK_TYPES } from '@/types/tutor'
-import { ExternalLink, Loader2, CheckCircle2, XCircle, RefreshCw, Trophy, Brain } from 'lucide-react'
+import { ExternalLink, CheckCircle2, XCircle, RefreshCw, Trophy, Brain } from 'lucide-react'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
 import { ChatMarkdown } from './ChatMarkdown'
 
@@ -111,7 +112,7 @@ function WorkflowStatusBlock({ payload }: { payload: Record<string, unknown> }) 
   return (
     <div className="rounded-xl border border-border bg-card p-3 mt-2 space-y-2">
       <div className="flex items-center gap-2">
-        {status === 'running' && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+        {status === 'running' && <SudarInlineLoader size="sm" />}
         {status === 'done' && <CheckCircle2 className="w-4 h-4 text-green-600" />}
         {status === 'error' && <XCircle className="w-4 h-4 text-destructive" />}
         <span className="font-medium text-card-foreground">{name}</span>

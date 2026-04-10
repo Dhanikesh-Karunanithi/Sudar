@@ -6,7 +6,6 @@ import {
   Settings,
   Building2,
   BarChart2,
-  Loader2,
   Plus,
   Trash2,
   Save,
@@ -16,6 +15,7 @@ import {
   Server,
   BookOpen,
 } from 'lucide-react'
+import { SudarInlineLoader, SudarLoadingFrost } from '@/components/branding/SudarBrandLoader'
 import type { PerformanceConfig, KpiDefinition, TermDefinition } from '@/types/performance'
 import { ModelPicker, type ModelPickerOption } from '@/components/ui/ModelPicker'
 
@@ -194,8 +194,8 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[200px]">
-        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+      <div className="relative p-8 min-h-[min(50vh,420px)] overflow-hidden rounded-2xl">
+        <SudarLoadingFrost label="Loading settings…" className="rounded-2xl" />
       </div>
     )
   }
@@ -236,7 +236,11 @@ export default function SettingsPage() {
           disabled={saving}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-medium"
         >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {saving ? (
+            <SudarInlineLoader size="sm" className="text-white" starFill="#4f46e5" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
           {saved ? 'Saved' : 'Save'}
         </button>
       </div>
@@ -605,7 +609,7 @@ export default function SettingsPage() {
                   }}
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-200 text-sm"
                 >
-                  {privateAiTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  {privateAiTesting ? <SudarInlineLoader size="sm" className="text-violet-400" starFill="var(--background)" /> : null}
                   Test connection
                 </button>
                 {privateAiTestStatus && (

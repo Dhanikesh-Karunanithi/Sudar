@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Users, Building2, Loader2, AlertCircle, Trash2 } from 'lucide-react'
+import { Users, Building2, AlertCircle, Trash2 } from 'lucide-react'
+import { SudarLoadingFrost } from '@/components/branding/SudarBrandLoader'
 
 interface PlatformUser {
   id: string
@@ -114,7 +115,7 @@ export default function SystemAdminPage() {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[200px]">
-        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+        <SudarLoadingFrost label="Loading system…" className="rounded-2xl min-h-[200px]" layout="block" />
       </div>
     )
   }

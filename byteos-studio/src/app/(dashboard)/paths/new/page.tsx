@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Route, Loader2, Zap, Lock, Award } from 'lucide-react'
+import { ArrowLeft, Route, Zap, Lock, Award } from 'lucide-react'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
 
 export default function NewPathPage() {
@@ -95,7 +96,7 @@ export default function NewPathPage() {
         <div className="flex items-center gap-3 pt-2">
           <button type="submit" disabled={loading || !title.trim()}
             className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2">
-            {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Creating...</> : <><Route className="w-4 h-4" />Create path</>}
+            {loading ? <><SudarInlineLoader size="sm" className="text-white" starFill="#4f46e5" />Creating...</> : <><Route className="w-4 h-4" />Create path</>}
           </button>
           <Link href="/paths" className="px-4 py-2.5 text-slate-400 hover:text-slate-200 text-sm font-medium rounded-lg hover:bg-slate-800 transition-all">Cancel</Link>
         </div>

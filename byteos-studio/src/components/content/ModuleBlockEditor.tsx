@@ -19,7 +19,8 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, Trash2, FileText, ChevronDown, CircleHelp, Sparkles, Loader2, Search, X, Upload, Video, ListOrdered, LayoutList, Mic, Layers, Shuffle, ImageIcon, AlignLeft, AlignCenter, AlignRight, Maximize2, ExternalLink } from 'lucide-react'
+import { GripVertical, Trash2, FileText, ChevronDown, CircleHelp, Sparkles, Search, X, Upload, Video, ListOrdered, LayoutList, Mic, Layers, Shuffle, ImageIcon, AlignLeft, AlignCenter, AlignRight, Maximize2, ExternalLink } from 'lucide-react'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
 import type { ModuleContent, EditorBlock, EditorBlockType, ImageAlignment, ImageSize } from '@/types/content'
 import {
@@ -877,7 +878,7 @@ export function ModuleBlockEditor({
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAssistEdit(instruction) }}
               className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-700 disabled:opacity-60"
             >
-              {assistLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" /> : <Sparkles className="w-3.5 h-3.5 shrink-0 text-violet-400" />}
+              {assistLoading ? <SudarInlineLoader size="sm" className="h-3.5 w-auto shrink-0 text-violet-400" starFill="var(--background)" /> : <Sparkles className="w-3.5 h-3.5 shrink-0 text-violet-400" />}
               {label}
             </button>
           ))}
@@ -949,7 +950,7 @@ export function ModuleBlockEditor({
             disabled={disabled || uploadLoading}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all disabled:opacity-60"
           >
-            {uploadLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+            {uploadLoading ? <SudarInlineLoader size="sm" className="h-3 w-auto text-slate-500" starFill="var(--background)" /> : <Upload className="w-3 h-3" />}
             Upload image
           </button>
         </div>
@@ -992,7 +993,7 @@ export function ModuleBlockEditor({
                   disabled={mediaLoading || !mediaQuery.trim()}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white"
                 >
-                  {mediaLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  {mediaLoading ? <SudarInlineLoader size="sm" className="text-slate-500" starFill="var(--background)" /> : <Search className="w-4 h-4" />}
                   Search
                 </button>
               </div>
@@ -1058,7 +1059,7 @@ export function ModuleBlockEditor({
                   disabled={videoLoading || !videoQuery.trim()}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white"
                 >
-                  {videoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  {videoLoading ? <SudarInlineLoader size="sm" className="text-slate-500" starFill="var(--background)" /> : <Search className="w-4 h-4" />}
                   Search
                 </button>
               </div>

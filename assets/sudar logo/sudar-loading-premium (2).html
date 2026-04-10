@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sudar</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #0c0c0e;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ── Soft ambient blobs the glass refracts ── */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(70px);
+}
+.orb-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(100,100,200,0.22) 0%, transparent 70%);
+  top: -100px; right: -80px;
+}
+.orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(60,80,180,0.15) 0%, transparent 70%);
+  bottom: -80px; left: -60px;
+}
+.orb-3 {
+  width: 280px; height: 280px;
+  background: radial-gradient(circle, rgba(160,160,255,0.10) 0%, transparent 70%);
+  top: 38%; left: 28%;
+}
+
+/* ── Scene ── */
+.scene {
+  position: relative;
+  width: 360px;
+  height: 220px;
+}
+
+/* ── Glass pill shared style ── */
+.pill {
+  position: absolute;
+  border-radius: 999px;
+  height: 64px;
+  width: 170px;
+
+  /* Glass body — very low opacity tint */
+  background: linear-gradient(
+    148deg,
+    rgba(255,255,255,0.14) 0%,
+    rgba(255,255,255,0.04) 45%,
+    rgba(255,255,255,0.07) 100%
+  );
+
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+
+  /* The whole glass look lives in these shadows */
+  box-shadow:
+    /* outer rim — barely-there border */
+    inset 0 0 0 0.5px rgba(255,255,255,0.20),
+    /* top-left bright catch — main specular */
+    inset 2px 3px 0px -1.5px rgba(255,255,255,0.60),
+    /* bottom-right faint second edge */
+    inset -1.5px -2px 0px -1.5px rgba(255,255,255,0.10),
+    /* inner depth shadow bottom */
+    inset 0px -8px 12px -5px rgba(0,0,0,0.40),
+    /* inner soft top glow */
+    inset 0px 5px 8px -4px rgba(255,255,255,0.10),
+    /* outer soft drop */
+    0px 10px 36px rgba(0,0,0,0.50),
+    0px 2px 8px rgba(0,0,0,0.30);
+
+  opacity: 0;
+}
+
+/* Pill positioning */
+.pill--top {
+  top: 36px;
+  left: 50%;
+  transform: translateX(calc(-50% + 20px));
+  z-index: 2;
+}
+.pill--bottom {
+  top: 100px;
+  left: 50%;
+  transform: translateX(calc(-50% - 20px));
+  z-index: 1;
+}
+
+/* Top specular streak */
+.pill::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 22px;
+  right: 22px;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255,255,255,0.55) 25%,
+    rgba(255,255,255,0.70) 50%,
+    rgba(255,255,255,0.55) 75%,
+    transparent
+  );
+}
+
+/* Bottom inner shadow line */
+.pill::after {
+  content: '';
+  position: absolute;
+  bottom: 7px;
+  left: 22px;
+  right: 22px;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(0,0,0,0.25) 30%,
+    rgba(0,0,0,0.30) 50%,
+    rgba(0,0,0,0.25) 70%,
+    transparent
+  );
+}
+
+/* ── Star ── */
+.star {
+  position: absolute;
+  left: 50%;
+  top: 100px;
+  width: 90px;
+  height: 90px;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* ── SVG draw-on overlay ── */
+#svg-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 30;
+  overflow: visible;
+}
+
+.pill-stroke {
+  fill: none;
+  stroke: rgba(255,255,255,0.45);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#stroke-a {
+  stroke-dasharray: 610;
+  stroke-dashoffset: 610;
+  animation: draw-stroke 0.8s cubic-bezier(0.45,0,0.2,1) 0.15s forwards;
+}
+#stroke-b {
+  stroke-dasharray: 610;
+  stroke-dashoffset: 610;
+  animation: draw-stroke 0.8s cubic-bezier(0.45,0,0.2,1) 0.5s forwards;
+}
+@keyframes draw-stroke {
+  0%   { stroke-dashoffset: 610; opacity: 1; }
+  75%  { opacity: 0.5; }
+  100% { stroke-dashoffset: 0;   opacity: 0; }
+}
+
+#guide {
+  stroke: rgba(255,255,255,0.10);
+  stroke-width: 0.5;
+  stroke-dasharray: 4 7;
+  opacity: 0;
+  animation: guide-flash 1.1s ease 0.05s forwards;
+}
+@keyframes guide-flash {
+  0%   { opacity: 0; }
+  18%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ── Pill entrance ── */
+.pill--top {
+  animation:
+    pill-in-top    0.6s cubic-bezier(0.22,1,0.36,1) 0.85s forwards,
+    glass-breathe  3.8s ease-in-out 2.2s infinite;
+}
+.pill--bottom {
+  animation:
+    pill-in-bottom 0.6s cubic-bezier(0.22,1,0.36,1) 1.15s forwards,
+    glass-breathe  3.8s ease-in-out 2.7s infinite;
+}
+
+@keyframes pill-in-top {
+  0%   { opacity: 0; transform: translateX(calc(-50% + 20px)) scale(0.92); filter: blur(6px); }
+  100% { opacity: 1; transform: translateX(calc(-50% + 20px)) scale(1);    filter: blur(0); }
+}
+@keyframes pill-in-bottom {
+  0%   { opacity: 0; transform: translateX(calc(-50% - 20px)) scale(0.92); filter: blur(6px); }
+  100% { opacity: 1; transform: translateX(calc(-50% - 20px)) scale(1);    filter: blur(0); }
+}
+
+/* Subtle shimmer — shifts the specular */
+@keyframes glass-breathe {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 0.5px rgba(255,255,255,0.20),
+      inset 2px 3px 0px -1.5px rgba(255,255,255,0.60),
+      inset -1.5px -2px 0px -1.5px rgba(255,255,255,0.10),
+      inset 0px -8px 12px -5px rgba(0,0,0,0.40),
+      inset 0px 5px 8px -4px rgba(255,255,255,0.10),
+      0px 10px 36px rgba(0,0,0,0.50),
+      0px 2px 8px rgba(0,0,0,0.30);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 0.5px rgba(255,255,255,0.26),
+      inset 2px 3px 0px -1.5px rgba(255,255,255,0.72),
+      inset -1.5px -2px 0px -1.5px rgba(255,255,255,0.16),
+      inset 0px -8px 12px -5px rgba(0,0,0,0.30),
+      inset 0px 5px 8px -4px rgba(255,255,255,0.16),
+      0px 14px 44px rgba(0,0,0,0.42),
+      0px 2px 8px rgba(0,0,0,0.22);
+  }
+}
+
+/* ── Star ignition — clean fade + gentle scale, no rotation ── */
+.star {
+  animation: star-ignite 0.7s cubic-bezier(0.22,1,0.36,1) 1.65s forwards;
+  filter: drop-shadow(0 0 8px rgba(255,255,255,0.55)) drop-shadow(0 0 20px rgba(200,210,255,0.30));
+}
+@keyframes star-ignite {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.72); filter: drop-shadow(0 0 0px rgba(255,255,255,0)); }
+  60%  { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1);    filter: drop-shadow(0 0 8px rgba(255,255,255,0.55)) drop-shadow(0 0 20px rgba(200,210,255,0.30)); }
+}
+
+/* ── Whole wrapper fade loop ── */
+#wrapper { animation: loop-fade 5.4s ease-in-out infinite; }
+@keyframes loop-fade {
+  0%   { opacity: 0; }
+  9%   { opacity: 1; }
+  70%  { opacity: 1; }
+  88%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- Ambient blobs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div id="wrapper">
+  <div class="scene">
+
+    <!-- Draw-on SVG (sits above everything, fades as glass fades in) -->
+    <svg id="svg-overlay" viewBox="0 0 360 220" xmlns="http://www.w3.org/2000/svg">
+      <line id="guide" x1="0" y1="100" x2="360" y2="100"/>
+
+      <!-- Top pill outline: left=115, top=36, w=170, h=64, r=32 -->
+      <path id="stroke-a" class="pill-stroke"
+        d="M147,36 L253,36 C270.673,36 285,50.327 285,68 C285,85.673 270.673,100 253,100 L147,100 C129.327,100 115,85.673 115,68 C115,50.327 129.327,36 147,36"/>
+
+      <!-- Bottom pill outline: left=75, top=100, w=170, h=64, r=32 -->
+      <path id="stroke-b" class="pill-stroke"
+        d="M107,100 L213,100 C230.673,100 245,114.327 245,132 C245,149.673 230.673,164 213,164 L107,164 C89.327,164 75,149.673 75,132 C75,114.327 89.327,100 107,100"/>
+    </svg>
+
+    <!-- Top pill — glass -->
+    <div class="pill pill--top"></div>
+
+    <!-- Star — sits above both pills at overlap point (z:20) -->
+    <div class="star">
+      <svg width="90" height="90" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Matches the glass pill: bright top-left, slightly deeper bottom-right -->
+          <linearGradient id="star-grad" x1="20%" y1="10%" x2="80%" y2="90%">
+            <stop offset="0%"   stop-color="rgba(255,255,255,0.95)"/>
+            <stop offset="40%"  stop-color="rgba(220,228,255,0.85)"/>
+            <stop offset="100%" stop-color="rgba(190,205,255,0.75)"/>
+          </linearGradient>
+          <!-- Soft inner glow emanating from center -->
+          <radialGradient id="star-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="rgba(255,255,255,0.9)"/>
+            <stop offset="55%"  stop-color="rgba(210,220,255,0.5)"/>
+            <stop offset="100%" stop-color="rgba(180,200,255,0.0)"/>
+          </radialGradient>
+        </defs>
+        <!-- Glow layer underneath -->
+        <path
+          d="M50,2 C51,49,51,49,98,50 C51,51,51,51,50,98 C49,51,49,51,2,50 C49,49,49,49,50,2 Z"
+          fill="url(#star-glow)" opacity="0.6"/>
+        <!-- Main glass-tinted fill -->
+        <path
+          d="M50,2 C51,49,51,49,98,50 C51,51,51,51,50,98 C49,51,49,51,2,50 C49,49,49,49,50,2 Z"
+          fill="url(#star-grad)"/>
+      </svg>
+    </div>
+
+    <!-- Bottom pill — glass -->
+    <div class="pill pill--bottom"></div>
+
+  </div>
+</div>
+
+<script>
+  const CYCLE = 5400;
+  function restart() {
+    const w = document.getElementById('wrapper');
+    const clone = w.cloneNode(true);
+    w.parentNode.replaceChild(clone, w);
+  }
+  setInterval(restart, CYCLE);
+</script>
+</body>
+</html>

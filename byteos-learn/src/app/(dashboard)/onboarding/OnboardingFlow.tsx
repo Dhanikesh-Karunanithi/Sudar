@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronRight, CheckCircle2, Loader2, Zap, User, Target, BookOpen, Lightbulb, Bot } from 'lucide-react'
+import { ChevronRight, CheckCircle2, Zap, User, Target, BookOpen, Lightbulb, Bot } from 'lucide-react'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
+import { SudarPremiumMark } from '@/components/branding/SudarPremiumLoader'
 import { cn } from '@/lib/utils'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { trackMascotEvent } from '@/lib/mascot/tracking'
@@ -398,7 +400,7 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
               <button onClick={() => setStep(3)} className="px-4 py-2.5 text-muted-foreground hover:text-card-foreground text-sm rounded-xl hover:bg-muted transition-all">Back</button>
               <button onClick={() => { setStep(5); handleFinish() }} disabled={saving}
                 className="flex-1 py-2.5 bg-primary hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground text-sm font-semibold rounded-button transition-all flex items-center justify-center gap-2">
-                {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : <>Complete setup <Zap className="w-4 h-4" /></>}
+                {saving ? <><SudarInlineLoader size="sm" className="text-primary-foreground" starFill="var(--primary)" />Saving...</> : <>Complete setup <Zap className="w-4 h-4" /></>}
               </button>
             </div>
           </div>
@@ -407,10 +409,17 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
         {/* Step 5: Done */}
         {step === 5 && (
           <div className="text-center space-y-6">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mx-auto shadow-xl shadow-green-200">
-              {saving
-                ? <Loader2 className="w-10 h-10 text-primary-foreground animate-spin" />
-                : <CheckCircle2 className="w-10 h-10 text-primary-foreground" />}
+            <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mx-auto shadow-xl shadow-green-200 overflow-hidden">
+              {saving ? (
+                <>
+                  <div className="absolute inset-0 bg-white/25 backdrop-blur-md" aria-hidden />
+                  <div className="relative flex h-[52px] w-[84px] items-center justify-center overflow-hidden">
+                    <SudarPremiumMark className="min-h-0 min-w-0 scale-[0.24] [&_.sudar-premium-scene]:max-w-none" />
+                  </div>
+                </>
+              ) : (
+                <CheckCircle2 className="w-10 h-10 text-primary-foreground relative z-10" />
+              )}
             </div>
             <div className="space-y-2">
               <h2 className="text-2xl font-bold text-card-foreground">

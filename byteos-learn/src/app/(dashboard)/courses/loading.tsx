@@ -1,10 +1,10 @@
 import { BookOpen } from 'lucide-react'
-import { SudarLoadingStrip } from '@/components/branding/SudarBrandLoader'
+import { SudarLoadingFrost } from '@/components/branding/SudarBrandLoader'
 
 export default function CoursesLoading() {
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-6">
-      <SudarLoadingStrip label="Loading courses…" />
+    <div className="relative max-w-4xl mx-auto min-h-[min(64vh,520px)] overflow-hidden rounded-2xl p-6 space-y-6">
+      <div className="pointer-events-none select-none opacity-[0.32] space-y-6">
       <div className="h-8 w-48 bg-muted rounded-lg animate-pulse" />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -25,6 +25,8 @@ export default function CoursesLoading() {
           </div>
         ))}
       </div>
+      </div>
+      <SudarLoadingFrost label="Loading courses…" className="rounded-2xl" />
     </div>
   )
 }

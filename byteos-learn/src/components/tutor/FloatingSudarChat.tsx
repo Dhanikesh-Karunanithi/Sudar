@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Send, Loader2, ExternalLink, Maximize2, Minimize2 } from 'lucide-react'
+import { X, Send, ExternalLink, Maximize2, Minimize2 } from 'lucide-react'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { cn, stripTutorActionsFromText } from '@/lib/utils'
 import type { TutorAction, TutorBlock } from '@/types/tutor'
 import { GenerativeBlockRenderer } from './GenerativeBlockRenderer'
@@ -328,7 +329,7 @@ export function FloatingSudarChat() {
               {thinking && (
                 <div className="flex justify-start">
                   <div className="chat-bubble bg-muted/80 text-card-foreground border border-border flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                    <SudarInlineLoader size="sm" className="shrink-0" />
                     <span>Thinking…</span>
                   </div>
                 </div>

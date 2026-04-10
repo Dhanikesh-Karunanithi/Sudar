@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import { usePathname, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Send, Loader2, ExternalLink, Download, Maximize2, Minimize2 } from 'lucide-react'
+import { X, Send, ExternalLink, Download, Maximize2, Minimize2 } from 'lucide-react'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
 
@@ -256,7 +257,7 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
               {thinking && (
                 <div className="flex justify-start">
                   <div className="chat-bubble bg-muted text-muted-foreground border border-border flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                    <SudarInlineLoader size="sm" className="shrink-0 text-violet-400" starFill="var(--background)" />
                     <span>Thinking…</span>
                   </div>
                 </div>

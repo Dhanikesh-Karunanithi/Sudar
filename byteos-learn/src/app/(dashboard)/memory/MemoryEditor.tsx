@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Save, CheckCircle2, Loader2 } from 'lucide-react'
+import { Save, CheckCircle2 } from 'lucide-react'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 
 interface Props {
   userId: string
@@ -95,7 +96,7 @@ export function MemoryEditor({ initialBackground, initialGoals, initialPreferenc
         disabled={saving}
         className="flex items-center gap-2 px-4 py-2 bg-primary hover:opacity-90 disabled:bg-muted text-primary-foreground disabled:text-muted-foreground text-sm font-medium rounded-button transition-all"
       >
-        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+        {saving ? <SudarInlineLoader size="sm" /> : saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
         {saved ? 'Saved!' : 'Save context'}
       </button>
     </div>

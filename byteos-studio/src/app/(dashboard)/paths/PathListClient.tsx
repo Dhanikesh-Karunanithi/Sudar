@@ -12,9 +12,9 @@ import {
   CheckCircle2,
   Award,
   Trash2,
-  Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 
 interface PathCourse {
   course_id: string
@@ -86,7 +86,7 @@ export function PathListClient({
                     disabled={isDeleting}
                     className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-medium flex items-center gap-1.5"
                   >
-                    {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    {isDeleting ? <SudarInlineLoader size="sm" className="h-3.5 w-auto text-white" starFill="#dc2626" /> : <Trash2 className="w-3.5 h-3.5" />}
                     {isDeleting ? 'Deleting...' : 'Delete'}
                   </button>
                   <button

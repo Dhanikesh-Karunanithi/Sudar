@@ -6,7 +6,6 @@ import Link from 'next/link'
 import {
   ArrowLeft,
   User,
-  Loader2,
   AlertCircle,
   Route,
   BarChart2,
@@ -17,6 +16,7 @@ import {
   UserCheck,
   UserX,
 } from 'lucide-react'
+import { SudarLoadingFrost } from '@/components/branding/SudarBrandLoader'
 
 interface UserDetail {
   id: string
@@ -203,8 +203,8 @@ export default function UserDetailPage() {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[200px]">
-        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+      <div className="relative p-8 min-h-[min(50vh,420px)] overflow-hidden rounded-2xl">
+        <SudarLoadingFrost label="Loading user…" className="rounded-2xl" />
       </div>
     )
   }
