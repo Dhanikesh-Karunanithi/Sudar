@@ -145,7 +145,7 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
             className={cn(
               'fixed z-[60] liquid-glass flex flex-col overflow-hidden rounded-[2rem] shadow-2xl transition-all duration-200',
               isExpanded
-                ? 'top-4 left-4 w-[calc(100vw-2rem)] max-w-[720px] h-[calc(100vh-6rem)]'
+                ? 'top-4 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-[calc(100vw-3rem)] max-w-[720px] h-[calc(100vh-6rem)]'
                 : 'bottom-24 right-6 w-[calc(100vw-3rem)] max-w-[420px] h-[520px]'
             )}
           >

@@ -27,6 +27,10 @@ export interface OrgAiCompliance {
   require_learner_consent?: boolean
   /** Documented retention intent; enforcement may be added later. */
   personalization_data_retention_days?: number
+  /** Documented retention for learning_events (days); enforcement may be added later. */
+  learning_events_retention_days?: number | null
+  /** Documented retention for ai_interactions (days); enforcement may be added later. */
+  ai_interactions_retention_days?: number | null
   /**
    * When false, skip pre-LLM scans for payment/identity-like patterns in tutor and paste flows.
    * Default true (omit = scan). Not recommended for production.

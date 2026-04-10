@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, BookOpen, Sparkles, LayoutList, CheckCircle2, Loader2, Package, FileText, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SudarBrandLoader } from '@/components/branding/SudarBrandLoader'
 
 const difficulties = [
   { value: 'beginner', label: 'Beginner', desc: 'No prior knowledge required' },
@@ -160,9 +161,13 @@ export default function NewCoursePage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-8">
         <div className="max-w-sm w-full text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-violet-600/15 border border-violet-500/20 flex items-center justify-center mx-auto">
-            <Sparkles className="w-8 h-8 text-violet-400 animate-pulse" />
-          </div>
+          <SudarBrandLoader
+            className="mx-auto"
+            size="lg"
+            starFill="#0f172a"
+            markClassName="text-violet-300"
+            glowClassName="bg-violet-500/30"
+          />
           <div className="space-y-2">
             <h2 className="text-lg font-semibold text-white">Sudar is building your course</h2>
             <p className="text-slate-400 text-sm">This takes about 30–60 seconds for a full course.</p>

@@ -2,6 +2,15 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { NextResponse } from 'next/server'
 import { performanceConfigSchema } from '@/types/performance'
+import { orgAiCompliancePatchSchema } from '@/types/orgCompliance'
+import {
+  getPrivateLlmBearerToken,
+  isOrgPrivateAiFeatureEnabled,
+  orgAiInferencePatchSchema,
+  parseOrgAiInference,
+  validateOrgPrivateServerUrl,
+  type OrgAiInferenceStored,
+} from '@/types/orgAiInference'
 import type { Json } from '@/types/database'
 
 /**
@@ -31,6 +40,7 @@ export async function GET() {
   const ai_models = (settings.ai_models as Record<string, string | null> | undefined) ?? {}
   const sso_config = (settings.sso_config as Record<string, unknown> | undefined) ?? null
   const ai_compliance = (settings.ai_compliance as Record<string, unknown> | undefined) ?? {}
+  const ai_inference = parseOrgAiInference(settings)
 
   return NextResponse.json({
     performance_config,
@@ -51,9 +61,22 @@ export async function GET() {
         typeof ai_compliance.personalization_data_retention_days === 'number'
           ? ai_compliance.personalization_data_retention_days
           : null,
+      learning_events_retention_days:
+        typeof ai_compliance.learning_events_retention_days === 'number'
+          ? ai_compliance.learning_events_retention_days
+          : null,
+      ai_interactions_retention_days:
+        typeof ai_compliance.ai_interactions_retention_days === 'number'
+          ? ai_compliance.ai_interactions_retention_days
+          : null,
       block_high_risk_pii_in_tutor: ai_compliance.block_high_risk_pii_in_tutor !== false,
       tutor_redact_echoed_secrets: ai_compliance.tutor_redact_echoed_secrets !== false,
       tutor_output_moderation_strict: ai_compliance.tutor_output_moderation_strict === true,
+    },
+    ai_inference: {
+      ...ai_inference,
+      feature_available: isOrgPrivateAiFeatureEnabled(),
+      bearer_configured: Boolean(getPrivateLlmBearerToken()),
     },
   })
 }
@@ -111,32 +134,74 @@ export async function PATCH(request: Request) {
     }
   }
 
-  if (body.ai_compliance !== undefined && typeof body.ai_compliance === 'object' && body.ai_compliance !== null) {
-    const ac = body.ai_compliance as Record<string, unknown>
+  if (body.ai_compliance !== undefined) {
+    if (typeof body.ai_compliance !== 'object' || body.ai_compliance === null || Array.isArray(body.ai_compliance)) {
+      return NextResponse.json({ error: 'Invalid ai_compliance' }, { status: 400 })
+    }
+    const parsed = orgAiCompliancePatchSchema.safeParse(body.ai_compliance)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid ai_compliance', details: parsed.error.flatten() },
+        { status: 400 }
+      )
+    }
     const prev = (typeof currentSettings.ai_compliance === 'object' && currentSettings.ai_compliance !== null
       ? (currentSettings.ai_compliance as Record<string, unknown>)
       : {})
-    updatedSettings.ai_compliance = {
-      ...prev,
-      ...(typeof ac.allow_generative_personalization === 'boolean' && {
-        allow_generative_personalization: ac.allow_generative_personalization,
-      }),
-      ...(typeof ac.require_learner_consent === 'boolean' && {
-        require_learner_consent: ac.require_learner_consent,
-      }),
-      ...(typeof ac.personalization_data_retention_days === 'number' && {
-        personalization_data_retention_days: ac.personalization_data_retention_days,
-      }),
-      ...(typeof ac.block_high_risk_pii_in_tutor === 'boolean' && {
-        block_high_risk_pii_in_tutor: ac.block_high_risk_pii_in_tutor,
-      }),
-      ...(typeof ac.tutor_redact_echoed_secrets === 'boolean' && {
-        tutor_redact_echoed_secrets: ac.tutor_redact_echoed_secrets,
-      }),
-      ...(typeof ac.tutor_output_moderation_strict === 'boolean' && {
-        tutor_output_moderation_strict: ac.tutor_output_moderation_strict,
-      }),
+    const merged: Record<string, unknown> = { ...prev }
+    for (const [key, value] of Object.entries(parsed.data)) {
+      if (value !== undefined) merged[key] = value
     }
+    updatedSettings.ai_compliance = merged
+  }
+
+  if (body.ai_inference !== undefined) {
+    if (!isOrgPrivateAiFeatureEnabled()) {
+      return NextResponse.json(
+        { error: 'Organisation private AI is not enabled on this deployment (ALLOW_ORG_PRIVATE_AI_SERVER).' },
+        { status: 403 }
+      )
+    }
+    if (typeof body.ai_inference !== 'object' || body.ai_inference === null || Array.isArray(body.ai_inference)) {
+      return NextResponse.json({ error: 'Invalid ai_inference' }, { status: 400 })
+    }
+    const parsed = orgAiInferencePatchSchema.safeParse(body.ai_inference)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid ai_inference', details: parsed.error.flatten() },
+        { status: 400 }
+      )
+    }
+    const prev = parseOrgAiInference(currentSettings)
+    const patch = parsed.data
+    const mergedInference: OrgAiInferenceStored = {
+      use_private_server: patch.use_private_server ?? prev.use_private_server,
+      private_server_url: patch.private_server_url !== undefined ? patch.private_server_url : prev.private_server_url,
+      private_server_model:
+        patch.private_server_model !== undefined ? patch.private_server_model : prev.private_server_model,
+    }
+    if (mergedInference.use_private_server) {
+      if (!mergedInference.private_server_url.trim()) {
+        return NextResponse.json({ error: 'Private AI requires a server address.' }, { status: 400 })
+      }
+      const urlCheck = validateOrgPrivateServerUrl(mergedInference.private_server_url)
+      if (!urlCheck.ok) {
+        return NextResponse.json({ error: urlCheck.error }, { status: 400 })
+      }
+      if (!mergedInference.private_server_model.trim()) {
+        return NextResponse.json({ error: 'Private AI requires a model name (e.g. gemma3:4b).' }, { status: 400 })
+      }
+      if (!getPrivateLlmBearerToken()) {
+        return NextResponse.json(
+          {
+            error:
+              'Private AI requires LOCAL_LLM_BEARER_TOKEN or AI_CHAT_API_KEY on the server. Your IT team sets this once in deployment settings, not in this form.',
+          },
+          { status: 400 }
+        )
+      }
+    }
+    updatedSettings.ai_inference = mergedInference
   }
 
   const { error } = await admin

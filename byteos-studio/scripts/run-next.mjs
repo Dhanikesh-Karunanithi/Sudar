@@ -1,5 +1,5 @@
 /**
- * When distDir points outside the app tree (Windows %TEMP% — avoids EPERM on .next/trace),
+ * When distDir points at node_modules/.cache (Windows — avoids EPERM on .next/trace / Temp locks),
  * compiled server chunks still require("next/dist/..."). Node resolves from the chunk's directory
  * and never reaches this app's node_modules unless NODE_PATH includes it.
  */

@@ -1,7 +1,9 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { getOrgIdAndRole } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { searchWeb } from '@/lib/search/webSearch'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
+import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
 
 export interface GenerateModuleWithResearchBody {
   topic: string
@@ -18,8 +20,12 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const configError = getChatConfigError()
+  const { orgId } = await getOrgIdAndRole(user.id)
+  const admin = createAdminClient()
+  const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
+  const configError = resolveChatConfigError(orgSettings, privateRuntime)
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })
+  const chatAiCtx = { privateOpenAi: privateRuntime }
 
   let body: GenerateModuleWithResearchBody
   try {
@@ -100,15 +106,18 @@ ${context ? `Additional context: ${context}` : ''}
 Write the full module content now.${webResults.length > 0 ? ' Use the web search results above and cite them with [1], [2], etc. End with a ## References section.' : ''}`
 
   try {
-    const { content } = await chatCompletion({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      max_tokens: 1400,
-      temperature: 0.7,
-      top_p: 0.9,
-    })
+    const { content } = await chatCompletion(
+      {
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        max_tokens: 1400,
+        temperature: 0.7,
+        top_p: 0.9,
+      },
+      chatAiCtx
+    )
 
     if (!content) return NextResponse.json({ error: 'No content generated' }, { status: 502 })
 

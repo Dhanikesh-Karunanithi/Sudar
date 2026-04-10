@@ -1,8 +1,9 @@
-import { ArrowLeft, BookOpen } from 'lucide-react'
+import { SudarLoadingStrip } from '@/components/branding/SudarBrandLoader'
 
 export default function CourseDetailLoading() {
   return (
     <div className="max-w-3xl mx-auto space-y-8 p-6">
+      <SudarLoadingStrip label="Loading course…" />
       <div className="h-5 w-32 bg-muted rounded animate-pulse" />
       <div className="bg-primary/5 rounded-card-xl p-8 border border-primary/20 animate-pulse">
         <div className="flex items-start gap-5">

@@ -11,7 +11,8 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
+import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { checkPersonalizationEligibility } from '@/lib/personalization/eligibility'
 import { checkAndIncrementUsage } from '@/lib/usage-limits'
 
@@ -58,12 +59,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: gate.reason }, { status: 403 })
   }
 
-  if (getChatConfigError()) {
+  const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
+    courseId: course_id,
+    userId: user.id,
+  })
+  const aiCfg = resolveChatConfigError(orgSettings, privateRuntime)
+  if (aiCfg) {
     return NextResponse.json(
-      { ok: false, error: 'Personalization is not available because AI is not configured for this environment.' },
+      { ok: false, error: `Personalization is not available: ${aiCfg}` },
       { status: 503 }
     )
   }
+  const chatCtx = { privateOpenAi: privateRuntime }
 
   // ── Load learner profile and memory ────────────────────────────────
   const [{ data: profile }, { data: learnerProfile }, { data: newCourse }] = await Promise.all([
@@ -142,11 +149,14 @@ If there's no prior history, make it a genuine warm welcome that references what
 
   let message = ''
   try {
-    const { content } = await chatCompletion({
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 300,
-      temperature: 0.8,
-    })
+    const { content } = await chatCompletion(
+      {
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 300,
+        temperature: 0.8,
+      },
+      chatCtx
+    )
     message = content ?? ''
   } catch {
     return NextResponse.json(

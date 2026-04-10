@@ -1,0 +1,8 @@
+{
+  "name": "sudar-monorepo",
+  "private": true,
+  "description": "Helper scripts for the Sudar repo (no install required for supabase — uses npx).",
+  "scripts": {
+    "supabase": "npx --yes supabase@latest"
+  }
+}

@@ -1,17 +1,16 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { getOrgIdAndRole } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { getCourseContentForGeneration } from '@/lib/courseContentForGeneration'
 import type { DialogueSegment } from '@/types/content'
 import type { Json } from '@/types/database'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
+import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const configError = getChatConfigError()
-  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
   let body: { courseId?: string } = {}
   try {
@@ -24,6 +23,12 @@ export async function POST(request: NextRequest) {
   if (!courseId) return NextResponse.json({ error: 'courseId required' }, { status: 400 })
 
   const admin = createAdminClient()
+  const { orgId } = await getOrgIdAndRole(user.id)
+  const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
+  const configError = resolveChatConfigError(orgSettings, privateRuntime)
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
+  const chatAiCtx = { privateOpenAi: privateRuntime }
+
   const sampleText = await getCourseContentForGeneration(admin, courseId, user.id)
 
   if (!sampleText) {
@@ -57,17 +62,20 @@ ${sampleText}
 Remember: ONLY output the JSON object. Start your response with { and end with }.`
 
   try {
-    const { content: raw } = await chatCompletion({
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a podcast script writer. Output ONLY valid JSON with no markdown, no explanations, no preamble. Start your response with { and end with }. Speaker labels must be exactly "host" or "expert" in lowercase.',
-        },
-        { role: 'user', content: prompt },
-      ],
-      max_tokens: 4500,
-      temperature: 0.75,
-    })
+    const { content: raw } = await chatCompletion(
+      {
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a podcast script writer. Output ONLY valid JSON with no markdown, no explanations, no preamble. Start your response with { and end with }. Speaker labels must be exactly "host" or "expert" in lowercase.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: 4500,
+        temperature: 0.75,
+      },
+      chatAiCtx
+    )
     const rawStr = (raw ?? '').trim()
 
     let segments: DialogueSegment[] = []

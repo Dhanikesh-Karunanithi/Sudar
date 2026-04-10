@@ -11,6 +11,22 @@ export default function HelpPage() {
         <h1 className="text-xl font-semibold text-white">Guides &amp; Help</h1>
       </div>
 
+      <section className="mb-8 rounded-lg border border-indigo-500/20 bg-indigo-500/5 p-4">
+        <h2 className="text-sm font-medium text-white mb-2 flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-indigo-400" />
+          Understanding AI in Sudar (short course)
+        </h2>
+        <p className="text-sm text-slate-400 mb-3">
+          Plain-language lessons for admins: what AI does in Studio and Learn, cloud vs private server, Gemma, and troubleshooting—no jargon required.
+        </p>
+        <Link
+          href="/help/ai-at-sudar"
+          className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300"
+        >
+          Open the course <ArrowRight className="w-4 h-4" />
+        </Link>
+      </section>
+
       <section className="mb-8">
         <h2 className="text-sm font-medium text-slate-300 uppercase tracking-wider mb-3">Getting started</h2>
         <p className="text-sm text-slate-400 mb-3">

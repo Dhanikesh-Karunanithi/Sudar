@@ -5,10 +5,12 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
+import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { checkPersonalizationEligibility } from '@/lib/personalization/eligibility'
 import { checkAndIncrementUsage } from '@/lib/usage-limits'
 import { moduleContentToPlainText } from '@/lib/learn/modulePlainText'
+import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 import type { Json } from '@/types/database'
 
 const MODES = ['role_explain', 'brief_3min'] as const
@@ -104,12 +106,21 @@ export async function POST(request: NextRequest) {
 
   const plain = moduleContentToPlainText(modRow.content as never)
 
-  if (getChatConfigError()) {
+  const blockedPers = await rejectSensitiveLearnerAiInput(admin, user.id, [modRow.title, plain, background, goals])
+  if (blockedPers) return blockedPers
+
+  const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
+    courseId: course_id,
+    userId: user.id,
+  })
+  const aiCfg = resolveChatConfigError(orgSettings, privateRuntime)
+  if (aiCfg) {
     return NextResponse.json(
-      { ok: false, error: 'Personalization is not available because AI is not configured.' },
+      { ok: false, error: `Personalization is not available: ${aiCfg}` },
       { status: 503 }
     )
   }
+  const chatCtx = { privateOpenAi: privateRuntime }
 
   const rolePrompt = `You are Sudar. The learner "${firstName}" is studying this module.
 
@@ -142,11 +153,14 @@ Produce a dense but readable summary: key ideas only, plain text, no markdown, n
 
   let text = ''
   try {
-    const { content } = await chatCompletion({
-      messages: [{ role: 'user', content: userPrompt }],
-      max_tokens: mode === 'brief_3min' ? 900 : 650,
-      temperature: 0.65,
-    })
+    const { content } = await chatCompletion(
+      {
+        messages: [{ role: 'user', content: userPrompt }],
+        max_tokens: mode === 'brief_3min' ? 900 : 650,
+        temperature: 0.65,
+      },
+      chatCtx
+    )
     text = (content ?? '').trim()
   } catch {
     return NextResponse.json(

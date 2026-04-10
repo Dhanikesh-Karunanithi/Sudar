@@ -1,10 +1,15 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getOrgIdAndRole } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
+import { orgSettingsToAiChatContext } from '@/lib/ai/orgAiChatContext'
 import { buildStudioContext } from '@/lib/agent/studioContext'
 import { STUDIO_ACTION_TYPES, type StudioAction } from '@/lib/agent/types'
-import { redactEchoedSensitiveDigits, scanSensitiveUserText } from '@/lib/security/sensitiveInputGuard'
+import {
+  applyStrictOutputRedaction,
+  redactEchoedSensitiveDigits,
+  scanSensitiveUserText,
+} from '@/lib/security/sensitiveInputGuard'
 
 const ACTIONS_REGEX = /\nACTIONS:\s*([\s\S]+)$/
 
@@ -69,11 +74,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const configError = getChatConfigError()
-    if (configError) {
-      return NextResponse.json({ error: 'AI chat not configured. Configure an AI provider in Settings → AI & API Keys.' }, { status: 503 })
-    }
-
     let body: { message?: string; conversation_history?: unknown[]; route?: string; focus_user_id?: string } = {}
     try {
       body = await request.json()
@@ -86,6 +86,15 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient()
     const { data: orgRowStudio } = await admin.from('organisations').select('settings').eq('id', orgId).maybeSingle()
+    const { orgSettings, privateRuntime } = orgSettingsToAiChatContext(orgRowStudio?.settings)
+    const configError = resolveChatConfigError(orgSettings, privateRuntime)
+    if (configError) {
+      return NextResponse.json(
+        { error: `AI chat not configured: ${configError} See Settings → Org settings (private AI) or AI & API Keys.` },
+        { status: 503 }
+      )
+    }
+    const chatAiCtx = { privateOpenAi: privateRuntime }
     const studioSettings = (orgRowStudio?.settings as Record<string, unknown> | null) ?? {}
     const studioAiCompliance = (studioSettings.ai_compliance as Record<string, unknown> | null) ?? {}
     if (studioAiCompliance.block_high_risk_pii_in_tutor !== false) {
@@ -136,15 +145,21 @@ ${ctx.contextPrompt}`
       { role: 'user' as const, content: message },
     ]
 
-    const { content: aiResponse } = await chatCompletion({
-      messages,
-      max_tokens: 1024,
-      temperature: 0.7,
-    })
+    const { content: aiResponse } = await chatCompletion(
+      {
+        messages,
+        max_tokens: 1024,
+        temperature: 0.7,
+      },
+      chatAiCtx
+    )
 
     let responseText = aiResponse?.trim() ?? ''
     if (studioAiCompliance.tutor_redact_echoed_secrets !== false) {
       responseText = redactEchoedSensitiveDigits(responseText)
+    }
+    if (studioAiCompliance.tutor_output_moderation_strict === true) {
+      responseText = applyStrictOutputRedaction(responseText)
     }
     const { text: responseTextClean, rawActions } = parseActionsFromResponse(responseText)
     const actions = validateAndParseActions(rawActions, ctx.userIds, ctx.courseIds, ctx.pathIds)

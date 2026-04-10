@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Network, Loader2, RotateCcw } from 'lucide-react'
+import { Network, RotateCcw } from 'lucide-react'
+import { SudarBrandLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
 
 export interface MindMapNode {
@@ -401,12 +402,12 @@ export function MindMapCard({
     return (
       <div className="w-full max-w-6xl mx-auto py-12 flex flex-col items-center justify-center gap-4">
         <ScopeSwitcher scope={scope} onScopeChange={onScopeChange} />
-        <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center animate-pulse">
-          <Loader2 className="w-6 h-6 text-primary animate-spin" />
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {scope === 'course' ? 'Building your course mindmap…' : 'Sudar is building your mindmap…'}
-        </p>
+        <SudarBrandLoader
+          size="sm"
+          message={
+            scope === 'course' ? 'Building your course mindmap…' : 'Sudar is building your mindmap…'
+          }
+        />
       </div>
     )
   }

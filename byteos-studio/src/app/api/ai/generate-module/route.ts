@@ -1,14 +1,20 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { getOrgIdAndRole } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
+import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const configError = getChatConfigError()
+  const { orgId } = await getOrgIdAndRole(user.id)
+  const admin = createAdminClient()
+  const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
+  const configError = resolveChatConfigError(orgSettings, privateRuntime)
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })
+  const chatAiCtx = { privateOpenAi: privateRuntime }
 
   const {
     topic,
@@ -59,15 +65,18 @@ ${context ? `Additional context: ${context}` : ''}
 Write the full module content now.`
 
   try {
-    const { content } = await chatCompletion({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      max_tokens: 1200,
-      temperature: 0.7,
-      top_p: 0.9,
-    })
+    const { content } = await chatCompletion(
+      {
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        max_tokens: 1200,
+        temperature: 0.7,
+        top_p: 0.9,
+      },
+      chatAiCtx
+    )
 
     if (!content) return NextResponse.json({ error: 'No content generated' }, { status: 502 })
 

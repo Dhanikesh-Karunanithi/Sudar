@@ -18,8 +18,18 @@ export async function GET() {
   }
 
   const keys = PROVIDER_KEYS.map((k) => {
-    const value = process.env[k.envVar]
-    const status = isKeyConfigured(value) ? 'configured' : 'not_set'
+    let status: 'configured' | 'not_set' = 'not_set'
+    if (k.id === 'local_openai_compatible') {
+      const base = process.env.AI_CHAT_BASE_URL?.trim()
+      const key =
+        process.env.AI_CHAT_API_KEY?.trim() ||
+        process.env.OPENAI_API_KEY?.trim() ||
+        process.env.TOGETHER_API_KEY?.trim()
+      status = base && key ? 'configured' : 'not_set'
+    } else {
+      const value = process.env[k.envVar]
+      status = isKeyConfigured(value) ? 'configured' : 'not_set'
+    }
     return {
       id: k.id,
       name: k.name,

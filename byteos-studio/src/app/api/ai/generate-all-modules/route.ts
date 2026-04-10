@@ -4,15 +4,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getOneImage } from '@/lib/media/imageSearch'
 import { selectComponentsForModule, toInteractiveElements, type ModuleRole } from '@/lib/ai/componentSelector'
 import { LESSON_ARCHETYPES, type LessonArchetype, selectArchetype, getArchetypeStructuralRule } from '@/lib/ai/archetypeSelector'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError, type ChatCompletionContext } from '@/lib/ai/chat'
+import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
 
-async function callAI(messages: { role: string; content: string }[], maxTokens = 1500) {
-  const { content } = await chatCompletion({
-    messages: messages as { role: 'system' | 'user' | 'assistant'; content: string }[],
-    max_tokens: maxTokens,
-    temperature: 0.7,
-    top_p: 0.9,
-  })
+async function callAI(messages: { role: string; content: string }[], maxTokens = 1500, ctx?: ChatCompletionContext) {
+  const { content } = await chatCompletion(
+    {
+      messages: messages as { role: 'system' | 'user' | 'assistant'; content: string }[],
+      max_tokens: maxTokens,
+      temperature: 0.7,
+      top_p: 0.9,
+    },
+    ctx
+  )
   if (!content) throw new Error('AI returned empty response')
   return content
 }
@@ -257,9 +261,6 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const configError = getChatConfigError()
-  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
-
   const { course_id } = await request.json()
   if (!course_id) return NextResponse.json({ error: 'course_id required' }, { status: 400 })
 
@@ -267,12 +268,17 @@ export async function POST(request: NextRequest) {
 
   const { data: course, error: courseErr } = await admin
     .from('courses')
-    .select('id, title, description, difficulty, created_by')
+    .select('id, title, description, difficulty, created_by, org_id')
     .eq('id', course_id)
     .single()
 
   if (courseErr || !course) return NextResponse.json({ error: 'Course not found' }, { status: 404 })
   if (course.created_by !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, course.org_id)
+  const configError = resolveChatConfigError(orgSettings, privateRuntime)
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
+  const chatAiCtx = { privateOpenAi: privateRuntime }
 
   const { data: modules } = await admin
     .from('modules')
@@ -302,7 +308,7 @@ export async function POST(request: NextRequest) {
     const planMessages = buildCurriculumPlanPrompt(
       course.title, course.description, difficulty, allTitles
     )
-    const raw = await callAI(planMessages, 2000)
+    const raw = await callAI(planMessages, 2000, chatAiCtx)
     const match = raw.match(/\[[\s\S]*\]/)
     if (!match) throw new Error('Curriculum plan response did not contain a JSON array')
     curriculum = JSON.parse(match[0]) as CurriculumEntry[]
@@ -375,7 +381,7 @@ export async function POST(request: NextRequest) {
     )
 
     try {
-      const content = await callAI(contentMessages, 1800)
+      const content = await callAI(contentMessages, 1800, chatAiCtx)
 
       const imageResult = await getOneImage(mod.title, course.title)
 
@@ -413,7 +419,7 @@ export async function POST(request: NextRequest) {
           content,
           (resolvedEntry.archetype ?? 'cold-open') as string
         )
-        const envelopeRaw = await callAI(envelopeMessages, 800)
+        const envelopeRaw = await callAI(envelopeMessages, 800, chatAiCtx)
         const envelope = parseEnvelope(envelopeRaw)
         if (envelope) {
           entryState = envelope.entryState

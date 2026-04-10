@@ -5,7 +5,8 @@ import type { RichContent } from '@/types/content'
 import type { Json } from '@/types/database'
 import { getImagesForSections } from '@/lib/media/imageSearch'
 import { selectComponentsForModule, toInteractiveElements, type ModuleRole } from '@/lib/ai/componentSelector'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError, type ChatCompletionContext } from '@/lib/ai/chat'
+import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
 
 /** Strip markdown code fences and extract/repair JSON for parsing. */
 function extractJson(raw: string): string {
@@ -48,12 +49,15 @@ function repairJson(s: string): string {
   return s.replace(/,(\s*[}\]])/g, '$1')
 }
 
-async function callAI(messages: { role: string; content: string }[], maxTokens = 1200) {
-  const { content } = await chatCompletion({
-    messages: messages as { role: 'system' | 'user' | 'assistant'; content: string }[],
-    max_tokens: maxTokens,
-    temperature: 0.7,
-  })
+async function callAI(messages: { role: string; content: string }[], maxTokens = 1200, ctx?: ChatCompletionContext) {
+  const { content } = await chatCompletion(
+    {
+      messages: messages as { role: 'system' | 'user' | 'assistant'; content: string }[],
+      max_tokens: maxTokens,
+      temperature: 0.7,
+    },
+    ctx
+  )
   if (!content) throw new Error('AI returned empty response')
   return content
 }
@@ -80,14 +84,16 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const configError = getChatConfigError()
-  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
   const admin = createAdminClient()
   const { title, description, difficulty = 'intermediate', num_modules = 5 } = await request.json()
   if (!title) return NextResponse.json({ error: 'title required' }, { status: 400 })
 
   const orgId = await getOrCreateOrg(user.id)
+  const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
+  const configError = resolveChatConfigError(orgSettings, privateRuntime)
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
+  const chatAiCtx = { privateOpenAi: privateRuntime }
 
   const now = new Date().toISOString()
   const { data: course, error: courseError } = await admin
@@ -110,7 +116,7 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
 
   let moduleTitles: string[] = []
   try {
-    const raw = await callAI([{ role: 'user', content: outlinePrompt }], 300)
+    const raw = await callAI([{ role: 'user', content: outlinePrompt }], 300, chatAiCtx)
     const jsonStr = extractJson(raw)
     if (!jsonStr.startsWith('[')) throw new Error('Outline response did not contain a JSON array')
     moduleTitles = JSON.parse(jsonStr)
@@ -129,10 +135,14 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
     const moduleTitle = moduleTitles[i]
     let rich: RichContent
     try {
-      const raw = await callAI([
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Course: "${title}". ${description ? `Description: ${description}. ` : ''}Generate the JSON object for module "${moduleTitle}". Include introduction, at least 2 sections, summary, one interactiveElement (expandable or quiz), and optional sideCard.` },
-      ], 4000)
+      const raw = await callAI(
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Course: "${title}". ${description ? `Description: ${description}. ` : ''}Generate the JSON object for module "${moduleTitle}". Include introduction, at least 2 sections, summary, one interactiveElement (expandable or quiz), and optional sideCard.` },
+        ],
+        4000,
+        chatAiCtx
+      )
       const jsonStr = extractJson(raw)
       if (!jsonStr.startsWith('{')) throw new Error('No JSON object in AI response')
       const parsed = JSON.parse(jsonStr) as Record<string, unknown>

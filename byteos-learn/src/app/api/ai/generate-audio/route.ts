@@ -6,6 +6,7 @@
  */
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 
 const INTELLIGENCE_URL = process.env.BYTEOS_INTELLIGENCE_URL?.replace(/\/$/, '')
 
@@ -18,9 +19,12 @@ export async function POST(request: NextRequest) {
   const text = typeof body.text === 'string' ? body.text.trim() : ''
   if (!text) return NextResponse.json({ error: 'text required' }, { status: 400 })
 
+  const admin = createAdminClient()
+  const blockedAudio = await rejectSensitiveLearnerAiInput(admin, user.id, [text])
+  if (blockedAudio) return blockedAudio
+
   let voice: string | undefined = typeof body.voice === 'string' ? body.voice.trim() || undefined : undefined
   if (!voice) {
-    const admin = createAdminClient()
     const { data: profile } = await admin
       .from('learner_profiles')
       .select('ai_tutor_context')

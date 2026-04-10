@@ -26,7 +26,7 @@ DEFAULT_MODELS = {
     PROVIDER_TOGETHER: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
     PROVIDER_OPENAI: "gpt-4o-mini",
     PROVIDER_ANTHROPIC: "claude-3-5-sonnet-20241022",
-    PROVIDER_CUSTOM: "gpt-4o-mini",
+    PROVIDER_CUSTOM: "gemma3:4b",
 }
 
 
@@ -42,6 +42,8 @@ def _get_provider() -> str:
         return PROVIDER_OPENAI
     if os.environ.get("ANTHROPIC_API_KEY", "").strip():
         return PROVIDER_ANTHROPIC
+    if os.environ.get("AI_CHAT_BASE_URL", "").strip():
+        return PROVIDER_CUSTOM
     return PROVIDER_TOGETHER
 
 
@@ -58,9 +60,13 @@ def get_chat_config_error() -> str | None:
         return "No AI chat provider configured. Set AI_CHAT_PROVIDER and one of OPENROUTER_API_KEY, TOGETHER_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY."
     if p == PROVIDER_CUSTOM:
         base = os.environ.get("AI_CHAT_BASE_URL", "").strip()
-        key = os.environ.get("OPENAI_API_KEY", "").strip() or os.environ.get("TOGETHER_API_KEY", "").strip()
+        key = (
+            os.environ.get("AI_CHAT_API_KEY", "").strip()
+            or os.environ.get("OPENAI_API_KEY", "").strip()
+            or os.environ.get("TOGETHER_API_KEY", "").strip()
+        )
         if not base or not key:
-            return "Custom provider requires AI_CHAT_BASE_URL and an API key."
+            return "Custom/local provider requires AI_CHAT_BASE_URL and AI_CHAT_API_KEY (or OPENAI_API_KEY / TOGETHER_API_KEY). Use any non-empty string for Ollama."
     return None
 
 
@@ -115,7 +121,11 @@ async def _chat_openai_compatible(
     elif provider == PROVIDER_CUSTOM:
         base = os.environ.get("AI_CHAT_BASE_URL", "").strip().rstrip("/")
         url = f"{base}/v1/chat/completions" if "/v1/" not in base else base
-        key = os.environ.get("OPENAI_API_KEY", "").strip() or os.environ.get("TOGETHER_API_KEY", "").strip()
+        key = (
+            os.environ.get("AI_CHAT_API_KEY", "").strip()
+            or os.environ.get("OPENAI_API_KEY", "").strip()
+            or os.environ.get("TOGETHER_API_KEY", "").strip()
+        )
     else:
         url = OPENAI_URL
         key = os.environ.get("OPENAI_API_KEY", "").strip()

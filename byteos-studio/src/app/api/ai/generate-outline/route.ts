@@ -1,14 +1,20 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { getOrgIdAndRole } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
+import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const configError = getChatConfigError()
+  const { orgId } = await getOrgIdAndRole(user.id)
+  const admin = createAdminClient()
+  const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
+  const configError = resolveChatConfigError(orgSettings, privateRuntime)
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })
+  const chatAiCtx = { privateOpenAi: privateRuntime }
 
   const { course_title, description, difficulty = 'intermediate', num_modules = 5 } = await request.json()
   if (!course_title) return NextResponse.json({ error: 'course_title required' }, { status: 400 })
@@ -26,11 +32,14 @@ Return ONLY a JSON array of module titles, nothing else. Example format:
 Return only the JSON array:`
 
   try {
-    const { content: raw } = await chatCompletion({
-      messages: [{ role: 'user', content: userPrompt }],
-      max_tokens: 300,
-      temperature: 0.6,
-    })
+    const { content: raw } = await chatCompletion(
+      {
+        messages: [{ role: 'user', content: userPrompt }],
+        max_tokens: 300,
+        temperature: 0.6,
+      },
+      chatAiCtx
+    )
 
     const match = raw?.match(/\[[\s\S]*\]/)
     if (!match) return NextResponse.json({ error: 'Could not parse outline', raw }, { status: 502 })

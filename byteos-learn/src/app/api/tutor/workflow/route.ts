@@ -4,7 +4,8 @@
  */
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { chatCompletion, getChatConfigError, getDefaultMemoryModel } from '@/lib/ai/chat'
+import { chatCompletion, getDefaultMemoryModel, resolveChatConfigError } from '@/lib/ai/chat'
+import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { scanSensitiveUserText } from '@/lib/security/sensitiveInputGuard'
 import { parseOrgAiCompliance, type OrgAiCompliance } from '@/types/personalization'
 
@@ -54,6 +55,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, { userId: user.id })
+    const cfgErr = resolveChatConfigError(orgSettings, privateRuntime)
+    if (cfgErr) return NextResponse.json({ error: cfgErr }, { status: 500 })
+    const chatCtx = { privateOpenAi: privateRuntime }
+
     const workflowId = crypto.randomUUID()
     const steps: string[] = []
     let result = ''
@@ -62,19 +68,21 @@ export async function POST(request: NextRequest) {
     if (type === 'summarize') {
       steps.push('Extract content')
       steps.push('Summarize')
-      if (getChatConfigError()) return NextResponse.json({ error: 'AI not configured' }, { status: 500 })
       try {
-        const { content: resContent } = await chatCompletion({
-          model: getDefaultMemoryModel(),
-          messages: [
-            {
-              role: 'user',
-              content: `Summarize the following text in 2–4 short paragraphs. Keep key points and structure.\n\n${inputText}`,
-            },
-          ],
-          max_tokens: 500,
-          temperature: 0.3,
-        })
+        const { content: resContent } = await chatCompletion(
+          {
+            model: getDefaultMemoryModel(privateRuntime),
+            messages: [
+              {
+                role: 'user',
+                content: `Summarize the following text in 2–4 short paragraphs. Keep key points and structure.\n\n${inputText}`,
+              },
+            ],
+            max_tokens: 500,
+            temperature: 0.3,
+          },
+          chatCtx
+        )
         result = resContent ?? ''
         summary = result.slice(0, 200) + (result.length > 200 ? '…' : '')
       } catch {
@@ -82,19 +90,21 @@ export async function POST(request: NextRequest) {
       }
     } else if (type === 'extract_terms') {
       steps.push('Extract key terms')
-      if (getChatConfigError()) return NextResponse.json({ error: 'AI not configured' }, { status: 500 })
       try {
-        const { content: resContent } = await chatCompletion({
-          model: getDefaultMemoryModel(),
-          messages: [
-            {
-              role: 'user',
-              content: `List the key terms, concepts, or phrases from the following text. One per line, no numbering.\n\n${inputText}`,
-            },
-          ],
-          max_tokens: 400,
-          temperature: 0.2,
-        })
+        const { content: resContent } = await chatCompletion(
+          {
+            model: getDefaultMemoryModel(privateRuntime),
+            messages: [
+              {
+                role: 'user',
+                content: `List the key terms, concepts, or phrases from the following text. One per line, no numbering.\n\n${inputText}`,
+              },
+            ],
+            max_tokens: 400,
+            temperature: 0.2,
+          },
+          chatCtx
+        )
         result = resContent ?? ''
         summary = result.slice(0, 200) + (result.length > 200 ? '…' : '')
       } catch {

@@ -5,6 +5,7 @@
  */
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 
 const SUDARVID_URL = process.env.SUDARVID_URL?.replace(/\/$/, '')
 
@@ -56,6 +57,9 @@ export async function POST(request: NextRequest) {
   }
 
   const contentText = extractPlainText(module.content)
+
+  const blockedVid = await rejectSensitiveLearnerAiInput(admin, user.id, [module.title, contentText])
+  if (blockedVid) return blockedVid
 
   const generateBody = {
     topic: module.title,

@@ -71,6 +71,23 @@ export const PROVIDER_KEYS: ProviderKeyDef[] = [
     description: 'Claude models.',
   },
   {
+    id: 'local_openai_compatible',
+    name: 'Local / OpenAI-compatible LLM',
+    envVar: 'AI_CHAT_BASE_URL',
+    category: 'chat',
+    signupUrl: 'https://ai.google.dev/gemma/docs/run',
+    steps: [
+      'Install Ollama (ollama.com) or LM Studio (lmstudio.ai), or run vLLM / llama.cpp with an OpenAI-compatible API.',
+      'Pull a model (example — Ollama): ollama pull gemma3:4b. Official Gemma run guide: ai.google.dev/gemma/docs/run',
+      'Start the local server (Ollama runs on port 11434; LM Studio default is often 1234).',
+      'Set AI_CHAT_PROVIDER=custom, AI_CHAT_BASE_URL=http://127.0.0.1:11434 (host only — no /v1 suffix), AI_CHAT_API_KEY=ollama (Ollama accepts any non-empty Bearer token), and AI_CHAT_DEFAULT_MODEL to the exact model id (e.g. gemma3:4b).',
+      'Copy the same variables into Studio, Learn, and Intelligence .env if all apps should use the local model. Restart dev servers.',
+      'RAG embeddings still need EMBED_PROVIDER (Together, OpenAI, or Hugging Face) unless you configure a separate local embedding endpoint.',
+    ],
+    description:
+      'Run Gemma or other open models on your machine. Uses the same OpenAI-compatible path as cloud APIs.',
+  },
+  {
     id: 'huggingface',
     name: 'Hugging Face',
     envVar: 'HUGGINGFACE_API_KEY',

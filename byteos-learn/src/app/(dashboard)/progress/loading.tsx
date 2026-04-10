@@ -1,8 +1,11 @@
 import { BarChart2 } from 'lucide-react'
+import { SudarLoadingStrip } from '@/components/branding/SudarBrandLoader'
 
 export default function ProgressLoading() {
   return (
-    <div className="space-y-10 animate-pulse">
+    <div className="space-y-6">
+      <SudarLoadingStrip label="Loading progress…" />
+      <div className="space-y-10 animate-pulse">
       <div>
         <div className="flex items-center gap-2">
           <BarChart2 className="w-7 h-7 text-muted-foreground" />
@@ -45,6 +48,7 @@ export default function ProgressLoading() {
           </div>
         </section>
       ))}
+    </div>
     </div>
   )
 }

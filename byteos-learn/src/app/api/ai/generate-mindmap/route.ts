@@ -3,9 +3,11 @@
  * Returns a tree structure { root: { label, children: MindMapNode[] } }.
  * Scope: 'module' = current section; 'course' = full course overview.
  */
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
+import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
+import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 
 const MODULE_CONTENT_CAP = 6000
 const COURSE_TOTAL_CAP = 15000
@@ -49,10 +51,18 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const configError = getChatConfigError()
+
+  const admin = createAdminClient()
+
+  const body = await request.json().catch(() => ({} as Record<string, unknown>))
+  const courseId = typeof body.course_id === 'string' ? body.course_id : null
+  const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
+    courseId,
+    userId: user.id,
+  })
+  const configError = resolveChatConfigError(orgSettings, privateRuntime)
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
-  const body = await request.json().catch(() => ({}))
   const scope = body.scope === 'course' ? 'course' : 'module'
 
   let prompt: string
@@ -80,6 +90,9 @@ export async function POST(request: NextRequest) {
     combined = combined.trim()
     if (!combined) return NextResponse.json({ error: 'No module content for course mindmap' }, { status: 400 })
 
+    const blockedCourse = await rejectSensitiveLearnerAiInput(admin, user.id, [courseTitle, combined])
+    if (blockedCourse) return blockedCourse
+
     prompt = `You are a learning designer. From the following FULL COURSE content (multiple modules), create a single mindmap as a JSON object. The goal is to give the learner a complete overview and show how concepts connect across the course.
 
 Rules:
@@ -103,6 +116,9 @@ JSON object (root with label and children):`
     if (!content) return NextResponse.json({ error: 'content required' }, { status: 400 })
 
     const text = content.slice(0, MODULE_CONTENT_CAP)
+    const blockedMod = await rejectSensitiveLearnerAiInput(admin, user.id, [moduleTitle, text])
+    if (blockedMod) return blockedMod
+
     prompt = `You are a learning designer. From the following module content, create a mindmap as a JSON object. The goal is to help the learner see how concepts connect — do NOT just list section headings.
 
 Rules:
@@ -120,11 +136,14 @@ JSON object (root with label and children):`
     fallbackRootLabel = moduleTitle
   }
 
-  const { content: raw } = await chatCompletion({
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: maxTokens,
-    temperature: 0.3,
-  })
+  const { content: raw } = await chatCompletion(
+    {
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: maxTokens,
+      temperature: 0.3,
+    },
+    { privateOpenAi: privateRuntime }
+  )
   const rawStr = raw ?? ''
 
   let jsonStr = rawStr

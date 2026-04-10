@@ -1,17 +1,19 @@
-import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// Windows: writing `.next/trace` under the repo (Desktop/OneDrive/Defender) often throws EPERM and kills `next dev`.
-// Put the entire dist output in %TEMP% instead (path relative to this app). npm scripts use scripts/run-next.mjs
-// so NODE_PATH includes this app's node_modules (otherwise `require("next/dist/...")` from Temp fails).
+// Windows: `.next/trace` under Desktop/OneDrive often throws EPERM; %TEMP%\byteos-studio-next can also EPERM when
+// Defender locks Temp. Use node_modules/.cache (stable relative path for tsconfig; usually fewer locks than Temp).
+// npm scripts use scripts/run-next.mjs so NODE_PATH includes this app's node_modules.
 // Set NEXT_FORCE_PROJECT_DIST=1 to use the default `.next` folder inside this directory.
-const useTempDistOnWin =
+const useExternalDistOnWin =
   process.platform === 'win32' && process.env.NEXT_FORCE_PROJECT_DIST !== '1'
-const distDirWin = useTempDistOnWin
-  ? path.relative(__dirname, path.join(os.tmpdir(), 'byteos-studio-next'))
+const distDirWin = useExternalDistOnWin
+  ? path.relative(
+      __dirname,
+      path.join(__dirname, 'node_modules', '.cache', 'byteos-studio-next')
+    )
   : undefined
 
 /** @type {import('next').NextConfig} */

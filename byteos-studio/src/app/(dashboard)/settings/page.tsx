@@ -13,6 +13,8 @@ import {
   Volume2,
   Sparkles,
   Shield,
+  Server,
+  BookOpen,
 } from 'lucide-react'
 import type { PerformanceConfig, KpiDefinition, TermDefinition } from '@/types/performance'
 import { ModelPicker, type ModelPickerOption } from '@/components/ui/ModelPicker'
@@ -46,9 +48,18 @@ export default function SettingsPage() {
   const [allowGenerativePersonalization, setAllowGenerativePersonalization] = useState(true)
   const [requireLearnerConsent, setRequireLearnerConsent] = useState(false)
   const [personalizationRetentionDays, setPersonalizationRetentionDays] = useState<string>('')
+  const [learningEventsRetentionDays, setLearningEventsRetentionDays] = useState<string>('')
+  const [aiInteractionsRetentionDays, setAiInteractionsRetentionDays] = useState<string>('')
   const [blockHighRiskPiiInTutor, setBlockHighRiskPiiInTutor] = useState(true)
   const [tutorRedactEchoedSecrets, setTutorRedactEchoedSecrets] = useState(true)
   const [tutorOutputModerationStrict, setTutorOutputModerationStrict] = useState(false)
+  const [usePrivateServer, setUsePrivateServer] = useState(false)
+  const [privateServerUrl, setPrivateServerUrl] = useState('')
+  const [privateServerModel, setPrivateServerModel] = useState('')
+  const [privateAiFeatureAvailable, setPrivateAiFeatureAvailable] = useState(false)
+  const [privateAiBearerConfigured, setPrivateAiBearerConfigured] = useState(false)
+  const [privateAiTestStatus, setPrivateAiTestStatus] = useState<string | null>(null)
+  const [privateAiTesting, setPrivateAiTesting] = useState(false)
 
   const fetchSettings = useCallback(async () => {
     const res = await fetch('/api/org/settings')
@@ -75,9 +86,20 @@ export default function SettingsPage() {
       setRequireLearnerConsent(data.ai_compliance.require_learner_consent === true)
       const d = data.ai_compliance.personalization_data_retention_days
       setPersonalizationRetentionDays(typeof d === 'number' && !Number.isNaN(d) ? String(d) : '')
+      const le = data.ai_compliance.learning_events_retention_days
+      setLearningEventsRetentionDays(typeof le === 'number' && !Number.isNaN(le) ? String(le) : '')
+      const ai = data.ai_compliance.ai_interactions_retention_days
+      setAiInteractionsRetentionDays(typeof ai === 'number' && !Number.isNaN(ai) ? String(ai) : '')
       setBlockHighRiskPiiInTutor(data.ai_compliance.block_high_risk_pii_in_tutor !== false)
       setTutorRedactEchoedSecrets(data.ai_compliance.tutor_redact_echoed_secrets !== false)
       setTutorOutputModerationStrict(data.ai_compliance.tutor_output_moderation_strict === true)
+    }
+    if (data.ai_inference) {
+      setUsePrivateServer(data.ai_inference.use_private_server === true)
+      setPrivateServerUrl(typeof data.ai_inference.private_server_url === 'string' ? data.ai_inference.private_server_url : '')
+      setPrivateServerModel(typeof data.ai_inference.private_server_model === 'string' ? data.ai_inference.private_server_model : '')
+      setPrivateAiFeatureAvailable(data.ai_inference.feature_available === true)
+      setPrivateAiBearerConfigured(data.ai_inference.bearer_configured === true)
     }
     setLoading(false)
   }, [])
@@ -110,7 +132,20 @@ export default function SettingsPage() {
           ...(personalizationRetentionDays.trim() !== '' && {
             personalization_data_retention_days: Number(personalizationRetentionDays),
           }),
+          ...(learningEventsRetentionDays.trim() !== '' && {
+            learning_events_retention_days: Number(learningEventsRetentionDays),
+          }),
+          ...(aiInteractionsRetentionDays.trim() !== '' && {
+            ai_interactions_retention_days: Number(aiInteractionsRetentionDays),
+          }),
         },
+        ...(privateAiFeatureAvailable && {
+          ai_inference: {
+            use_private_server: usePrivateServer,
+            private_server_url: privateServerUrl,
+            private_server_model: privateServerModel,
+          },
+        }),
       }),
     })
     setSaving(false)
@@ -398,6 +433,32 @@ export default function SettingsPage() {
             className="w-full max-w-sm rounded-lg border border-slate-700 bg-slate-800 text-white px-3 py-2 text-sm"
           />
         </div>
+        <div>
+          <label className="block text-xs text-slate-500 mb-1">
+            Documented retention for learning events (days, optional)
+          </label>
+          <input
+            type="number"
+            min={1}
+            placeholder="e.g. 365 — enforcement can be added later"
+            value={learningEventsRetentionDays}
+            onChange={(e) => setLearningEventsRetentionDays(e.target.value)}
+            className="w-full max-w-sm rounded-lg border border-slate-700 bg-slate-800 text-white px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-slate-500 mb-1">
+            Documented retention for AI tutor interactions (days, optional)
+          </label>
+          <input
+            type="number"
+            min={1}
+            placeholder="e.g. 730 — enforcement can be added later"
+            value={aiInteractionsRetentionDays}
+            onChange={(e) => setAiInteractionsRetentionDays(e.target.value)}
+            className="w-full max-w-sm rounded-lg border border-slate-700 bg-slate-800 text-white px-3 py-2 text-sm"
+          />
+        </div>
         <div className="pt-4 border-t border-slate-800 space-y-3">
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-emerald-500/80" />
@@ -431,9 +492,129 @@ export default function SettingsPage() {
               onChange={(e) => setTutorOutputModerationStrict(e.target.checked)}
               className="rounded border-slate-600"
             />
-            Strict output moderation (reserved for future use)
+            Strict output moderation (extra redaction on tutor and Studio agent replies)
           </label>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Server className="w-4 h-4 text-slate-500" />
+          <h2 className="font-semibold text-white">Where Sudar runs your AI</h2>
+        </div>
+        <p className="text-slate-500 text-sm">
+          By default, Sudar sends chat and generation requests to cloud AI services using the keys in{' '}
+          <Link href="/settings/keys" className="text-indigo-400 hover:text-indigo-300">AI &amp; API Keys</Link>.
+          Your organisation can instead use a private AI server on your network (for example Ollama with Gemma on a PC in your office).
+        </p>
+        <p className="text-slate-500 text-xs">
+          New to these ideas? Take the short course:{' '}
+          <Link href="/help/ai-at-sudar" className="text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1">
+            <BookOpen className="w-3 h-3" /> Understanding AI in Sudar
+          </Link>
+        </p>
+        {!privateAiFeatureAvailable && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200/90">
+            Private organisation AI is not enabled on this deployment. Your platform operator sets{' '}
+            <code className="text-xs bg-slate-800 px-1 rounded">ALLOW_ORG_PRIVATE_AI_SERVER=true</code> and supplies a server token (
+            <code className="text-xs bg-slate-800 px-1 rounded">LOCAL_LLM_BEARER_TOKEN</code> or{' '}
+            <code className="text-xs bg-slate-800 px-1 rounded">AI_CHAT_API_KEY</code>).
+          </div>
+        )}
+        {privateAiFeatureAvailable && (
+          <>
+            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={usePrivateServer}
+                onChange={(e) => setUsePrivateServer(e.target.checked)}
+                className="rounded border-slate-600"
+              />
+              Use our organisation&apos;s private AI server for chat and generation
+            </label>
+            <div className="space-y-3 pl-1 border-l-2 border-slate-700 ml-1">
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Server address</label>
+                <input
+                  type="url"
+                  placeholder="http://192.168.1.10:11434"
+                  value={privateServerUrl}
+                  onChange={(e) => setPrivateServerUrl(e.target.value)}
+                  disabled={!usePrivateServer}
+                  className="w-full max-w-lg rounded-lg border border-slate-700 bg-slate-800 text-white px-3 py-2 text-sm disabled:opacity-50"
+                />
+                <p className="text-slate-500 text-xs mt-1">
+                  Full URL including <code className="text-slate-400">http://</code> or <code className="text-slate-400">https://</code>.
+                  Typical home/office: port <code className="text-slate-400">11434</code> (Ollama) or <code className="text-slate-400">1234</code> (LM Studio).
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Model name</label>
+                <input
+                  type="text"
+                  placeholder="gemma3:4b"
+                  value={privateServerModel}
+                  onChange={(e) => setPrivateServerModel(e.target.value)}
+                  disabled={!usePrivateServer}
+                  className="w-full max-w-lg rounded-lg border border-slate-700 bg-slate-800 text-white px-3 py-2 text-sm disabled:opacity-50"
+                />
+                <p className="text-slate-500 text-xs mt-1">Must match the name shown in your AI app (exact spelling).</p>
+              </div>
+              <p className="text-slate-500 text-xs">
+                <strong className="text-slate-400">Password for the server:</strong> not stored here. IT sets{' '}
+                <code className="text-slate-400">LOCAL_LLM_BEARER_TOKEN</code> or{' '}
+                <code className="text-slate-400">AI_CHAT_API_KEY</code> once on the Sudar server — same for all orgs on this deployment.
+                {privateAiBearerConfigured ? (
+                  <span className="text-emerald-400/90"> Currently configured on this server.</span>
+                ) : (
+                  <span className="text-amber-400/90"> Not set yet — private AI will not work until it is.</span>
+                )}
+              </p>
+              <p className="text-slate-500 text-xs">
+                Course search and embeddings may still use cloud keys unless you configure those separately.
+              </p>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  disabled={!usePrivateServer || privateAiTesting}
+                  onClick={async () => {
+                    setPrivateAiTesting(true)
+                    setPrivateAiTestStatus(null)
+                    const saveFirst = await fetch('/api/org/settings', {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        ai_inference: {
+                          use_private_server: usePrivateServer,
+                          private_server_url: privateServerUrl,
+                          private_server_model: privateServerModel,
+                        },
+                      }),
+                    })
+                    if (!saveFirst.ok) {
+                      const err = await saveFirst.json().catch(() => ({}))
+                      setPrivateAiTestStatus(typeof err.error === 'string' ? err.error : 'Could not save settings.')
+                      setPrivateAiTesting(false)
+                      return
+                    }
+                    const tr = await fetch('/api/org/settings/test-private-ai', { method: 'POST' })
+                    const td = await tr.json().catch(() => ({}))
+                    if (td.ok) setPrivateAiTestStatus(`Success: ${td.sample_reply ? `"${td.sample_reply.slice(0, 80)}"` : 'connected'}`)
+                    else setPrivateAiTestStatus(typeof td.error === 'string' ? td.error : 'Test failed.')
+                    setPrivateAiTesting(false)
+                  }}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-200 text-sm"
+                >
+                  {privateAiTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  Test connection
+                </button>
+                {privateAiTestStatus && (
+                  <span className="text-xs text-slate-400 max-w-md">{privateAiTestStatus}</span>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-6">

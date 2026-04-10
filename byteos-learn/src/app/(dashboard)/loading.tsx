@@ -1,8 +1,11 @@
 import { BookOpen, BarChart2, Route } from 'lucide-react'
+import { SudarLoadingStrip } from '@/components/branding/SudarBrandLoader'
 
 export default function DashboardLoading() {
   return (
-    <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 animate-pulse">
+    <div className="space-y-4">
+      <SudarLoadingStrip label="Loading your space…" />
+      <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 animate-pulse">
       {/* Left column */}
       <div className="flex-[2.2] flex flex-col gap-8">
         {/* Hero */}
@@ -99,6 +102,7 @@ export default function DashboardLoading() {
           ))}
         </div>
       </aside>
+    </div>
     </div>
   )
 }

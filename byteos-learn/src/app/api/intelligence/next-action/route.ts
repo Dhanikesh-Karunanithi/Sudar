@@ -20,7 +20,8 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
+import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { checkAndIncrementUsage } from '@/lib/usage-limits'
 
 const STALE_HOURS = 4
@@ -40,6 +41,8 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createAdminClient()
+  const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, { userId: user.id })
+  const chatCfg = resolveChatConfigError(orgSettings, privateRuntime)
   const usage = await checkAndIncrementUsage(admin, user.id, 'next_action')
   if (!usage.allowed) {
     return NextResponse.json(
@@ -189,14 +192,17 @@ export async function POST(request: NextRequest) {
     ? `This course ${best.reasons[0]}.`
     : `A strong next step based on your learning profile.`
 
-  if (!getChatConfigError() && best.reasons.length > 0) {
+  if (!chatCfg && best.reasons.length > 0) {
     try {
       const prompt = `Write one sentence (max 25 words) explaining to a learner why they should take the course "${best.course.title}" next. Reasons: ${best.reasons.join('; ')}. Be warm and specific. No fluff.`
-      const { content: gen } = await chatCompletion({
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 60,
-        temperature: 0.6,
-      })
+      const { content: gen } = await chatCompletion(
+        {
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 60,
+          temperature: 0.6,
+        },
+        { privateOpenAi: privateRuntime }
+      )
       if (gen) reason = gen
     } catch { /* use heuristic reason */ }
   }

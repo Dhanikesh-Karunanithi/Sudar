@@ -1,15 +1,14 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { getOrgIdAndRole } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { getCourseContentForGeneration } from '@/lib/courseContentForGeneration'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
+import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const configError = getChatConfigError()
-  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
   let body: { courseId?: string } = {}
   try {
@@ -22,6 +21,12 @@ export async function POST(request: NextRequest) {
   if (!courseId) return NextResponse.json({ error: 'courseId required' }, { status: 400 })
 
   const admin = createAdminClient()
+  const { orgId } = await getOrgIdAndRole(user.id)
+  const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
+  const configError = resolveChatConfigError(orgSettings, privateRuntime)
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
+  const chatAiCtx = { privateOpenAi: privateRuntime }
+
   const sampleText = await getCourseContentForGeneration(admin, courseId, user.id)
 
   if (!sampleText) {
@@ -57,14 +62,17 @@ Return ONLY valid JSON in this format:
 }`
 
   try {
-    const { content: raw } = await chatCompletion({
-      messages: [
-        { role: 'system', content: 'You are an expert video script writer. Always respond with valid JSON only, no additional text.' },
-        { role: 'user', content: prompt },
-      ],
-      max_tokens: 3000,
-      temperature: 0.7,
-    })
+    const { content: raw } = await chatCompletion(
+      {
+        messages: [
+          { role: 'system', content: 'You are an expert video script writer. Always respond with valid JSON only, no additional text.' },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: 3000,
+        temperature: 0.7,
+      },
+      chatAiCtx
+    )
 
     if (!raw) return NextResponse.json({ error: 'AI provider returned empty response' }, { status: 502 })
 

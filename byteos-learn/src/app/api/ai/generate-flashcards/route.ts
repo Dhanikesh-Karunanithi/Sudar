@@ -1,6 +1,8 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
+import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
+import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 
 export interface FlashcardPair {
   front: string
@@ -11,11 +13,15 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const configError = getChatConfigError()
-  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
   const { content, module_title } = await request.json()
   const text = (content ?? '').trim().slice(0, 4000)
+  const admin = createAdminClient()
+  const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, { userId: user.id })
+  const configError = resolveChatConfigError(orgSettings, privateRuntime)
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
+  const blocked = await rejectSensitiveLearnerAiInput(admin, user.id, [text, module_title])
+  if (blocked) return blocked
   if (!text) {
     return NextResponse.json(
       { cards: [], error: 'empty_content', message: 'No module text was provided to generate flashcards.' },
@@ -32,11 +38,14 @@ ${text}
 
 JSON array:`
 
-  const { content: raw } = await chatCompletion({
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: 1200,
-    temperature: 0.3,
-  }).catch((err) => {
+  const { content: raw } = await chatCompletion(
+    {
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 1200,
+      temperature: 0.3,
+    },
+    { privateOpenAi: privateRuntime }
+  ).catch((err) => {
     throw new Error(err instanceof Error ? err.message : String(err))
   })
   const rawStr = raw ?? ''

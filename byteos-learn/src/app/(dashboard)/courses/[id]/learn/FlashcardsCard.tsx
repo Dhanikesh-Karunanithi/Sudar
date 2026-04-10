@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, RotateCcw, Layers } from 'lucide-react'
+import { SudarBrandLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
 
 export interface FlashcardPair {
@@ -23,12 +24,11 @@ export function FlashcardsCard({
 
   if (loading) {
     return (
-      <div className="max-w-xl mx-auto py-12 flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center animate-pulse">
-          <Layers className="w-6 h-6 text-primary" />
-        </div>
-        <p className="text-sm text-muted-foreground">Sudar is building your flashcards…</p>
-      </div>
+      <SudarBrandLoader
+        className="max-w-xl mx-auto py-12"
+        size="sm"
+        message="Sudar is building your flashcards…"
+      />
     )
   }
 

@@ -3,16 +3,24 @@ import { getOrCreateOrg } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import type { RichContent } from '@/types/content'
 import type { Json } from '@/types/database'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError, type ChatCompletionContext } from '@/lib/ai/chat'
+import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
 
 const MAX_DOC_CHARS = 45000
 
-async function callAI(messages: { role: string; content: string }[], maxTokens = 1200) {
-  const { content } = await chatCompletion({
-    messages: messages as { role: 'system' | 'user' | 'assistant'; content: string }[],
-    max_tokens: maxTokens,
-    temperature: 0.7,
-  })
+async function callAI(
+  messages: { role: string; content: string }[],
+  maxTokens = 1200,
+  ctx?: ChatCompletionContext
+) {
+  const { content } = await chatCompletion(
+    {
+      messages: messages as { role: 'system' | 'user' | 'assistant'; content: string }[],
+      max_tokens: maxTokens,
+      temperature: 0.7,
+    },
+    ctx
+  )
   return content ?? ''
 }
 
@@ -71,11 +79,13 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const configError = getChatConfigError()
-  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
   const admin = createAdminClient()
   const orgId = await getOrCreateOrg(user.id)
+  const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
+  const configError = resolveChatConfigError(orgSettings, privateRuntime)
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
+  const chatAiCtx = { privateOpenAi: privateRuntime }
 
   let documentText = ''
   const contentType = request.headers.get('content-type') ?? ''
@@ -109,7 +119,7 @@ Reply with ONLY the course title, no quotes or extra text.`
 
   let title = 'Course from document'
   try {
-    const raw = await callAI([{ role: 'user', content: titlePrompt }], 80)
+    const raw = await callAI([{ role: 'user', content: titlePrompt }], 80, chatAiCtx)
     if (raw.trim()) title = raw.trim()
   } catch {
     // keep default
@@ -124,7 +134,7 @@ Return ONLY a JSON array of ${numModules} module titles. Example: ["Introduction
 
   let moduleTitles: string[] = []
   try {
-    const raw = await callAI([{ role: 'user', content: outlinePrompt }], 300)
+    const raw = await callAI([{ role: 'user', content: outlinePrompt }], 300, chatAiCtx)
     const match = raw.match(/\[[\s\S]*\]/)
     if (match) moduleTitles = JSON.parse(match[0])
   } catch {
@@ -150,10 +160,14 @@ Return ONLY a JSON array of ${numModules} module titles. Example: ["Introduction
 
     let rich: RichContent
     try {
-      const raw = await callAI([
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Document excerpt:\n${docChunk}\n\nGenerate the JSON object for module "${moduleTitle}". Use only information from the document.` },
-      ], 4000)
+      const raw = await callAI(
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Document excerpt:\n${docChunk}\n\nGenerate the JSON object for module "${moduleTitle}". Use only information from the document.` },
+        ],
+        4000,
+        chatAiCtx
+      )
       const jsonMatch = raw.match(/\{[\s\S]*\}/)
       if (!jsonMatch) throw new Error('No JSON in response')
       const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>

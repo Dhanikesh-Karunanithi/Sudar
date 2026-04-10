@@ -2,7 +2,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { requireOrgAdmin } from '@/lib/org'
 import Link from 'next/link'
-import { ShieldCheck, BookOpen, FileText, ExternalLink } from 'lucide-react'
+import { ShieldCheck, BookOpen, FileText, ExternalLink, Server } from 'lucide-react'
 
 const TRUST_DOCS_BASE =
   'https://github.com/Dhanikesh-Karunanithi/Sudar/blob/main/docs/trust'
@@ -32,10 +32,18 @@ export default async function GovernancePage() {
   const requireConsent = ac.require_learner_consent === true
   const allowGenPers = ac.allow_generative_personalization !== false
 
+  const persDays = ac.personalization_data_retention_days
+  const leDays = ac.learning_events_retention_days
+  const aiDays = ac.ai_interactions_retention_days
+
   const rows: { label: string; on: boolean; note?: string }[] = [
     { label: 'Block high-risk patterns in tutor and Studio chat (cards, SSN-style, keys)', on: blockPii },
     { label: 'Redact card-like sequences from tutor model output', on: redactEcho },
-    { label: 'Strict output moderation (reserved)', on: strictOut, note: 'Reserved for a future moderation pass.' },
+    {
+      label: 'Strict output moderation (extra redaction on tutor and Studio agent replies)',
+      on: strictOut,
+      note: 'When on, applies additional pattern redaction to model text.',
+    },
     { label: 'Generative personalization allowed', on: allowGenPers },
     { label: 'Learner consent required before personalization', on: requireConsent },
   ]
@@ -89,6 +97,48 @@ export default async function GovernancePage() {
               {r.note ? <p className="text-xs text-slate-500 sm:w-full sm:order-3">{r.note}</p> : null}
             </li>
           ))}
+        </ul>
+      </div>
+
+      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-3">
+        <h2 className="font-semibold text-white flex items-center gap-2">
+          <Server className="w-4 h-4 text-slate-400" />
+          AI data routing
+        </h2>
+        <p className="text-slate-500 text-sm">
+          Sudar can send learner questions and Studio generation to either cloud AI providers (using API keys) or a private server on your network.
+          Routing is configured in{' '}
+          <Link href="/settings" className="text-indigo-400 hover:text-indigo-300">
+            Org settings
+          </Link>{' '}
+          under &quot;Where Sudar runs your AI&quot;, when your operator has enabled that option.
+        </p>
+        <p className="text-slate-500 text-sm">
+          Plain-language guide:{' '}
+          <Link href="/help/ai-at-sudar" className="text-indigo-400 hover:text-indigo-300">
+            Understanding AI in Sudar
+          </Link>
+          . Technical trust context:{' '}
+          <a
+            href={`${TRUST_DOCS_BASE}/THREAT_MODEL.md`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-indigo-400 hover:text-indigo-300 inline-flex items-center gap-1"
+          >
+            Threat model <ExternalLink className="w-3 h-3 opacity-60" />
+          </a>
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-3">
+        <h2 className="font-semibold text-white text-sm">Documented retention (days)</h2>
+        <p className="text-slate-500 text-xs">
+          Stored in Org settings for policy alignment. Automated deletion jobs are not implied — implement per deployment.
+        </p>
+        <ul className="text-sm text-slate-300 space-y-1 font-mono text-xs">
+          <li>AI personalization overlays: {typeof persDays === 'number' ? persDays : '—'}</li>
+          <li>Learning events: {typeof leDays === 'number' ? leDays : '—'}</li>
+          <li>AI tutor interactions: {typeof aiDays === 'number' ? aiDays : '—'}</li>
         </ul>
       </div>
 

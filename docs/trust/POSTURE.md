@@ -19,3 +19,11 @@ Use this memo to scope HIPAA, PCI, and regional law discussions.
 ## Markets
 
 Document primary regions (EU/UK/US) to drive GDPR, UK GDPR, and state privacy laws. AI Act obligations depend on use case and role (provider vs deployer); see AI_SYSTEM_REGISTER.md.
+
+## Checklist (per deployment)
+
+- [ ] Primary customer regions and lawful basis documented with legal counsel.
+- [ ] Subprocessor list finalized for **this** environment (hosting, email, model APIs).
+- [ ] Whether cardholder data or PHI will appear in course content or attributes (scopes HIPAA/PCI discussion).
+- [ ] `organisations.settings.ai_compliance` reviewed in Sudar Studio (Governance + Org settings).
+- [ ] Retention fields in Org settings treated as **policy intent** until automated jobs exist.

@@ -80,6 +80,21 @@ interface TutorQueryData {
   blocks?: TutorBlock[]
 }
 
+const TUTOR_TRANSCRIPT_STORAGE_PREFIX = 'sudar-learn-course-tutor:v1:'
+const MAX_TUTOR_TRANSCRIPT_BYTES = 400_000
+
+function reviveStoredTutorMessages(parsed: unknown): Message[] {
+  if (!Array.isArray(parsed)) return []
+  const out: Message[] = []
+  for (const item of parsed) {
+    if (!item || typeof item !== 'object') continue
+    const m = item as Partial<Message>
+    if (m.role !== 'user' && m.role !== 'assistant') continue
+    if (typeof m.content !== 'string') continue
+    out.push(item as Message)
+  }
+  return out
+}
 
 interface PersonalizedWelcome {
   message: string
@@ -709,6 +724,11 @@ export function CourseViewer({
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const prevCourseIdRef = useRef<string>(course.id)
 
+  // Keep module in sync with URL (?module=) — back/forward and deep links
+  useEffect(() => {
+    setCurrentModuleId(activeModuleId)
+  }, [activeModuleId])
+
   // Text selection popup
   const [selectionPopup, setSelectionPopup] = useState<SelectionPopup | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -840,6 +860,30 @@ export function CourseViewer({
       setMindmapCourse(null)
     }
   }, [currentModuleId, course.id])
+
+  // Restore course tutor transcript after navigations / remounts (same tab)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(`${TUTOR_TRANSCRIPT_STORAGE_PREFIX}${course.id}`)
+      if (!raw) return
+      const revived = reviveStoredTutorMessages(JSON.parse(raw) as unknown)
+      setMessages(revived)
+    } catch {
+      /* ignore corrupt storage */
+    }
+  }, [course.id])
+
+  useEffect(() => {
+    if (messages.length === 0) return
+    try {
+      const key = `${TUTOR_TRANSCRIPT_STORAGE_PREFIX}${course.id}`
+      const serialized = JSON.stringify(messages)
+      if (serialized.length > MAX_TUTOR_TRANSCRIPT_BYTES) return
+      sessionStorage.setItem(key, serialized)
+    } catch {
+      /* quota or private mode */
+    }
+  }, [messages, course.id])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -983,6 +1027,20 @@ export function CourseViewer({
       .then((data) => { if (data?.memory) setLearnerContext(data.memory as Record<string, unknown>) })
       .catch(() => {})
   }, [tutorOpen])
+
+  useEffect(() => {
+    if (!tutorOpen) return
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return
+      if (tutorPanelExpanded) {
+        setTutorPanelExpanded(false)
+      } else {
+        setTutorOpen(false)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [tutorOpen, tutorPanelExpanded])
 
   // Drag-to-resize Sudar overlay panel
   useEffect(() => {
@@ -1292,7 +1350,7 @@ export function CourseViewer({
     }
   }
 
-  const tutorPanelStyle = { width: tutorPanelWidth }
+  const tutorPanelStyle = tutorPanelExpanded ? undefined : { width: tutorPanelWidth }
 
   return (
     <div className="flex bg-background overflow-hidden -mx-6 -mt-8 -mb-8 h-[calc(100vh-64px)]">
@@ -2011,45 +2069,69 @@ export function CourseViewer({
             </>
             )} {/* end non-SCORM branch */}
 
-        {/* Sudar overlay — floats over content, does not push or resize the course area */}
+        {/* Sudar overlay — side dock or centered focus mode */}
         {tutorOpen && (
-          <div
-            className="fixed top-16 right-0 bottom-0 z-50 flex flex-col border-l border-border bg-muted shadow-2xl transition-[width] duration-200"
-            style={tutorPanelStyle}
-          >
-            {/* Draggable resize handle on left edge */}
+          <>
+            {tutorPanelExpanded && (
+              <button
+                type="button"
+                aria-label="Exit focus mode"
+                className="fixed top-16 inset-x-0 bottom-0 z-[40] bg-black/45 border-0 w-full cursor-default"
+                onClick={() => setTutorPanelExpanded(false)}
+              />
+            )}
             <div
-              role="separator"
-              aria-orientation="vertical"
-              aria-valuenow={tutorPanelWidth}
-              onMouseDown={(e) => { e.preventDefault(); setTutorPanelResizing(true) } }
+              role="dialog"
+              aria-modal={tutorPanelExpanded}
+              aria-label="Sudar tutor chat"
               className={cn(
-                'absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-10',
-                tutorPanelResizing && 'bg-primary/50'
+                'flex flex-col bg-muted shadow-2xl overflow-hidden',
+                tutorPanelExpanded
+                  ? 'fixed z-[50] top-20 left-3 right-3 bottom-3 sm:left-4 sm:right-4 sm:bottom-4 max-w-3xl w-[min(42rem,calc(100vw-1.5rem))] mx-auto rounded-2xl border border-border min-h-0'
+                  : 'fixed top-16 right-0 bottom-0 z-50 border-l border-border transition-[width] duration-200 min-h-0'
               )}
-            />
+              style={tutorPanelStyle}
+            >
+              {!tutorPanelExpanded && (
+                <div
+                  role="separator"
+                  aria-orientation="vertical"
+                  aria-valuenow={tutorPanelWidth}
+                  onMouseDown={(e) => { e.preventDefault(); setTutorPanelResizing(true) } }
+                  className={cn(
+                    'absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors z-10',
+                    tutorPanelResizing && 'bg-primary/50'
+                  )}
+                />
+              )}
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <div className="px-4 py-3 border-b border-border bg-background flex items-center gap-3">
                 <SudarLogoMark className="h-8 w-auto shrink-0 text-primary" starFill="var(--background)" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-card-foreground">Sudar</p>
-                  <p className="text-xs text-muted-foreground truncate">Knows the full course + your history</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {tutorPanelExpanded ? 'Focus mode — larger chat (Esc to dock)' : 'Knows the full course + your history'}
+                  </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTutorPanelExpanded((e) => !e)
-                    setTutorPanelWidth((w) => (w >= 500 ? 384 : 560))
-                  } }
-                  className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-card-foreground"
-                  aria-label={tutorPanelExpanded ? 'Collapse chat' : 'Expand chat'}
-                  title={tutorPanelExpanded ? 'Collapse chat' : 'Expand chat for full engagement'}
-                >
-                  {tutorPanelExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                </button>
-                <button onClick={() => setTutorOpen(false)} className="p-1.5 hover:bg-muted rounded-md transition-colors">
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </button>
+                <div className="flex items-center shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setTutorPanelExpanded((e) => !e)}
+                    className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-card-foreground"
+                    aria-label={tutorPanelExpanded ? 'Dock chat to the side' : 'Focus mode — larger chat'}
+                    title={tutorPanelExpanded ? 'Dock to the right' : 'Focus mode — larger chat'}
+                  >
+                    {tutorPanelExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setTutorOpen(false); setTutorPanelExpanded(false) } }
+                    className="p-1.5 hover:bg-muted rounded-lg transition-colors"
+                    aria-label="Close Sudar"
+                  >
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
               </div>
 
               {/* What Sudar knows about you — collapsible (Apple-style) */}
@@ -2294,7 +2376,8 @@ export function CourseViewer({
               </div>
             </div>
             </div>
-          )}
+          </>
+        )}
         {/* end tutor overlay */}
         </div>
       </div>

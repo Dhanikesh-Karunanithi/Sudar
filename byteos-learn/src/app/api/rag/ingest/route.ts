@@ -7,6 +7,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { embedTexts, EMBED_DIMENSIONS } from '@/lib/embed'
+import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,6 +38,13 @@ export async function POST(request: NextRequest) {
       if (content) chunks.push({ course_id: c.id, content, chunk_index: 0, chunk_type: 'course' })
     }
     if (chunks.length === 0) return NextResponse.json({ ok: true, indexed: 0 })
+
+    const blockedRag = await rejectSensitiveLearnerAiInput(
+      admin,
+      user.id,
+      chunks.map((ch) => ch.content)
+    )
+    if (blockedRag) return blockedRag
 
     const embeddings = await embedTexts(chunks.map((ch) => ch.content))
     if (embeddings.some((e) => e.length !== EMBED_DIMENSIONS)) {

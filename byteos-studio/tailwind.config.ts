@@ -46,11 +46,27 @@ const config: Config = {
       keyframes: {
         "sudar-logo-pulse": {
           "0%, 100%": { transform: "scale(1)" },
-          "50%": { transform: "scale(1.06)" },
+          "45%": { transform: "scale(1.055)" },
+          "70%": { transform: "scale(1.02)" },
+        },
+        "sudar-logo-drift": {
+          "0%, 100%": { transform: "translateY(0) scale(1)" },
+          "50%": { transform: "translateY(-4px) scale(1.045)" },
+        },
+        "sudar-star-shimmer": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.78" },
+        },
+        "sudar-loader-glow": {
+          "0%, 100%": { opacity: "0.35", transform: "scale(0.9)" },
+          "50%": { opacity: "0.7", transform: "scale(1.06)" },
         },
       },
       animation: {
         "sudar-logo-pulse": "sudar-logo-pulse 2.8s ease-in-out infinite",
+        "sudar-logo-drift": "sudar-logo-drift 1.85s ease-in-out infinite",
+        "sudar-star-shimmer": "sudar-star-shimmer 1.85s ease-in-out infinite",
+        "sudar-loader-glow": "sudar-loader-glow 2.2s ease-in-out infinite",
       },
     },
   },

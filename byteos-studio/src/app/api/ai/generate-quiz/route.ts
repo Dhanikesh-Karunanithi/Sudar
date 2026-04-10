@@ -5,18 +5,23 @@
  */
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { getOrgIdAndRole } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import type { Json } from '@/types/database'
-import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
+import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const configError = getChatConfigError()
-  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 
   const admin = createAdminClient()
+  const { orgId } = await getOrgIdAndRole(user.id)
+  const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
+  const configError = resolveChatConfigError(orgSettings, privateRuntime)
+  if (configError) return NextResponse.json({ error: configError }, { status: 500 })
+  const chatAiCtx = { privateOpenAi: privateRuntime }
   const { module_id, course_title, module_title, content, difficulty = 'intermediate', num_questions = 4 } = await request.json()
 
   if (!module_id || !content) return NextResponse.json({ error: 'module_id and content required' }, { status: 400 })
@@ -54,11 +59,14 @@ Return ONLY valid JSON in this exact structure:
   ]
 }`
 
-  const { content: raw } = await chatCompletion({
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: 1200,
-    temperature: 0.5,
-  }).catch(() => ({ content: '' }))
+  const { content: raw } = await chatCompletion(
+    {
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 1200,
+      temperature: 0.5,
+    },
+    chatAiCtx
+  ).catch(() => ({ content: '' }))
   if (!raw) return NextResponse.json({ error: 'AI generation failed' }, { status: 500 })
 
   let quiz: { questions: unknown[] }

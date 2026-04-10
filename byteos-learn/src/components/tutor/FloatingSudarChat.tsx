@@ -186,45 +186,47 @@ export function FloatingSudarChat() {
             className={cn(
               'fixed z-[60] liquid-glass flex flex-col overflow-hidden rounded-[2rem] shadow-2xl transition-all duration-200',
               isExpanded
-                ? 'top-4 left-4 w-[calc(100vw-2rem)] max-w-[720px] h-[calc(100vh-6rem)]'
+                ? 'top-4 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-[calc(100vw-3rem)] max-w-[720px] h-[calc(100vh-6rem)]'
                 : 'bottom-24 right-6 w-[calc(100vw-3rem)] max-w-[420px] h-[520px]'
             )}
           >
-            <div className="p-5 border-b border-border flex items-center justify-between shrink-0 bg-card/80">
-              <div className="flex items-center gap-3">
-                <MascotAvatar mascotId={activeMascot} size="lg" className="rounded-2xl" />
-                <div>
+            <div className="p-5 border-b border-border flex items-center justify-between gap-2 shrink-0 bg-card/80">
+              <div className="flex items-center gap-3 min-w-0">
+                <MascotAvatar mascotId={activeMascot} size="lg" className="rounded-2xl shrink-0" />
+                <div className="min-w-0">
                   <h3 className="font-display text-lg font-bold text-card-foreground">Sudar</h3>
                   <div className="mt-1">
                     <MascotModeBadge mascotId={activeMascot} />
                   </div>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  void trackMascotEvent({
-                    eventType: 'mascot_dismiss',
-                    mascotId: activeMascot,
-                    source: 'tutor_chat',
-                    detail: { trigger: 'chat_open' },
-                  })
-                  setIsOpen(false)
-                }}
-                className="p-2 text-muted-foreground hover:text-card-foreground transition-colors rounded-lg"
-                aria-label="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="p-2 text-muted-foreground hover:text-card-foreground transition-colors rounded-lg"
-                aria-label={isExpanded ? 'Collapse chat' : 'Expand chat'}
-                title={isExpanded ? 'Collapse chat' : 'Expand chat for full engagement'}
-              >
-                {isExpanded ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-              </button>
+              <div className="flex items-center shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="p-2 text-muted-foreground hover:text-card-foreground transition-colors rounded-lg"
+                  aria-label={isExpanded ? 'Collapse chat' : 'Expand chat'}
+                  title={isExpanded ? 'Collapse chat' : 'Larger chat panel'}
+                >
+                  {isExpanded ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void trackMascotEvent({
+                      eventType: 'mascot_dismiss',
+                      mascotId: activeMascot,
+                      source: 'tutor_chat',
+                      detail: { trigger: 'chat_open' },
+                    })
+                    setIsOpen(false)
+                  }}
+                  className="p-2 text-muted-foreground hover:text-card-foreground transition-colors rounded-lg"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div

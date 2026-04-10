@@ -4,10 +4,22 @@ import type { TutorAction, TutorActionType } from '@/types/tutor'
 import { TUTOR_ACTION_TYPES } from '@/types/tutor'
 import { retrieveChunks } from '@/lib/rag/retrieve'
 import { getCachedPublishedCourses, getCachedPublishedPaths } from '@/lib/cache'
-import { chatCompletion, getChatConfigError, getDefaultTutorModel, getDefaultMemoryModel } from '@/lib/ai/chat'
+import {
+  chatCompletion,
+  getDefaultTutorModel,
+  getDefaultMemoryModel,
+  resolveChatConfigError,
+  type ChatCompletionContext,
+} from '@/lib/ai/chat'
+import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
+import type { PrivateOpenAiRuntime } from '@/types/orgAiInference'
 import { checkAndIncrementUsage } from '@/lib/usage-limits'
 import { logAiError } from '@/lib/logger'
-import { redactEchoedSensitiveDigits, scanSensitiveUserText } from '@/lib/security/sensitiveInputGuard'
+import {
+  applyStrictOutputRedaction,
+  redactEchoedSensitiveDigits,
+  scanSensitiveUserText,
+} from '@/lib/security/sensitiveInputGuard'
 import { parseOrgAiCompliance, type OrgAiCompliance } from '@/types/personalization'
 const GUARDRAIL_REFUSAL_MESSAGE = "I'm here to help with your courses and learning. I can't help with that. What would you like to learn today?"
 const SENSITIVE_DATA_REFUSAL_MESSAGE = (
@@ -15,6 +27,12 @@ const SENSITIVE_DATA_REFUSAL_MESSAGE = (
 )
 const PLATFORM_CONTEXT_CATALOG_LIMIT = 25
 const MAX_TUTOR_MESSAGE_LENGTH = 2000
+
+type TutorAiDeps = {
+  orgSettings: unknown
+  privateRuntime: PrivateOpenAiRuntime | null
+  chatCtx: ChatCompletionContext
+}
 
 // Static, factual description of the Sudar Learn UI — injected into every prompt so Sudar
 // can guide navigation accurately instead of hallucinating steps.
@@ -110,7 +128,11 @@ const FOLLOWUP_BYPASS_PATTERNS = [
 ]
 
 /** Returns true if the message passes the input guardrail (learning/platform scope). */
-async function runInputGuardrail(message: string, hasConversationHistory: boolean): Promise<{ pass: boolean }> {
+async function runInputGuardrail(
+  message: string,
+  hasConversationHistory: boolean,
+  aiDeps: TutorAiDeps
+): Promise<{ pass: boolean }> {
   const trimmed = message.trim()
   if (!trimmed) return { pass: false }
 
@@ -134,20 +156,23 @@ async function runInputGuardrail(message: string, hasConversationHistory: boolea
   // learning-related regardless of whether it sounds like it in isolation.
   if (hasConversationHistory) return { pass: true }
 
-  if (getChatConfigError()) return { pass: true } // no API key → skip LLM check
+  if (resolveChatConfigError(aiDeps.orgSettings, aiDeps.privateRuntime)) return { pass: true } // no API → skip LLM check
 
   try {
-    const { content } = await chatCompletion({
-      model: getDefaultMemoryModel(),
-      messages: [
-        {
-          role: 'user',
-          content: `Does this message ask for help with learning, courses, studying, questions about the AI tutor, or using this learning platform? Reply with exactly YES or NO.\n\nMessage: "${trimmed.slice(0, 500)}"`,
-        },
-      ],
-      max_tokens: 10,
-      temperature: 0,
-    })
+    const { content } = await chatCompletion(
+      {
+        model: getDefaultMemoryModel(aiDeps.privateRuntime),
+        messages: [
+          {
+            role: 'user',
+            content: `Does this message ask for help with learning, courses, studying, questions about the AI tutor, or using this learning platform? Reply with exactly YES or NO.\n\nMessage: "${trimmed.slice(0, 500)}"`,
+          },
+        ],
+        max_tokens: 10,
+        temperature: 0,
+      },
+      aiDeps.chatCtx
+    )
     const answer = (content ?? '').toUpperCase()
     const pass = !answer.startsWith('NO')
     return { pass }
@@ -235,24 +260,30 @@ const TUTOR_MODELS = [
 const DEFAULT_TUTOR_MODEL = 'openai/gpt-oss-20b'
 const DEFAULT_MEMORY_MODEL = 'google/gemma-3n-E4B-it'
 
-function getTutorModel(): string {
+function getTutorModel(privateRuntime: PrivateOpenAiRuntime | null): string {
+  if (privateRuntime) return privateRuntime.defaultModel
   const env = process.env.TOGETHER_TUTOR_MODEL?.trim()
   if (env && TUTOR_MODELS.some((m) => m.id === env)) return env
-  return getDefaultTutorModel()
+  return getDefaultTutorModel(null)
 }
 
 async function callAI(
   messages: { role: string; content: string }[],
-  maxTokens = 600,
-  model = getTutorModel()
+  maxTokens: number,
+  aiDeps: TutorAiDeps,
+  model?: string
 ): Promise<string> {
-  const { content } = await chatCompletion({
-    messages: messages as { role: 'system' | 'user' | 'assistant'; content: string }[],
-    model,
-    max_tokens: maxTokens,
-    temperature: 0.7,
-    top_p: 0.9,
-  })
+  const m = model ?? getTutorModel(aiDeps.privateRuntime)
+  const { content } = await chatCompletion(
+    {
+      messages: messages as { role: 'system' | 'user' | 'assistant'; content: string }[],
+      model: m,
+      max_tokens: maxTokens,
+      temperature: 0.7,
+      top_p: 0.9,
+    },
+    aiDeps.chatCtx
+  )
   return content ?? ''
 }
 
@@ -264,8 +295,9 @@ async function generateQuizBlock(
   courseContent: string,
   moduleTitle: string,
   conversationContext: string,
+  aiDeps: TutorAiDeps,
 ): Promise<{ question: string; options: Array<{ id: string; text: string; correct: boolean; explanation: string }>; topic: string; difficulty: 'recall' | 'application' | 'challenge' } | null> {
-  if (getChatConfigError()) return null
+  if (resolveChatConfigError(aiDeps.orgSettings, aiDeps.privateRuntime)) return null
 
   const difficultyHint = /challenge|harder|harder question|push me|more difficult/i.test(conversationContext)
     ? 'challenge'
@@ -305,12 +337,15 @@ Rules:
 - Return ONLY the JSON object. No other text.`
 
   try {
-    const { content: raw } = await chatCompletion({
-      model: getDefaultMemoryModel(),
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 600,
-      temperature: 0.5,
-    })
+    const { content: raw } = await chatCompletion(
+      {
+        model: getDefaultMemoryModel(aiDeps.privateRuntime),
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 600,
+        temperature: 0.5,
+      },
+      aiDeps.chatCtx
+    )
     if (!raw) return null
     const match = raw.match(/\{[\s\S]*\}/)
     if (!match) return null
@@ -332,31 +367,8 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    if (!process.env.TOGETHER_API_KEY) return NextResponse.json({ error: 'AI tutor not configured' }, { status: 500 })
 
     const admin = createAdminClient()
-    const usage = await checkAndIncrementUsage(admin, user.id, 'tutor')
-    if (!usage.allowed) {
-      return NextResponse.json(
-        { error: `Daily tutor request limit (${usage.limit}) reached. Try again tomorrow.` },
-        { status: 429 }
-      )
-    }
-
-    const { data: profForCompliance } = await admin
-      .from('profiles')
-      .select('org_id')
-      .eq('id', user.id)
-      .maybeSingle()
-    let orgAiCompliance: OrgAiCompliance = {}
-    if (profForCompliance?.org_id) {
-      const { data: orgForCompliance } = await admin
-        .from('organisations')
-        .select('settings')
-        .eq('id', profForCompliance.org_id)
-        .maybeSingle()
-      orgAiCompliance = parseOrgAiCompliance(orgForCompliance?.settings)
-    }
 
     let body: {
       message?: string
@@ -381,6 +393,43 @@ export async function POST(request: NextRequest) {
     }
 
     const { message: rawMessage, course_id, module_id, conversation_history = [], pasted_text, selected_text, active_modality, available_modalities, route: routeParam } = body
+
+    const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
+      courseId: course_id ?? null,
+      userId: user.id,
+    })
+    const cfgErr = resolveChatConfigError(orgSettings, privateRuntime)
+    if (cfgErr) {
+      return NextResponse.json({ error: cfgErr }, { status: 500 })
+    }
+    const aiDeps: TutorAiDeps = {
+      orgSettings,
+      privateRuntime,
+      chatCtx: { privateOpenAi: privateRuntime },
+    }
+
+    const usage = await checkAndIncrementUsage(admin, user.id, 'tutor')
+    if (!usage.allowed) {
+      return NextResponse.json(
+        { error: `Daily tutor request limit (${usage.limit}) reached. Try again tomorrow.` },
+        { status: 429 }
+      )
+    }
+
+    const { data: profForCompliance } = await admin
+      .from('profiles')
+      .select('org_id')
+      .eq('id', user.id)
+      .maybeSingle()
+    let orgAiCompliance: OrgAiCompliance = {}
+    if (profForCompliance?.org_id) {
+      const { data: orgForCompliance } = await admin
+        .from('organisations')
+        .select('settings')
+        .eq('id', profForCompliance.org_id)
+        .maybeSingle()
+      orgAiCompliance = parseOrgAiCompliance(orgForCompliance?.settings)
+    }
     if (!rawMessage?.trim()) return NextResponse.json({ error: 'message required' }, { status: 400 })
     if (rawMessage.length > MAX_TUTOR_MESSAGE_LENGTH) {
       return NextResponse.json({ error: `Message too long. Max ${MAX_TUTOR_MESSAGE_LENGTH} characters.` }, { status: 400 })
@@ -393,7 +442,7 @@ export async function POST(request: NextRequest) {
 
     // ── Input guardrail: refuse off-topic / harmful requests ─────────────────
     const hasConversationHistory = Array.isArray(conversation_history) && conversation_history.length > 0
-    const guardrail = await runInputGuardrail(message, hasConversationHistory)
+    const guardrail = await runInputGuardrail(message, hasConversationHistory, aiDeps)
     if (!guardrail.pass) {
       return NextResponse.json(
         { response: GUARDRAIL_REFUSAL_MESSAGE, guardrail_refused: true },
@@ -742,7 +791,7 @@ How to personalize:
 
   let aiResponse: string
   try {
-    aiResponse = await callAI(messages, maxTokens)
+    aiResponse = await callAI(messages, maxTokens, aiDeps)
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'AI service error'
     logAiError('together', msg, { route: '/api/tutor/query' })
@@ -756,6 +805,9 @@ How to personalize:
   let { text: responseText, rawActions } = parseActionsFromResponse(aiResponse)
   if (orgAiCompliance.tutor_redact_echoed_secrets !== false) {
     responseText = redactEchoedSensitiveDigits(responseText)
+  }
+  if (orgAiCompliance.tutor_output_moderation_strict === true) {
+    responseText = applyStrictOutputRedaction(responseText)
   }
   const actions = validateActions(rawActions, allowedCourseIds, allowedPathIds, enrollmentByCourseId)
 
@@ -788,7 +840,7 @@ How to personalize:
   }
 
   // ── 6. Async memory update (fire and forget) ───────────────────────────
-  updateLearnerMemory(user.id, message, responseText, admin).catch(() => {})
+  updateLearnerMemory(user.id, message, responseText, admin, aiDeps).catch(() => {})
 
   // ── 7. Quiz block (if quiz intent detected) ───────────────────────────
   let quizBlock: { id: string; type: 'quiz'; payload: Record<string, unknown> } | null = null
@@ -796,7 +848,7 @@ How to personalize:
     const conversationContext = Array.isArray(conversation_history)
       ? conversation_history.slice(-4).map((m: { content?: string }) => String(m.content ?? '')).join(' ')
       : ''
-    const quizData = await generateQuizBlock(courseContext, currentModuleTitle, conversationContext)
+    const quizData = await generateQuizBlock(courseContext, currentModuleTitle, conversationContext, aiDeps)
     if (quizData) {
       quizBlock = { id: 'quiz-1', type: 'quiz', payload: quizData as unknown as Record<string, unknown> }
     }
@@ -832,7 +884,8 @@ async function updateLearnerMemory(
   userMessage: string,
   aiResponse: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  admin: any
+  admin: any,
+  aiDeps: TutorAiDeps
 ) {
   const { data: profile } = await admin
     .from('learner_profiles')
@@ -858,12 +911,15 @@ Return a JSON object with ONLY the fields you can confidently infer (omit others
 Return only the JSON, nothing else.`
 
   try {
-    const { content } = await chatCompletion({
-      model: getDefaultMemoryModel(),
-      messages: [{ role: 'user', content: extractPrompt }],
-      max_tokens: 150,
-      temperature: 0.2,
-    })
+    const { content } = await chatCompletion(
+      {
+        model: getDefaultMemoryModel(aiDeps.privateRuntime),
+        messages: [{ role: 'user', content: extractPrompt }],
+        max_tokens: 150,
+        temperature: 0.2,
+      },
+      aiDeps.chatCtx
+    )
     const match = (content ?? '').match(/\{[\s\S]*\}/)
     if (!match) return
 

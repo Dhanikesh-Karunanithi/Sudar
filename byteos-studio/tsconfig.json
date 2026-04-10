@@ -33,7 +33,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    "..\\..\\..\\..\\..\\AppData\\Local\\Temp\\byteos-studio-next/types/**/*.ts"
+    "node_modules/.cache/byteos-studio-next/types/**/*.ts",
+    "node_modules\\.cache\\byteos-studio-next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

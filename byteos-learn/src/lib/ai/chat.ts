@@ -1,10 +1,17 @@
 /**
  * Sudar Learn — provider-agnostic chat completion.
- * Supports OpenRouter, Together, OpenAI, Anthropic, and custom base URL.
+ * Supports OpenRouter, Together, OpenAI, Anthropic, custom base URL, and org private OpenAI-compatible servers.
  * Backward compatible with TOGETHER_TUTOR_MODEL and TOGETHER_MEMORY_MODEL.
  */
 
+import { getOrgPrivateAiConfigError, type PrivateOpenAiRuntime } from '@/types/orgAiInference'
+
 export type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string }
+
+export type ChatCompletionContext = {
+  /** When set, chat uses this private server instead of deployment env provider. */
+  privateOpenAi?: PrivateOpenAiRuntime | null
+}
 
 export type ChatCompletionOptions = {
   messages: ChatMessage[]
@@ -29,6 +36,7 @@ const DEFAULT_MODEL_BY_PROVIDER: Record<string, string> = {
   together: DEFAULT_TUTOR_MODEL,
   openai: 'gpt-4o-mini',
   anthropic: 'claude-3-5-sonnet-20241022',
+  custom: 'gemma3:4b',
 }
 
 function getProvider(): string {
@@ -111,12 +119,14 @@ function getDefaultModel(provider: string): string {
 }
 
 /** Default model for tutor (main) responses. Backward compat: TOGETHER_TUTOR_MODEL. */
-export function getDefaultTutorModel(): string {
+export function getDefaultTutorModel(privateRuntime?: PrivateOpenAiRuntime | null): string {
+  if (privateRuntime) return privateRuntime.defaultModel
   return process.env.AI_CHAT_DEFAULT_MODEL?.trim() || process.env.TOGETHER_TUTOR_MODEL?.trim() || DEFAULT_TUTOR_MODEL
 }
 
 /** Default model for memory/short tasks (e.g. quiz block). Backward compat: TOGETHER_MEMORY_MODEL. */
-export function getDefaultMemoryModel(): string {
+export function getDefaultMemoryModel(privateRuntime?: PrivateOpenAiRuntime | null): string {
+  if (privateRuntime) return privateRuntime.defaultModel
   return process.env.TOGETHER_MEMORY_MODEL?.trim() || DEFAULT_MEMORY_MODEL
 }
 
@@ -151,23 +161,52 @@ async function chatAnthropic(apiKey: string, options: ChatCompletionOptions): Pr
  */
 export async function chatCompletion(
   options: ChatCompletionOptions,
-  _opts?: { orgId?: string }
+  ctx?: ChatCompletionContext
 ): Promise<ChatCompletionResult> {
+  const p = ctx?.privateOpenAi
+  if (p) {
+    const base = p.baseUrl.replace(/\/$/, '')
+    const url = `${base}/v1/chat/completions`
+    return chatOpenAICompatible(url, p.apiKey, options, 'custom')
+  }
   const provider = getProvider()
   const { key, url } = getApiKeyAndUrl(provider)
   if (provider === 'anthropic') return chatAnthropic(key, options)
   return chatOpenAICompatible(url, key, options, provider)
 }
 
+/**
+ * Config error for chat: org private AI misconfiguration wins; else env-based provider.
+ */
+export function resolveChatConfigError(orgSettings: unknown, privateRuntime: PrivateOpenAiRuntime | null): string | null {
+  if (privateRuntime) return null
+  const orgErr = getOrgPrivateAiConfigError(orgSettings)
+  if (orgErr) return orgErr
+  return getChatConfigError()
+}
+
 export function getChatConfigError(): string | null {
-  const provider = process.env.AI_CHAT_PROVIDER?.trim()?.toLowerCase()
+  const provider = getProvider()
   if (provider === 'openrouter' && !process.env.OPENROUTER_API_KEY?.trim()) return 'Set OPENROUTER_API_KEY.'
   if (provider === 'together' && !process.env.TOGETHER_API_KEY?.trim()) return 'Set TOGETHER_API_KEY.'
   if (provider === 'openai' && !process.env.OPENAI_API_KEY?.trim()) return 'Set OPENAI_API_KEY.'
   if (provider === 'anthropic' && !process.env.ANTHROPIC_API_KEY?.trim()) return 'Set ANTHROPIC_API_KEY.'
-  if (provider === 'custom' && !process.env.AI_CHAT_BASE_URL?.trim()) return 'Set AI_CHAT_BASE_URL for custom provider.'
-  if (!process.env.OPENROUTER_API_KEY?.trim() && !process.env.TOGETHER_API_KEY?.trim() && !process.env.OPENAI_API_KEY?.trim() && !process.env.ANTHROPIC_API_KEY?.trim()) {
-    return 'No AI chat provider configured. Set one of OPENROUTER_API_KEY, TOGETHER_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY. See docs/ENV_REFERENCE.md.'
+  if (provider === 'custom') {
+    if (!process.env.AI_CHAT_BASE_URL?.trim()) return 'Set AI_CHAT_BASE_URL for custom/local OpenAI-compatible server.'
+    const key =
+      process.env.AI_CHAT_API_KEY?.trim() ||
+      process.env.OPENAI_API_KEY?.trim() ||
+      process.env.TOGETHER_API_KEY?.trim()
+    if (!key) return 'Set AI_CHAT_API_KEY (any non-empty string is fine for Ollama) or reuse OPENAI_API_KEY / TOGETHER_API_KEY. See docs/ENV_REFERENCE.md — Local LLM.'
+    return null
+  }
+  if (
+    !process.env.OPENROUTER_API_KEY?.trim() &&
+    !process.env.TOGETHER_API_KEY?.trim() &&
+    !process.env.OPENAI_API_KEY?.trim() &&
+    !process.env.ANTHROPIC_API_KEY?.trim()
+  ) {
+    return 'No AI chat provider configured. Set a cloud API key or use a local server (AI_CHAT_BASE_URL + AI_CHAT_API_KEY). See docs/ENV_REFERENCE.md.'
   }
   return null
 }

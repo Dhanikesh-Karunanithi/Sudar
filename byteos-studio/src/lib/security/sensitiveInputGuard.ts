@@ -84,3 +84,13 @@ export function redactEchoedSensitiveDigits(text: string): string {
   }
   return out
 }
+
+/** Extra redaction for strict output mode (keep in sync with byteos-learn). */
+export function applyStrictOutputRedaction(text: string): string {
+  let t = redactEchoedSensitiveDigits(text)
+  t = t.replace(/-----BEGIN[\s\S]*?-----END[^\n\r]*/g, '[redacted]')
+  t = t.replace(/\bAKIA[0-9A-Z]{16}\b/g, '[redacted]')
+  t = t.replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[redacted]')
+  t = t.replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{4,30}\b/gi, '[redacted]')
+  return t
+}

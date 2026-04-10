@@ -30,8 +30,49 @@ Set **one** of the following API keys (or use `AI_CHAT_PROVIDER` to choose expli
 | `TOGETHER_API_KEY` | Studio, Learn, Intelligence | [Together AI](https://www.together.ai/) — cost-effective open models. | [api.together.xyz](https://api.together.xyz/) → Settings → API Keys |
 | `OPENAI_API_KEY` | Studio, Learn, Intelligence | [OpenAI](https://platform.openai.com/) — GPT-4, etc. | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
 | `ANTHROPIC_API_KEY` | Studio, Learn, Intelligence | [Anthropic](https://www.anthropic.com/) — Claude models. | [console.anthropic.com](https://console.anthropic.com/) → API Keys |
-| `AI_CHAT_BASE_URL` | Studio, Learn | For custom/local models (e.g. local LLM server). OpenAI-compatible `/v1/chat/completions` endpoint base. | — |
-| `AI_CHAT_DEFAULT_MODEL` | Studio, Learn | Override default model (e.g. `openai/gpt-4o`, `anthropic/claude-3-5-sonnet`). Provider-specific. | — |
+| `AI_CHAT_BASE_URL` | Studio, Learn, Intelligence | For custom/local models. **Host only** (no `/v1` path): Sudar appends `/v1/chat/completions`. Example: `http://127.0.0.1:11434` (Ollama), `http://127.0.0.1:1234` (LM Studio). | — |
+| `AI_CHAT_API_KEY` | Studio, Learn, Intelligence | Bearer token for the custom server. Ollama ignores the value but still expects a header — use e.g. `ollama`. LM Studio may use a key from its server settings. | — |
+| `AI_CHAT_DEFAULT_MODEL` | Studio, Learn, Intelligence | Required for local servers: must match the model id loaded in Ollama/LM Studio (e.g. `gemma3:4b`, `gemma3:12b`). Cloud defaults do not apply. | — |
+
+### Local LLM (Gemma, Llama, etc.) — OpenAI-compatible servers
+
+Sudar chat uses an **OpenAI-compatible** HTTP API. You can point it at a **local** inference stack instead of a cloud API.
+
+1. **Install a local runner** (pick one):
+   - **[Ollama](https://ollama.com/)** — `ollama pull gemma3:4b` (or `gemma3:12b`, etc.). See [Google’s Ollama + Gemma guide](https://ai.google.dev/gemma/docs/integrations/ollama).
+   - **[LM Studio](https://lmstudio.ai/)** — download a Gemma GGUF, start the **Local Server** tab. See [LM Studio + Gemma](https://ai.google.dev/gemma/docs/integrations/lmstudio).
+   - **vLLM / llama.cpp server** — production-style serving; still exposes `/v1/chat/completions` when configured for OpenAI compatibility.
+
+2. **Gemma overview** — Open **weights** (usage under [Gemma terms](https://ai.google.dev/gemma/terms)); model list and frameworks: [Run Gemma](https://ai.google.dev/gemma/docs/run). For **on-device / edge** (phone, NPU), Google documents [LiteRT-LM](https://github.com/google-ai-edge/LiteRT-LM), [MediaPipe LLM Inference](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference), and **MLX** (Apple Silicon).
+
+3. **Wire Sudar** — in `.env.local` (Studio, Learn) and Intelligence’s env:
+
+   ```env
+   AI_CHAT_PROVIDER=custom
+   AI_CHAT_BASE_URL=http://127.0.0.1:11434
+   AI_CHAT_API_KEY=ollama
+   AI_CHAT_DEFAULT_MODEL=gemma3:4b
+   ```
+
+   Use the **model name exactly** as shown by `ollama list` or LM Studio. **Embeddings** for RAG still use `EMBED_PROVIDER` (Together / OpenAI / Hugging Face) unless you add a separate local embedding service — local chat does not replace embeddings by itself.
+
+4. **Docker / remote LAN** — use the machine’s IP instead of `127.0.0.1` if Learn runs in a container and Ollama on the host (ensure the server binds to `0.0.0.0` where appropriate).
+
+Studio **Settings → AI & API Keys** includes a **Local / OpenAI-compatible LLM** card with the same steps.
+
+### Organisation private AI (Studio + Learn)
+
+When `ALLOW_ORG_PRIVATE_AI_SERVER=true`, org **Admins/Managers** can set a private OpenAI-compatible URL and model in **Org settings → Where Sudar runs your AI** (stored in `organisations.settings.ai_inference`). The bearer token is **not** stored in the database.
+
+| Variable | App | Description |
+|----------|-----|-------------|
+| `ALLOW_ORG_PRIVATE_AI_SERVER` | Studio, Learn | Must be `true` to allow org-level private server settings. Default off (mitigates SSRF if untrusted admins exist). |
+| `LOCAL_LLM_BEARER_TOKEN` | Studio, Learn | Preferred bearer for org private server; falls back to `AI_CHAT_API_KEY`. |
+| `PRIVATE_AI_URL_HOST_ALLOWLIST` | Studio, Learn | Optional comma-separated hostnames; when set, only those hosts are accepted (otherwise private IPv4 + localhost). |
+
+Admin-facing walkthrough: **Studio → Understanding AI** (`/help/ai-at-sudar`). Printable mirror: [docs/admin/AI_LITERACY_AND_LOCAL_MODELS.md](admin/AI_LITERACY_AND_LOCAL_MODELS.md).
+
+**Sudar Intelligence** does not read `organisations.settings` yet; configure `AI_CHAT_*` env on the Intelligence host for the same effect, or extend in a follow-up.
 
 ---
 
@@ -95,7 +136,12 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 
 ## Intelligence (Python) — summary
 
-Same Supabase and AI provider keys as above. See `byteos-intelligence/.env.example`. Key vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `TOGETHER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AI_CHAT_PROVIDER` (when implemented), `PORT`, `ENV`.\n+\n+Security hardening vars:\n+- `SUPABASE_JWT_SECRET` (Intelligence): validates Supabase JWTs from Learn/Studio.\n+- `INTELLIGENCE_SERVICE_SECRET` (Intelligence + Learn): optional shared secret used for ALP server-to-server proxy calls via `X-Intelligence-Service-Secret`.\n*** End Patch}
+Same Supabase and AI provider keys as above. See `byteos-intelligence/.env.example`. Key vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `AI_CHAT_PROVIDER`, `TOGETHER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AI_CHAT_BASE_URL`, `AI_CHAT_API_KEY`, `AI_CHAT_DEFAULT_MODEL`, `PORT`, `ENV`.
+
+Security hardening vars:
+
+- `SUPABASE_JWT_SECRET` (Intelligence): validates Supabase JWTs from Learn/Studio.
+- `INTELLIGENCE_SERVICE_SECRET` (Intelligence + Learn): optional shared secret used for ALP server-to-server proxy calls via `X-Intelligence-Service-Secret`.
 
 ---
 

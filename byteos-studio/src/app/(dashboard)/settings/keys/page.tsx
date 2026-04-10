@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { Key, ExternalLink, ChevronDown, ChevronUp, Copy, Check, Info } from 'lucide-react'
 import { PROVIDER_KEYS } from '@/lib/ai/providerConfig'
@@ -67,6 +68,13 @@ export default function SettingsKeysPage() {
       <p className="text-sm text-slate-400 mb-6">
         See which keys are configured and how to get them. Keys are set in your deployment environment (.env.local or host). Values are never shown here.
       </p>
+      <div className="rounded-lg border border-indigo-500/25 bg-indigo-500/10 px-4 py-3 mb-6 text-sm text-slate-300">
+        <strong className="text-white">New to APIs?</strong> You do not need to memorize technical terms to use Sudar. Start with the friendly walkthrough:{' '}
+        <Link href="/help/ai-at-sudar" className="text-indigo-400 hover:text-indigo-300 font-medium">
+          Understanding AI in Sudar
+        </Link>
+        — then come back here when you need a specific signup link.
+      </div>
 
       {/* Where to set these */}
       <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-4 mb-6">

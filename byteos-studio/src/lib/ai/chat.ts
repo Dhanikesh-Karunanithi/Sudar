@@ -1,10 +1,16 @@
 /**
  * Sudar Studio — provider-agnostic chat completion.
- * Supports OpenRouter, Together, OpenAI, Anthropic, and custom base URL.
+ * Supports OpenRouter, Together, OpenAI, Anthropic, custom base URL, and org private OpenAI-compatible servers.
  * Set AI_CHAT_PROVIDER or rely on fallback: first available key in order above.
  */
 
+import { getOrgPrivateAiConfigError, type PrivateOpenAiRuntime } from '@/types/orgAiInference'
+
 export type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string }
+
+export type ChatCompletionContext = {
+  privateOpenAi?: PrivateOpenAiRuntime | null
+}
 
 export type ChatCompletionOptions = {
   messages: ChatMessage[]
@@ -26,6 +32,7 @@ const DEFAULT_MODEL_BY_PROVIDER: Record<string, string> = {
   together: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
   openai: 'gpt-4o-mini',
   anthropic: 'claude-3-5-sonnet-20241022',
+  custom: 'gemma3:4b',
 }
 
 function getProvider(): string {
@@ -80,7 +87,11 @@ async function chatOpenAICompatible(
   options: ChatCompletionOptions,
   provider: string
 ): Promise<ChatCompletionResult> {
-  const model = options.model ?? process.env.AI_CHAT_DEFAULT_MODEL?.trim() ?? DEFAULT_MODEL_BY_PROVIDER[provider] ?? DEFAULT_MODEL_BY_PROVIDER.together
+  const model =
+    options.model ??
+    process.env.AI_CHAT_DEFAULT_MODEL?.trim() ??
+    DEFAULT_MODEL_BY_PROVIDER[provider] ??
+    DEFAULT_MODEL_BY_PROVIDER.together
   const res = await fetch(url, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
@@ -130,26 +141,55 @@ async function chatAnthropic(apiKey: string, options: ChatCompletionOptions): Pr
  * Call the configured AI chat provider. Throws if no provider is configured.
  */
 export async function chatCompletion(
-  options: ChatCompletionOptions
+  options: ChatCompletionOptions,
+  ctx?: ChatCompletionContext
 ): Promise<ChatCompletionResult> {
+  const p = ctx?.privateOpenAi
+  if (p) {
+    const base = p.baseUrl.replace(/\/$/, '')
+    const url = `${base}/v1/chat/completions`
+    const model =
+      options.model ?? p.defaultModel ?? process.env.AI_CHAT_DEFAULT_MODEL?.trim() ?? DEFAULT_MODEL_BY_PROVIDER.custom
+    return chatOpenAICompatible(url, p.apiKey, { ...options, model }, 'custom')
+  }
   const provider = getProvider()
   const { key, url } = getApiKeyAndUrl(provider)
   if (provider === 'anthropic') return chatAnthropic(key, options)
   return chatOpenAICompatible(url, key, options, provider)
 }
 
+export function resolveChatConfigError(orgSettings: unknown, privateRuntime: PrivateOpenAiRuntime | null): string | null {
+  if (privateRuntime) return null
+  const orgErr = getOrgPrivateAiConfigError(orgSettings)
+  if (orgErr) return orgErr
+  return getChatConfigError()
+}
+
 /**
  * Returns a user-friendly error message when no AI provider is configured.
  */
 export function getChatConfigError(): string | null {
-  const provider = process.env.AI_CHAT_PROVIDER?.trim()?.toLowerCase()
+  const provider = getProvider()
   if (provider === 'openrouter' && !process.env.OPENROUTER_API_KEY?.trim()) return 'Set OPENROUTER_API_KEY in .env.local or host environment.'
   if (provider === 'together' && !process.env.TOGETHER_API_KEY?.trim()) return 'Set TOGETHER_API_KEY in .env.local or host environment.'
   if (provider === 'openai' && !process.env.OPENAI_API_KEY?.trim()) return 'Set OPENAI_API_KEY in .env.local or host environment.'
   if (provider === 'anthropic' && !process.env.ANTHROPIC_API_KEY?.trim()) return 'Set ANTHROPIC_API_KEY in .env.local or host environment.'
-  if (provider === 'custom' && !process.env.AI_CHAT_BASE_URL?.trim()) return 'Set AI_CHAT_BASE_URL for custom provider.'
-  if (!process.env.OPENROUTER_API_KEY?.trim() && !process.env.TOGETHER_API_KEY?.trim() && !process.env.OPENAI_API_KEY?.trim() && !process.env.ANTHROPIC_API_KEY?.trim()) {
-    return 'No AI chat provider configured. Set AI_CHAT_PROVIDER and one of OPENROUTER_API_KEY, TOGETHER_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY. See docs/ENV_REFERENCE.md.'
+  if (provider === 'custom') {
+    if (!process.env.AI_CHAT_BASE_URL?.trim()) return 'Set AI_CHAT_BASE_URL for custom/local OpenAI-compatible server.'
+    const key =
+      process.env.AI_CHAT_API_KEY?.trim() ||
+      process.env.OPENAI_API_KEY?.trim() ||
+      process.env.TOGETHER_API_KEY?.trim()
+    if (!key) return 'Set AI_CHAT_API_KEY (any non-empty string is fine for Ollama) or reuse OPENAI_API_KEY / TOGETHER_API_KEY. See docs/ENV_REFERENCE.md — Local LLM.'
+    return null
+  }
+  if (
+    !process.env.OPENROUTER_API_KEY?.trim() &&
+    !process.env.TOGETHER_API_KEY?.trim() &&
+    !process.env.OPENAI_API_KEY?.trim() &&
+    !process.env.ANTHROPIC_API_KEY?.trim()
+  ) {
+    return 'No AI chat provider configured. Set a cloud API key or use a local server (AI_CHAT_BASE_URL + AI_CHAT_API_KEY). See docs/ENV_REFERENCE.md.'
   }
   return null
 }
