@@ -149,8 +149,8 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
                 : 'bottom-24 right-6 w-[calc(100vw-3rem)] max-w-[420px] h-[520px]'
             )}
           >
-            <div className="p-5 border-b border-border flex items-center justify-between shrink-0 bg-card/80">
-              <div className="flex items-center gap-3">
+            <div className="p-5 border-b border-border flex items-center justify-between gap-2 shrink-0 bg-card/90">
+              <div className="flex items-center gap-3 min-w-0">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center">
                   <SudarLogoMark className="h-8 w-auto text-primary" starFill="var(--card)" />
                 </div>
@@ -159,39 +159,41 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
                   <p className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">Studio assistant</p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="p-2 text-muted-foreground hover:text-card-foreground transition-colors rounded-lg"
-                aria-label="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="p-2 text-muted-foreground hover:text-card-foreground transition-colors rounded-lg"
-                aria-label={isExpanded ? 'Collapse chat' : 'Expand chat'}
-                title={isExpanded ? 'Collapse chat' : 'Expand chat'}
-              >
-                {isExpanded ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-              </button>
+              <div className="flex items-center shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="p-2 text-muted-foreground hover:text-card-foreground transition-colors rounded-lg"
+                  aria-label={isExpanded ? 'Collapse chat' : 'Expand chat'}
+                  title={isExpanded ? 'Collapse chat' : 'Expand chat'}
+                >
+                  {isExpanded ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="p-2 text-muted-foreground hover:text-card-foreground transition-colors rounded-lg"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
-            <div ref={listRef} className="flex-1 overflow-y-auto p-5 space-y-4">
+            <div ref={listRef} className="flex-1 overflow-y-auto p-5 space-y-4 bg-background/40">
               {messages.length === 0 && (
                 <>
-                  <div className="chat-bubble bg-white/10 text-slate-200 border border-white/20">
+                  <div className="chat-bubble bg-muted text-foreground border border-border">
                     Hi! I&apos;m Sudar. I can help with users, courses, paths, analytics, integrations, and anything in Sudar Studio. Ask me anything.
                   </div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-1">Try</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Try</p>
                   <div className="flex flex-wrap gap-2">
                     {QUICK_PROMPTS.map((q) => (
                       <button
                         key={q}
                         type="button"
                         onClick={() => handleSendWithMessage(q)}
-                        className="rounded-full bg-white/10 border border-white/20 px-4 py-2 text-sm text-slate-200 hover:bg-indigo-500/20 hover:border-indigo-400/30 transition-colors text-left"
+                        className="rounded-full bg-muted border border-border px-4 py-2 text-sm text-foreground hover:bg-primary/15 hover:border-primary/35 transition-colors text-left"
                       >
                         {q}
                       </button>
@@ -206,8 +208,8 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
                       className={cn(
                         'chat-bubble',
                         m.role === 'user'
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-white/10 text-slate-200 border border-white/20'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-foreground border border-border'
                       )}
                     >
                       <div className="whitespace-pre-wrap break-words">{m.content}</div>
@@ -253,7 +255,7 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
               ))}
               {thinking && (
                 <div className="flex justify-start">
-                  <div className="chat-bubble bg-white/10 text-slate-300 border border-white/20 flex items-center gap-2">
+                  <div className="chat-bubble bg-muted text-muted-foreground border border-border flex items-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin shrink-0" />
                     <span>Thinking…</span>
                   </div>
@@ -261,7 +263,7 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
               )}
             </div>
 
-            <div className="p-5 border-t border-white/20 bg-white/10 shrink-0">
+            <div className="p-5 border-t border-border bg-card/90 shrink-0">
               <div className="relative flex items-center gap-2">
                 <input
                   type="text"
@@ -269,14 +271,14 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
                   placeholder="Ask Sudar..."
-                  className="w-full bg-white/10 border border-white/20 rounded-full py-3 px-5 pr-14 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
+                  className="w-full bg-muted border border-border rounded-full py-3 px-5 pr-14 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
                   disabled={thinking}
                 />
                 <button
                   type="button"
                   onClick={handleSend}
                   disabled={thinking || !input.trim()}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100"
                   aria-label="Send"
                 >
                   <Send className="w-4 h-4" />

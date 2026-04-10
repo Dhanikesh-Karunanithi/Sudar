@@ -23,21 +23,21 @@ function StatCard({
 }) {
   return (
     <div className={cn(
-      'bg-slate-900 border rounded-xl p-5 space-y-3',
-      accent ? 'border-indigo-500/30' : 'border-slate-800'
+      'bg-card border rounded-xl p-5 space-y-3',
+      accent ? 'border-indigo-500/30' : 'border-border'
     )}>
       <div className="flex items-center justify-between">
-        <span className="text-slate-400 text-sm font-medium">{label}</span>
+        <span className="text-muted-foreground text-sm font-medium">{label}</span>
         <div className={cn(
           'w-8 h-8 rounded-lg flex items-center justify-center',
-          accent ? 'bg-indigo-600/15' : 'bg-slate-800'
+          accent ? 'bg-indigo-600/15' : 'bg-muted'
         )}>
-          <Icon className={cn('w-4 h-4', accent ? 'text-indigo-400' : 'text-slate-500')} />
+          <Icon className={cn('w-4 h-4', accent ? 'text-indigo-400' : 'text-muted-foreground')} />
         </div>
       </div>
       <div>
-        <p className="text-3xl font-bold text-white">{value}</p>
-        <p className="text-slate-500 text-xs mt-1">{description}</p>
+        <p className="text-3xl font-bold text-card-foreground">{value}</p>
+        <p className="text-muted-foreground text-xs mt-1">{description}</p>
       </div>
     </div>
   )
@@ -85,10 +85,10 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold text-white">
+          <h1 className="text-2xl font-semibold text-foreground">
             <Greeting firstName={firstName} />
           </h1>
-          <p className="text-slate-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             Here&apos;s an overview of your Sudar Studio workspace.
           </p>
         </div>
@@ -140,14 +140,14 @@ export default async function DashboardPage() {
 
       {/* CTA or recent courses */}
       {!recentCourses || recentCourses.length === 0 ? (
-        <div className="bg-gradient-to-br from-indigo-600/10 via-slate-900 to-purple-600/10 border border-indigo-500/20 rounded-2xl p-8">
+        <div className="bg-gradient-to-br from-indigo-600/10 via-card to-purple-600/10 border border-indigo-500/20 rounded-2xl p-8">
           <div className="max-w-xl space-y-4">
             <div className="w-12 h-12 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center">
               <Sparkles className="w-6 h-6 text-indigo-400" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-xl font-semibold text-white">Create your first course</h2>
-              <p className="text-slate-400 text-sm leading-relaxed">
+              <h2 className="text-xl font-semibold text-foreground">Create your first course</h2>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 Build a course, add modules, and publish it to Sudar Learn. Learners can
                 enroll, track progress, and have every event recorded for analytics.
               </p>
@@ -162,7 +162,7 @@ export default async function DashboardPage() {
               </Link>
               <Link
                 href="/courses"
-                className="flex items-center gap-2 px-4 py-2.5 text-slate-300 hover:text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 text-muted-foreground hover:text-foreground text-sm font-medium rounded-lg hover:bg-muted transition-colors"
               >
                 View all courses
                 <ArrowRight className="w-4 h-4" />
@@ -173,33 +173,33 @@ export default async function DashboardPage() {
       ) : (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-white">Recent courses</h2>
+            <h2 className="text-base font-semibold text-foreground">Recent courses</h2>
             <Link href="/courses" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
               View all <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-          <div className="bg-slate-900 border border-slate-800 rounded-xl divide-y divide-slate-800 overflow-hidden">
+          <div className="bg-card border border-border rounded-xl divide-y divide-border overflow-hidden">
             {recentCourses.map((course) => (
               <Link
                 key={course.id}
                 href={`/courses/${course.id}`}
-                className="flex items-center gap-4 px-5 py-4 hover:bg-slate-800/50 transition-colors group"
+                className="flex items-center gap-4 px-5 py-4 hover:bg-muted/60 transition-colors group"
               >
-                <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
-                  <BookOpen className="w-4 h-4 text-slate-500" />
+                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <BookOpen className="w-4 h-4 text-muted-foreground" />
                 </div>
-                <span className="flex-1 text-sm font-medium text-slate-200 group-hover:text-white transition-colors truncate">
+                <span className="flex-1 text-sm font-medium text-card-foreground group-hover:text-foreground transition-colors truncate">
                   {course.title}
                 </span>
                 <span className={cn(
                   'text-xs font-medium px-2 py-0.5 rounded-full shrink-0',
                   course.status === 'published'
                     ? 'bg-green-500/15 text-green-400 border border-green-500/20'
-                    : 'bg-slate-700 text-slate-400'
+                    : 'bg-muted text-muted-foreground border border-border'
                 )}>
                   {course.status === 'published' ? 'Live' : 'Draft'}
                 </span>
-                <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors shrink-0" />
+                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-card-foreground transition-colors shrink-0" />
               </Link>
             ))}
           </div>

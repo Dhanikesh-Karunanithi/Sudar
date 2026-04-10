@@ -97,12 +97,12 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
           <>
             <Link
               href="/courses"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all group"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-card-foreground hover:bg-muted transition-all group"
             >
-              <ArrowLeft className="w-4 h-4 shrink-0 text-slate-500 group-hover:text-slate-300" />
+              <ArrowLeft className="w-4 h-4 shrink-0 text-muted-foreground group-hover:text-card-foreground" />
               <span className="flex-1">Back to courses</span>
             </Link>
-            <p className="px-3 mt-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            <p className="px-3 mt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Editing course
             </p>
             {sidebarContent?.content && (
@@ -113,7 +113,7 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
           </>
         ) : (
           <>
-            <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Content
             </p>
             {contentNavItems.map((item) => {
@@ -148,7 +148,7 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
             })}
             {canManageOrg && (
               <>
-                <p className="px-3 mt-4 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                <p className="px-3 mt-4 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Organization
                 </p>
                 {organizationNavItems.map((item) => {
@@ -161,13 +161,13 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
                         'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group',
                         isActive
                           ? 'bg-indigo-600/15 text-indigo-300 border border-indigo-500/20'
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                          : 'text-muted-foreground hover:text-card-foreground hover:bg-muted'
                       )}
                     >
                       <item.icon
                         className={cn(
                           'w-4 h-4 shrink-0',
-                          isActive ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-300'
+                          isActive ? 'text-indigo-400' : 'text-muted-foreground group-hover:text-card-foreground'
                         )}
                         strokeWidth={isActive ? 2.5 : 2}
                       />
@@ -183,7 +183,7 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
 
             {isSuperAdmin && (
               <>
-                <p className="px-3 mt-4 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                <p className="px-3 mt-4 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Platform
                 </p>
                 {superAdminNavItems.map((item) => {
@@ -198,13 +198,13 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
                         'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group',
                         isActive
                           ? 'bg-indigo-600/15 text-indigo-300 border border-indigo-500/20'
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                          : 'text-muted-foreground hover:text-card-foreground hover:bg-muted'
                       )}
                     >
                       <item.icon
                         className={cn(
                           'w-4 h-4 shrink-0',
-                          isActive ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-300'
+                          isActive ? 'text-indigo-400' : 'text-muted-foreground group-hover:text-card-foreground'
                         )}
                         strokeWidth={isActive ? 2.5 : 2}
                       />
@@ -220,8 +220,8 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
 
             {/* Content development panel (injected by other pages) */}
             {sidebarContent?.content && (
-              <div className="mt-4 pt-4 border-t border-slate-800 space-y-2">
-                <p className="px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              <div className="mt-4 pt-4 border-t border-border space-y-2">
+                <p className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Content tools
                 </p>
                 <div className="space-y-1">
@@ -249,7 +249,7 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
           <button
             onClick={handleSignOut}
             title="Sign out"
-            className="p-1.5 rounded-md text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-all"
+            className="p-1.5 rounded-md text-muted-foreground hover:text-card-foreground hover:bg-muted transition-all"
           >
             <LogOut className="w-4 h-4" />
           </button>
