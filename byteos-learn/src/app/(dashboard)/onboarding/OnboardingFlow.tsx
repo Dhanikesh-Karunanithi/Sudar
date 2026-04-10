@@ -2,8 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronRight, CheckCircle2, Loader2, Zap, User, Target, BookOpen, Lightbulb } from 'lucide-react'
+import { ChevronRight, CheckCircle2, Loader2, Zap, User, Target, BookOpen, Lightbulb, Bot } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
+import { trackMascotEvent } from '@/lib/mascot/tracking'
+import type { MascotId, MascotIntensity, MascotMode, MascotSupportStyle } from '@/types/mascot'
 
 interface Props {
   firstName: string
@@ -31,11 +34,30 @@ const LEARNING_FREQUENCIES = [
   { value: 'flexible', label: 'Flexible', desc: 'Whenever I have time' },
 ]
 
+const MASCOT_MODES: { value: MascotMode; label: string; desc: string }[] = [
+  { value: 'all', label: 'Sudar + companions', desc: 'Use full support from Sudar, Focus, Memory, and Confidence' },
+  { value: 'selected', label: 'Selected companions', desc: 'Use Sudar and only the companions you choose' },
+  { value: 'hero-only', label: 'Sudar only', desc: 'Keep only Sudar as your always-on guide' },
+]
+
+const MASCOT_STYLES: { value: MascotSupportStyle; label: string; desc: string }[] = [
+  { value: 'calm', label: 'Calm', desc: 'Steady and reassuring guidance' },
+  { value: 'balanced', label: 'Balanced', desc: 'Friendly and practical guidance' },
+  { value: 'energetic', label: 'Energetic', desc: 'High-momentum and motivating guidance' },
+]
+
+const MASCOT_INTENSITIES: { value: MascotIntensity; label: string; desc: string }[] = [
+  { value: 'low', label: 'Low', desc: 'Fewer interruptions' },
+  { value: 'medium', label: 'Medium', desc: 'Support at key moments' },
+  { value: 'high', label: 'High', desc: 'Frequent support and reactions' },
+]
+
 const STEPS = [
   { id: 'welcome', icon: Bot, label: 'Meet Sudar' },
   { id: 'background', icon: User, label: 'Your background' },
   { id: 'goals', icon: Target, label: 'Your goals' },
   { id: 'style', icon: Lightbulb, label: 'How you learn' },
+  { id: 'mascot', icon: Bot, label: 'Companions' },
   { id: 'done', icon: CheckCircle2, label: 'Done' },
 ]
 
@@ -50,6 +72,10 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
   const [goals, setGoals] = useState((existingMemory.learning_goals as string) ?? '')
   const [learningStyle, setLearningStyle] = useState((existingMemory.preferred_explanation_style as string) ?? '')
   const [frequency, setFrequency] = useState((existingMemory.learning_frequency as string) ?? '')
+  const [mascotMode, setMascotMode] = useState<MascotMode>('all')
+  const [mascotStyle, setMascotStyle] = useState<MascotSupportStyle>('balanced')
+  const [mascotIntensity, setMascotIntensity] = useState<MascotIntensity>('high')
+  const [mascotCompanions, setMascotCompanions] = useState<MascotId[]>(['focus', 'memory', 'confidence'])
 
   const totalSteps = STEPS.length - 1 // exclude 'done' from progress
 
@@ -73,8 +99,34 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ force: true }),
     })
+    await fetch('/api/learner/preferences', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mascot_mode: mascotMode,
+        mascot_style: mascotStyle,
+        mascot_intensity: mascotIntensity,
+        mascot_companions: mascotCompanions,
+      }),
+    })
+    void trackMascotEvent({
+      eventType: 'mascot_mode_change',
+      mascotId: 'sudar',
+      source: 'onboarding',
+      detail: {
+        mascot_mode: mascotMode,
+        mascot_style: mascotStyle,
+        mascot_intensity: mascotIntensity,
+        mascot_companions: mascotCompanions,
+      },
+    })
     setSaving(false)
     router.push('/')
+  }
+
+  function toggleCompanion(id: MascotId) {
+    if (id === 'sudar') return
+    setMascotCompanions((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
   }
 
   return (
@@ -99,8 +151,8 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
         {/* Step 0: Welcome */}
         {step === 0 && (
           <div className="text-center space-y-6">
-            <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center mx-auto shadow-xl shadow-md">
-              <img src="/sudar-chat-logo.png" className="w-10 h-10 object-contain brightness-0 invert" alt="Sudar" />
+            <div className="mx-auto flex h-16 w-44 max-w-full items-center justify-center">
+              <SudarLogoMark className="h-full w-full text-primary" starFill="var(--background)" animated />
             </div>
             <div className="space-y-3">
               <h1 className="text-2xl font-bold text-card-foreground">Hi {firstName}, I&apos;m Sudar</h1>
@@ -244,7 +296,107 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
 
             <div className="flex gap-3">
               <button onClick={() => setStep(2)} className="px-4 py-2.5 text-muted-foreground hover:text-card-foreground text-sm rounded-xl hover:bg-muted transition-all">Back</button>
-              <button onClick={() => { setStep(4); handleFinish() }} disabled={!learningStyle || saving}
+              <button onClick={() => setStep(4)} disabled={!learningStyle || saving}
+                className="flex-1 py-2.5 bg-primary hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground text-sm font-semibold rounded-button transition-all flex items-center justify-center gap-2">
+                Next <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Mascot preferences */}
+        {step === 4 && (
+          <div className="bg-card border border-border rounded-2xl p-7 shadow-sm space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <Bot className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-bold text-card-foreground">How should Sudar support you?</h2>
+                <p className="text-muted-foreground text-sm">You can always change this in settings.</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-card-foreground">Companion visibility</label>
+              <div className="space-y-2">
+                {MASCOT_MODES.map((mode) => (
+                  <button
+                    key={mode.value}
+                    onClick={() => setMascotMode(mode.value)}
+                    className={cn(
+                      'w-full text-left p-3.5 rounded-xl border transition-all',
+                      mascotMode === mode.value ? 'border-primary bg-primary/10' : 'border-border hover:border-border',
+                    )}
+                  >
+                    <p className={cn('text-sm font-semibold', mascotMode === mode.value ? 'text-primary' : 'text-card-foreground')}>{mode.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{mode.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-card-foreground">Support style</label>
+                {MASCOT_STYLES.map((style) => (
+                  <button
+                    key={style.value}
+                    onClick={() => setMascotStyle(style.value)}
+                    className={cn(
+                      'w-full text-left p-3 rounded-xl border transition-all',
+                      mascotStyle === style.value ? 'border-primary bg-primary/10' : 'border-border hover:border-border',
+                    )}
+                  >
+                    <p className={cn('text-sm font-semibold', mascotStyle === style.value ? 'text-primary' : 'text-card-foreground')}>{style.label}</p>
+                    <p className="text-xs text-muted-foreground">{style.desc}</p>
+                  </button>
+                ))}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-card-foreground">Interaction intensity</label>
+                {MASCOT_INTENSITIES.map((intensity) => (
+                  <button
+                    key={intensity.value}
+                    onClick={() => setMascotIntensity(intensity.value)}
+                    className={cn(
+                      'w-full text-left p-3 rounded-xl border transition-all',
+                      mascotIntensity === intensity.value ? 'border-primary bg-primary/10' : 'border-border hover:border-border',
+                    )}
+                  >
+                    <p className={cn('text-sm font-semibold', mascotIntensity === intensity.value ? 'text-primary' : 'text-card-foreground')}>{intensity.label}</p>
+                    <p className="text-xs text-muted-foreground">{intensity.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {mascotMode !== 'hero-only' && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-card-foreground">Choose companions</label>
+                <div className="flex flex-wrap gap-2">
+                  {(['focus', 'memory', 'confidence'] as MascotId[]).map((id) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => toggleCompanion(id)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors',
+                        mascotCompanions.includes(id)
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border text-muted-foreground hover:text-card-foreground',
+                      )}
+                    >
+                      {id}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button onClick={() => setStep(3)} className="px-4 py-2.5 text-muted-foreground hover:text-card-foreground text-sm rounded-xl hover:bg-muted transition-all">Back</button>
+              <button onClick={() => { setStep(5); handleFinish() }} disabled={saving}
                 className="flex-1 py-2.5 bg-primary hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground text-sm font-semibold rounded-button transition-all flex items-center justify-center gap-2">
                 {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : <>Complete setup <Zap className="w-4 h-4" /></>}
               </button>
@@ -252,8 +404,8 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
           </div>
         )}
 
-        {/* Step 4: Done */}
-        {step === 4 && (
+        {/* Step 5: Done */}
+        {step === 5 && (
           <div className="text-center space-y-6">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mx-auto shadow-xl shadow-green-200">
               {saving

@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Settings, Loader2, Volume2, Save } from 'lucide-react'
 import { ModelPicker, type ModelPickerOption } from '@/components/ui/ModelPicker'
+import { trackMascotEvent } from '@/lib/mascot/tracking'
+import type { MascotId, MascotIntensity, MascotMode, MascotSupportStyle } from '@/types/mascot'
 
 const TTS_VOICE_OPTIONS: ModelPickerOption[] = [
   { id: 'en-US-JennyNeural', name: 'Jenny (US)', description: 'Natural US English, female' },
@@ -18,6 +20,10 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [ttsVoice, setTtsVoice] = useState<string | null>('en-US-JennyNeural')
+  const [mascotMode, setMascotMode] = useState<MascotMode>('all')
+  const [mascotStyle, setMascotStyle] = useState<MascotSupportStyle>('balanced')
+  const [mascotIntensity, setMascotIntensity] = useState<MascotIntensity>('high')
+  const [mascotCompanions, setMascotCompanions] = useState<MascotId[]>(['focus', 'memory', 'confidence'])
 
   const fetchPreferences = useCallback(async () => {
     const res = await fetch('/api/learner/preferences')
@@ -27,6 +33,10 @@ export default function SettingsPage() {
     }
     const data = await res.json()
     setTtsVoice(data.tts_voice ?? 'en-US-JennyNeural')
+    setMascotMode(data.mascot_mode ?? 'all')
+    setMascotStyle(data.mascot_style ?? 'balanced')
+    setMascotIntensity(data.mascot_intensity ?? 'high')
+    setMascotCompanions(Array.isArray(data.mascot_companions) ? data.mascot_companions : ['focus', 'memory', 'confidence'])
     setLoading(false)
   }, [])
 
@@ -40,13 +50,35 @@ export default function SettingsPage() {
     const res = await fetch('/api/learner/preferences', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tts_voice: ttsVoice }),
+      body: JSON.stringify({
+        tts_voice: ttsVoice,
+        mascot_mode: mascotMode,
+        mascot_style: mascotStyle,
+        mascot_intensity: mascotIntensity,
+        mascot_companions: mascotCompanions,
+      }),
     })
     setSaving(false)
     if (res.ok) {
+      void trackMascotEvent({
+        eventType: 'mascot_mode_change',
+        mascotId: 'sudar',
+        source: 'settings',
+        detail: {
+          mascot_mode: mascotMode,
+          mascot_style: mascotStyle,
+          mascot_intensity: mascotIntensity,
+          mascot_companions: mascotCompanions,
+        },
+      })
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     }
+  }
+
+  function toggleCompanion(id: MascotId) {
+    if (id === 'sudar') return
+    setMascotCompanions((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
   }
 
   if (loading) {
@@ -94,6 +126,87 @@ export default function SettingsPage() {
           value={ttsVoice}
           onChange={(id) => setTtsVoice(id)}
         />
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-6 space-y-6">
+        <h2 className="font-semibold text-card-foreground">Sudar companions</h2>
+        <p className="text-muted-foreground text-sm">
+          Choose how Sudar and companions support your learning journey.
+        </p>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-card-foreground">Visibility mode</p>
+          <div className="flex flex-wrap gap-2">
+            {(['all', 'selected', 'hero-only'] as MascotMode[]).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setMascotMode(mode)}
+                className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
+                  mascotMode === mode ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-card-foreground'
+                }`}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-card-foreground">Support style</p>
+          <div className="flex flex-wrap gap-2">
+            {(['calm', 'balanced', 'energetic'] as MascotSupportStyle[]).map((style) => (
+              <button
+                key={style}
+                type="button"
+                onClick={() => setMascotStyle(style)}
+                className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
+                  mascotStyle === style ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-card-foreground'
+                }`}
+              >
+                {style}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-card-foreground">Interaction intensity</p>
+          <div className="flex flex-wrap gap-2">
+            {(['low', 'medium', 'high'] as MascotIntensity[]).map((intensity) => (
+              <button
+                key={intensity}
+                type="button"
+                onClick={() => setMascotIntensity(intensity)}
+                className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
+                  mascotIntensity === intensity ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-card-foreground'
+                }`}
+              >
+                {intensity}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {mascotMode !== 'hero-only' && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-card-foreground">Companions</p>
+            <div className="flex flex-wrap gap-2">
+              {(['focus', 'memory', 'confidence'] as MascotId[]).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => toggleCompanion(id)}
+                  className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
+                    mascotCompanions.includes(id) ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-card-foreground'
+                  }`}
+                >
+                  {id}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

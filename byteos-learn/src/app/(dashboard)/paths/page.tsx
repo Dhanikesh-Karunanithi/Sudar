@@ -7,7 +7,11 @@ import { getCachedPublishedPaths } from '@/lib/cache'
 
 interface PathCourse { course_id: string; order_index: number; is_mandatory: boolean; title: string }
 
-export default async function LearnPathsPage() {
+export default async function LearnPathsPage({
+  searchParams,
+}: {
+  searchParams?: { q?: string }
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const admin = createAdminClient()
@@ -17,8 +21,23 @@ export default async function LearnPathsPage() {
     admin.from('enrollments').select('path_id, status, progress_pct, personalized_sequence').eq('user_id', user!.id).not('path_id', 'is', null),
   ])
 
-  const mandatory = (paths ?? []).filter((p) => p.is_mandatory)
-  const optional = (paths ?? []).filter((p) => !p.is_mandatory)
+  const searchQuery = (searchParams?.q ?? '').trim().toLowerCase()
+  const visiblePaths = (paths ?? []).filter((p) => {
+    if (!searchQuery) return true
+    const title = (p.title ?? '').toLowerCase()
+    const description = (p.description ?? '').toLowerCase()
+    const courseTitles = Array.isArray(p.courses)
+      ? p.courses.map((c) => String(c.title ?? '').toLowerCase())
+      : []
+    return (
+      title.includes(searchQuery) ||
+      description.includes(searchQuery) ||
+      courseTitles.some((courseTitle) => courseTitle.includes(searchQuery))
+    )
+  })
+
+  const mandatory = visiblePaths.filter((p) => p.is_mandatory)
+  const optional = visiblePaths.filter((p) => !p.is_mandatory)
 
   function EnrollmentStatus({ pathId }: { pathId: string }) {
     const e = myEnrollments?.find((en) => en.path_id === pathId)
@@ -99,6 +118,11 @@ export default async function LearnPathsPage() {
       <div>
         <h1 className="font-display text-2xl md:text-3xl font-bold text-card-foreground">Learning Paths</h1>
         <p className="text-muted-foreground text-sm mt-1">Structured programmes that guide you through multiple courses</p>
+        {searchQuery && (
+          <p className="text-xs text-muted-foreground mt-2">
+            Showing results for <span className="font-semibold text-card-foreground">&quot;{searchParams?.q}&quot;</span>
+          </p>
+        )}
       </div>
 
       {mandatory.length > 0 && (
@@ -122,7 +146,17 @@ export default async function LearnPathsPage() {
         </div>
       )}
 
-      {(!paths || paths.length === 0) && (
+      {searchQuery && visiblePaths.length === 0 && (
+        <BentoCard padding="lg" className="rounded-5xl py-16 text-center space-y-3">
+          <Route className="w-10 h-10 text-muted-foreground mx-auto" />
+          <p className="text-muted-foreground">No paths matched your search.</p>
+          <Link href="/paths" className="text-xs font-medium text-primary hover:underline">
+            Clear search
+          </Link>
+        </BentoCard>
+      )}
+
+      {!searchQuery && (!paths || paths.length === 0) && (
         <BentoCard padding="lg" className="rounded-5xl py-16 text-center space-y-3">
           <Route className="w-10 h-10 text-muted-foreground mx-auto" />
           <p className="text-muted-foreground">No learning paths published yet.</p>

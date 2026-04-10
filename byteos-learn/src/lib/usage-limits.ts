@@ -7,21 +7,22 @@
 const TUTOR_DAILY_LIMIT = 500
 const NEXT_ACTION_DAILY_LIMIT = 200
 const GENERIC_AI_DAILY_LIMIT = 300
+const MODULE_PERSONALIZE_DAILY_LIMIT = 120
 
-export type LimitType = 'tutor' | 'next_action' | 'generic'
+export type LimitType = 'tutor' | 'next_action' | 'generic' | 'module_personalize'
 
 const LIMITS: Record<LimitType, number> = {
   tutor: TUTOR_DAILY_LIMIT,
   next_action: NEXT_ACTION_DAILY_LIMIT,
   generic: GENERIC_AI_DAILY_LIMIT,
+  module_personalize: MODULE_PERSONALIZE_DAILY_LIMIT,
 }
 
-type SupabaseAdmin = {
-  rpc: (fn: string, params: { p_user_id: string; p_date: string }) => Promise<{ data: number | null; error: unknown }>
-}
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 
 export async function checkAndIncrementUsage(
-  admin: SupabaseAdmin,
+  admin: Pick<SupabaseClient<Database>, 'rpc'>,
   userId: string,
   type: LimitType
 ): Promise<{ allowed: true } | { allowed: false; limit: number }> {

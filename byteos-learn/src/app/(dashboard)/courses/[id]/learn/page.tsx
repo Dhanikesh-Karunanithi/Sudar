@@ -2,6 +2,12 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { CourseViewer } from './CourseViewer'
 import type { ComponentProps } from 'react'
+import { resolvePersonalizationAccess } from '@/lib/personalization/eligibility'
+import type { PersonalizationEligibility } from '@/lib/personalization/eligibility'
+
+function serializeGate(e: PersonalizationEligibility): { allowed: boolean; reason?: string } {
+  return e.allowed ? { allowed: true } : { allowed: false, reason: e.reason }
+}
 
 type CourseForViewer = ComponentProps<typeof CourseViewer>['course']
 
@@ -22,12 +28,14 @@ export default async function CourseLearnPage({
 
   const { data: enrollment } = await admin
     .from('enrollments')
-    .select('id, progress_pct, status, personalized_welcome')
+    .select('id, progress_pct, status, personalized_welcome, personalization_overlays')
     .eq('user_id', user.id)
     .eq('course_id', params.id)
     .single()
 
   if (!enrollment) redirect(`/courses/${params.id}`)
+
+  const personalizationAccess = await resolvePersonalizationAccess(admin, user.id, params.id)
 
   const { data: course } = await admin
     .from('courses')
@@ -46,13 +54,26 @@ export default async function CourseLearnPage({
     .eq('course_id', params.id)
     .eq('event_type', 'module_complete')
 
-  const completedModuleIds = new Set(completedEvents?.map((e) => e.module_id) ?? [])
+  const completedModuleIds = new Set(
+    (completedEvents ?? [])
+      .map((e) => e.module_id)
+      .filter((id): id is string => typeof id === 'string')
+  )
 
   const activeModuleId = searchParams.module ?? course.modules[0].id
 
-  // Only show welcome on first-ever visit (before any module completion)
+  const welcomeRaw = enrollment.personalized_welcome as Record<string, unknown> | null
+  const hasStoredWelcome =
+    typeof welcomeRaw?.message === 'string' && (welcomeRaw.message as string).trim().length > 0
+
+  // Only auto-show stored welcome on first stretch of the course (before any module completion)
   const isFirstVisit = completedModuleIds.size === 0 && enrollment.status !== 'completed'
-  const welcome = isFirstVisit ? (enrollment.personalized_welcome as Record<string, unknown> | null) : null
+  const welcome = isFirstVisit ? welcomeRaw : null
+
+  const personalizeOffered =
+    !hasStoredWelcome
+    && enrollment.status !== 'completed'
+    && personalizationAccess.courseWelcome.allowed
 
   return (
     <CourseViewer
@@ -60,8 +81,20 @@ export default async function CourseLearnPage({
       activeModuleId={activeModuleId}
       completedModuleIds={Array.from(completedModuleIds)}
       enrollmentProgress={Math.round(enrollment.progress_pct)}
+      enrollmentId={enrollment.id}
+      personalizeOffered={personalizeOffered}
       personalizedWelcome={welcome}
       learnerName={learnerName}
+      personalizationAccess={{
+        courseWelcome: serializeGate(personalizationAccess.courseWelcome),
+        moduleRoleExplain: serializeGate(personalizationAccess.moduleRoleExplain),
+        moduleBrief: serializeGate(personalizationAccess.moduleBrief),
+        orgRequiresConsent: personalizationAccess.orgRequiresConsent,
+        hasConsent: personalizationAccess.hasConsent,
+      }}
+      personalizationOverlays={
+        (enrollment.personalization_overlays as Record<string, Record<string, string>> | null) ?? null
+      }
     />
   )
 }

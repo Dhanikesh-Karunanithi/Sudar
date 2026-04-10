@@ -17,10 +17,11 @@ export const SUDAR_STUDIO_PLATFORM_KNOWLEDGE = `
 - Courses — /courses (create, edit, publish courses; also /courses/new, /courses/[id])
 - Learning Paths — /paths (build ordered sequences, assign to learners; /paths/new, /paths/[id])
 - Analytics — /analytics (completions, skill gaps, drop-off, time per section)
-- Compliance — /compliance (overdue, at-risk, on-track, completed path assignments)
+- Training compliance — /compliance (overdue, at-risk, on-track, completed path assignments)
 
 **Organization** (only Admin and Manager see this section):
 - Users — /users (manage org members, roles; user detail /users/[id])
+- Governance — /governance (trust overview, subprocessors links, organisation protection toggles from Org settings)
 - Integrations — /integrations (API keys, embed Sudar, event ingestion)
 - AI & API Keys — /settings/keys (OpenRouter, Together, OpenAI, Anthropic, embeddings, TTS, media)
 - Org settings — /settings (organisation-wide configuration: performance_config, KPIs, terms, scale, ai_models, SSO)
@@ -50,7 +51,7 @@ export const SUDAR_STUDIO_PLATFORM_KNOWLEDGE = `
 - Embed token: generate in Studio (Integrations → Embed Sudar); token in URL for iframe; expires 1 hour.
 
 ### Compliance and reminders
-- **Compliance page**: Sidebar → Compliance. Shows path assignments with due date, progress, status (Overdue / At risk / On track / Completed).
+- **Training compliance page**: Sidebar → Training compliance. Shows path assignments with due date, progress, status (Overdue / At risk / On track / Completed).
 - **Email reminders**: POST <Studio base URL>/api/cron/compliance-reminders. Auth: Authorization: Bearer <CRON_SECRET> or ?secret=<CRON_SECRET>. Set CRON_SECRET, RESEND_API_KEY, RESEND_FROM in env. Call on a schedule (e.g. daily). Learners with at-risk or overdue path assignments receive one email.
 
 ### Users
@@ -70,7 +71,7 @@ export const SUDAR_STUDIO_PLATFORM_KNOWLEDGE = `
 | Configure AI providers | Sidebar → AI & API Keys (/settings/keys) |
 | See analytics | Sidebar → Analytics (/analytics) |
 | Assign a path to a learner | Users → click user → assign path (or path detail page) |
-| Compliance reminders | Call POST .../api/cron/compliance-reminders with CRON_SECRET |
+| Training compliance reminders | Call POST .../api/cron/compliance-reminders with CRON_SECRET |
 
 ### Integration blocks (Lego-style)
 - **SudarMemory**: Sends events → POST /api/alp/events.

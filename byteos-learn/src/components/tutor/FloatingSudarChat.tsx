@@ -3,13 +3,19 @@
 import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, X, Send, Loader2, ExternalLink, Maximize2, Minimize2 } from 'lucide-react'
+import { X, Send, Loader2, ExternalLink, Maximize2, Minimize2 } from 'lucide-react'
 import { cn, stripTutorActionsFromText } from '@/lib/utils'
 import type { TutorAction, TutorBlock } from '@/types/tutor'
 import { GenerativeBlockRenderer } from './GenerativeBlockRenderer'
 import { ChatMarkdown } from './ChatMarkdown'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
+import { MascotAvatar } from '@/components/mascot/MascotAvatar'
+import { buildMascotResponse, normalizeMascotPreferences, pickActiveMascot } from '@/lib/mascot/engine'
+import { trackMascotEvent } from '@/lib/mascot/tracking'
+import { MascotModeBadge } from '@/components/mascot/MascotModeBadge'
+import type { MascotPreferences } from '@/types/mascot'
+import { MASCOT_ROLLOUT } from '@/lib/mascot/rollout'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -35,13 +41,45 @@ export function FloatingSudarChat() {
   const [input, setInput] = useState('')
   const [pastedText, setPastedText] = useState('')
   const [thinking, setThinking] = useState(false)
+  const [prefs, setPrefs] = useState<MascotPreferences | null>(null)
+  const [openTracked, setOpenTracked] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
+  const activeMascot = pickActiveMascot('chat_open', prefs)
+  const greetingCopy = buildMascotResponse('chat_open', prefs).text
+
+  if (!MASCOT_ROLLOUT.surfaces.tutor_chat) return null
 
   useEffect(() => {
     if (isOpen && listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight
     }
   }, [isOpen, messages])
+
+  useEffect(() => {
+    fetch('/api/learner/preferences')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (!data) return
+        setPrefs(normalizeMascotPreferences({
+          mascot_mode: data.mascot_mode,
+          mascot_style: data.mascot_style,
+          mascot_intensity: data.mascot_intensity,
+          mascot_companions: data.mascot_companions,
+        }))
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!isOpen || openTracked) return
+    setOpenTracked(true)
+    void trackMascotEvent({
+      eventType: 'mascot_impression',
+      mascotId: activeMascot,
+      source: 'tutor_chat',
+      detail: { trigger: 'chat_open' },
+    })
+  }, [activeMascot, isOpen, openTracked])
 
   async function handleSendWithMessage(msg: string) {
     const trimmed = msg.trim()
@@ -50,6 +88,12 @@ export function FloatingSudarChat() {
     const newMessages: Message[] = [...messages, { role: 'user', content: trimmed }]
     setMessages(newMessages)
     setThinking(true)
+    void trackMascotEvent({
+      eventType: 'mascot_interaction',
+      mascotId: pickActiveMascot('chat_query', prefs),
+      source: 'tutor_chat',
+      detail: { trigger: 'chat_query' },
+    })
 
     try {
       const res = await fetch('/api/tutor/query', {
@@ -113,17 +157,23 @@ export function FloatingSudarChat() {
         type="button"
         whileHover={{ scale: 1.1, rotate: 5 }}
         whileTap={{ scale: 0.9 }}
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 md:w-16 md:h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-2xl hover:shadow-primary/30 transition-shadow overflow-hidden"
+        onClick={() => {
+          if (isOpen) {
+            void trackMascotEvent({
+              eventType: 'mascot_dismiss',
+              mascotId: activeMascot,
+              source: 'tutor_chat',
+              detail: { trigger: 'chat_open' },
+            })
+          } else {
+            setOpenTracked(false)
+          }
+          setIsOpen(!isOpen)
+        }}
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full border border-primary/35 bg-primary/15 text-primary shadow-2xl backdrop-blur-md hover:border-primary/50 hover:bg-primary/25 hover:shadow-primary/20 motion-reduce:backdrop-blur-none"
         aria-label={isOpen ? 'Close Sudar chat' : 'Open Sudar chat'}
       >
-        <Image
-          src="/sudar-chat-logo.png"
-          alt=""
-          width={36}
-          height={36}
-          className="w-9 h-9 md:w-10 md:h-10 object-contain brightness-0 invert"
-        />
+        <SudarLogoMark className="h-8 w-auto md:h-9" starFill="var(--background)" animated />
       </motion.button>
 
       <AnimatePresence>
@@ -140,19 +190,27 @@ export function FloatingSudarChat() {
                 : 'bottom-24 right-6 w-[calc(100vw-3rem)] max-w-[420px] h-[520px]'
             )}
           >
-            <div className="p-5 border-b border-white/20 flex items-center justify-between shrink-0">
+            <div className="p-5 border-b border-border flex items-center justify-between shrink-0 bg-card/80">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
-                  <Sparkles className="text-primary-foreground w-5 h-5" />
-                </div>
+                <MascotAvatar mascotId={activeMascot} size="lg" className="rounded-2xl" />
                 <div>
                   <h3 className="font-display text-lg font-bold text-card-foreground">Sudar</h3>
-                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">Always online</p>
+                  <div className="mt-1">
+                    <MascotModeBadge mascotId={activeMascot} />
+                  </div>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  void trackMascotEvent({
+                    eventType: 'mascot_dismiss',
+                    mascotId: activeMascot,
+                    source: 'tutor_chat',
+                    detail: { trigger: 'chat_open' },
+                  })
+                  setIsOpen(false)
+                }}
                 className="p-2 text-muted-foreground hover:text-card-foreground transition-colors rounded-lg"
                 aria-label="Close"
               >
@@ -176,7 +234,7 @@ export function FloatingSudarChat() {
               {messages.length === 0 && (
                 <>
                   <div className="chat-bubble bg-muted/80 text-card-foreground border border-border">
-                    Hi! I&apos;m Sudar. I know your learning history and goals. Ask me anything — course recommendations, concepts, or how to get the most from your learning.
+                    {`Hi! I'm Sudar. ${greetingCopy}`}
                   </div>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Try asking</p>
                   <div className="flex flex-wrap gap-2">
@@ -184,7 +242,15 @@ export function FloatingSudarChat() {
                       <button
                         key={q}
                         type="button"
-                        onClick={() => handleSendWithMessage(q)}
+                        onClick={() => {
+                          void trackMascotEvent({
+                            eventType: 'mascot_nudge_outcome',
+                            mascotId: activeMascot,
+                            source: 'tutor_chat',
+                            detail: { nudge_type: 'startup_question', accepted: true },
+                          })
+                          void handleSendWithMessage(q)
+                        }}
                         className="rounded-full bg-card/80 border border-border px-4 py-2 text-sm text-card-foreground hover:bg-primary/10 hover:border-primary/30 transition-colors text-left"
                       >
                         {q}
@@ -267,7 +333,7 @@ export function FloatingSudarChat() {
               )}
             </div>
 
-            <div className="p-5 border-t border-white/20 bg-white/20 shrink-0">
+            <div className="p-5 border-t border-border bg-card/80 shrink-0">
               {pastedText.length > 0 && (
                 <div className="mb-2 rounded-lg border border-border bg-card/80 p-2">
                   <p className="text-[10px] text-muted-foreground mb-1">Pasted text ({pastedText.length} chars) — will be sent with your message</p>
@@ -308,6 +374,9 @@ export function FloatingSudarChat() {
                   rows={2}
                 />
               </div>
+              <p className="text-[10px] text-muted-foreground mt-2 leading-relaxed">
+                Sudar is for learning. Do not paste passwords, card numbers, or private keys.
+              </p>
             </div>
           </motion.div>
         )}

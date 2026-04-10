@@ -1,5 +1,5 @@
 # Sudar — Marketing Strategy & Messaging Deck
-**Version**: 1.0 | **Date**: February 2026
+**Version**: 1.1 | **Date**: April 2026
 
 ---
 
@@ -23,11 +23,11 @@
 - Always put the human first, the technology second.
 
 ### Visual Identity Direction
-- **Primary color**: Deep blue-purple (#4A2FD1 — authority, intelligence)
-- **Accent color**: Electric cyan (#00D4FF — energy, adaptability)
-- **Supporting**: Near-black (#0A0F1E), soft white (#F8F9FC)
-- **Typography**: Clean, modern sans-serif — Inter or Plus Jakarta Sans
-- **Design feel**: Liquid glass, depth, subtle gradients — premium but accessible
+- **Logo narrative**: "=" access (two pills) -> "S" flow (directional learning) -> center AI star flame
+- **Primary color system**: Option A (Indigo + Ember)
+- **Core tokens**: #2F2A8A (primary), #5E5AD7 (secondary), #FF7A45 (accent), #FFD166 (highlight), #0D1026 (deep surface), #F7F8FC (light surface)
+- **Typography**: Manrope (headlines), Inter (UI/body)
+- **Design feel**: Premium-minimal + warm-human; restrained depth, not flashy futurism
 - **Avoid**: Clipart, stock photo people, generic "tech" aesthetics
 
 ### The AI Tutor "Sudar"
@@ -130,6 +130,11 @@ Supporting data: Free tier, $8/learner/month vs. $25+/learner for Docebo/Corners
 **Pillar 4 — Intelligence**
 "A platform that gets smarter the more you use it."
 Supporting data: Longitudinal AI tutor, behavioral adaptation, skill gap mapping
+
+### Claims Taxonomy (Required in External Messaging)
+- **Validated product claims**: shipped features and documented architecture.
+- **Evidence-informed claims**: language grounded in research literature.
+- **Future-work claims**: roadmap or pilot items labeled as planned/in progress.
 
 ---
 

@@ -67,4 +67,53 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
-*Last updated: March 2026. For roadmap and next priorities, see [STRATEGIC_PATH.md](STRATEGIC_PATH.md) and [ACTION_PLANS.md](ACTION_PLANS.md).*
+## Personalization v2 — module overlays, consent, org policy (Learn + Studio)
+
+- **Where**: Sudar Learn (course experience + settings); Sudar Studio (org settings, course editor, governance).  
+- **What**: For **adaptive** courses, orgs can configure AI personalization (audience: org / groups / individuals; features: course welcome, role explanation, brief “3 min” views). Generated text is stored only in **`enrollments.personalization_overlays`** (per module keys); canonical **`modules.content`** is never overwritten. Orgs can require learner consent (`organisations.settings.ai_compliance`); consent timestamp on **`learner_profiles.generative_ai_consent_at`**.  
+- **Database**: Migration `supabase/migrations/20260410000000_personalization_v2.sql` — consent column, `personalization_overlays` on `enrollments`, **`learner_groups`** and **`learner_group_members`** for audience targeting.  
+- **Key files (Learn)**:
+  - `byteos-learn/src/lib/personalization/eligibility.ts` — gate features by org, course, enrollment, consent.  
+  - `byteos-learn/src/app/api/ai/module-personalize/route.ts` — POST to generate/store overlays (`role_explain` | `brief_3min`); usage limit `module_personalize`.  
+  - `byteos-learn/src/app/api/learner/ai-consent/route.ts` — learner accepts generative personalization when required.  
+  - `byteos-learn/src/lib/learn/modulePlainText.ts` — module body to plain text for prompts.  
+- **Key files (Studio)**: Org settings API `byteos-studio/src/app/api/org/settings/route.ts`; learner groups `byteos-studio/src/app/api/org/learner-groups/`; course detail/settings UI for personalization flags; **Governance** `byteos-studio/src/app/(dashboard)/governance/page.tsx` (links to `docs/trust/`).  
+- **Flow**: Admin enables policy + course personalization → learner meets consent if required → eligible learners request overlay per module → overlay cached on enrollment → telemetry via `learning_events` (see ECOSYSTEM.md — AI personalization boundaries).
+
+---
+
+## Brand, logo, and mascot system (Learn + Studio)
+
+- **Where**: App chrome (header, nav, auth pages), public assets, learner journey cards.  
+- **What**: Shared **SudarLogo** component and SVG marks; neutral **mascot** assets (Sudar, focus, memory, confidence) for journey UI; lightweight **mascot engine** (personas, rollout, tracking) for staged experiences.  
+- **Key files**:
+  - `byteos-learn/src/components/branding/SudarLogo.tsx`, `byteos-studio/src/components/branding/SudarLogo.tsx`  
+  - `byteos-learn/public/sudar-logo.svg`, `sudar-logo-mark.svg`; Studio equivalents under `byteos-studio/public/`  
+  - `byteos-learn/public/mascots/*.svg`, `byteos-learn/src/components/mascot/*`, `byteos-learn/src/lib/mascot/*`  
+- **Brand docs**: `docs/brand/` (strategy, guidelines, design tokens, mascot illustration spec and character bibles, rollout checklist, messaging kit).
+
+---
+
+## Trust and governance documentation
+
+- **Where**: Repository `docs/trust/`; Sudar Studio **Governance** page.  
+- **What**: Technical trust pack (posture, data flows, subprocessors, shared responsibility, AI system register, threat model, operations, audit log backlog) for reviews and procurement — not legal advice.  
+- **Key files**: `docs/trust/README.md` (index); `byteos-studio/src/app/(dashboard)/governance/page.tsx`.
+
+---
+
+## Global search (Learn)
+
+- **Where**: Learner dashboard app — `/search`.  
+- **What**: Search entry point for courses/paths content discovery (implementation under `byteos-learn/src/app/(dashboard)/search/`).
+
+---
+
+## Sensitive input guard (Studio + Learn)
+
+- **Where**: Server-side paths that accept free text toward AI or logs.  
+- **What**: Shared guard utilities to reduce high-risk patterns (e.g. secrets/sensitive payloads) before model calls; Studio: `byteos-studio/src/lib/security/sensitiveInputGuard.ts`; Learn: `byteos-learn/src/lib/security/sensitiveInputGuard.ts`.
+
+---
+
+*Last updated: April 2026. For roadmap and next priorities, see [STRATEGIC_PATH.md](STRATEGIC_PATH.md) and [ACTION_PLANS.md](ACTION_PLANS.md).*

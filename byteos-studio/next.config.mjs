@@ -1,5 +1,24 @@
+import os from 'node:os'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+// Windows: writing `.next/trace` under the repo (Desktop/OneDrive/Defender) often throws EPERM and kills `next dev`.
+// Put the entire dist output in %TEMP% instead (path relative to this app). npm scripts use scripts/run-next.mjs
+// so NODE_PATH includes this app's node_modules (otherwise `require("next/dist/...")` from Temp fails).
+// Set NEXT_FORCE_PROJECT_DIST=1 to use the default `.next` folder inside this directory.
+const useTempDistOnWin =
+  process.platform === 'win32' && process.env.NEXT_FORCE_PROJECT_DIST !== '1'
+const distDirWin = useTempDistOnWin
+  ? path.relative(__dirname, path.join(os.tmpdir(), 'byteos-studio-next'))
+  : undefined
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  ...(distDirWin ? { distDir: distDirWin } : {}),
+  // Monorepo: avoid inferring a parent folder (e.g. stray lockfile outside the repo) as the workspace root
+  outputFileTracingRoot: path.join(__dirname, '..'),
   experimental: {
     serverActions: {
       bodySizeLimit: '100mb',

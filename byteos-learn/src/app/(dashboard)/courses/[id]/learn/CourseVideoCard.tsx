@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react'
 import type { VideoScene } from '@/types/content'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
 
 type AnimType = 'kinetic' | 'word-reveal' | 'fade' | 'list'
 
@@ -427,11 +428,10 @@ export function CourseVideoCard({ scenes, courseTitle }: { scenes: VideoScene[];
         {/* Intro overlay */}
         {phase === 'intro' && (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 bg-white/10 backdrop-blur-sm">
-            <img
-              src="/sudar-chat-logo.png"
-              alt="Sudar"
-              className="intro-logo w-20 h-20 object-contain"
-              style={{ filter: 'drop-shadow(0 4px 24px color-mix(in srgb, var(--primary, #a977b8) 60%, transparent))' }}
+            <SudarLogoMark
+              animated
+              className="intro-logo h-16 w-48 max-w-[min(90%,14rem)] text-primary [filter:drop-shadow(0_4px_20px_color-mix(in_srgb,var(--primary)_50%,transparent))]"
+              starFill="var(--background)"
             />
             <p
               className="intro-logo text-sm font-semibold tracking-widest uppercase"

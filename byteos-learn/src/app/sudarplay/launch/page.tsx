@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
@@ -18,8 +19,11 @@ export default async function SudarPlayLaunchPage({ searchParams }: Props) {
   const intelligenceUrl = process.env.BYTEOS_INTELLIGENCE_URL?.replace(/\/$/, '')
   if (!intelligenceUrl) {
     return (
-      <div className="p-6 text-center text-red-600">
-        SudarPlay is not configured (BYTEOS_INTELLIGENCE_URL missing).
+      <div className="p-6 text-center space-y-2">
+        <p className="text-red-600">SudarPlay is not configured (BYTEOS_INTELLIGENCE_URL missing).</p>
+        <Link href="/courses" className="text-sm font-medium text-primary hover:underline">
+          Return to courses
+        </Link>
       </div>
     )
   }
@@ -40,8 +44,16 @@ export default async function SudarPlayLaunchPage({ searchParams }: Props) {
   if (!res.ok) {
     const detail = (await res.json().catch(() => ({}))).detail ?? res.statusText
     return (
-      <div className="p-6 text-center text-red-600">
-        Could not start SudarPlay: {detail}
+      <div className="p-6 text-center space-y-2">
+        <p className="text-red-600">Could not start SudarPlay: {String(detail)}</p>
+        <div className="flex items-center justify-center gap-4 text-sm">
+          <Link href={`/sudarplay/launch?module_id=${encodeURIComponent(module_id)}`} className="font-medium text-primary hover:underline">
+            Retry
+          </Link>
+          <Link href="/courses" className="font-medium text-primary hover:underline">
+            Back to courses
+          </Link>
+        </div>
       </div>
     )
   }

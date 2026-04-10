@@ -6,7 +6,7 @@ import Link from 'next/link'
 import {
   ArrowLeft, Plus, Trash2, GripVertical, Globe, FileText,
   ChevronDown, ChevronUp, Loader2, CheckCircle2, Sparkles, Wand2, LayoutList, Zap,
-  CircleHelp, RefreshCcw, Eye, Timer, Palette, Video, X
+  CircleHelp, RefreshCcw, Eye, Timer, Palette, Video, X, Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSidebarContent } from '@/contexts/SidebarContentContext'
@@ -35,6 +35,19 @@ interface Module {
   quiz?: { questions: QuizQuestion[] } | null
 }
 
+type PersonalizationAudience = 'org' | 'groups' | 'individuals'
+
+interface CoursePersonalizationSettings {
+  audience?: PersonalizationAudience
+  group_ids?: string[]
+  user_ids?: string[]
+  features?: {
+    course_welcome?: boolean
+    module_role_explain?: boolean
+    module_brief?: boolean
+  }
+}
+
 interface Course {
   id: string
   title: string
@@ -52,6 +65,7 @@ interface Course {
     podcast_dialogue?: DialogueSegment[]
     video_generation_status?: 'idle' | 'generating' | 'script_ready' | 'complete' | 'failed'
     podcast_generation_status?: 'idle' | 'generating' | 'complete' | 'failed'
+    personalization?: CoursePersonalizationSettings
   } | null
   modules: Module[]
 }
@@ -85,6 +99,8 @@ export default function CourseEditorPage() {
   const [podcastGenStep, setPodcastGenStep] = useState<'script' | 'audio' | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deletingCourse, setDeletingCourse] = useState(false)
+  const [learnerGroups, setLearnerGroups] = useState<Array<{ id: string; name: string }>>([])
+  const [orgLearners, setOrgLearners] = useState<Array<{ id: string; full_name: string }>>([])
 
   const fetchCourse = useCallback(async () => {
     const res = await fetch(`/api/courses/${id}`)
@@ -96,6 +112,17 @@ export default function CourseEditorPage() {
   }, [id, router])
 
   useEffect(() => { fetchCourse() }, [fetchCourse])
+
+  useEffect(() => {
+    fetch('/api/org/learner-groups')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setLearnerGroups(Array.isArray(d) ? d : []))
+      .catch(() => setLearnerGroups([]))
+    fetch('/api/org/learners')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setOrgLearners(Array.isArray(d) ? d : []))
+      .catch(() => setOrgLearners([]))
+  }, [])
 
   useEffect(() => {
     if (!viewMediaSheet) return
@@ -271,14 +298,44 @@ export default function CourseEditorPage() {
   async function saveCourse(updates: Partial<Course>): Promise<void> {
     if (!course) return
     setSaving(true); setSaved(false)
-    await fetch(`/api/courses/${id}`, {
+    const res = await fetch(`/api/courses/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
     })
-    setCourse((c) => c ? { ...c, ...updates } : c)
+    const data = res.ok ? await res.json().catch(() => null) : null
+    setCourse((c) => {
+      if (!c) return c
+      if (data && typeof data === 'object' && data !== null && 'settings' in data && data.settings) {
+        return { ...c, ...updates, settings: data.settings as Course['settings'] }
+      }
+      return { ...c, ...updates }
+    })
     setSaving(false); setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  function patchCoursePersonalization(partial: Partial<CoursePersonalizationSettings>) {
+    if (!course) return
+    const p = course.settings?.personalization ?? {}
+    const features = {
+      course_welcome: p.features?.course_welcome !== false,
+      module_role_explain: p.features?.module_role_explain !== false,
+      module_brief: p.features?.module_brief !== false,
+      ...partial.features,
+    }
+    const next: CoursePersonalizationSettings = {
+      audience: partial.audience ?? p.audience ?? 'org',
+      group_ids: partial.group_ids !== undefined ? partial.group_ids : (p.group_ids ?? []),
+      user_ids: partial.user_ids !== undefined ? partial.user_ids : (p.user_ids ?? []),
+      features,
+    }
+    saveCourse({
+      settings: {
+        ...(course.settings ?? {}),
+        personalization: next,
+      },
+    })
   }
 
   async function saveModule(moduleId: string, updates: Partial<Module>) {
@@ -661,8 +718,8 @@ export default function CourseEditorPage() {
           </div>
         </div>
 
-        {/* Adaptive learning toggle */}
-        <div className="border-t border-slate-800 pt-4 mt-2">
+        {/* Adaptive learning + personalization scope */}
+        <div className="border-t border-slate-800 pt-4 mt-2 space-y-3">
           <button
             type="button"
             onClick={() => saveCourse({ is_adaptive: !course.is_adaptive })}
@@ -682,7 +739,7 @@ export default function CourseEditorPage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <p className={cn('text-sm font-semibold', course.is_adaptive ? 'text-violet-200' : 'text-slate-300')}>
-                  Adaptive Learning
+                  Adaptive personalization
                 </p>
                 {course.is_adaptive && (
                   <span className="text-[10px] px-2 py-0.5 bg-violet-500/20 text-violet-300 rounded-full border border-violet-500/30 font-medium">
@@ -692,11 +749,10 @@ export default function CourseEditorPage() {
               </div>
               <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                 {course.is_adaptive
-                  ? 'Sudar will generate a personalized welcome for each learner on enrollment, bridging their past knowledge to this course.'
-                  : 'Enable to let Sudar personalise this course for each learner — connecting their memory, prior courses, and goals to this content.'}
+                  ? 'Learners opt in inside Sudar Learn. Sudar can add a course welcome and optional per-module helpers using their profile — canonical module content is never overwritten.'
+                  : 'Turn on to allow opt-in AI personalization for this course (subject to org policy and audience you configure below).'}
               </p>
             </div>
-            {/* Toggle indicator */}
             <div className={cn(
               'w-10 h-6 rounded-full flex items-center transition-all shrink-0 mt-0.5 px-0.5',
               course.is_adaptive ? 'bg-violet-600 justify-end' : 'bg-slate-700 justify-start'
@@ -704,6 +760,139 @@ export default function CourseEditorPage() {
               <div className="w-5 h-5 bg-white rounded-full shadow-sm" />
             </div>
           </button>
+
+          {course.is_adaptive && (() => {
+            const p = course.settings?.personalization ?? {}
+            const aud: PersonalizationAudience = p.audience ?? 'org'
+            const gids = new Set(p.group_ids ?? [])
+            const uids = new Set(p.user_ids ?? [])
+            const fw = p.features?.course_welcome !== false
+            const fRole = p.features?.module_role_explain !== false
+            const fBrief = p.features?.module_brief !== false
+            return (
+              <div className="ml-0 sm:ml-14 space-y-4 rounded-xl border border-slate-700 bg-slate-900/40 p-4">
+                <p className="text-[10px] text-slate-500">
+                  Org-wide AI limits and learner consent live in{' '}
+                  <Link href="/settings" className="text-indigo-400 hover:underline">Settings</Link>.
+                </p>
+                <div>
+                  <p className="text-xs font-medium text-slate-400 mb-2">What learners may use</p>
+                  <div className="space-y-2">
+                    {([
+                      ['course_welcome', 'Course welcome (opt-in)', fw],
+                      ['module_role_explain', 'Explain this module for my role', fRole],
+                      ['module_brief', '3-minute version', fBrief],
+                    ] as const).map(([key, label, on]) => (
+                      <label key={key} className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={on}
+                          onChange={() => patchCoursePersonalization({
+                            features: {
+                              course_welcome: key === 'course_welcome' ? !on : fw,
+                              module_role_explain: key === 'module_role_explain' ? !on : fRole,
+                              module_brief: key === 'module_brief' ? !on : fBrief,
+                            },
+                          })}
+                          className="rounded border-slate-600"
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-400 mb-2">Who can personalize</p>
+                  <div className="space-y-2">
+                    {([
+                      ['org', 'Everyone in your org (enrolled learners)'],
+                      ['groups', 'Only selected learner groups'],
+                      ['individuals', 'Only selected individuals'],
+                    ] as const).map(([value, lab]) => (
+                      <label key={value} className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="pers-audience"
+                          checked={aud === value}
+                          onChange={() => {
+                            if (value === 'org') {
+                              patchCoursePersonalization({ audience: 'org', group_ids: [], user_ids: [] })
+                            } else if (value === 'groups') {
+                              patchCoursePersonalization({
+                                audience: 'groups',
+                                user_ids: [],
+                                group_ids: p.group_ids ?? [],
+                              })
+                            } else {
+                              patchCoursePersonalization({
+                                audience: 'individuals',
+                                group_ids: [],
+                                user_ids: p.user_ids ?? [],
+                              })
+                            }
+                          }}
+                          className="border-slate-600"
+                        />
+                        {lab}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                {aud === 'groups' && (
+                  <div>
+                    <p className="text-xs text-slate-500 mb-2 flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5" /> Groups (manage under org tools / API)
+                    </p>
+                    {learnerGroups.length === 0 ? (
+                      <p className="text-[10px] text-slate-600">No groups yet. Create groups via Studio API or future Groups UI.</p>
+                    ) : (
+                      <div className="max-h-36 overflow-y-auto space-y-1 border border-slate-700 rounded-lg p-2">
+                        {learnerGroups.map((g) => (
+                          <label key={g.id} className="flex items-center gap-2 text-xs text-slate-300">
+                            <input
+                              type="checkbox"
+                              checked={gids.has(g.id)}
+                              onChange={() => {
+                                const next = new Set(gids)
+                                if (next.has(g.id)) next.delete(g.id)
+                                else next.add(g.id)
+                                patchCoursePersonalization({ group_ids: [...next] })
+                              }}
+                              className="rounded border-slate-600"
+                            />
+                            {g.name}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {aud === 'individuals' && (
+                  <div>
+                    <p className="text-xs text-slate-500 mb-2">Org members</p>
+                    <div className="max-h-36 overflow-y-auto space-y-1 border border-slate-700 rounded-lg p-2">
+                      {orgLearners.map((u) => (
+                        <label key={u.id} className="flex items-center gap-2 text-xs text-slate-300">
+                          <input
+                            type="checkbox"
+                            checked={uids.has(u.id)}
+                            onChange={() => {
+                              const next = new Set(uids)
+                              if (next.has(u.id)) next.delete(u.id)
+                              else next.add(u.id)
+                              patchCoursePersonalization({ user_ids: [...next] })
+                            }}
+                            className="rounded border-slate-600"
+                          />
+                          {u.full_name}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
         </div>
 
         {/* Visual Persona (course theme) */}

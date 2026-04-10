@@ -3,8 +3,53 @@
 @tailwind utilities;
 
 :root {
-  --background: #020817;
-  --foreground: #f8fafc;
+  --surface: #f7f8fc;
+  --surface-elevated: #ffffff;
+  --background: #f7f8fc;
+  --foreground: #12152b;
+  --border: #d9dcef;
+  --text-primary: #12152b;
+  --text-secondary: #4d5275;
+  --primary: #2f2a8a;
+  --primary-strong: #26216f;
+  --primary-foreground: #ffffff;
+  --primary-hover: #26216f;
+  --accent: #ff7a45;
+  --accent-soft: #ffd166;
+  --accent-foreground: #12152b;
+  --muted: #eef1fb;
+  --muted-foreground: #4d5275;
+  --card: #ffffff;
+  --card-foreground: #12152b;
+  --success: #1f9d62;
+  --warning: #e59a00;
+  --destructive: #d64545;
+  --info: #4f7cff;
+}
+
+.dark {
+  --surface: #0d1026;
+  --surface-elevated: #161a38;
+  --background: #0d1026;
+  --foreground: #f5f7ff;
+  --border: #2e3567;
+  --text-primary: #f5f7ff;
+  --text-secondary: #c1c8f0;
+  --primary: #5e5ad7;
+  --primary-strong: #2f2a8a;
+  --primary-foreground: #ffffff;
+  --primary-hover: #2f2a8a;
+  --accent: #ff7a45;
+  --accent-soft: #ffd166;
+  --accent-foreground: #12152b;
+  --muted: #1b2147;
+  --muted-foreground: #c1c8f0;
+  --card: #161a38;
+  --card-foreground: #f5f7ff;
+  --success: #1f9d62;
+  --warning: #e59a00;
+  --destructive: #d64545;
+  --info: #4f7cff;
 }
 
 body {
@@ -26,18 +71,18 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--border);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--muted-foreground);
 }
 
 /* Translucent glass panel (matches Learn chat) */
 .liquid-glass {
   @apply backdrop-blur-2xl shadow-2xl;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--surface-elevated) 76%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
   border-radius: 2rem;
 }
 

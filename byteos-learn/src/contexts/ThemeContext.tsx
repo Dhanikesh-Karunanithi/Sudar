@@ -17,6 +17,13 @@ const defaultState: ThemeState = {
   palette: 'default',
 }
 
+function normalizePalette(value: unknown): PaletteId {
+  if (value === 'ocean' || value === 'forest' || value === 'sunset') {
+    return value
+  }
+  return 'default'
+}
+
 function loadTheme(): ThemeState {
   if (typeof window === 'undefined') return defaultState
   try {
@@ -25,7 +32,7 @@ function loadTheme(): ThemeState {
     const parsed = JSON.parse(raw) as Partial<ThemeState>
     return {
       mode: parsed.mode === 'dark' ? 'dark' : 'light',
-      palette: ['default', 'ocean', 'forest', 'sunset'].includes(parsed.palette ?? '') ? parsed.palette! : 'default',
+      palette: normalizePalette(parsed.palette),
     }
   } catch {
     return defaultState

@@ -12,8 +12,11 @@
 **Headline**: Sudar
 **Subheadline**: The Operating System for Learning
 **Tagline**: *Learns with you, for you.*
-**Visual**: Clean, minimal — deep blue-purple gradient with a single glowing node network
-  representing neurons/learning connections
+**Visual**: Clean, minimal with the Sudar symbol narrative:
+- two pills as "=" (equal access),
+- motion into "S" (learning flow),
+- center AI star ignition (flame of learning).
+Use Option A palette: indigo + ember accents.
 **Presenter note**: Open with the question: "When was the last time you finished an online course?"
 
 ---
@@ -70,7 +73,7 @@ Learners hit a wall. There's nobody to ask. So they stop.
 
 **Bullet points**:
 - **Create**: Build a complete AI course in < 15 minutes from any document, URL, or idea
-- **Deliver**: 7 learning modalities — text, video, audio, games, mindmaps, flashcards, feed
+- **Deliver**: Multi-modality learning delivery with adaptive guidance
 - **Adapt**: A Digital Learner Twin that personalizes difficulty, modality, and next steps
 - **Tutor**: "Sudar" — a personal AI tutor that remembers every learner, in every session
 
@@ -238,6 +241,10 @@ becomes — creating compounding switching costs.
 **The Sudar reorg**: All of the above is now being consolidated into one unified, production-ready
 platform — Sudar. This is not a concept; it's a consolidation.
 
+**Claim discipline note**:
+- Separate currently shipped capabilities from pilot-evaluation claims.
+- Present efficacy as evidence-informed and pilot-backed (planned) where applicable.
+
 ---
 
 ## SLIDE 13 — The Team
@@ -291,5 +298,5 @@ the privileged few.
 
 ---
 
-*Sudar Pitch Deck v1.0 | February 2026*
+*Sudar Pitch Deck v1.1 | April 2026*
 *Confidential — For discussion purposes only*

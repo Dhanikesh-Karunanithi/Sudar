@@ -69,6 +69,7 @@ export type Database = {
           overall_engagement_score: number
           next_best_action: Json | null
           ai_tutor_context: Json | null
+          generative_ai_consent_at: string | null
           updated_at: string
         }
         Insert: {
@@ -87,6 +88,7 @@ export type Database = {
           overall_engagement_score?: number
           next_best_action?: Json | null
           ai_tutor_context?: Json | null
+          generative_ai_consent_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -96,7 +98,36 @@ export type Database = {
           overall_engagement_score?: number
           next_best_action?: Json | null
           ai_tutor_context?: Json | null
+          generative_ai_consent_at?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      organisations: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          branding: Json | null
+          settings: Json | null
+          plan: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          branding?: Json | null
+          settings?: Json | null
+          plan?: string
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          slug?: string
+          branding?: Json | null
+          settings?: Json | null
+          plan?: string
         }
         Relationships: []
       }
@@ -114,6 +145,9 @@ export type Database = {
           estimated_duration_mins: number | null
           target_skills: Json | null
           tags: string[]
+          scorm_url: string | null
+          settings: Json | null
+          is_adaptive: boolean
           published_at: string | null
           created_at: string
           updated_at: string
@@ -178,6 +212,9 @@ export type Database = {
           due_date: string | null
           started_at: string | null
           completed_at: string | null
+          personalized_welcome: Json | null
+          personalized_sequence: Json | null
+          personalization_overlays: Json | null
           created_at: string
         }
         Insert: {
@@ -188,13 +225,53 @@ export type Database = {
           enrolled_by?: string | null
           status?: string
           progress_pct?: number
+          personalized_welcome?: Json | null
+          personalized_sequence?: Json | null
+          personalization_overlays?: Json | null
         }
         Update: {
           status?: string
           progress_pct?: number
           started_at?: string | null
           completed_at?: string | null
+          personalized_welcome?: Json | null
+          personalization_overlays?: Json | null
         }
+        Relationships: []
+      }
+      learner_groups: {
+        Row: {
+          id: string
+          org_id: string
+          name: string
+          description: string | null
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          name: string
+          description?: string | null
+          created_by: string
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          description?: string | null
+        }
+        Relationships: []
+      }
+      learner_group_members: {
+        Row: {
+          group_id: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          user_id: string
+        }
+        Update: Record<string, never>
         Relationships: []
       }
       learning_events: {

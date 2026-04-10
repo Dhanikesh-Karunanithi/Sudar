@@ -18,6 +18,29 @@ interface PathCourse {
   difficulty: string | null
 }
 
+function detectDifficultyFromProfile(
+  background: string,
+  memory: Record<string, unknown>
+): string | null {
+  const comfort = memory.difficulty_comfort as string | undefined
+  if (comfort) return comfort
+  if (background.includes('senior') || background.includes('expert') || background.includes('lead')) {
+    return 'advanced'
+  }
+  if (background.includes('junior') || background.includes('student') || background.includes('new to')) {
+    return 'beginner'
+  }
+  return 'intermediate'
+}
+
+function isDifficultyAdjacent(a: string, b: string): boolean {
+  const order = ['beginner', 'intermediate', 'advanced']
+  const i = order.indexOf(a)
+  const j = order.indexOf(b)
+  if (i < 0 || j < 0) return false
+  return Math.abs(i - j) === 1
+}
+
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -68,7 +91,7 @@ export async function POST(request: NextRequest) {
   let personalizedSequence = rawCourses.map((c, i) => ({ ...c, order_index: i, seq_status: 'not_started' }))
 
   if (path.is_adaptive && rawCourses.length > 1) {
-    // Load learner memory
+    // Load learner memory (Digital Learner Twin context)
     const { data: lp } = await admin
       .from('learner_profiles')
       .select('ai_tutor_context')
@@ -78,21 +101,73 @@ export async function POST(request: NextRequest) {
     const memory = (lp?.ai_tutor_context as Record<string, unknown>) ?? {}
     const knownConcepts = ((memory.known_concepts as string[]) ?? []).map((s) => s.toLowerCase())
     const struggles = ((memory.struggles_with as string[]) ?? []).map((s) => s.toLowerCase())
+    const goals = ((memory.learning_goals as string) ?? '').toLowerCase().trim()
+    const background = ((memory.self_reported_background as string) ?? '').toLowerCase()
+    const preferredDifficulty = detectDifficultyFromProfile(background, memory)
 
     // Separate mandatory and optional
     const mandatory = rawCourses.filter((c) => c.is_mandatory)
     const optional = rawCourses.filter((c) => !c.is_mandatory)
 
-    // Score optional courses — surface gaps first, deprioritise already-known
-    const scored = optional.map((c) => {
-      const text = c.title.toLowerCase()
-      let score = 50 // base
-      const struggleMatch = struggles.some((s) => text.includes(s))
-      const knownMatch = knownConcepts.some((k) => text.includes(k))
-      if (struggleMatch) score += 30 // bring forward — learner needs this
-      if (knownMatch) score -= 20  // push back — they may already know this
-      return { ...c, score, skip_reason: knownMatch && !struggleMatch ? 'Concepts may already be familiar' : null }
-    }).sort((a, b) => b.score - a.score)
+    // Rich text for optional courses (title alone misses goals / concepts in descriptions & modules)
+    const optionalIds = optional.map((c) => c.course_id)
+    const metaById: Record<
+      string,
+      { description: string | null; tags: string[]; moduleTitles: string[] }
+    > = {}
+    if (optionalIds.length > 0) {
+      const { data: rows } = await admin
+        .from('courses')
+        .select('id, description, tags, modules(title)')
+        .in('id', optionalIds)
+      for (const row of rows ?? []) {
+        const mods = (row.modules as Array<{ title: string }> | null) ?? []
+        metaById[row.id] = {
+          description: row.description,
+          tags: (row.tags as string[]) ?? [],
+          moduleTitles: mods.map((m) => m.title),
+        }
+      }
+    }
+
+    // Score optional courses — align with next-action signals: gaps, goals, difficulty, known concepts
+    const scored = optional
+      .map((c) => {
+        const meta = metaById[c.course_id]
+        const searchText = [
+          c.title,
+          meta?.description ?? '',
+          ...(meta?.tags ?? []),
+          ...(meta?.moduleTitles ?? []),
+        ]
+          .join(' ')
+          .toLowerCase()
+
+        let score = 50 // base
+        const struggleMatch = struggles.some((s) => searchText.includes(s))
+        const knownMatch = knownConcepts.some((k) => searchText.includes(k))
+        if (struggleMatch) score += 30
+        if (knownMatch) score -= 20
+
+        if (goals) {
+          const goalWords = goals.split(/\s+/).filter((w) => w.length > 4)
+          const goalMatches = goalWords.filter((w) => searchText.includes(w))
+          if (goalMatches.length >= 2) score += 25
+          else if (goalMatches.length === 1) score += 12
+        }
+
+        if (c.difficulty && preferredDifficulty) {
+          if (c.difficulty === preferredDifficulty) score += 15
+          else if (isDifficultyAdjacent(preferredDifficulty, c.difficulty)) score += 5
+        }
+
+        return {
+          ...c,
+          score,
+          skip_reason: knownMatch && !struggleMatch ? 'Concepts may already be familiar' : null,
+        }
+      })
+      .sort((a, b) => b.score - a.score)
 
     // Rebuild: mandatory courses stay in original positions; optional fill the rest
     const mandatoryPositions = mandatory.map((c) => c.order_index).sort((a, b) => a - b)

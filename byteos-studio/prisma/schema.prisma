@@ -37,7 +37,9 @@ model Profile {
   enrollments         Enrollment[]
   certifications      Certification[]
   aiInteractions      AiInteraction[]
-  learningEvents      LearningEvent[]
+  learningEvents           LearningEvent[]
+  learnerGroupsCreated     LearnerGroup[]       @relation("LearnerGroupCreator")
+  learnerGroupMemberships  LearnerGroupMember[]
 
   @@map("profiles")
 }
@@ -74,6 +76,7 @@ model Organisation {
   performanceRecords   LearnerPerformanceRecord[]
   orgInvites           OrgInvite[]
   integrationApiKeys   IntegrationApiKey[]
+  learnerGroups        LearnerGroup[]
 
   @@map("organisations")
 }
@@ -144,6 +147,36 @@ model OrgInvite {
 }
 
 // ============================================
+// LEARNER GROUPS (cohorts — personalization audience targeting)
+// ============================================
+
+model LearnerGroup {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId       String   @map("org_id") @db.Uuid
+  name        String
+  description String?
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  org     Organisation         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  creator Profile              @relation("LearnerGroupCreator", fields: [createdBy], references: [id])
+  members LearnerGroupMember[]
+
+  @@map("learner_groups")
+}
+
+model LearnerGroupMember {
+  groupId String @map("group_id") @db.Uuid
+  userId  String @map("user_id") @db.Uuid
+
+  group   LearnerGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  profile Profile      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+  @@map("learner_group_members")
+}
+
+// ============================================
 // DIGITAL LEARNER TWIN
 // ============================================
 
@@ -162,8 +195,9 @@ model LearnerProfile {
   lastActiveAt          DateTime? @map("last_active_at")
   overallEngagementScore Float   @default(0.5) @map("overall_engagement_score")
   nextBestAction        Json?    @map("next_best_action")
-  aiTutorContext        Json?    @map("ai_tutor_context")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  aiTutorContext           Json?     @map("ai_tutor_context")
+  generativeAiConsentAt    DateTime? @map("generative_ai_consent_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
 
   profile Profile @relation(fields: [userId], references: [id])
 
@@ -348,9 +382,10 @@ model Enrollment {
   dueDate             DateTime? @map("due_date")
   startedAt           DateTime? @map("started_at")
   completedAt         DateTime? @map("completed_at")
-  personalizedWelcome  Json?     @map("personalized_welcome")
-  personalizedSequence Json?     @map("personalized_sequence")
-  createdAt            DateTime  @default(now()) @map("created_at")
+  personalizedWelcome    Json?     @map("personalized_welcome")
+  personalizedSequence   Json?     @map("personalized_sequence")
+  personalizationOverlays Json?    @map("personalization_overlays")
+  createdAt              DateTime  @default(now()) @map("created_at")
 
   profile Profile       @relation(fields: [userId], references: [id])
   path    LearningPath? @relation(fields: [pathId], references: [id])

@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   BookOpen,
@@ -17,10 +16,12 @@ import {
   Plug,
   Key,
   HelpCircle,
+  ShieldCheck,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { useSidebarContent } from '@/contexts/SidebarContentContext'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
 
 interface SidebarProps {
   user: {
@@ -37,11 +38,12 @@ const contentNavItems = [
   { label: 'Courses', href: '/courses', icon: BookOpen },
   { label: 'Learning Paths', href: '/paths', icon: Route },
   { label: 'Analytics', href: '/analytics', icon: BarChart2 },
-  { label: 'Compliance', href: '/compliance', icon: Shield },
+  { label: 'Training compliance', href: '/compliance', icon: Shield },
 ]
 
 const organizationNavItems = [
   { label: 'Users', href: '/users', icon: Users },
+  { label: 'Governance', href: '/governance', icon: ShieldCheck },
   { label: 'Integrations', href: '/integrations', icon: Plug },
   { label: 'AI & API Keys', href: '/settings/keys', icon: Key },
   { label: 'Org settings', href: '/settings', icon: Settings },
@@ -77,22 +79,14 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
   }
 
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-full shrink-0">
+    <aside className="w-64 bg-background border-r border-border flex flex-col h-full shrink-0">
       {/* Logo */}
-      <div className="p-5 border-b border-slate-800">
+      <div className="p-5 border-b border-border">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-8 h-8 shrink-0">
-            <Image
-              src="/sudar-logo-dark.png"
-              alt="Sudar"
-              fill
-              className="object-contain"
-              sizes="32px"
-            />
-          </div>
+          <SudarLogoMark className="h-8 w-auto max-w-[5.5rem] shrink-0 text-card-foreground" starFill="var(--background)" />
           <div>
-            <p className="text-white font-semibold text-sm leading-tight">Sudar</p>
-            <p className="text-indigo-400 text-xs font-medium">SudarLab</p>
+            <p className="text-card-foreground font-semibold text-sm leading-tight">Sudar</p>
+            <p className="text-primary text-xs font-medium">SudarLab</p>
           </div>
         </Link>
       </div>
@@ -134,20 +128,20 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
                   className={cn(
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group',
                     isActive
-                      ? 'bg-indigo-600/15 text-indigo-300 border border-indigo-500/20'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                      ? 'bg-primary/10 text-primary border border-primary/20'
+                      : 'text-muted-foreground hover:text-card-foreground hover:bg-muted'
                   )}
                 >
                   <item.icon
                     className={cn(
                       'w-4 h-4 shrink-0',
-                      isActive ? 'text-indigo-400' : 'text-slate-500 group-hover:text-slate-300'
+                      isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-card-foreground'
                     )}
                     strokeWidth={isActive ? 2.5 : 2}
                   />
                   <span className="flex-1">{item.label}</span>
                   {isActive && (
-                    <ChevronRight className="w-3 h-3 text-indigo-500" />
+                    <ChevronRight className="w-3 h-3 text-primary" />
                   )}
                 </Link>
               )
@@ -240,17 +234,17 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
       </nav>
 
       {/* User info */}
-      <div className="p-3 border-t border-slate-800 space-y-0.5">
+      <div className="p-3 border-t border-border space-y-0.5">
         {/* User info */}
         <div className="flex items-center gap-3 px-3 py-3 mt-1">
-          <div className="w-8 h-8 rounded-full bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
-            <span className="text-indigo-300 text-xs font-semibold">{initials}</span>
+          <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center shrink-0">
+            <span className="text-primary text-xs font-semibold">{initials}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-slate-200 text-sm font-medium truncate leading-tight">
+            <p className="text-card-foreground text-sm font-medium truncate leading-tight">
               {user.full_name ?? 'User'}
             </p>
-            <p className="text-slate-500 text-xs truncate">{user.email}</p>
+            <p className="text-muted-foreground text-xs truncate">{user.email}</p>
           </div>
           <button
             onClick={handleSignOut}

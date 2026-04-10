@@ -1,5 +1,11 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import type { MascotId, MascotIntensity, MascotMode, MascotSupportStyle } from '@/types/mascot'
+
+const MASCOT_IDS: MascotId[] = ['focus', 'memory', 'confidence', 'sudar']
+const MASCOT_MODES: MascotMode[] = ['all', 'selected', 'hero-only']
+const MASCOT_STYLES: MascotSupportStyle[] = ['calm', 'balanced', 'energetic']
+const MASCOT_INTENSITIES: MascotIntensity[] = ['low', 'medium', 'high']
 
 /**
  * GET /api/learner/preferences — Return learner AI preferences (TTS voice, optional tutor model).
@@ -21,6 +27,10 @@ export async function GET() {
   return NextResponse.json({
     tts_voice: prefs.tts_voice ?? null,
     tutor_model: prefs.tutor_model ?? null,
+    mascot_mode: prefs.mascot_mode ?? 'all',
+    mascot_style: prefs.mascot_style ?? 'balanced',
+    mascot_intensity: prefs.mascot_intensity ?? 'high',
+    mascot_companions: Array.isArray(prefs.mascot_companions) ? prefs.mascot_companions : ['focus', 'memory', 'confidence'],
   })
 }
 
@@ -35,8 +45,21 @@ export async function PATCH(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
   const tts_voice = typeof body.tts_voice === 'string' ? body.tts_voice : undefined
   const tutor_model = typeof body.tutor_model === 'string' ? body.tutor_model : undefined
-  if (tts_voice === undefined && tutor_model === undefined) {
-    return NextResponse.json({ error: 'Provide tts_voice and/or tutor_model' }, { status: 400 })
+  const mascot_mode = MASCOT_MODES.includes(body.mascot_mode) ? (body.mascot_mode as MascotMode) : undefined
+  const mascot_style = MASCOT_STYLES.includes(body.mascot_style) ? (body.mascot_style as MascotSupportStyle) : undefined
+  const mascot_intensity = MASCOT_INTENSITIES.includes(body.mascot_intensity) ? (body.mascot_intensity as MascotIntensity) : undefined
+  const mascot_companions = Array.isArray(body.mascot_companions)
+    ? body.mascot_companions.filter((id: unknown): id is MascotId => typeof id === 'string' && MASCOT_IDS.includes(id as MascotId))
+    : undefined
+  if (
+    tts_voice === undefined
+    && tutor_model === undefined
+    && mascot_mode === undefined
+    && mascot_style === undefined
+    && mascot_intensity === undefined
+    && mascot_companions === undefined
+  ) {
+    return NextResponse.json({ error: 'Provide at least one valid preference value' }, { status: 400 })
   }
 
   const admin = createAdminClient()
@@ -52,6 +75,10 @@ export async function PATCH(request: NextRequest) {
     ...existingPrefs,
     ...(tts_voice !== undefined && { tts_voice }),
     ...(tutor_model !== undefined && { tutor_model }),
+    ...(mascot_mode !== undefined && { mascot_mode }),
+    ...(mascot_style !== undefined && { mascot_style }),
+    ...(mascot_intensity !== undefined && { mascot_intensity }),
+    ...(mascot_companions !== undefined && { mascot_companions }),
   }
   const updatedCtx = { ...ctx, preferences: updatedPrefs }
 

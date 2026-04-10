@@ -3,11 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20.19.0 <24"
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "node ./scripts/run-next.mjs dev",
+    "dev:3003": "node ./scripts/run-next.mjs dev -p 3003",
+    "dev:fresh": "node ./scripts/rm-next-cache.mjs && node ./scripts/run-next.mjs dev",
+    "dev:3003:fresh": "node ./scripts/rm-next-cache.mjs && node ./scripts/run-next.mjs dev -p 3003",
+    "build": "node ./scripts/run-next.mjs build",
+    "start": "node ./scripts/run-next.mjs start",
+    "lint": "node ./scripts/run-next.mjs lint"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

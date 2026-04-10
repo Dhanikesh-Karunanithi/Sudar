@@ -7,7 +7,8 @@ import {
   ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight,
   BookOpen, List, X, Sparkles, Send, Loader2,
   ChevronDown, FileText, Video, Network,
-  Layers, Zap, MessageSquarePlus, Code, Quote, Pin, PinOff, PanelLeftClose, Mic, Maximize2, Minimize2, Headphones, Gamepad2
+  Layers, Zap, MessageSquarePlus, Code, Quote, Pin, PinOff, PanelLeftClose, Mic, Maximize2, Minimize2, Headphones, Gamepad2,
+  User, Clock,
 } from 'lucide-react'
 import { cn, stripTutorActionsFromText } from '@/lib/utils'
 import { QuizCard } from './QuizCard'
@@ -20,6 +21,7 @@ import { SudarVidCard } from './SudarVidCard'
 import { RichModuleContent } from '@/components/learn/RichModuleContent'
 import { ReadAlongControls } from '@/components/learn/ReadAlongControls'
 import { CourseThemeProvider } from '@/components/learn/CourseThemeProvider'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { GenerativeBlockRenderer } from '@/components/tutor/GenerativeBlockRenderer'
 import { ChatMarkdown } from '@/components/tutor/ChatMarkdown'
 import { isRichContent, isScormContent, type RichContent } from '@/types/content'
@@ -93,13 +95,27 @@ interface SelectionPopup {
   y: number
 }
 
+export interface PersonalizationAccessClient {
+  courseWelcome: { allowed: boolean; reason?: string }
+  moduleRoleExplain: { allowed: boolean; reason?: string }
+  moduleBrief: { allowed: boolean; reason?: string }
+  orgRequiresConsent: boolean
+  hasConsent: boolean
+}
+
 interface Props {
   course: Course
   activeModuleId: string
   completedModuleIds: string[]
   enrollmentProgress: number
+  /** Enrollment row id — required for opt-in personalization API */
+  enrollmentId: string
+  /** Show "Personalize for me" until a welcome exists or the course is completed */
+  personalizeOffered: boolean
   personalizedWelcome?: Record<string, unknown> | null
   learnerName?: string
+  personalizationAccess: PersonalizationAccessClient
+  personalizationOverlays?: Record<string, Record<string, string>> | null
 }
 
 /** Get plain text body from module content for flashcards or fallback */
@@ -306,24 +322,36 @@ function renderMarkdown(body: string, opts?: { showEmptyState?: boolean }): Reac
 
   function nextKey() { return key++ }
 
-  // Inline formatting: bold, italic, inline code, links
+  // Inline formatting: links, bold, italic, inline code
   function parseInline(text: string): React.ReactNode {
     const parts: React.ReactNode[] = []
-    // Regex: **bold**, *italic*, `code` (use RegExp to avoid parser issues with literal)
-    const regex = new RegExp('(\\*\\*(.+?)\\*\\*|\\*(.+?)\\*|`(.+?)`)', 'g')
+    // Regex: [link](url), **bold**, *italic*, `code`
+    const regex = new RegExp('(\\[(.+?)\\]\\((https?:\\/\\/[^\\s)]+)\\)|\\*\\*(.+?)\\*\\*|\\*(.+?)\\*|`(.+?)`)', 'g')
     let last = 0
     let match: RegExpExecArray | null
 
     while ((match = regex.exec(text)) !== null) {
       if (match.index > last) parts.push(text.slice(last, match.index))
-      if (match[0].startsWith('**')) {
-        parts.push(<strong key={match.index} className="font-semibold text-card-foreground">{match[2]}</strong>)
+      if (match[0].startsWith('[')) {
+        parts.push(
+          <a
+            key={match.index}
+            href={match[3]}
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary underline underline-offset-2 hover:opacity-90"
+          >
+            {match[2]}
+          </a>
+        )
+      } else if (match[0].startsWith('**')) {
+        parts.push(<strong key={match.index} className="font-semibold text-card-foreground">{match[4]}</strong>)
       } else if (match[0].startsWith('*')) {
-        parts.push(<em key={match.index} className="italic text-card-foreground">{match[3]}</em>)
+        parts.push(<em key={match.index} className="italic text-card-foreground">{match[5]}</em>)
       } else if (match[0].startsWith('`')) {
         parts.push(
           <code key={match.index} className="bg-muted text-primary text-xs px-1.5 py-0.5 rounded font-mono border border-border">
-            {match[4]}
+            {match[6]}
           </code>
         )
       }
@@ -544,8 +572,12 @@ export function CourseViewer({
   activeModuleId,
   completedModuleIds,
   enrollmentProgress,
+  enrollmentId,
+  personalizeOffered,
   personalizedWelcome,
   learnerName,
+  personalizationAccess,
+  personalizationOverlays: initialOverlays,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -577,9 +609,75 @@ export function CourseViewer({
   const isVisibleRef = useRef(typeof document !== 'undefined' ? document.visibilityState === 'visible' : true)
   const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Welcome card
-  const [showWelcome, setShowWelcome] = useState(!!personalizedWelcome?.message)
-  const welcome = personalizedWelcome as PersonalizedWelcome | null
+  // Opt-in personalized welcome (generated on request, not at enroll time)
+  const welcomeFromServer = personalizedWelcome as PersonalizedWelcome | null
+  const [clientWelcome, setClientWelcome] = useState<PersonalizedWelcome | null>(null)
+  const welcome = clientWelcome ?? welcomeFromServer
+  const [showWelcome, setShowWelcome] = useState(!!welcomeFromServer?.message)
+  const [personalizeLoading, setPersonalizeLoading] = useState(false)
+  const [personalizeError, setPersonalizeError] = useState<string | null>(null)
+  const [consentGranted, setConsentGranted] = useState(personalizationAccess.hasConsent)
+  const [consentLoading, setConsentLoading] = useState(false)
+  const [overlays, setOverlays] = useState<Record<string, Record<string, string>>>(initialOverlays ?? {})
+  const [modulePersonalizeMode, setModulePersonalizeMode] = useState<'role_explain' | 'brief_3min' | null>(null)
+  const [modulePersonalizeLoading, setModulePersonalizeLoading] = useState(false)
+  const [modulePersonalizeError, setModulePersonalizeError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setOverlays(initialOverlays ?? {})
+  }, [initialOverlays])
+
+  useEffect(() => {
+    setConsentGranted(personalizationAccess.hasConsent)
+  }, [personalizationAccess.hasConsent])
+
+  const handlePersonalizeCourse = useCallback(async () => {
+    setPersonalizeError(null)
+    setPersonalizeLoading(true)
+    try {
+      const res = await fetch('/api/ai/enroll-bridge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enrollment_id: enrollmentId, course_id: course.id }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.ok) {
+        setPersonalizeError(typeof data.error === 'string' ? data.error : 'Could not personalize this course.')
+        return
+      }
+      if (data.welcome?.message) {
+        setClientWelcome(data.welcome as PersonalizedWelcome)
+        setShowWelcome(true)
+        router.refresh()
+      }
+    } catch {
+      setPersonalizeError('Network error. Try again.')
+    } finally {
+      setPersonalizeLoading(false)
+    }
+  }, [course.id, enrollmentId, router])
+
+  useEffect(() => {
+    if (welcomeFromServer?.message) {
+      setShowWelcome(true)
+      setClientWelcome(null)
+    }
+  }, [welcomeFromServer])
+
+  const showConsentBanner =
+    personalizationAccess.orgRequiresConsent && !consentGranted
+
+  const handleGrantAiConsent = useCallback(async () => {
+    setConsentLoading(true)
+    try {
+      const res = await fetch('/api/learner/ai-consent', { method: 'POST' })
+      if (!res.ok) return
+      setConsentGranted(true)
+      router.refresh()
+    } finally {
+      setConsentLoading(false)
+    }
+  }, [router])
 
   // Quiz state
   const [showQuiz, setShowQuiz] = useState(false)
@@ -634,6 +732,51 @@ export function CourseViewer({
   const minTimeSecs = completionRule?.type === 'min_time' ? (completionRule.min_time_secs ?? 0) : 0
   const [elapsedActiveSecs, setElapsedActiveSecs] = useState(0)
   const canMarkCompleteByTime = minTimeSecs <= 0 || elapsedActiveSecs >= minTimeSecs
+
+  const handleModulePersonalize = useCallback(
+    async (mode: 'role_explain' | 'brief_3min') => {
+      setModulePersonalizeError(null)
+      setModulePersonalizeLoading(true)
+      setModulePersonalizeMode(mode)
+      try {
+        const res = await fetch('/api/ai/module-personalize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            enrollment_id: enrollmentId,
+            course_id: course.id,
+            module_id: currentModuleId,
+            mode,
+          }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok || !data.ok) {
+          setModulePersonalizeError(
+            typeof data.error === 'string' ? data.error : 'Could not generate this view.'
+          )
+          return
+        }
+        if (data.module_id && data.overlay) {
+          setOverlays((prev) => ({
+            ...prev,
+            [data.module_id as string]: data.overlay as Record<string, string>,
+          }))
+        }
+        router.refresh()
+      } catch {
+        setModulePersonalizeError('Network error. Try again.')
+      } finally {
+        setModulePersonalizeLoading(false)
+        setModulePersonalizeMode(null)
+      }
+    },
+    [course.id, currentModuleId, enrollmentId, router]
+  )
+
+  const currentOverlay = overlays[currentModuleId]
+  const showModulePersonalizeRow =
+    (personalizationAccess.moduleRoleExplain.allowed || personalizationAccess.moduleBrief.allowed)
+    && progress < 100
 
   // -- Effects ----------------------------------------------------------
   // Visibility: only count time as "active" when tab is visible
@@ -1174,7 +1317,7 @@ export function CourseViewer({
           >
             {/* Selected text preview */}
             <div className="px-3 pt-2.5 pb-1.5 border-b border-border/60 flex items-start gap-2">
-              <img src="/sudar-chat-logo.png" className="w-3.5 h-3.5 mt-0.5 opacity-70 shrink-0" alt="Sudar" />
+              <SudarLogoMark className="mt-0.5 h-5 w-auto shrink-0 text-primary opacity-70" starFill="var(--card)" />
               <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-2 italic">
                 &ldquo;{selectionPopup.text.slice(0, 120)}{selectionPopup.text.length > 120 ? '…' : ''}&rdquo;
               </p>
@@ -1444,6 +1587,60 @@ export function CourseViewer({
                 'max-w-2xl'
               )} ref={contentRef}>
 
+                {showConsentBanner && (
+                  <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 p-4 space-y-3">
+                    <p className="text-sm text-card-foreground leading-relaxed">
+                      Your organization requires confirmation before Sudar can use your learning profile for optional AI personalization (welcome message and module helpers). Tutor chat may still follow separate rules.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleGrantAiConsent}
+                      disabled={consentLoading}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60"
+                    >
+                      {consentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                      I understand — enable personalization
+                    </button>
+                  </div>
+                )}
+
+                {/* Opt-in course personalization (AI welcome — no silent calls at enroll) */}
+                {personalizeOffered && !welcome?.message && (
+                  <div className="relative bg-muted/40 border border-border rounded-2xl p-6 shadow-sm">
+                    <div className="flex items-start gap-3 mb-3">
+                      <Sparkles className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-semibold text-card-foreground">Want Sudar to personalize this course for you?</p>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                          Sudar can write a short welcome that connects this course to your goals, background, and what you already know.
+                          Your module content stays the same; this only adds context. You can skip this anytime.
+                        </p>
+                      </div>
+                    </div>
+                    {personalizeError && (
+                      <p className="text-xs text-destructive mb-3" role="alert">{personalizeError}</p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handlePersonalizeCourse}
+                      disabled={personalizeLoading}
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 disabled:opacity-60 transition-opacity"
+                    >
+                      {personalizeLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Personalizing…
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          Personalize this course for me
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
                 {/* Personalized welcome card */}
                 {showWelcome && welcome?.message && (
                   <div className="relative bg-gradient-to-br from-primary/5 via-primary/5 to-background border border-primary/20 rounded-2xl p-6 shadow-sm shadow-sm">
@@ -1452,9 +1649,7 @@ export function CourseViewer({
                       <X className="w-4 h-4 text-primary" />
                     </button>
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-md shrink-0">
-                        <img src="/sudar-chat-logo.png" className="w-5 h-5 object-contain brightness-0 invert" alt="Sudar" />
-                      </div>
+                      <SudarLogoMark className="h-10 w-auto shrink-0 text-primary" starFill="var(--background)" />
                       <div>
                         <p className="text-sm font-semibold text-card-foreground">Sudar knows you&apos;re here</p>
                         <p className="text-xs text-primary">Personalized just for you</p>
@@ -1680,25 +1875,93 @@ export function CourseViewer({
                         .finally(() => setListeningLoading(false))
                     } }
                   />
-                ) : isRichContent(currentModule?.content) ? (
-                  <RichModuleContent
-                    content={currentModule.content}
-                    renderMarkdown={renderMarkdown}
-                    onExplain={(context) => {
-                      setInput(context)
-                      setTutorOpen(true)
-                    } }
-                    courseId={course.id}
-                    moduleId={currentModuleId}
-                    moduleTitle={currentModule?.title ?? ''}
-                    learnerName={learnerName}
-                    onQuizComplete={handleQuizComplete}
-                    onAskByte={handleQuizAskByte}
-                  />
                 ) : (
-                  <div>
-                    {renderMarkdown((currentModule?.content as { body?: string })?.body ?? '')}
-                  </div>
+                  <>
+                    {activeModality === 'text' && showModulePersonalizeRow && (
+                      <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3 mb-6">
+                        <div className="flex items-start gap-2">
+                          <Layers className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-card-foreground">Optional module helpers</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              These do not replace the official module below — extra views generated for you and saved on your enrollment only.
+                            </p>
+                          </div>
+                        </div>
+                        {modulePersonalizeError && (
+                          <p className="text-xs text-destructive" role="alert">{modulePersonalizeError}</p>
+                        )}
+                        <div className="flex flex-wrap gap-2">
+                          {personalizationAccess.moduleRoleExplain.allowed && (
+                            <button
+                              type="button"
+                              onClick={() => handleModulePersonalize('role_explain')}
+                              disabled={modulePersonalizeLoading}
+                              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-background text-sm hover:bg-muted/80 disabled:opacity-50"
+                            >
+                              {modulePersonalizeLoading && modulePersonalizeMode === 'role_explain' ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <User className="w-4 h-4" />
+                              )}
+                              Explain for my role
+                            </button>
+                          )}
+                          {personalizationAccess.moduleBrief.allowed && (
+                            <button
+                              type="button"
+                              onClick={() => handleModulePersonalize('brief_3min')}
+                              disabled={modulePersonalizeLoading}
+                              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-background text-sm hover:bg-muted/80 disabled:opacity-50"
+                            >
+                              {modulePersonalizeLoading && modulePersonalizeMode === 'brief_3min' ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Clock className="w-4 h-4" />
+                              )}
+                              3-minute version
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {isRichContent(currentModule?.content) ? (
+                      <RichModuleContent
+                        content={currentModule.content}
+                        renderMarkdown={renderMarkdown}
+                        onExplain={(context) => {
+                          setInput(context)
+                          setTutorOpen(true)
+                        } }
+                        courseId={course.id}
+                        moduleId={currentModuleId}
+                        moduleTitle={currentModule?.title ?? ''}
+                        learnerName={learnerName}
+                        onQuizComplete={handleQuizComplete}
+                        onAskByte={handleQuizAskByte}
+                      />
+                    ) : (
+                      <div>
+                        {renderMarkdown((currentModule?.content as { body?: string })?.body ?? '')}
+                      </div>
+                    )}
+                    {activeModality === 'text' && currentOverlay?.role_explanation?.trim() && (
+                      <div className="mt-8 rounded-xl border border-primary/20 bg-primary/5 p-5 space-y-2">
+                        <p className="text-xs font-semibold text-primary uppercase tracking-wide">For your role</p>
+                        <p className="text-sm text-card-foreground leading-relaxed whitespace-pre-wrap">
+                          {currentOverlay.role_explanation}
+                        </p>
+                      </div>
+                    )}
+                    {activeModality === 'text' && currentOverlay?.brief_3min?.trim() && (
+                      <div className="mt-6 rounded-xl border border-border bg-muted/30 p-5 space-y-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">3-minute version</p>
+                        <p className="text-sm text-card-foreground leading-relaxed whitespace-pre-wrap">
+                          {currentOverlay.brief_3min}
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {/* Quiz — shown after Mark Complete */}
@@ -1767,9 +2030,7 @@ export function CourseViewer({
             />
             <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
               <div className="px-4 py-3 border-b border-border bg-background flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-sm shadow-md">
-                  <img src="/sudar-chat-logo.png" className="w-4 h-4 object-contain brightness-0 invert" alt="Sudar" />
-                </div>
+                <SudarLogoMark className="h-8 w-auto shrink-0 text-primary" starFill="var(--background)" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-card-foreground">Sudar</p>
                   <p className="text-xs text-muted-foreground truncate">Knows the full course + your history</p>
@@ -1839,9 +2100,7 @@ export function CourseViewer({
                 {messages.length === 0 && (
                   <div className="space-y-3 pt-2">
                     <div className="flex items-start gap-2">
-                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 mt-0.5">
-                        <img src="/sudar-chat-logo.png" className="w-3 h-3 object-contain brightness-0 invert" alt="Sudar" />
-                      </div>
+                      <SudarLogoMark className="mt-0.5 h-6 w-auto shrink-0 text-primary" starFill="var(--card)" />
                       <div className="bg-card border border-border rounded-xl rounded-tl-sm px-3 py-2 text-xs text-card-foreground leading-relaxed">
                         {learnerName ? `Hi ${learnerName}! ` : 'Hi! '}I&apos;m Sudar. I know <span className="font-medium text-primary">{currentModule?.title}</span> and your full learning history. Ask me anything.
                         <br /><span className="text-muted-foreground text-[10px] mt-1 block">💡 Tip: highlight any text in the module to get quick explanations.</span>
@@ -1883,9 +2142,7 @@ export function CourseViewer({
                 {messages.map((msg, i) => (
                   <div key={i} className={cn('flex items-start gap-2', msg.role === 'user' ? 'flex-row-reverse' : '')}>
                     {msg.role === 'assistant' && (
-                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 mt-0.5">
-                        <img src="/sudar-chat-logo.png" className="w-3 h-3 object-contain brightness-0 invert" alt="Sudar" />
-                      </div>
+                      <SudarLogoMark className="mt-0.5 h-6 w-auto shrink-0 text-primary" starFill="var(--card)" />
                     )}
                     <div className={cn(
                       'rounded-xl leading-relaxed',
@@ -1975,9 +2232,7 @@ export function CourseViewer({
 
                 {thinking && (
                   <div className="flex items-start gap-2">
-                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0">
-                      <img src="/sudar-chat-logo.png" className="w-3 h-3 object-contain brightness-0 invert" alt="Sudar" />
-                    </div>
+                    <SudarLogoMark className="h-6 w-auto shrink-0 text-primary" starFill="var(--card)" />
                     <div className="bg-card border border-border rounded-xl rounded-tl-sm px-3 py-2.5">
                       <div className="flex gap-1">
                         {[0, 1, 2].map((i) => (

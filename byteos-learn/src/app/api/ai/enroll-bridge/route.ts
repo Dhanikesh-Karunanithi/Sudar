@@ -1,25 +1,69 @@
 /**
- * Enrollment Bridge Generator
+ * Enrollment Bridge Generator (opt-in personalization)
  *
- * Called once per enrollment for adaptive courses.
- * Reads the learner's full memory + prior completed courses and generates
- * a personalized welcome that bridges their existing knowledge to this course.
+ * Called when the learner chooses "Personalize this course for me" in the course viewer.
+ * Reads memory, goals, and prior courses and generates a short welcome that bridges
+ * their context to this course.
  *
- * Output is stored in enrollments.personalized_welcome and shown once in the viewer.
+ * Output is stored in enrollments.personalized_welcome. Module bodies stay shared;
+ * the tutor and path sequencing provide further adaptation.
  */
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
+import { checkPersonalizationEligibility } from '@/lib/personalization/eligibility'
+import { checkAndIncrementUsage } from '@/lib/usage-limits'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (getChatConfigError()) return NextResponse.json({ ok: true }) // fail silently
 
   const admin = createAdminClient()
-  const { enrollment_id, course_id } = await request.json()
+  const usage = await checkAndIncrementUsage(admin, user.id, 'generic')
+  if (!usage.allowed) {
+    return NextResponse.json(
+      { ok: false, error: `Daily AI limit (${usage.limit}) reached. Try again tomorrow.` },
+      { status: 429 }
+    )
+  }
+
+  let body: { enrollment_id?: string; course_id?: string }
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
+  const { enrollment_id, course_id } = body
+  if (!enrollment_id || !course_id) {
+    return NextResponse.json({ error: 'enrollment_id and course_id required' }, { status: 400 })
+  }
+
+  const { data: enc } = await admin
+    .from('enrollments')
+    .select('id, user_id, course_id')
+    .eq('id', enrollment_id)
+    .single()
+  if (!enc || enc.user_id !== user.id || enc.course_id !== course_id) {
+    return NextResponse.json({ error: 'Invalid enrollment' }, { status: 403 })
+  }
+
+  const gate = await checkPersonalizationEligibility(admin, {
+    userId: user.id,
+    courseId: course_id,
+    feature: 'course_welcome',
+  })
+  if (!gate.allowed) {
+    return NextResponse.json({ ok: false, error: gate.reason }, { status: 403 })
+  }
+
+  if (getChatConfigError()) {
+    return NextResponse.json(
+      { ok: false, error: 'Personalization is not available because AI is not configured for this environment.' },
+      { status: 503 }
+    )
+  }
 
   // ── Load learner profile and memory ────────────────────────────────
   const [{ data: profile }, { data: learnerProfile }, { data: newCourse }] = await Promise.all([
@@ -105,10 +149,18 @@ If there's no prior history, make it a genuine warm welcome that references what
     })
     message = content ?? ''
   } catch {
-    return NextResponse.json({ ok: true }) // fail silently — enrollment already created
+    return NextResponse.json(
+      { ok: false, error: 'Could not generate personalization. Try again in a moment.' },
+      { status: 502 }
+    )
   }
 
-  if (!message) return NextResponse.json({ ok: true })
+  if (!message.trim()) {
+    return NextResponse.json(
+      { ok: false, error: 'Personalization returned empty content. Try again.' },
+      { status: 502 }
+    )
+  }
 
   // ── Build concept bridges ───────────────────────────────────────────
   // Find which known concepts are relevant to the new course modules
@@ -131,6 +183,14 @@ If there's no prior history, make it a genuine warm welcome that references what
     .from('enrollments')
     .update({ personalized_welcome: welcome })
     .eq('id', enrollment_id)
+    .eq('user_id', user.id)
+
+  await admin.from('learning_events').insert({
+    user_id: user.id,
+    course_id,
+    event_type: 'course_personalize',
+    payload: { enrollment_id, course_title: newCourse.title },
+  })
 
   return NextResponse.json({ ok: true, welcome })
 }

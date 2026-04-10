@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sudar — Loop</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #111; display: flex; align-items: center;
+    justify-content: center; min-height: 100vh;
+  }
+  .scene { position: relative; width: 360px; height: 220px; }
+  .pill { position: absolute; border-radius: 999px; background: #fff; height: 64px; }
+  .pill--top    { z-index: 2; }
+  .pill--bottom { z-index: 1; }
+  .star {
+    position: absolute; z-index: 20; pointer-events: none;
+    width: 90px; height: 90px;
+  }
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <div class="pill pill--top"    id="pt"></div>
+  <div class="star"              id="star">
+    <svg width="90" height="90" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 50 2 C 51 49, 51 49, 98 50 C 51 51, 51 51, 50 98 C 49 51, 49 51, 2 50 C 49 49, 49 49, 50 2 Z" fill="#111"/>
+    </svg>
+  </div>
+  <div class="pill pill--bottom" id="pb"></div>
+</div>
+
+<script>
+// ── Config ──────────────────────────────────────────────
+const C = {
+  topY: 36,  topW: 170, topX: 20,
+  botY: 100, botW: 170, botX: 20,
+  pillH: 64, gap: 22,
+  starY: 100, starX: '50%', starSize: 90,
+};
+
+// ── Derived start positions ──────────────────────────────
+// Pills start centred (= sign) at final width
+const totalH  = C.pillH * 2 + C.gap;
+const startTop = (220 - totalH) / 2;        // = 35px
+const startBot = startTop + C.pillH + C.gap; // = 121px
+
+// ── Elements ─────────────────────────────────────────────
+const pt   = document.getElementById('pt');
+const pb   = document.getElementById('pb');
+const star = document.getElementById('star');
+
+// ── Utility ──────────────────────────────────────────────
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+// Apply a CSS transition and wait for it to finish
+function transition(el, props, durationMs, easing) {
+  el.style.transition = props
+    .map(p => `${p} ${durationMs}ms ${easing}`)
+    .join(', ');
+}
+
+// ── Apply a set of styles (no transition — instant) ──────
+function snap(el, styles) {
+  el.style.transition = 'none';
+  Object.assign(el.style, styles);
+}
+
+// ── Main loop ────────────────────────────────────────────
+async function loop() {
+  while (true) {
+
+    // 1 · Snap to start state (instant, invisible reset)
+    snap(pt, {
+      width: C.topW + 'px',
+      top:   startTop + 'px',
+      left:  '50%',
+      transform: 'translateX(-50%)',
+    });
+    snap(pb, {
+      width: C.botW + 'px',
+      top:   startBot + 'px',
+      left:  '50%',
+      transform: 'translateX(-50%)',
+    });
+    snap(star, {
+      left:      C.starX,
+      top:       C.starY + 'px',
+      opacity:   '0',
+      transform: 'translate(-50%,-50%) scale(0) rotate(-15deg)',
+    });
+    // Force reflow so transitions fire cleanly from this state
+    void pt.offsetHeight;
+
+    // 2 · Hold briefly so viewer sees the = shape
+    await wait(900);
+
+    // 3 · Pills slide to final S-offset positions
+    const ease = 'cubic-bezier(.4,0,.2,1)';
+    transition(pt, ['top','transform'], 1800, ease);
+    transition(pb, ['top','transform'], 1800, ease);
+    pt.style.top       = C.topY + 'px';
+    pt.style.transform = `translateX(calc(-50% + ${C.topX}px))`;
+    pb.style.top       = C.botY + 'px';
+    pb.style.transform = `translateX(calc(-50% - ${C.botX}px))`;
+    await wait(1800);
+
+    // 4 · Star pops in
+    const popEase = 'cubic-bezier(.34,1.56,.64,1)';
+    transition(star, ['opacity','transform'], 650, popEase);
+    star.style.opacity   = '1';
+    star.style.transform = 'translate(-50%,-50%) scale(1) rotate(0deg)';
+    await wait(650);
+
+    // 5 · Hold final state — let viewer absorb the mark
+    await wait(1600);
+
+    // 6 · Star fades out
+    transition(star, ['opacity','transform'], 400, 'ease');
+    star.style.opacity   = '0';
+    star.style.transform = 'translate(-50%,-50%) scale(0.7) rotate(8deg)';
+    await wait(200); // slight overlap with pill return
+
+    // 7 · Pills return to centre (slightly faster than forward)
+    transition(pt, ['top','transform'], 1400, ease);
+    transition(pb, ['top','transform'], 1400, ease);
+    pt.style.top       = startTop + 'px';
+    pt.style.transform = 'translateX(-50%)';
+    pb.style.top       = startBot + 'px';
+    pb.style.transform = 'translateX(-50%)';
+    await wait(1400);
+
+    // 8 · Brief pause before next cycle
+    await wait(700);
+
+    // → loop restarts from step 1
+  }
+}
+
+// Kick off
+loop();
+</script>
+</body>
+</html>

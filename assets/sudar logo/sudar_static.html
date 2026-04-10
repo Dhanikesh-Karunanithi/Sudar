@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sudar — Logo</title>
+<style>
+  /* ── Reset & page ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #111;                 /* dark canvas */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  /* ── Outer wrapper — centres everything vertically ── */
+  .logo-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;                        /* space between icon and wordmark */
+  }
+
+  /* ── Scene — the bounding box the pills live in ── */
+  .scene {
+    position: relative;
+    width: 360px;
+    height: 220px;
+  }
+
+  /* ── Base pill style (shared by both pills) ── */
+  .pill {
+    position: absolute;
+    border-radius: 999px;             /* fully rounded ends (stadium shape) */
+    background: #fff;
+    height: 64px;                     /* pillH */
+  }
+
+  /* ── TOP PILL ── */
+  /* Final position: topY=36px, topW=170px, shifted +20px to the right */
+  .pill--top {
+    width: 170px;                     /* topW */
+    top: 36px;                        /* topY */
+    left: 50%;
+    transform: translateX(calc(-50% + 20px));   /* topShift +20px */
+    z-index: 2;                       /* sits above bottom pill at overlap */
+  }
+
+  /* ── BOTTOM PILL ── */
+  /* Final position: botY=100px, botW=170px, shifted -20px to the left */
+  .pill--bottom {
+    width: 170px;                     /* botW */
+    top: 100px;                       /* botY  — overlaps top pill by 0px (100 > 36+64=100) */
+    left: 50%;
+    transform: translateX(calc(-50% - 20px));   /* botShift -20px */
+    z-index: 1;
+  }
+
+  /* ── STAR ── */
+  /* Centred at x=50%, y=100px — exactly at the pill overlap point */
+  .star {
+    position: absolute;
+    left: 50%;                        /* starX 50% */
+    top: 100px;                       /* starY — overlap/touch point of both pills */
+    width: 90px;                      /* starSize */
+    height: 90px;
+    transform: translate(-50%, -50%); /* visually centre the SVG on the point */
+    z-index: 20;                      /* above both pills */
+    pointer-events: none;
+  }
+
+  /* ── WORDMARK ── */
+  .wordmark {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: 0.35em;
+    color: #fff;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="logo-wrap">
+
+  <!-- Icon mark -->
+  <div class="scene">
+
+    <!-- Top pill: wider, shifted right -->
+    <div class="pill pill--top"></div>
+
+    <!-- 4-pointed sparkle star at the pill intersection
+         Path formula: concavity=23 → control points at (51,49) & (49,49) etc.
+         Tips reach: top(50,2) right(98,50) bottom(50,98) left(2,50) — equal all axes
+         fill=#111 matches body background, creating a "cut-out" effect on the pills -->
+    <div class="star">
+      <svg width="90" height="90" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"
+           role="img" aria-label="Sparkle star mark">
+        <path
+          d="M 50 2 C 51 49, 51 49, 98 50 C 51 51, 51 51, 50 98 C 49 51, 49 51, 2 50 C 49 49, 49 49, 50 2 Z"
+          fill="#111"/>
+          <!--
+            Arc 1 top→right:    C 51 49, 51 49, 98 50
+            Arc 2 right→bottom: C 51 51, 51 51, 50 98
+            Arc 3 bottom→left:  C 49 51, 49 51,  2 50
+            Arc 4 left→top:     C 49 49, 49 49, 50  2
+          -->
+      </svg>
+    </div>
+
+    <!-- Bottom pill: same width, shifted left -->
+    <div class="pill pill--bottom"></div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

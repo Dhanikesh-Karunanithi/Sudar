@@ -68,9 +68,12 @@ export interface TutorQueryResponse {
   response?: string
   actions?: TutorAction[]
   blocks?: TutorBlock[]
+  guardrail_refused?: boolean
+  guardrail_code?: string
 }
 
 export interface TutorQueryErrorResponse {
   error: string
   guardrail_refused?: boolean
+  guardrail_code?: 'sensitive_data_detected' | string
 }

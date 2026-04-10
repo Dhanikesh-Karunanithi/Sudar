@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title">
+  <title id="title">Focus companion character</title>
+  <circle cx="48" cy="44" r="30" fill="#0EA5E9" fill-opacity="0.15"/>
+  <ellipse cx="48" cy="48" rx="23" ry="27" fill="#D4A574" stroke="#0C4A6E" stroke-width="1.75"/>
+  <path d="M30 36c5-12 14-18 18-18s13 6 18 18" fill="none" stroke="#0C4A6E" stroke-width="2" stroke-linecap="round"/>
+  <ellipse cx="40" cy="46" rx="3.5" ry="3" fill="#0C4A6E"/>
+  <ellipse cx="56" cy="46" rx="3.5" ry="3" fill="#0C4A6E"/>
+  <path d="M40 56h16" stroke="#0C4A6E" stroke-width="2" stroke-linecap="round"/>
+  <path d="M34 70c0-5 6-9 14-9s14 4 14 9v6H34z" fill="#0284C7" stroke="#0C4A6E" stroke-width="1.5" stroke-linejoin="round"/>
+</svg>

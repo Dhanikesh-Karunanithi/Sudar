@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, getChatConfigError } from '@/lib/ai/chat'
 import { buildStudioContext } from '@/lib/agent/studioContext'
 import { STUDIO_ACTION_TYPES, type StudioAction } from '@/lib/agent/types'
+import { redactEchoedSensitiveDigits, scanSensitiveUserText } from '@/lib/security/sensitiveInputGuard'
 
 const ACTIONS_REGEX = /\nACTIONS:\s*([\s\S]+)$/
 
@@ -84,12 +85,28 @@ export async function POST(request: NextRequest) {
     if (!message) return NextResponse.json({ error: 'message required' }, { status: 400 })
 
     const admin = createAdminClient()
+    const { data: orgRowStudio } = await admin.from('organisations').select('settings').eq('id', orgId).maybeSingle()
+    const studioSettings = (orgRowStudio?.settings as Record<string, unknown> | null) ?? {}
+    const studioAiCompliance = (studioSettings.ai_compliance as Record<string, unknown> | null) ?? {}
+    if (studioAiCompliance.block_high_risk_pii_in_tutor !== false) {
+      const st = scanSensitiveUserText(message)
+      if (st.blocked) {
+        return NextResponse.json(
+          {
+            error:
+              "Can't process payment card numbers, government IDs, bank details, or private keys in chat. Remove them and try again.",
+            guardrail_code: 'sensitive_data_detected',
+          },
+          { status: 400 },
+        )
+      }
+    }
     const route = typeof body.route === 'string' ? body.route : ''
     const focusUserId = typeof body.focus_user_id === 'string' ? body.focus_user_id : undefined
 
     const ctx = await buildStudioContext(admin, orgId, { route, focusUserId })
 
-    const systemPrompt = `You are Sudar, the AI assistant for Sudar Studio. You help with **everything** on the platform: Dashboard, Courses (create/edit/publish, modules, SCORM, media), Learning Paths (create, assign), Analytics, Compliance, Users (add, roles, performance, enrollments), Integrations (API keys, embed, event ingestion), AI & API Keys, Org settings, and Help. Use **only** the Platform Knowledge and context below — never invent menus, endpoints, or steps.
+    const systemPrompt = `You are Sudar, the AI assistant for Sudar Studio. You help with **everything** on the platform: Dashboard, Courses (create/edit/publish, modules, SCORM, media), Learning Paths (create, assign), Analytics, Training compliance, Users (add, roles, performance, enrollments), Integrations (API keys, embed, event ingestion), AI & API Keys, Org settings, and Help. Use **only** the Platform Knowledge and context below — never invent menus, endpoints, or steps.
 
 When the user asks to do something that changes data (e.g. assign a path, assign a course, export users), respond clearly and at the end of your reply output exactly one line:
 ACTIONS: [{"type":"<action_type>", ...}]
@@ -125,7 +142,10 @@ ${ctx.contextPrompt}`
       temperature: 0.7,
     })
 
-    const responseText = aiResponse?.trim() ?? ''
+    let responseText = aiResponse?.trim() ?? ''
+    if (studioAiCompliance.tutor_redact_echoed_secrets !== false) {
+      responseText = redactEchoedSensitiveDigits(responseText)
+    }
     const { text: responseTextClean, rawActions } = parseActionsFromResponse(responseText)
     const actions = validateAndParseActions(rawActions, ctx.userIds, ctx.courseIds, ctx.pathIds)
 

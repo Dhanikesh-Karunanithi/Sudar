@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
 
 interface SidebarProps {
   user: {
@@ -49,17 +50,8 @@ export function Sidebar({ user }: SidebarProps) {
         href="/"
         className="flex flex-col items-center gap-1.5 px-3 py-5 border-b border-border"
       >
-        <div className="relative h-10 w-10 shrink-0">
-          <span className="sr-only">Sudar</span>
-          <div
-            className="absolute inset-0 bg-primary block dark:hidden logo-mask-light"
-            aria-hidden
-          />
-          <div
-            className="absolute inset-0 bg-primary hidden dark:block logo-mask-dark"
-            aria-hidden
-          />
-        </div>
+        <span className="sr-only">Sudar</span>
+        <SudarLogoMark className="h-8 w-auto max-w-[4.5rem] shrink-0 text-primary" starFill="var(--card)" />
         <span className="text-[10px] font-semibold text-primary leading-tight">
           Learn
         </span>

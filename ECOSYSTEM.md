@@ -237,6 +237,7 @@ learner_profiles (
   overall_engagement_score float DEFAULT 0.5,
   next_best_action jsonb,   -- {type, target_id, reason, computed_at}
   ai_tutor_context jsonb,   -- last N interactions summary for longitudinal memory
+  generative_ai_consent_at timestamptz,  -- learner accepted org-required AI personalization
   updated_at timestamptz DEFAULT now()
 )
 ```
@@ -307,7 +308,8 @@ courses (
   target_skills jsonb,         -- [{skill_id, target_proficiency}]
   tags text[],
   scorm_url text,              -- if exported as SCORM
-  settings jsonb,              -- {allow_ai_tutor, require_completion_order, etc.}
+  settings jsonb,              -- includes personalization: { audience, group_ids, user_ids, features }; video/podcast; module_completion
+  is_adaptive boolean DEFAULT false,  -- must be true for Learn-side personalization gates
   published_at timestamptz,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
@@ -363,9 +365,34 @@ enrollments (
   due_date timestamptz,
   started_at timestamptz,
   completed_at timestamptz,
+  personalized_welcome jsonb,           -- opt-in course welcome from Sudar
+  personalized_sequence jsonb,          -- adaptive path ordering (path enrollments)
+  personalization_overlays jsonb,       -- per-module AI views: { [module_id]: { role_explanation?, brief_3min?, updated_at } }
   created_at timestamptz DEFAULT now()
 )
+
+learner_groups (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id uuid references organisations NOT NULL,
+  name text NOT NULL,
+  description text,
+  created_by uuid references profiles NOT NULL,
+  created_at timestamptz DEFAULT now()
+)
+
+learner_group_members (
+  group_id uuid references learner_groups ON DELETE CASCADE,
+  user_id uuid references profiles ON DELETE CASCADE,
+  PRIMARY KEY (group_id, user_id)
+)
 ```
+
+**AI personalization (data boundaries)**  
+- **Course policy**: `courses.settings.personalization` — `{ audience: 'org'|'groups'|'individuals', group_ids[], user_ids[], features: { course_welcome, module_role_explain, module_brief } }`. **`courses.is_adaptive`** must be on for any of these features in Learn.  
+- **Org policy**: `organisations.settings.ai_compliance` — `{ allow_generative_personalization, require_learner_consent, personalization_data_retention_days? }`.  
+- **Learner consent**: `learner_profiles.generative_ai_consent_at` when the org requires consent.  
+- **Telemetry**: `learning_events` types include `course_personalize`, `module_personalize`, `ai_personalization_consent`. Payloads avoid storing full model output.  
+- **Canonical content**: `modules.content` is never overwritten by personalization; overlays live only on `enrollments.personalization_overlays`.
 
 ### Events & Analytics (Time-series learner telemetry)
 ```sql
@@ -422,6 +449,13 @@ compliance_records (
   reminder_sent_at timestamptz
 )
 ```
+
+---
+
+## 5a. Trust, governance, and compliance documentation
+
+- **Technical trust pack** (data flows, AI feature register, subprocessors, shared responsibility, threat model, operations runbook, audit log design): [docs/trust/README.md](docs/trust/README.md).
+- **Sudar Studio**: **Governance** (Admin/Manager) summarises organisation-level protections; **Org settings** stores `organisations.settings.ai_compliance` (including tutor input checks). **Training compliance** (`/compliance`) is L&D path assignments and due dates, not legal or GDPR compliance by itself.
 
 ---
 

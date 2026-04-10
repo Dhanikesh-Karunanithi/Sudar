@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import {
   BookOpen, Clock, Search, X, LayoutGrid, List,
@@ -29,6 +29,7 @@ interface Enrollment {
 interface Props {
   courses: Course[]
   enrollments: Enrollment[]
+  initialSearch?: string
 }
 
 /* ── Config ─────────────────────────────────────────────────────────────── */
@@ -237,11 +238,15 @@ function CourseCardList({ course, enrollment }: { course: Course; enrollment?: E
 
 /* ── Main component ─────────────────────────────────────────────────────── */
 
-export default function CourseCatalogClient({ courses, enrollments }: Props) {
-  const [search, setSearch] = useState('')
+export default function CourseCatalogClient({ courses, enrollments, initialSearch = '' }: Props) {
+  const [search, setSearch] = useState(initialSearch)
   const [diffFilter, setDiffFilter] = useState<typeof DIFFICULTY_FILTERS[number]>('all')
   const [statusFilter, setStatusFilter] = useState<typeof STATUS_FILTERS[number]['id']>('all')
   const [view, setView] = useState<'grid' | 'list'>('grid')
+
+  useEffect(() => {
+    setSearch(initialSearch)
+  }, [initialSearch])
 
   const enrollmentMap = useMemo(
     () => new Map(enrollments.map((e) => [e.course_id, e])),

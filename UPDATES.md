@@ -16,6 +16,23 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-04-11 — Sudar: brand, personalization v2, trust pack, governance, learner UX
+
+**Continuing this work (operators & agents)**  
+- **Database**: Apply `supabase/migrations/20260410000000_personalization_v2.sql` to the shared Supabase project (consent column, `personalization_overlays` on enrollments, `learner_groups` / `learner_group_members`). Then align Prisma: `byteos-studio` — `npx prisma db pull` or `db push` as you normally do for this repo.  
+- **Policy & product docs**: Brand and messaging live under `docs/brand/`; security / procurement context under `docs/trust/` (indexed in `docs/trust/README.md`). Studio **Governance** (`/governance`) links learners to the trust pack.  
+- **Code map**: Learn personalization gates — `byteos-learn/src/lib/personalization/eligibility.ts`, module overlays API — `byteos-learn/src/app/api/ai/module-personalize/route.ts`, consent — `byteos-learn/src/app/api/learner/ai-consent/route.ts`. Studio org AI compliance + course personalization live in org/course settings and APIs (`byteos-studio/src/app/api/org/settings/route.ts`, course editor). Learner groups API — `byteos-studio/src/app/api/org/learner-groups/`. Mascot system — `byteos-learn/src/lib/mascot/*`, `byteos-learn/src/components/mascot/*`.  
+- **Windows / Studio dev**: Prefer `npm run dev` from `byteos-studio` (uses `scripts/run-next.mjs`) so Next resolves correctly; optional `NEXT_FORCE_PROJECT_DIST=1` if you want `.next` inside the app folder. See `byteos-studio/.env.example`.  
+- **Shipped feature summary**: [docs/SHIPPED_FEATURES.md](docs/SHIPPED_FEATURES.md) (April 2026 sections). Roadmap text: [docs/STRATEGIC_PATH.md](docs/STRATEGIC_PATH.md) §2.
+
+**What shipped**  
+- **Brand & UI**: Sudar logo components and static marks in Learn and Studio (`SudarLogo.tsx`, `public/sudar-logo.svg`, `public/sudar-logo-mark.svg`); logo assets under `assets/sudar logo/`. Learn theme/globals and Tailwind tokens refined for consistent Sudar visual language.  
+- **Mascot (Learn)**: Neutral mascot SVGs in `byteos-learn/public/mascots/`; `MascotAvatar`, `MascotJourneyCard`, `MascotModeBadge`; engine/personas/rollout/tracking under `byteos-learn/src/lib/mascot/`; types in `src/types/mascot.ts`.  
+- **Personalization v2**: Opt-in **per-module AI overlays** (`role_explain`, `brief_3min`) stored on `enrollments.personalization_overlays` without changing canonical `modules.content`. Eligibility respects `courses.settings.personalization`, `courses.is_adaptive`, and `organisations.settings.ai_compliance`; learner consent via `learner_profiles.generative_ai_consent_at` and `/api/learner/ai-consent`. Daily usage cap via `module_personalize` in usage limits. Plain-text extraction helper: `byteos-learn/src/lib/learn/modulePlainText.ts`.  
+- **Studio**: **Governance** dashboard page; **Compliance** page cross-links; course detail/settings expanded for personalization and org policies; **learner groups** REST API (`/api/org/learner-groups`); Prisma/schema and `database` types updated; agent chat and platform knowledge touch-ups; `fetch-with-deadline` utility; **sensitive input guard** shared pattern with Learn. Middleware and `next.config.mjs` updates; dev scripts `scripts/run-next.mjs`, `scripts/rm-next-cache.mjs`.  
+- **Learn (learner experience)**: **Global search** route (`/search`); course viewer, onboarding, paths, settings (including AI consent UI), TopNav, Floating Sudar Chat, enroll-bridge and path-enrollments improvements; tutor and ALP query routes hardened; **sensitive input guard** for tutor-facing inputs.  
+- **Docs**: Full **brand** pack (`docs/brand/` — strategy, guidelines, tokens, mascot specs, rollout checklist, deck assets). **Trust** pack (`docs/trust/` — posture, data flows, subprocessors, AI system register, threat model, operations). Root **README**, **ECOSYSTEM**, **AGENTS**, **GITHUB_SETUP**, marketing/pitch decks aligned with Sudar positioning.
+
 ### 2026-04-07 — SudarVid overhaul: loader UX, timeline editor, media generation pipeline
 - **SudarVid frontend**: Refined UI/UX in `frontend/index.html`, `frontend/assets/main.css`, and `frontend/assets/main.js` with improved timeline editing flow and richer controls for creator-side video building.
 - **Playback and loader experience**: Updated `static/js/sudarvid.js`, added dedicated loader assets (`loader.html`, `sudar_loading_v3.html`), and intro/outro template support (`sudarvid-intro-outro.html`).
@@ -117,9 +134,9 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 - **Path assignment**: Assign path to learners from Studio, optional due date, “Assigned learners” table.
 
 ### Phase 5 — Scale (in progress)
-- **Done**: Path assignment + due dates, compliance view, certificate print, upcoming deadlines, required paths.
-- **Implemented**: Flashcards modality (Learn: FlashcardsCard, generate-flashcards API); document-to-course (Studio: generate-from-document API for PDF/DOCX/URL); SCORM 1.2 import (Studio: import-scorm API). RAG in Learn (content_chunks, ingest, tutor search); Floating Sudar Chat (global); tutor workflows (summarize/extract_terms); outcome logging; validate-memory quick preferences; memory insights carousel; SCORM delivery proxy (Learn); change-password flow.
-- **Upcoming**: Email reminders for at-risk/overdue, then BytePlay/ByteFeed/ByteMind, white-label, SSO/HRIS.
+- **Done**: Path assignment + due dates, compliance view, certificate print, upcoming deadlines, required paths; compliance **email reminders** (Studio cron — see SHIPPED_FEATURES.md).
+- **Implemented**: Flashcards modality (Learn: FlashcardsCard, generate-flashcards API); document-to-course (Studio: generate-from-document API for PDF/DOCX/URL); SCORM 1.2 import (Studio: import-scorm API). RAG in Learn (content_chunks, ingest, tutor search); Floating Sudar Chat (global); tutor workflows (summarize/extract_terms); outcome logging; validate-memory quick preferences; memory insights carousel; SCORM delivery proxy (Learn); change-password flow. **Personalization v2** (overlays, consent, learner groups), Sudar **brand/mascot** surfaces, **trust** docs + Studio Governance (2026-04-11 — see Latest above).
+- **Upcoming**: SudarPlay / SudarFeed / SudarMind wiring, white-label, SSO/HRIS; production hardening of personalization policies.
 
 ---
 
@@ -130,7 +147,7 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 | 1 | **Second full modality** | Audio TTS for current module (standalone Audio tab in course viewer). Flashcards already live as embedded + generate API. |
 | 2 | ~~Document/URL import~~ | ✅ Shipped — generate-from-document (PDF/DOCX/URL) in Studio. |
 | 3 | ~~SCORM 1.2 import~~ | ✅ Shipped — import-scorm API in Studio. |
-| 4 | **Email reminders** | Notify learners (or admins) when assignments are at-risk or overdue. |
+| 4 | ~~**Email reminders**~~ | ✅ Shipped — Studio `POST /api/cron/compliance-reminders` (see SHIPPED_FEATURES.md). |
 | 5 | **Server-side certificate PDF** | Optional: generate PDF for download (in addition to browser Print). |
 | 6 | **SudarPlay / SudarFeed / SudarMind** | Wire game, feed, and mindmap modalities into Learn. |
 | 7 | **White-label & SSO** | Org branding, custom domain, SAML/OIDC (later phase). |

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   Search,
@@ -18,8 +18,9 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
-import { useState } from 'react'
-import { useTheme, type ThemeMode, type PaletteId } from '@/contexts/ThemeContext'
+import { useEffect, useState, type FormEvent } from 'react'
+import { useTheme, type PaletteId } from '@/contexts/ThemeContext'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
 
 interface TopNavProps {
   user: {
@@ -31,7 +32,7 @@ interface TopNavProps {
 }
 
 const PALETTES: { id: PaletteId; label: string; swatch: string }[] = [
-  { id: 'default', label: 'Violet', swatch: 'bg-[#7c3aed]' },
+  { id: 'default', label: 'Sudar', swatch: 'bg-primary' },
   { id: 'ocean', label: 'Ocean', swatch: 'bg-[#0ea5e9]' },
   { id: 'forest', label: 'Forest', swatch: 'bg-[#059669]' },
   { id: 'sunset', label: 'Sunset', swatch: 'bg-[#d97706]' },
@@ -48,9 +49,21 @@ const mainNavItems: { label: string; href: string }[] = [
 export function TopNav({ user, showOnboardingNudge }: TopNavProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [moreOpen, setMoreOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [query, setQuery] = useState('')
   const { theme, setMode, setPalette } = useTheme()
+
+  useEffect(() => {
+    setMoreOpen(false)
+    setUserMenuOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    const q = searchParams.get('q') ?? ''
+    setQuery(q)
+  }, [searchParams])
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -63,56 +76,65 @@ export function TopNav({ user, showOnboardingNudge }: TopNavProps) {
     ? user.full_name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
     : user.email.slice(0, 2).toUpperCase()
 
+  function handleHeaderSearchSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const trimmed = query.trim()
+    if (!trimmed) return
+    const encoded = encodeURIComponent(trimmed)
+    if (pathname === '/courses' || pathname.startsWith('/courses?')) {
+      router.push(`/courses?q=${encoded}`)
+      return
+    }
+    if (pathname === '/paths' || pathname.startsWith('/paths?')) {
+      router.push(`/paths?q=${encoded}`)
+      return
+    }
+    router.push(`/search?q=${encoded}`)
+  }
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-6 pl-6 pr-4 md:px-6 py-3 border-b border-border bg-card">
       {/* Logo — adequate left padding so logo isn't clipped */}
       <Link href="/" className="flex items-center gap-3 shrink-0 min-w-0">
-        <div className="relative h-12 w-12 shrink-0">
-          <span className="sr-only">Sudar</span>
-          <div
-            className="absolute inset-0 bg-primary block dark:hidden logo-mask-light rounded-2xl"
-            aria-hidden
-          />
-          <div
-            className="absolute inset-0 bg-primary hidden dark:block logo-mask-dark rounded-2xl"
-            aria-hidden
-          />
-        </div>
+        <span className="sr-only">Sudar</span>
+        <SudarLogoMark className="h-9 w-auto shrink-0 text-primary md:h-10" starFill="var(--card)" />
         <span className="font-display text-2xl font-bold tracking-tighter text-card-foreground hidden sm:block">
           Sudar
         </span>
       </Link>
 
       {/* Center: nav pills — design-system aligned, animated */}
-      <nav className="shrink-0 min-w-0 overflow-x-auto no-scrollbar flex items-center gap-1 p-1.5 rounded-full bg-muted border border-border">
-        {mainNavItems.map((item) => {
-          const isActive =
-            item.href === '/'
-              ? pathname === '/'
-              : pathname.startsWith(item.href)
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'relative flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]',
-                isActive
-                  ? 'text-primary-foreground'
-                  : 'text-card-foreground/80 hover:text-card-foreground hover:bg-card'
-              )}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="active-pill"
-                  className="absolute inset-0 rounded-full bg-primary"
-                  transition={{ type: 'spring', bounce: 0.2, stiffness: 400, damping: 30 }}
-                />
-              )}
-              <span className="relative z-10">{item.label}</span>
-            </Link>
-          )
-        })}
-        <div className="relative">
+      <nav className="shrink-0 min-w-0 flex items-center gap-1 p-1.5 rounded-full bg-muted border border-border">
+        <div className="min-w-0 overflow-x-auto no-scrollbar flex items-center gap-1">
+          {mainNavItems.map((item) => {
+            const isActive =
+              item.href === '/'
+                ? pathname === '/'
+                : pathname.startsWith(item.href)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'relative flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]',
+                  isActive
+                    ? 'text-primary-foreground'
+                    : 'text-card-foreground/80 hover:text-card-foreground hover:bg-card'
+                )}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="active-pill"
+                    className="absolute inset-0 rounded-full bg-primary"
+                    transition={{ type: 'spring', bounce: 0.2, stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{item.label}</span>
+              </Link>
+            )
+          })}
+        </div>
+        <div className="relative shrink-0">
           <button
             type="button"
             onClick={() => setMoreOpen((v) => !v)}
@@ -176,14 +198,16 @@ export function TopNav({ user, showOnboardingNudge }: TopNavProps) {
             Set up your profile
           </Link>
         )}
-        <div className="relative group hidden md:block">
+        <form onSubmit={handleHeaderSearchSubmit} className="relative group hidden md:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors h-5 w-5" />
           <input
             type="text"
             placeholder="Search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             className="bg-muted border border-border rounded-full py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:bg-card transition-all w-40 focus:w-56"
           />
-        </div>
+        </form>
         <div className="relative">
           <button
             type="button"

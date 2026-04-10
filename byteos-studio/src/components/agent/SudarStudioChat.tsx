@@ -3,10 +3,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { usePathname, useParams } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, X, Send, Loader2, ExternalLink, Download, Maximize2, Minimize2 } from 'lucide-react'
+import { X, Send, Loader2, ExternalLink, Download, Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -129,16 +129,10 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
         whileHover={{ scale: 1.1, rotate: 5 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 md:w-16 md:h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-2xl hover:shadow-indigo-500/30 transition-shadow overflow-hidden"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full border border-primary/35 bg-primary/15 text-primary shadow-2xl backdrop-blur-md hover:border-primary/50 hover:bg-primary/25 hover:shadow-primary/20 motion-reduce:backdrop-blur-none"
         aria-label={isOpen ? 'Close Sudar' : 'Open Sudar'}
       >
-        <Image
-          src="/sudar-chat-logo.png"
-          alt=""
-          width={36}
-          height={36}
-          className="w-9 h-9 md:w-10 md:h-10 object-contain brightness-0 invert"
-        />
+        <SudarLogoMark className="h-8 w-auto md:h-9" starFill="var(--background)" animated />
       </motion.button>
 
       <AnimatePresence>
@@ -155,20 +149,20 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
                 : 'bottom-24 right-6 w-[calc(100vw-3rem)] max-w-[420px] h-[520px]'
             )}
           >
-            <div className="p-5 border-b border-white/20 flex items-center justify-between shrink-0">
+            <div className="p-5 border-b border-border flex items-center justify-between shrink-0 bg-card/80">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Sparkles className="text-white w-5 h-5" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center">
+                  <SudarLogoMark className="h-8 w-auto text-primary" starFill="var(--card)" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">Sudar</h3>
-                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-widest">Studio assistant</p>
+                  <h3 className="text-lg font-bold text-card-foreground">Sudar</h3>
+                  <p className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">Studio assistant</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg"
+                className="p-2 text-muted-foreground hover:text-card-foreground transition-colors rounded-lg"
                 aria-label="Close"
               >
                 <X className="w-5 h-5" />
@@ -176,7 +170,7 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
               <button
                 type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg"
+                className="p-2 text-muted-foreground hover:text-card-foreground transition-colors rounded-lg"
                 aria-label={isExpanded ? 'Collapse chat' : 'Expand chat'}
                 title={isExpanded ? 'Collapse chat' : 'Expand chat'}
               >

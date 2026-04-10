@@ -2,9 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Premium LMS: display font */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
-
 /* Design tokens: radius (curved edges) */
 :root {
   --radius-card: 1rem;    /* 16px - bento containers */
@@ -16,103 +13,106 @@
   --radius-4xl: 2.5rem;   /* premium */
   --radius-5xl: 3.5rem;
   --radius-6xl: 5rem;
-  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-heading), "Manrope", "Inter", "Segoe UI", Arial, sans-serif;
 
-  /* Reference palette: BARBR (orange, yellow, teal, blue, pink) + Zywa (neon pink, lime, blue) + wireframe purple/lime */
-  --shell-bg: #e5e7eb;    /* grey-200 - outside curved container */
-  --background: #fafafa;  /* subtle off-white - inside app */
-  --foreground: #1f2937;  /* grey-800 */
-  --primary: #7c3aed;     /* vibrant violet - main actions, nav active, progress */
+  --shell-bg: #f7f8fc;
+  --surface: #f7f8fc;
+  --surface-elevated: #ffffff;
+  --background: #f7f8fc;
+  --foreground: #12152b;
+  --primary: #2f2a8a;
   --primary-foreground: #ffffff;
-  --primary-hover: #6d28d9;
-  --accent: #db2777;      /* Zywa-style pink/fuchsia - highlights, badges */
-  --accent-foreground: #ffffff;
-  --accent-muted: #fce7f3; /* pink-100 for soft accents */
-  --muted: #f3f4f6;       /* grey-100 */
-  --muted-foreground: #6b7280; /* grey-500 */
+  --primary-hover: #26216f;
+  --accent: #ff7a45;
+  --accent-foreground: #12152b;
+  --accent-muted: #ffd166;
+  --muted: #eef1fb;
+  --muted-foreground: #4d5275;
   --card: #ffffff;
-  --card-foreground: #1f2937;
-  --border: #e5e7eb;      /* grey-200 */
-  --success: #15803d;     /* green-700 - WCAG AA on white/card */
+  --card-foreground: #12152b;
+  --border: #d9dcef;
+  --success: #1f9d62;
   --success-foreground: #ffffff;
-  --success-muted: #dcfce7; /* green-100 - reference lime/green */
-  --warning: #c2410c;     /* orange-700 - WCAG AA on white/card */
-  --warning-foreground: #ffffff;
-  --warning-muted: #ffedd5; /* orange-100 */
-  --destructive: #dc2626;
+  --success-muted: #d9f3e8;
+  --warning: #e59a00;
+  --warning-foreground: #12152b;
+  --warning-muted: #fff2cc;
+  --destructive: #d64545;
   --destructive-foreground: #ffffff;
 }
 
 .dark {
-  --shell-bg: #111827;
-  --background: #0f172a;
-  --foreground: #f8fafc;
-  --primary: #8b5cf6;
+  --shell-bg: #0d1026;
+  --surface: #0d1026;
+  --surface-elevated: #161a38;
+  --background: #0d1026;
+  --foreground: #f5f7ff;
+  --primary: #5e5ad7;
   --primary-foreground: #ffffff;
-  --primary-hover: #7c3aed;
-  --accent: #ec4899;
-  --accent-foreground: #1f2937;
-  --accent-muted: #831843;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --card: #1e293b;
-  --card-foreground: #f8fafc;
-  --border: #334155;
-  --success: #4ade80;
-  --success-foreground: #064e3b;
-  --success-muted: #14532d;
-  --warning: #fb923c;
-  --warning-foreground: #1f2937;
-  --warning-muted: #431407;
-  --destructive: #f87171;
+  --primary-hover: #2f2a8a;
+  --accent: #ff7a45;
+  --accent-foreground: #12152b;
+  --accent-muted: #ffd166;
+  --muted: #1b2147;
+  --muted-foreground: #c1c8f0;
+  --card: #161a38;
+  --card-foreground: #f5f7ff;
+  --border: #2e3567;
+  --success: #1f9d62;
+  --success-foreground: #ffffff;
+  --success-muted: #1b5a3d;
+  --warning: #e59a00;
+  --warning-foreground: #12152b;
+  --warning-muted: #5a4300;
+  --destructive: #d64545;
   --destructive-foreground: #ffffff;
 }
 
-/* Palette overrides (light) */
-[data-palette="ocean"] {
+:root[data-palette='ocean'] {
+  --primary: #0369a1;
+  --primary-hover: #075985;
+  --accent: #14b8a6;
+  --accent-muted: #99f6e4;
+}
+
+:root[data-palette='forest'] {
+  --primary: #166534;
+  --primary-hover: #14532d;
+  --accent: #84cc16;
+  --accent-muted: #d9f99d;
+}
+
+:root[data-palette='sunset'] {
+  --primary: #c2410c;
+  --primary-hover: #9a3412;
+  --accent: #fb7185;
+  --accent-muted: #fecdd3;
+}
+
+:root.dark[data-palette='ocean'] {
   --primary: #0ea5e9;
   --primary-hover: #0284c7;
-  --accent: #06b6d4;
+  --accent: #2dd4bf;
+  --accent-muted: #134e4a;
 }
-[data-palette="forest"] {
-  --primary: #059669;
-  --primary-hover: #047857;
-  --accent: #10b981;
+
+:root.dark[data-palette='forest'] {
+  --primary: #22c55e;
+  --primary-hover: #16a34a;
+  --accent: #a3e635;
+  --accent-muted: #3f6212;
 }
-[data-palette="sunset"] {
-  --primary: #d97706;
-  --primary-hover: #b45309;
-  --accent: #f59e0b;
+
+:root.dark[data-palette='sunset'] {
+  --primary: #f97316;
+  --primary-hover: #ea580c;
+  --accent: #fb7185;
+  --accent-muted: #881337;
 }
-.dark[data-palette="ocean"] { --primary: #38bdf8; --primary-hover: #0ea5e9; --accent: #22d3ee; }
-.dark[data-palette="forest"] { --primary: #34d399; --primary-hover: #10b981; --accent: #6ee7b7; }
-.dark[data-palette="sunset"] { --primary: #fbbf24; --primary-hover: #f59e0b; --accent: #fcd34d; }
 
 body {
   color: var(--foreground);
   background: var(--shell-bg);
-}
-
-/* Logo mask: fill logo shape with current primary (theme/palette) */
-.logo-mask-light {
-  -webkit-mask-image: url('/sudar-logo-light.png');
-  mask-image: url('/sudar-logo-light.png');
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-}
-.logo-mask-dark {
-  -webkit-mask-image: url('/sudar-logo-dark.png');
-  mask-image: url('/sudar-logo-dark.png');
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
 }
 
 /* Scrollbar styling */
@@ -229,8 +229,8 @@ body {
 
 .liquid-glass {
   @apply backdrop-blur-2xl shadow-2xl;
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: color-mix(in srgb, var(--surface-elevated) 76%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
   border-radius: 3rem;
 }
 

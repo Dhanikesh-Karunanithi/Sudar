@@ -10,10 +10,9 @@ export async function POST(request: NextRequest) {
   const { course_id } = await request.json()
   if (!course_id) return NextResponse.json({ error: 'course_id required' }, { status: 400 })
 
-  // Verify course is published + get adaptive flag
   const { data: course } = await admin
     .from('courses')
-    .select('id, title, is_adaptive')
+    .select('id, title')
     .eq('id', course_id)
     .eq('status', 'published')
     .single()
@@ -63,16 +62,8 @@ export async function POST(request: NextRequest) {
     await admin.from('learner_profiles').insert({ user_id: user.id })
   }
 
-  // Trigger enrollment bridge generation async (fire-and-forget)
-  // Works for all courses — adaptive or not — but only shows if content is generated
-  if (data?.id) {
-    const baseUrl = request.nextUrl.origin
-    fetch(`${baseUrl}/api/ai/enroll-bridge`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: request.headers.get('cookie') ?? '' },
-      body: JSON.stringify({ enrollment_id: data.id, course_id }),
-    }).catch(() => {}) // non-blocking
-  }
+  // Personalized course welcome is opt-in from the course viewer ("Personalize for me")
+  // — see POST /api/ai/enroll-bridge — to avoid silent AI calls and respect learner choice.
 
   return NextResponse.json(data, { status: 201 })
 }

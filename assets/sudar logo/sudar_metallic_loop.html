@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sudar — Metallic Loop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── Background ── */
+  body {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 36px;
+
+    /* Deep space base */
+    background-color: #05060d;
+
+    /* Layered: fine grid + radial center bloom */
+    background-image:
+      radial-gradient(ellipse 700px 500px at 50% 50%,
+        rgba(30, 50, 110, 0.35) 0%, transparent 70%),
+      linear-gradient(rgba(40, 65, 140, 0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(40, 65, 140, 0.055) 1px, transparent 1px);
+    background-size: auto, 44px 44px, 44px 44px;
+
+    overflow: hidden;
+  }
+
+  /* ── Scanline overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 999;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 3px,
+      rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px
+    );
+  }
+
+  /* ── Scene ── */
+  .scene-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: 28px;
+  }
+
+  .scene {
+    position: relative;
+    width: 360px; height: 220px;
+    /* Ambient blue glow around whole mark */
+    filter:
+      drop-shadow(0 0 18px rgba(80, 130, 255, 0.22))
+      drop-shadow(0 0 50px rgba(60, 100, 220, 0.12));
+  }
+
+  /* ── Pills ── */
+  .pill {
+    position: absolute;
+    border-radius: 999px;
+    height: 64px;
+    overflow: hidden; /* clips shimmer */
+
+    /* Cylindrical chrome gradient — top highlight, centre bright, bottom dark */
+    background: linear-gradient(
+      180deg,
+      #1c1f2e 0%,
+      #4a5068 8%,
+      #8a90a8 18%,
+      #c2c8d8 28%,
+      #e8ecf5 38%,
+      #f5f7fc 48%,    /* peak highlight */
+      #dde1ee 57%,
+      #aab0c4 67%,
+      #6e7488 77%,
+      #3c4055 87%,
+      #1a1c28 100%
+    );
+
+    /* Edge glow + depth shadow + top/bottom rim */
+    box-shadow:
+      inset 0  1px 0 rgba(255,255,255,0.55),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.55),
+      0 0 14px rgba(100, 150, 255, 0.14),
+      0 3px 12px rgba(0, 0, 0, 0.7);
+  }
+
+  /* Shimmer sweep */
+  .pill::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -80px;
+    width: 70px; height: 200%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255,255,255,0.18) 35%,
+      rgba(255,255,255,0.55) 50%,
+      rgba(255,255,255,0.18) 65%,
+      transparent 100%
+    );
+    transform: skewX(-18deg);
+    animation: shimmer 4s ease-in-out infinite;
+  }
+  .pill--bottom::after { animation-delay: 0.6s; }
+
+  @keyframes shimmer {
+    0%   { left: -80px;  opacity: 0; }
+    8%   { opacity: 1; }
+    92%  { opacity: 1; }
+    100% { left: calc(100% + 80px); opacity: 0; }
+  }
+
+  .pill--top    { z-index: 2; }
+  .pill--bottom { z-index: 1; }
+
+  /* ── Star ── */
+  .star {
+    position: absolute; z-index: 20; pointer-events: none;
+    width: 90px; height: 90px;
+    /* Layered glow: white-hot core → electric blue corona */
+    filter:
+      drop-shadow(0 0  3px rgba(255, 255, 255, 1.0))
+      drop-shadow(0 0  8px rgba(180, 210, 255, 0.95))
+      drop-shadow(0 0 20px rgba(100, 160, 255, 0.75))
+      drop-shadow(0 0 40px rgba(70,  120, 255, 0.40));
+  }
+
+  /* ── Reflection ── */
+  .reflection {
+    position: relative;
+    width: 360px; height: 80px;
+    overflow: hidden;
+    opacity: 0.18;
+    transform: scaleY(-1);
+    pointer-events: none;
+    filter: blur(1.5px);
+    /* fade out toward bottom (which is the "floor" side) */
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
+    mask-image:         linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
+    margin-top: -14px;
+  }
+  .reflection .scene {
+    filter: none;
+    position: absolute; bottom: 0; left: 0;
+  }
+
+  /* ── Wordmark ── */
+  .wordmark {
+    font-family: 'Orbitron', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.55em;
+    text-transform: uppercase;
+    padding-left: 0.55em; /* balance the letter-spacing */
+
+    /* Chrome gradient text */
+    background: linear-gradient(
+      180deg,
+      #c8cdd8 0%,
+      #eceef5 30%,
+      #f8f9fc 50%,
+      #c0c5d2 70%,
+      #7a8090 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+
+    /* Subtle text glow */
+    filter: drop-shadow(0 0 6px rgba(140,170,255,0.4));
+  }
+</style>
+</head>
+<body>
+
+<div class="scene-wrap">
+
+  <!-- Main mark -->
+  <div class="scene" id="scene">
+    <div class="pill pill--top"    id="pt"></div>
+    <div class="star"              id="star">
+      <svg width="90" height="90" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- White fill — glows against chrome pills via CSS filter above -->
+        <path d="M 50 2 C 51 49, 51 49, 98 50 C 51 51, 51 51, 50 98 C 49 51, 49 51, 2 50 C 49 49, 49 49, 50 2 Z" fill="#ffffff"/>
+      </svg>
+    </div>
+    <div class="pill pill--bottom" id="pb"></div>
+  </div>
+
+  <!-- Floor reflection (mirrors the mark, fades downward) -->
+  <div class="reflection">
+    <div class="scene" id="scene-r">
+      <div class="pill pill--top"    id="pt-r"></div>
+      <div class="pill pill--bottom" id="pb-r"></div>
+    </div>
+  </div>
+
+  <!-- Wordmark -->
+  <div class="wordmark">Sudar</div>
+
+</div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────
+const C = {
+  topY: 36,  topW: 170, topX: 20,
+  botY: 100, botW: 170, botX: 20,
+  pillH: 64, gap: 22,
+  starY: 100, starSize: 90,
+};
+
+const totalH   = C.pillH * 2 + C.gap;
+const startTop = (220 - totalH) / 2;         // 35px
+const startBot = startTop + C.pillH + C.gap; // 121px
+
+// ── Elements ────────────────────────────────────────────────────
+const pt   = document.getElementById('pt');
+const pb   = document.getElementById('pb');
+const star = document.getElementById('star');
+const ptR  = document.getElementById('pt-r');   // reflection mirrors
+const pbR  = document.getElementById('pb-r');
+
+// ── Helpers ─────────────────────────────────────────────────────
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+function tr(el, props, ms, ease) {
+  el.style.transition = props.map(p => `${p} ${ms}ms ${ease}`).join(', ');
+}
+
+function snap(el, styles) {
+  el.style.transition = 'none';
+  Object.assign(el.style, styles);
+}
+
+function setPill(el, top, width, shift) {
+  el.style.top       = top + 'px';
+  el.style.width     = width + 'px';
+  el.style.left      = '50%';
+  el.style.transform = `translateX(calc(-50% + ${shift}px))`;
+}
+
+// ── Loop ────────────────────────────────────────────────────────
+async function loop() {
+  const ease    = 'cubic-bezier(.4,0,.2,1)';
+  const popEase = 'cubic-bezier(.34,1.56,.64,1)';
+
+  while (true) {
+
+    // 1 · Snap to start (instant reset)
+    snap(pt,   { height: C.pillH+'px', width: C.topW+'px', top: startTop+'px', left:'50%', transform:'translateX(-50%)' });
+    snap(pb,   { height: C.pillH+'px', width: C.botW+'px', top: startBot+'px', left:'50%', transform:'translateX(-50%)' });
+    snap(ptR,  { height: C.pillH+'px', width: C.topW+'px', top: startTop+'px', left:'50%', transform:'translateX(-50%)' });
+    snap(pbR,  { height: C.pillH+'px', width: C.botW+'px', top: startBot+'px', left:'50%', transform:'translateX(-50%)' });
+    snap(star, {
+      left: '50%', top: C.starY+'px',
+      width: C.starSize+'px', height: C.starSize+'px',
+      opacity: '0',
+      transform: 'translate(-50%,-50%) scale(0) rotate(-20deg)',
+    });
+    void pt.offsetHeight; // force reflow
+
+    // 2 · Hold = shape
+    await wait(900);
+
+    // 3 · Morph pills to S-offset
+    const mvProps = ['top', 'transform'];
+    tr(pt,  mvProps, 1800, ease); tr(ptR, mvProps, 1800, ease);
+    tr(pb,  mvProps, 1800, ease); tr(pbR, mvProps, 1800, ease);
+
+    pt.style.top  = C.topY+'px'; pt.style.transform = `translateX(calc(-50% + ${C.topX}px))`;
+    pb.style.top  = C.botY+'px'; pb.style.transform = `translateX(calc(-50% - ${C.botX}px))`;
+    ptR.style.top = C.topY+'px'; ptR.style.transform = `translateX(calc(-50% + ${C.topX}px))`;
+    pbR.style.top = C.botY+'px'; pbR.style.transform = `translateX(calc(-50% - ${C.botX}px))`;
+    await wait(1800);
+
+    // 4 · Star ignites
+    tr(star, ['opacity','transform'], 600, popEase);
+    star.style.opacity   = '1';
+    star.style.transform = 'translate(-50%,-50%) scale(1) rotate(0deg)';
+    await wait(600);
+
+    // 5 · Hold — admire the glow
+    await wait(1800);
+
+    // 6 · Star fades (gentle exit)
+    tr(star, ['opacity','transform'], 450, 'ease');
+    star.style.opacity   = '0';
+    star.style.transform = 'translate(-50%,-50%) scale(0.75) rotate(10deg)';
+    await wait(250);
+
+    // 7 · Pills return to centre
+    tr(pt,  mvProps, 1350, ease); tr(ptR, mvProps, 1350, ease);
+    tr(pb,  mvProps, 1350, ease); tr(pbR, mvProps, 1350, ease);
+
+    pt.style.top  = startTop+'px'; pt.style.transform = 'translateX(-50%)';
+    pb.style.top  = startBot+'px'; pb.style.transform = 'translateX(-50%)';
+    ptR.style.top = startTop+'px'; ptR.style.transform = 'translateX(-50%)';
+    pbR.style.top = startBot+'px'; pbR.style.transform = 'translateX(-50%)';
+    await wait(1350);
+
+    // 8 · Pause before next cycle
+    await wait(700);
+  }
+}
+
+loop();
+</script>
+</body>
+</html>

@@ -8,6 +8,14 @@
 
 ---
 
+## Cursor: Agent mode vs Plan mode
+
+- **Implementing code** (TypeScript, TSX, Python, config, etc.): use **Agent mode** in Cursor so the assistant can apply edits with the normal patch tools.
+- **Plan mode** is for planning only: it blocks edits to non-markdown files, which forces fragile workarounds (shell one-liners) and is easy to miss.
+- When the user asks to **execute**, **implement**, or **ship** a plan, work in **Agent mode**, not Plan mode.
+
+---
+
 ## What Is Sudar?
 
 Sudar is an AI-native Learning Operating System. It is NOT:
@@ -206,8 +214,10 @@ Instead, it silently powers ALL personalization decisions behind the scenes.
 
 ## Current Build Status
 
-**Phase**: Phases 1–4 complete; Phase 5 (Engagement & Scale) not started.
-**Priority**: Visibility (demo, screenshots), document/SCORM import, second modality; then further modalities and scale.
+**Phase**: Phases 1–4 complete; Phase 5 (Engagement & Scale) partially in motion (modalities and learner engagement work continues).
+**Priority**: Visibility (demo, screenshots); harden personalization and governance in production; document/SCORM import and further modalities per **docs/STRATEGIC_PATH.md**.
+
+**Recent ship (April 2026)**: Personalization v2 (enrollment overlays, consent, org policy, learner groups), Sudar brand/logo and mascot system in Learn, trust documentation pack and Studio Governance page, Learn search and learner-flow polish, sensitive-input guardrails. See **UPDATES.md** (2026-04-11) and **docs/SHIPPED_FEATURES.md**.
 
 For up-to-date state and next priorities, see **docs/STRATEGIC_PATH.md** and **docs/ACTION_PLANS.md**.
 See `ECOSYSTEM.md` Section 8 for the full build roadmap with checkboxes.
@@ -218,4 +228,4 @@ See `ECOSYSTEM.md` Section 8 for the full build roadmap with checkboxes.
 
 *Sudar — Learns with you, for you.*
 *This agent context file is maintained by the project owner.*
-*Last updated: February 2026*
+*Last updated: 11 April 2026*

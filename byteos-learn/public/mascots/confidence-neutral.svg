@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title">
+  <title id="title">Confidence companion character</title>
+  <circle cx="48" cy="44" r="30" fill="#059669" fill-opacity="0.16"/>
+  <ellipse cx="48" cy="48" rx="23" ry="27" fill="#E0B896" stroke="#064E3B" stroke-width="1.75"/>
+  <path d="M30 36c5-11 14-17 18-17s13 6 18 17" fill="none" stroke="#064E3B" stroke-width="2" stroke-linecap="round"/>
+  <ellipse cx="40" cy="46" rx="3" ry="4" fill="#064E3B"/>
+  <ellipse cx="56" cy="46" rx="3" ry="4" fill="#064E3B"/>
+  <path d="M38 56c4 6 16 6 20 0" fill="none" stroke="#064E3B" stroke-width="1.75" stroke-linecap="round"/>
+  <path d="M32 70c0-5 7-9 16-9s16 4 16 9v6H32z" fill="#047857" stroke="#064E3B" stroke-width="1.5" stroke-linejoin="round"/>
+</svg>

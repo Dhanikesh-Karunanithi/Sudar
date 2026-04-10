@@ -30,6 +30,7 @@ export async function GET() {
   const performance_config = settings.performance_config ?? null
   const ai_models = (settings.ai_models as Record<string, string | null> | undefined) ?? {}
   const sso_config = (settings.sso_config as Record<string, unknown> | undefined) ?? null
+  const ai_compliance = (settings.ai_compliance as Record<string, unknown> | undefined) ?? {}
 
   return NextResponse.json({
     performance_config,
@@ -43,6 +44,17 @@ export async function GET() {
       tutor_model: ai_models.tutor_model ?? null,
     },
     sso_config,
+    ai_compliance: {
+      allow_generative_personalization: ai_compliance.allow_generative_personalization !== false,
+      require_learner_consent: ai_compliance.require_learner_consent === true,
+      personalization_data_retention_days:
+        typeof ai_compliance.personalization_data_retention_days === 'number'
+          ? ai_compliance.personalization_data_retention_days
+          : null,
+      block_high_risk_pii_in_tutor: ai_compliance.block_high_risk_pii_in_tutor !== false,
+      tutor_redact_echoed_secrets: ai_compliance.tutor_redact_echoed_secrets !== false,
+      tutor_output_moderation_strict: ai_compliance.tutor_output_moderation_strict === true,
+    },
   })
 }
 
@@ -96,6 +108,34 @@ export async function PATCH(request: Request) {
     const raw = body.sso_config
     if (raw === null || (typeof raw === 'object' && !Array.isArray(raw))) {
       updatedSettings.sso_config = raw as Record<string, unknown> | null
+    }
+  }
+
+  if (body.ai_compliance !== undefined && typeof body.ai_compliance === 'object' && body.ai_compliance !== null) {
+    const ac = body.ai_compliance as Record<string, unknown>
+    const prev = (typeof currentSettings.ai_compliance === 'object' && currentSettings.ai_compliance !== null
+      ? (currentSettings.ai_compliance as Record<string, unknown>)
+      : {})
+    updatedSettings.ai_compliance = {
+      ...prev,
+      ...(typeof ac.allow_generative_personalization === 'boolean' && {
+        allow_generative_personalization: ac.allow_generative_personalization,
+      }),
+      ...(typeof ac.require_learner_consent === 'boolean' && {
+        require_learner_consent: ac.require_learner_consent,
+      }),
+      ...(typeof ac.personalization_data_retention_days === 'number' && {
+        personalization_data_retention_days: ac.personalization_data_retention_days,
+      }),
+      ...(typeof ac.block_high_risk_pii_in_tutor === 'boolean' && {
+        block_high_risk_pii_in_tutor: ac.block_high_risk_pii_in_tutor,
+      }),
+      ...(typeof ac.tutor_redact_echoed_secrets === 'boolean' && {
+        tutor_redact_echoed_secrets: ac.tutor_redact_echoed_secrets,
+      }),
+      ...(typeof ac.tutor_output_moderation_strict === 'boolean' && {
+        tutor_output_moderation_strict: ac.tutor_output_moderation_strict,
+      }),
     }
   }
 

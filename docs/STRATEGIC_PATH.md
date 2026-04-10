@@ -36,6 +36,12 @@ Every new feature or fix should map to at least one of these pillars. If it does
 - **Learner polish**: Certificate page has reliable “Print / Save as PDF” (client component + print CSS); Learn dashboard shows “Upcoming deadlines” and “Required by your organisation” when relevant.  
 - **Compliance**: Studio “Compliance” page lists path assignments with due date, progress, and status (Overdue / At risk / On track / Completed); Learn dashboard surfaces required paths and due-soon items.
 
+**Recently shipped (2026-04-11)** — detail in [UPDATES.md](../UPDATES.md) and [SHIPPED_FEATURES.md](SHIPPED_FEATURES.md).  
+- **Personalization v2**: Per-module AI overlays on enrollments (role explanation, brief views); org/course policy and optional learner consent; `learner_groups` for audience targeting; migration `supabase/migrations/20260410000000_personalization_v2.sql`.  
+- **Brand & mascot**: Sudar logo components and marks; mascot assets and journey UI hooks in Learn; brand strategy/guidelines/tokens under `docs/brand/`.  
+- **Trust & governance**: Technical trust pack (`docs/trust/`); Studio **Governance** page linking to it.  
+- **Product polish**: Learn global **search**; course viewer / onboarding / paths / settings and Floating Sudar Chat improvements; sensitive-input guardrails on tutor-related APIs; Studio course/org flows, `fetch-with-deadline`, Windows-friendly Next dev scripts and config.
+
 **Built and documented (shipped)** — see [docs/SHIPPED_FEATURES.md](SHIPPED_FEATURES.md) for details.  
 - **Flashcards modality**: FlashcardsCard in Learn course viewer; generate-flashcards API.  
 - **Document-to-course**: Studio generate-from-document API (PDF/DOCX/URL → course outline + modules).  

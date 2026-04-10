@@ -11,6 +11,21 @@ An AI-native learning platform: one reference implementation, and a plugin layer
 </div>
 
 ---
+## Brand system (v1)
+
+Sudar now uses a unified brand system across product and external messaging.
+
+- **Logo story**: two pills start as "=" (equal access), move into an "S" (learning flow), and the center AI star ignites as the flame of learning.
+- **Visual direction**: premium-minimal + warm-human.
+- **Palette**: Option A (Indigo + Ember).
+- **Typography**: Manrope (headlines) + Inter (UI/body).
+
+Reference docs:
+- [docs/brand/brand-guidelines.md](./docs/brand/brand-guidelines.md)
+- [docs/brand/design-tokens-v1.md](./docs/brand/design-tokens-v1.md)
+- [docs/brand/brand-strategy.md](./docs/brand/brand-strategy.md)
+
+---
 ## What Sudar is
 
 **Sudar** does two things:
@@ -18,7 +33,7 @@ An AI-native learning platform: one reference implementation, and a plugin layer
 1. **Reference platform** — Authoring (Studio), learner experience (Learn), and intelligence (adaptive engine + AI tutor) over a shared data layer. One place for courses, paths, and a **Digital Learner Twin** that accumulates behaviour, preferences, and tutor context across sessions.
 2. **Adaptive Learning Layer (ALP)** — A plugin architecture so you can attach learner memory, memory-aware tutoring, and modality choice to Moodle, Canvas, or other LMSs you already run. No full migration.
 
-Most LMSs deliver the same content to everyone and don’t remember the learner. Research shows adaptive instruction and intelligent tutoring beat one-size-fits-all, but mainstream products don’t keep a longitudinal learner model or offer tutoring that persists across sessions. Sudar is built to close that gap: open source (Apache 2.0), with design choices grounded in learning-science evidence ([RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md)).
+Most LMSs deliver the same content to everyone and don’t remember the learner. Research shows adaptive instruction and intelligent tutoring beat one-size-fits-all, but mainstream products don’t keep a longitudinal learner model or offer tutoring that persists across sessions. Sudar is built to close that gap: open source (Apache 2.0), with design choices grounded in learning-science evidence ([RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md)) and a claim-safe roadmap grounded in shipped capabilities.
 
 ---
 

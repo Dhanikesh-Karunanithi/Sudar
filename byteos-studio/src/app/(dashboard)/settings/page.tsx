@@ -12,6 +12,7 @@ import {
   Save,
   Volume2,
   Sparkles,
+  Shield,
 } from 'lucide-react'
 import type { PerformanceConfig, KpiDefinition, TermDefinition } from '@/types/performance'
 import { ModelPicker, type ModelPickerOption } from '@/components/ui/ModelPicker'
@@ -42,6 +43,12 @@ export default function SettingsPage() {
   const [terms, setTerms] = useState<TermDefinition[]>([])
   const [ttsVoice, setTtsVoice] = useState<string | null>('en-US-JennyNeural')
   const [contentGenerationModel, setContentGenerationModel] = useState<string | null>('default')
+  const [allowGenerativePersonalization, setAllowGenerativePersonalization] = useState(true)
+  const [requireLearnerConsent, setRequireLearnerConsent] = useState(false)
+  const [personalizationRetentionDays, setPersonalizationRetentionDays] = useState<string>('')
+  const [blockHighRiskPiiInTutor, setBlockHighRiskPiiInTutor] = useState(true)
+  const [tutorRedactEchoedSecrets, setTutorRedactEchoedSecrets] = useState(true)
+  const [tutorOutputModerationStrict, setTutorOutputModerationStrict] = useState(false)
 
   const fetchSettings = useCallback(async () => {
     const res = await fetch('/api/org/settings')
@@ -62,6 +69,15 @@ export default function SettingsPage() {
     if (data.ai_models) {
       setTtsVoice(data.ai_models.tts_voice ?? 'en-US-JennyNeural')
       setContentGenerationModel(data.ai_models.content_generation_model ?? 'default')
+    }
+    if (data.ai_compliance) {
+      setAllowGenerativePersonalization(data.ai_compliance.allow_generative_personalization !== false)
+      setRequireLearnerConsent(data.ai_compliance.require_learner_consent === true)
+      const d = data.ai_compliance.personalization_data_retention_days
+      setPersonalizationRetentionDays(typeof d === 'number' && !Number.isNaN(d) ? String(d) : '')
+      setBlockHighRiskPiiInTutor(data.ai_compliance.block_high_risk_pii_in_tutor !== false)
+      setTutorRedactEchoedSecrets(data.ai_compliance.tutor_redact_echoed_secrets !== false)
+      setTutorOutputModerationStrict(data.ai_compliance.tutor_output_moderation_strict === true)
     }
     setLoading(false)
   }, [])
@@ -84,6 +100,16 @@ export default function SettingsPage() {
         ai_models: {
           tts_voice: ttsVoice,
           content_generation_model: contentGenerationModel,
+        },
+        ai_compliance: {
+          allow_generative_personalization: allowGenerativePersonalization,
+          require_learner_consent: requireLearnerConsent,
+          block_high_risk_pii_in_tutor: blockHighRiskPiiInTutor,
+          tutor_redact_echoed_secrets: tutorRedactEchoedSecrets,
+          tutor_output_moderation_strict: tutorOutputModerationStrict,
+          ...(personalizationRetentionDays.trim() !== '' && {
+            personalization_data_retention_days: Number(personalizationRetentionDays),
+          }),
         },
       }),
     })
@@ -334,6 +360,81 @@ export default function SettingsPage() {
           </p>
         </div>
       )}
+
+      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-slate-500" />
+          <h2 className="font-semibold text-white">AI personalization &amp; privacy</h2>
+        </div>
+        <p className="text-slate-500 text-sm">
+          Controls optional generative features in Sudar Learn (course welcome and module helpers). Per-course audience is set on each course. Audit events are logged when learners use personalization.
+        </p>
+        <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={allowGenerativePersonalization}
+            onChange={(e) => setAllowGenerativePersonalization(e.target.checked)}
+            className="rounded border-slate-600"
+          />
+          Allow generative personalization for this organization
+        </label>
+        <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={requireLearnerConsent}
+            onChange={(e) => setRequireLearnerConsent(e.target.checked)}
+            className="rounded border-slate-600"
+          />
+          Require learners to accept before personalization runs
+        </label>
+        <div>
+          <label className="block text-xs text-slate-500 mb-1">Documented retention for AI-derived overlays (days, optional)</label>
+          <input
+            type="number"
+            min={1}
+            placeholder="e.g. 365 — enforcement can be added later"
+            value={personalizationRetentionDays}
+            onChange={(e) => setPersonalizationRetentionDays(e.target.value)}
+            className="w-full max-w-sm rounded-lg border border-slate-700 bg-slate-800 text-white px-3 py-2 text-sm"
+          />
+        </div>
+        <div className="pt-4 border-t border-slate-800 space-y-3">
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-emerald-500/80" />
+            <h3 className="font-medium text-white text-sm">Tutor and chat safety</h3>
+          </div>
+          <p className="text-slate-500 text-xs">
+            Applies to Sudar Learn tutor, paste workflows, and Studio chat. Heuristic checks only — not a substitute for policy training.
+          </p>
+          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={blockHighRiskPiiInTutor}
+              onChange={(e) => setBlockHighRiskPiiInTutor(e.target.checked)}
+              className="rounded border-slate-600"
+            />
+            Block payment card, ID, and private-key patterns before they reach AI providers
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={tutorRedactEchoedSecrets}
+              onChange={(e) => setTutorRedactEchoedSecrets(e.target.checked)}
+              className="rounded border-slate-600"
+            />
+            Redact card-like number sequences from tutor replies
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={tutorOutputModerationStrict}
+              onChange={(e) => setTutorOutputModerationStrict(e.target.checked)}
+              className="rounded border-slate-600"
+            />
+            Strict output moderation (reserved for future use)
+          </label>
+        </div>
+      </div>
 
       <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-6">
         <div className="flex items-center gap-2">

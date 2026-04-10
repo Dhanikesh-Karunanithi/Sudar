@@ -56,12 +56,14 @@ export function EnrollButton({
   }
 
   if (isEnrolled) {
+    const canStart = Boolean(firstModuleId)
     return (
       <div className="flex flex-col items-center gap-2 w-full max-w-md">
         {error && <p className="text-destructive text-sm">{error}</p>}
         <button
           onClick={() => firstModuleId && router.push(`/courses/${courseId}/learn?module=${firstModuleId}`)}
-          className="w-full flex items-center justify-center gap-2.5 px-8 py-3 bg-primary hover:opacity-90 text-primary-foreground font-semibold rounded-button transition-colors shadow-lg"
+          disabled={!canStart}
+          className="w-full flex items-center justify-center gap-2.5 px-8 py-3 bg-primary hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed text-primary-foreground font-semibold rounded-button transition-colors shadow-lg"
         >
           {isCompleted ? (
             <BookOpen className="w-5 h-5" />
@@ -70,6 +72,9 @@ export function EnrollButton({
           )}
           {getCtaLabel()}
         </button>
+        {!canStart && (
+          <p className="text-muted-foreground text-xs">This course is temporarily unavailable because no modules are published yet.</p>
+        )}
       </div>
     )
   }

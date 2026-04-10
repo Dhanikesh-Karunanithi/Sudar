@@ -1,10 +1,13 @@
 import { createServerClient } from '@supabase/ssr'
+import type { User } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { fetchWithDeadline } from '@/lib/fetch-with-deadline'
+
 export async function middleware(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!url?.trim() || !anonKey?.trim()) {
+  if (!supabaseUrl?.trim() || !anonKey?.trim()) {
     return new NextResponse(
       'Missing Supabase config. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local (get anon key from Supabase Dashboard → Project Settings → API).',
       { status: 503, headers: { 'Content-Type': 'text/plain' } }
@@ -14,9 +17,12 @@ export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
-    url,
+    supabaseUrl,
     anonKey,
     {
+      global: {
+        fetch: fetchWithDeadline(),
+      },
       cookies: {
         getAll() {
           return request.cookies.getAll()
@@ -35,24 +41,28 @@ export async function middleware(request: NextRequest) {
   )
 
   // Refresh session — must not use getSession() here, always getUser()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user: User | null = null
+  try {
+    const { data, error } = await supabase.auth.getUser()
+    if (!error) user = data.user ?? null
+  } catch {
+    user = null
+  }
 
   const { pathname } = request.nextUrl
   const publicPaths = ['/login', '/signup', '/auth/callback']
   const isPublicPath = publicPaths.some((p) => pathname.startsWith(p))
 
   if (!user && !isPublicPath) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = '/login'
+    return NextResponse.redirect(redirectUrl)
   }
 
   if (user && (pathname === '/login' || pathname === '/signup')) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/'
-    return NextResponse.redirect(url)
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = '/'
+    return NextResponse.redirect(redirectUrl)
   }
 
   return supabaseResponse

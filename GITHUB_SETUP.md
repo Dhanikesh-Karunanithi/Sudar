@@ -119,7 +119,7 @@ If the remote already has a README/license and push is rejected:
 - **LICENSE** — Apache 2.0.
 - **CONTRIBUTING.md** — How to contribute.
 - **.gitignore** — Excludes `.env`, `.env.local`, `node_modules`, `.cursor/`, build outputs.
-- **assets/logos/** — Sudar brand logos (used in Learn and Studio).
+- **assets/sudar logo/sudar_static.html** — canonical Sudar logo source used for app logo components.
 - **byteos-studio/** — Admin app (Next.js 14).
 - **byteos-learn/** — Learner app (Next.js 14).
 - **byteos-intelligence/** — Python FastAPI service.

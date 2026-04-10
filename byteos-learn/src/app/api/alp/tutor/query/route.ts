@@ -9,6 +9,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { validateAlpKey, getAlpKeyFromRequest, validateEmbedToken, isUserInOrg } from '@/lib/alp-auth'
 import { NextRequest, NextResponse } from 'next/server'
+import { scanSensitiveUserText } from '@/lib/security/sensitiveInputGuard'
 
 const INTELLIGENCE_URL = process.env.BYTEOS_INTELLIGENCE_URL?.replace(/\/$/, '')
 
@@ -47,6 +48,20 @@ export async function POST(request: NextRequest) {
   const context_text = body.context_text ?? ''
   if (!user_id || !message?.trim()) {
     return NextResponse.json({ error: 'user_id and message required' }, { status: 400 })
+  }
+
+  const sens = scanSensitiveUserText(message.trim() + (context_text ? ` ${context_text}` : ''))
+  if (sens.blocked) {
+    return NextResponse.json(
+      {
+        response:
+          "I'm here to help with learning. I can't process payment card numbers, government ID numbers, bank details, or private keys. Remove sensitive details and ask again.",
+        confidence: 0,
+        sources_used: [],
+        guardrail_code: 'sensitive_data_detected',
+      },
+      { status: 200 },
+    )
   }
 
   const admin = createAdminClient()

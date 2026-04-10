@@ -1,9 +1,9 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { GoogleIcon } from '@/components/ui/GoogleIcon'
 import { createClient } from '@/lib/supabase/client'
 
@@ -64,9 +64,7 @@ export function LoginClient() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(139,92,246,0.08),transparent_60%)] pointer-events-none" />
 
         <div className="relative flex items-center gap-3">
-          <div className="relative w-9 h-9 shrink-0">
-            <Image src="/sudar-logo-dark.png" alt="Sudar" fill className="object-contain" sizes="36px" />
-          </div>
+          <SudarLogoMark className="h-9 w-auto shrink-0 text-white" starFill="#0f172a" animated />
           <div>
             <p className="text-white font-semibold text-base leading-tight">Sudar Studio</p>
             <p className="text-indigo-400 text-xs">Admin & Creator</p>
@@ -105,9 +103,7 @@ export function LoginClient() {
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-sm space-y-8">
           <div className="lg:hidden flex items-center gap-3 justify-center">
-            <div className="relative w-9 h-9 shrink-0">
-              <Image src="/sudar-logo-dark.png" alt="Sudar" fill className="object-contain" sizes="36px" />
-            </div>
+            <SudarLogoMark className="h-9 w-auto shrink-0 text-white" starFill="#0f172a" />
             <p className="text-white font-semibold text-base">Sudar Studio</p>
           </div>
 

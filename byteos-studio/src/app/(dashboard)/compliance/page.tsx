@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+﻿import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getOrCreateOrg } from '@/lib/org'
 import { Shield, AlertTriangle, CheckCircle2, Clock, User, Route, Calendar } from 'lucide-react'
@@ -38,12 +38,12 @@ export default async function CompliancePage() {
             <Shield className="w-6 h-6 text-amber-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Compliance</h1>
-            <p className="text-slate-400 text-sm">Assignments, due dates, and completion status</p>
+            <h1 className="text-2xl font-bold text-white">Training compliance</h1>
+            <p className="text-slate-400 text-sm">Path assignments, due dates, and completion status</p>
           </div>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-xl py-12 text-center text-slate-500">
-          No learning paths yet. Create and publish a path, then assign learners to see compliance here.
+          No learning paths yet. Create and publish a path, then assign learners to see training compliance here.
         </div>
       </div>
     )
@@ -94,8 +94,8 @@ export default async function CompliancePage() {
             <Shield className="w-6 h-6 text-amber-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Compliance</h1>
-            <p className="text-slate-400 text-sm">Assignments, due dates, and completion status</p>
+            <h1 className="text-2xl font-bold text-white">Training compliance</h1>
+            <p className="text-slate-400 text-sm">Path assignments, due dates, and completion status</p>
           </div>
         </div>
         <Link href="/paths" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
@@ -107,7 +107,7 @@ export default async function CompliancePage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Overdue', value: overdue.length, icon: AlertTriangle, color: 'text-red-400 bg-red-500/10 border-red-500/20' },
-          { label: 'At risk (≤7 days)', value: atRisk.length, icon: Clock, color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+          { label: 'At risk (â‰¤7 days)', value: atRisk.length, icon: Clock, color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
           { label: 'On track', value: onTrack.length, icon: CheckCircle2, color: 'text-green-400 bg-green-500/10 border-green-500/20' },
           { label: 'Completed', value: completed.length, icon: CheckCircle2, color: 'text-slate-400 bg-slate-500/10 border-slate-500/20' },
         ].map(({ label, value, icon: Icon, color }) => (
@@ -157,7 +157,7 @@ export default async function CompliancePage() {
                     </td>
                     <td className="px-4 py-3 text-slate-400 flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5" />
-                      {r.due_date ? new Date(r.due_date).toLocaleDateString() : '—'}
+                      {r.due_date ? new Date(r.due_date).toLocaleDateString() : 'â€”'}
                     </td>
                     <td className="px-4 py-3 text-slate-400">{Math.round(r.progress_pct)}%</td>
                     <td className="px-4 py-3">
@@ -183,3 +183,4 @@ export default async function CompliancePage() {
     </div>
   )
 }
+

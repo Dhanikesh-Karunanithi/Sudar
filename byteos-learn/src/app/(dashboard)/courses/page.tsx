@@ -5,7 +5,11 @@ import CourseCatalogClient from './CourseCatalogClient'
 
 export const metadata: Metadata = { title: 'Courses' }
 
-export default async function CourseCatalogPage() {
+export default async function CourseCatalogPage({
+  searchParams,
+}: {
+  searchParams?: { q?: string }
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const admin = createAdminClient()
@@ -22,6 +26,7 @@ export default async function CourseCatalogPage() {
     <CourseCatalogClient
       courses={courses}
       enrollments={enrollments ?? []}
+      initialSearch={searchParams?.q ?? ''}
     />
   )
 }

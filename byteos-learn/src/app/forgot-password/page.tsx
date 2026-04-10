@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { createClient } from '@/lib/supabase/client'
 
 export default function ForgotPasswordPage() {
@@ -32,10 +33,9 @@ export default function ForgotPasswordPage() {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
         <div className="w-full max-w-md space-y-6 text-center">
-          <div className="relative w-16 h-16 mx-auto">
+          <div className="relative mx-auto flex h-12 w-40 max-w-[11rem] items-center justify-center">
             <span className="sr-only">Sudar</span>
-            <div className="absolute inset-0 bg-primary block dark:hidden logo-mask-light rounded-2xl" aria-hidden />
-            <div className="absolute inset-0 bg-primary hidden dark:block logo-mask-dark rounded-2xl" aria-hidden />
+            <SudarLogoMark className="h-full w-full text-slate-900" starFill="#f8fafc" />
           </div>
           <h1 className="text-xl font-bold text-slate-900">Check your email</h1>
           <p className="text-slate-600 text-sm">
@@ -56,10 +56,9 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-3">
-          <div className="relative w-16 h-16 mx-auto">
+          <div className="relative mx-auto flex h-12 w-40 max-w-[11rem] items-center justify-center">
             <span className="sr-only">Sudar</span>
-            <div className="absolute inset-0 bg-primary block dark:hidden logo-mask-light rounded-2xl" aria-hidden />
-            <div className="absolute inset-0 bg-primary hidden dark:block logo-mask-dark rounded-2xl" aria-hidden />
+            <SudarLogoMark className="h-full w-full text-slate-900" starFill="#f8fafc" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Reset password</h1>
           <p className="text-slate-500 text-sm">Enter your email and we&apos;ll send you a link to reset your password.</p>

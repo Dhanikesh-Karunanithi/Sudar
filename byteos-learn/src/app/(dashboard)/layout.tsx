@@ -30,8 +30,8 @@ export default async function DashboardLayout({
     redirect('/change-password')
   }
 
-  // Redirect new learners to onboarding if they haven't completed it yet.
-  // Skip this redirect if they're already on the onboarding page.
+  // Keep learners in flow and show an onboarding nudge until they complete setup.
+  // We intentionally avoid a hard redirect here so users can still access assigned content.
   const memory = (learnerProfile?.ai_tutor_context as Record<string, unknown>) ?? {}
   const onboardingDone = memory.onboarding_complete === 'true'
 

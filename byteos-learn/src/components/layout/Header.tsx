@@ -18,7 +18,7 @@ interface HeaderProps {
 }
 
 const PALETTES: { id: PaletteId; label: string; swatch: string }[] = [
-  { id: 'default', label: 'Violet', swatch: 'bg-[#7c3aed]' },
+  { id: 'default', label: 'Sudar', swatch: 'bg-primary' },
   { id: 'ocean', label: 'Ocean', swatch: 'bg-[#0ea5e9]' },
   { id: 'forest', label: 'Forest', swatch: 'bg-[#059669]' },
   { id: 'sunset', label: 'Sunset', swatch: 'bg-[#d97706]' },

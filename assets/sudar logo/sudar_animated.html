@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sudar — Animated Logo</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #111; display: flex; align-items: center;
+    justify-content: center; min-height: 100vh; flex-direction: column; gap: 32px;
+  }
+
+  .scene { position: relative; width: 360px; height: 220px; }
+
+  .pill {
+    position: absolute; border-radius: 999px; background: #fff; height: 64px;
+  }
+
+  /* ── Start state: both pills centred, same width as final ── */
+  /* totalH = 64+22+64 = 150 → startTop = (220-150)/2 = 35 */
+  .pill--top {
+    width: 170px; top: 35px;  /* start: centred */
+    left: 50%; transform: translateX(-50%); z-index: 2;
+    animation: topMorph 1.8s cubic-bezier(.4,0,.2,1) 0.8s forwards;
+  }
+  .pill--bottom {
+    width: 170px; top: 121px; /* start: 35+64+22=121 */
+    left: 50%; transform: translateX(-50%); z-index: 1;
+    animation: botMorph 1.8s cubic-bezier(.4,0,.2,1) 0.8s forwards;
+  }
+
+  /* ── Final positions: slide to S-offset ── */
+  @keyframes topMorph {
+    0%   { top: 35px;  transform: translateX(-50%); }
+    100% { top: 36px;  transform: translateX(calc(-50% + 20px)); }
+  }
+  @keyframes botMorph {
+    0%   { top: 121px; transform: translateX(-50%); }
+    100% { top: 100px; transform: translateX(calc(-50% - 20px)); }
+  }
+
+  /* ── Star ── */
+  .star {
+    position: absolute; left: 50%; top: 100px;
+    width: 90px; height: 90px;
+    transform: translate(-50%, -50%) scale(0) rotate(-15deg);
+    opacity: 0; z-index: 20; pointer-events: none;
+    animation: starPop .65s cubic-bezier(.34,1.56,.64,1) 2.4s forwards;
+  }
+  @keyframes starPop {
+    0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.05) rotate(-15deg); }
+    100% { opacity: 1; transform: translate(-50%,-50%) scale(1) rotate(0deg); }
+  }
+
+  /* ── Wordmark ── */
+  .wordmark {
+    font-family: 'Georgia', serif; font-size: 20px; font-weight: 400;
+    letter-spacing: 0.35em; color: #fff; text-transform: uppercase;
+    opacity: 0; animation: fadeIn .6s ease 3.0s forwards;
+  }
+  @keyframes fadeIn { to { opacity: 1; } }
+
+  /* ── Replay ── */
+  .replay {
+    background: transparent; border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.45); font-size: 12px; font-family: system-ui, sans-serif;
+    letter-spacing: 0.05em; padding: 7px 20px; border-radius: 20px;
+    cursor: pointer; transition: all 150ms;
+  }
+  .replay:hover { border-color: rgba(255,255,255,0.35); color: rgba(255,255,255,0.8); }
+</style>
+</head>
+<body>
+
+<div>
+  <div class="scene">
+    <div class="pill pill--top"    id="pt"></div>
+    <div class="star"              id="star">
+      <svg width="90" height="90" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 50 2 C 51 49, 51 49, 98 50 C 51 51, 51 51, 50 98 C 49 51, 49 51, 2 50 C 49 49, 49 49, 50 2 Z" fill="#111"/>
+      </svg>
+    </div>
+    <div class="pill pill--bottom" id="pb"></div>
+  </div>
+
+</div>
+
+
+
+<script>
+function replay() {
+  const anims = [
+    ['pt',  'topMorph 1.8s cubic-bezier(.4,0,.2,1) 0.8s forwards'],
+    ['pb',  'botMorph 1.8s cubic-bezier(.4,0,.2,1) 0.8s forwards'],
+    ['star','starPop .65s cubic-bezier(.34,1.56,.64,1) 2.4s forwards'],
+    ['wm',  'fadeIn .6s ease 3.0s forwards'],
+  ];
+  anims.forEach(([id, anim]) => {
+    const el = document.getElementById(id);
+    el.style.animation = 'none';
+    void el.offsetHeight;
+    el.style.animation = anim;
+  });
+}
+</script>
+</body>
+</html>

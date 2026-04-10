@@ -7,7 +7,12 @@ import { getCachedPublishedCourses, getCachedPublishedPaths } from '@/lib/cache'
 import { chatCompletion, getChatConfigError, getDefaultTutorModel, getDefaultMemoryModel } from '@/lib/ai/chat'
 import { checkAndIncrementUsage } from '@/lib/usage-limits'
 import { logAiError } from '@/lib/logger'
+import { redactEchoedSensitiveDigits, scanSensitiveUserText } from '@/lib/security/sensitiveInputGuard'
+import { parseOrgAiCompliance, type OrgAiCompliance } from '@/types/personalization'
 const GUARDRAIL_REFUSAL_MESSAGE = "I'm here to help with your courses and learning. I can't help with that. What would you like to learn today?"
+const SENSITIVE_DATA_REFUSAL_MESSAGE = (
+  "I'm here to help with learning. I can't process payment card numbers, government ID numbers, bank details, or private keys in chat. Remove sensitive details and ask again."
+)
 const PLATFORM_CONTEXT_CATALOG_LIMIT = 25
 const MAX_TUTOR_MESSAGE_LENGTH = 2000
 
@@ -62,6 +67,8 @@ const INPUT_BLOCKLIST_PATTERNS = [
   /\bunethical\s+(request|ask)\b/i,
   /\bignore\s+(all\s+)?(previous|instructions)\b/i,
   /\b(jailbreak|bypass)\s+(safety|guardrails)\b/i,
+  /\b(reveal|print|dump|show)\s+(your\s+)?(system\s+prompt|hidden\s+instructions|developer\s+message)\b/i,
+  /\bexfiltrat|send\s+(me\s+)?(the\s+)?(api\s+key|password|secret|env|\.env)\b/i,
 ]
 
 // Questions about Sudar's own identity always pass — no LLM call needed.
@@ -336,6 +343,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const { data: profForCompliance } = await admin
+      .from('profiles')
+      .select('org_id')
+      .eq('id', user.id)
+      .maybeSingle()
+    let orgAiCompliance: OrgAiCompliance = {}
+    if (profForCompliance?.org_id) {
+      const { data: orgForCompliance } = await admin
+        .from('organisations')
+        .select('settings')
+        .eq('id', profForCompliance.org_id)
+        .maybeSingle()
+      orgAiCompliance = parseOrgAiCompliance(orgForCompliance?.settings)
+    }
+
     let body: {
       message?: string
       course_id?: string
@@ -377,6 +399,25 @@ export async function POST(request: NextRequest) {
         { response: GUARDRAIL_REFUSAL_MESSAGE, guardrail_refused: true },
         { status: 200 }
       )
+    }
+
+    const skipSensitiveScan = orgAiCompliance.block_high_risk_pii_in_tutor === false
+    if (!skipSensitiveScan) {
+      const pasteEarly = (typeof pasted_text === 'string' ? pasted_text : '').slice(0, 15000)
+      const selEarly = (typeof selected_text === 'string' ? selected_text : '').slice(0, 6000)
+      for (const chunk of [message, pasteEarly, selEarly]) {
+        const sens = scanSensitiveUserText(chunk)
+        if (sens.blocked) {
+          return NextResponse.json(
+            {
+              response: SENSITIVE_DATA_REFUSAL_MESSAGE,
+              guardrail_refused: true,
+              guardrail_code: 'sensitive_data_detected',
+            },
+            { status: 200 },
+          )
+        }
+      }
     }
 
     const pastedText = (typeof pasted_text === 'string' ? pasted_text : '').trim().slice(0, 15000)
@@ -712,7 +753,10 @@ How to personalize:
   }
 
   // ── Parse and validate ACTIONS from response (output guardrail) ─────────
-  const { text: responseText, rawActions } = parseActionsFromResponse(aiResponse)
+  let { text: responseText, rawActions } = parseActionsFromResponse(aiResponse)
+  if (orgAiCompliance.tutor_redact_echoed_secrets !== false) {
+    responseText = redactEchoedSensitiveDigits(responseText)
+  }
   const actions = validateActions(rawActions, allowedCourseIds, allowedPathIds, enrollmentByCourseId)
 
   // ── 5. Save interaction (non-blocking; don't fail the request) ───────────

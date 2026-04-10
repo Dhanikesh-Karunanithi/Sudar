@@ -112,7 +112,16 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
       <div className="space-y-3">
         <h2 className="text-base font-semibold text-card-foreground">Course content</h2>
         {(!course.modules || course.modules.length === 0) ? (
-          <p className="text-muted-foreground text-sm">No modules yet.</p>
+          <div className="text-sm space-y-1">
+            <p className="text-muted-foreground">No modules yet.</p>
+            <p className="text-muted-foreground">
+              Try another published course from the{' '}
+              <Link href="/courses" className="text-primary font-medium hover:underline">
+                course catalog
+              </Link>
+              .
+            </p>
+          </div>
         ) : (
           <div className="bg-card border border-border rounded-card overflow-hidden divide-y divide-border">
             {course.modules.map((mod, idx) => {

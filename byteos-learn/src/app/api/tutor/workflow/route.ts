@@ -2,15 +2,33 @@
  * Start a batch workflow (e.g. summarize text, extract key terms).
  * Runs synchronously; returns workflow_id, status, steps, and result.
  */
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, getChatConfigError, getDefaultMemoryModel } from '@/lib/ai/chat'
+import { scanSensitiveUserText } from '@/lib/security/sensitiveInputGuard'
+import { parseOrgAiCompliance, type OrgAiCompliance } from '@/types/personalization'
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const admin = createAdminClient()
+    const { data: profForCompliance } = await admin
+      .from('profiles')
+      .select('org_id')
+      .eq('id', user.id)
+      .maybeSingle()
+    let orgAiCompliance: OrgAiCompliance = {}
+    if (profForCompliance?.org_id) {
+      const { data: orgForCompliance } = await admin
+        .from('organisations')
+        .select('settings')
+        .eq('id', profForCompliance.org_id)
+        .maybeSingle()
+      orgAiCompliance = parseOrgAiCompliance(orgForCompliance?.settings)
+    }
 
     let body: { type?: string; text?: string } = {}
     try {
@@ -21,6 +39,20 @@ export async function POST(request: NextRequest) {
     const { type = 'summarize', text } = body
     const inputText = (text ?? '').trim().slice(0, 15000)
     if (!inputText) return NextResponse.json({ error: 'text required' }, { status: 400 })
+
+    if (orgAiCompliance.block_high_risk_pii_in_tutor !== false) {
+      const sens = scanSensitiveUserText(inputText)
+      if (sens.blocked) {
+        return NextResponse.json(
+          {
+            error:
+              "Can't process payment card numbers, government IDs, bank details, or private keys. Remove them and try again.",
+            guardrail_code: 'sensitive_data_detected',
+          },
+          { status: 400 },
+        )
+      }
+    }
 
     const workflowId = crypto.randomUUID()
     const steps: string[] = []

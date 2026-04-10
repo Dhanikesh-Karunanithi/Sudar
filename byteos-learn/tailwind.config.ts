@@ -59,7 +59,17 @@ const config: Config = {
         "6xl": "var(--radius-6xl)",
       },
       fontFamily: {
-        display: ["var(--font-display)", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-body)", "Inter", "Segoe UI", "Arial", "sans-serif"],
+        display: ["var(--font-display)", "Manrope", "Inter", "Segoe UI", "Arial", "sans-serif"],
+      },
+      keyframes: {
+        "sudar-logo-pulse": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.06)" },
+        },
+      },
+      animation: {
+        "sudar-logo-pulse": "sudar-logo-pulse 2.8s ease-in-out infinite",
       },
     },
   },

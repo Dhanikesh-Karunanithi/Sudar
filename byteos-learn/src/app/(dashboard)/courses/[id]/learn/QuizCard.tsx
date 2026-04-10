@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { CheckCircle2, XCircle, ChevronRight, CircleHelp, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { QuizMode } from '@/types/content'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
 
 interface QuizQuestion {
   id: string
@@ -143,7 +144,7 @@ export function QuizCard({ quiz, moduleTitle, learnerName, onComplete, onAskByte
         {wrongTopics.length > 0 && (
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <img src="/sudar-chat-logo.png" className="w-4 h-4 object-contain" alt="Sudar" />
+              <SudarLogoMark className="h-4 w-auto shrink-0 text-primary" starFill="var(--card)" />
               <p className="text-sm font-semibold text-card-foreground">Sudar can help with these</p>
             </div>
             <div className="flex flex-wrap gap-1.5">
@@ -298,7 +299,7 @@ export function QuizCard({ quiz, moduleTitle, learnerName, onComplete, onAskByte
                 onClick={() => onAskByte(`I answered this quiz question incorrectly: "${q.question}". Can you explain the concept of "${q.topic}" more clearly?`)}
                 className="flex items-center gap-1.5 text-xs text-primary hover:text-primary font-medium mt-1"
               >
-                <img src="/sudar-chat-logo.png" className="w-3.5 h-3.5 object-contain" alt="Sudar" />Ask Sudar to explain {q.topic}
+                <SudarLogoMark className="h-3.5 w-auto shrink-0 text-primary" starFill="var(--card)" />Ask Sudar to explain {q.topic}
               </button>
             )}
           </div>
@@ -329,7 +330,7 @@ export function QuizCard({ quiz, moduleTitle, learnerName, onComplete, onAskByte
               title="Ask Sudar before answering"
               className="p-2.5 bg-primary/5 hover:bg-primary/10 border border-primary/20 text-primary rounded-xl transition-colors"
             >
-              <img src="/sudar-chat-logo.png" className="w-4 h-4 object-contain" alt="Sudar" />
+              <SudarLogoMark className="h-4 w-auto shrink-0 text-primary" starFill="var(--card)" />
             </button>
           )}
         </div>

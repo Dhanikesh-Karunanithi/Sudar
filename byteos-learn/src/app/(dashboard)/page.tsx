@@ -10,6 +10,10 @@ import { BentoCard } from '@/components/ui/BentoCard'
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
 import { ActivityChartClient } from '@/components/dashboard/ActivityChartClient'
 import { Greeting } from '@/components/dashboard/Greeting'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
+import { MascotJourneyCard } from '@/components/mascot/MascotJourneyCard'
+import type { MascotPreferences } from '@/types/mascot'
+import { MASCOT_ROLLOUT } from '@/lib/mascot/rollout'
 
 function toLocalDateKey(d: Date): string {
   const y = d.getFullYear()
@@ -326,6 +330,7 @@ export default async function DashboardPage() {
   }
 
   const memory = (learnerProfile?.ai_tutor_context as Record<string, unknown>) ?? {}
+  const preferences = (memory.preferences as Partial<MascotPreferences> | undefined) ?? null
   const interactionCount = (memory.interaction_count as number) ?? 0
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
@@ -403,6 +408,9 @@ export default async function DashboardPage() {
             )}
           </div>
         </section>
+        {MASCOT_ROLLOUT.surfaces.dashboard && (
+          <MascotJourneyCard preferences={preferences} firstName={firstName} />
+        )}
 
         {/* KPI row + Activity chart */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -531,9 +539,7 @@ export default async function DashboardPage() {
         {/* Sudar memory card */}
         {interactionCount > 0 && (
           <BentoCard padding="md" className="bg-primary/5 border-primary/20 flex items-start gap-4">
-            <div className="w-10 h-10 rounded-card bg-card border border-border flex items-center justify-center shrink-0">
-              <img src="/sudar-chat-logo.png" className="w-5 h-5 object-contain" alt="Sudar" />
-            </div>
+            <SudarLogoMark className="h-8 w-auto shrink-0 text-primary" starFill="var(--card)" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-card-foreground">
                 Sudar has learned from {interactionCount} interaction{interactionCount !== 1 ? 's' : ''} with you

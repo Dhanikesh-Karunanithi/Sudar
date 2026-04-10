@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { CheckCircle2 } from 'lucide-react'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { GoogleIcon } from '@/components/ui/GoogleIcon'
 import { createClient } from '@/lib/supabase/client'
 
@@ -91,10 +92,9 @@ export function SignupClient() {
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-3">
-          <div className="relative w-16 h-16 mx-auto">
+          <div className="relative mx-auto flex h-12 w-40 max-w-[11rem] items-center justify-center">
             <span className="sr-only">Sudar</span>
-            <div className="absolute inset-0 bg-primary block dark:hidden logo-mask-light" aria-hidden />
-            <div className="absolute inset-0 bg-primary hidden dark:block logo-mask-dark" aria-hidden />
+            <SudarLogoMark className="h-full w-full text-slate-900" starFill="#f8fafc" animated />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Sudar Learn</h1>
