@@ -1,5 +1,8 @@
 import type { MascotId, MascotPersona, MascotPreferences } from '@/types/mascot'
 
+/** Single brand mark for all mascot personas (companions use copy/motion, not distinct characters). */
+export const SUDAR_LOGO_AVATAR_SRC = '/sudar-logo-mark.svg'
+
 export const DEFAULT_MASCOT_PREFERENCES: MascotPreferences = {
   mascot_mode: 'all',
   mascot_style: 'balanced',
@@ -14,7 +17,7 @@ export const MASCOT_PERSONAS: Record<MascotId, MascotPersona> = {
     domain: 'hero',
     colorToken: 'text-primary',
     icon: 'sparkles',
-    avatarSrc: '/mascots/sudar-neutral.svg',
+    avatarSrc: SUDAR_LOGO_AVATAR_SRC,
     summary: 'Always-on guide that helps learners stay oriented and encouraged.',
   },
   focus: {
@@ -23,7 +26,7 @@ export const MASCOT_PERSONAS: Record<MascotId, MascotPersona> = {
     domain: 'focus',
     colorToken: 'text-sky-500',
     icon: 'target',
-    avatarSrc: '/mascots/focus-neutral.svg',
+    avatarSrc: SUDAR_LOGO_AVATAR_SRC,
     summary: 'Momentum coach for starting and sustaining attention.',
   },
   memory: {
@@ -32,7 +35,7 @@ export const MASCOT_PERSONAS: Record<MascotId, MascotPersona> = {
     domain: 'memory',
     colorToken: 'text-violet-500',
     icon: 'brain',
-    avatarSrc: '/mascots/memory-neutral.svg',
+    avatarSrc: SUDAR_LOGO_AVATAR_SRC,
     summary: 'Retrieval practice specialist for recap and reinforcement.',
   },
   confidence: {
@@ -41,7 +44,7 @@ export const MASCOT_PERSONAS: Record<MascotId, MascotPersona> = {
     domain: 'confidence',
     colorToken: 'text-emerald-500',
     icon: 'heart',
-    avatarSrc: '/mascots/confidence-neutral.svg',
+    avatarSrc: SUDAR_LOGO_AVATAR_SRC,
     summary: 'Supportive companion for setbacks, retries, and self-belief.',
   },
 }
