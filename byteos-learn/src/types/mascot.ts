@@ -44,7 +44,7 @@ export interface MascotPersona {
   domain: 'hero' | 'focus' | 'memory' | 'confidence'
   colorToken: string
   icon: 'sparkles' | 'target' | 'brain' | 'heart'
-  /** Public path under byteos-learn/public (Sudar logo mark for all personas). */
+  /** Public path under byteos-learn/public (`/sudar-logo.svg` or PNG variants). */
   avatarSrc: string
   summary: string
 }

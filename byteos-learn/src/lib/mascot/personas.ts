@@ -1,7 +1,7 @@
 import type { MascotId, MascotPersona, MascotPreferences } from '@/types/mascot'
 
-/** Single brand mark for all mascot personas (companions use copy/motion, not distinct characters). */
-export const SUDAR_LOGO_AVATAR_SRC = '/sudar-logo-mark.svg'
+/** Approved Sudar logo (SVG); PNG variants: `/sudar-logo.png`, `/sudar-logo-dark.png`, `/sudar-logo-light.png`. */
+export const SUDAR_LOGO_AVATAR_SRC = '/sudar-logo.svg'
 
 export const DEFAULT_MASCOT_PREFERENCES: MascotPreferences = {
   mascot_mode: 'all',
