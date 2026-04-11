@@ -16,7 +16,7 @@ export function DashboardShell({ user, orgRole = 'LEARNER', isSuperAdmin = false
     <SidebarContentProvider>
       <div className="dark flex h-screen bg-background text-foreground overflow-hidden">
         <Sidebar user={user} orgRole={orgRole} isSuperAdmin={isSuperAdmin} />
-        <main className="flex-1 overflow-y-auto bg-background">
+        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-background">
           {children}
         </main>
       </div>

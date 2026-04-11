@@ -127,10 +127,15 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
     <>
       <motion.button
         type="button"
-        whileHover={{ scale: 1.1, rotate: 5 }}
-        whileTap={{ scale: 0.9 }}
+        whileHover={{
+          y: -5,
+          scale: 1.06,
+          transition: { type: 'spring', stiffness: 420, damping: 24 },
+        }}
+        whileTap={{ scale: 0.94 }}
+        transition={{ type: 'spring', stiffness: 460, damping: 28 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full border border-primary/35 bg-primary/15 text-primary shadow-2xl backdrop-blur-md hover:border-primary/50 hover:bg-primary/25 hover:shadow-primary/20 motion-reduce:backdrop-blur-none"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full border border-primary/35 bg-primary/15 text-primary shadow-2xl backdrop-blur-md transition-[box-shadow,background-color,border-color] duration-300 hover:border-primary/55 hover:bg-primary/28 hover:shadow-[0_18px_50px_-12px_color-mix(in_oklab,var(--primary)_42%,transparent)] motion-reduce:backdrop-blur-none motion-reduce:hover:shadow-2xl"
         aria-label={isOpen ? 'Close Sudar' : 'Open Sudar'}
       >
         <SudarLogoMark className="h-8 w-auto md:h-9" starFill="var(--background)" animated />

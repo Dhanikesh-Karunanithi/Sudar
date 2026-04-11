@@ -4,19 +4,24 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  ArrowLeft, Plus, Trash2, GripVertical, Globe, FileText,
-  ChevronDown, ChevronUp, CheckCircle2, Sparkles, Wand2, LayoutList, Zap,
-  CircleHelp, RefreshCcw, Eye, Timer, Palette, Video, X, Users,
+  ArrowLeft, Plus, Trash2, Globe, FileText,
+  CheckCircle2, Sparkles, Wand2,
+  CircleHelp, Eye, Timer, Video, X, Settings, ImageIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SudarInlineLoader, SudarLoadingFrost } from '@/components/branding/SudarBrandLoader'
 import { useSidebarContent } from '@/contexts/SidebarContentContext'
-import { ContentToolsPanel } from '@/components/content/ContentToolsPanel'
 import { ProjectMediaPeek } from '@/components/content/ProjectMediaPeek'
-import { ModuleBlockEditor } from '@/components/content/ModuleBlockEditor'
-import { getModuleBodyText } from '@/lib/contentBlocks'
-import { LEARNING_PERSONAS, type LearningPersonaSlug } from '@/lib/themes/learningPersonas'
-import type { ModuleContent } from '@/types/content'
+import {
+  CourseModuleContent,
+  type CourseContentRegionKey,
+} from '@/components/course/CourseModuleContent'
+import { CourseCanvasFloatingBar } from '@/components/course/CourseCanvasFloatingBar'
+import { CourseWysiwygInspector } from '@/components/course/CourseWysiwygInspector'
+import { CourseSettingsSheet } from '@/components/course/CourseSettingsSheet'
+import { ReorderModuleBlocksPanel } from '@/components/course/ReorderModuleBlocksPanel'
+import { appendEditorBlockToModuleContent, getModuleBodyText } from '@/lib/contentBlocks'
+import type { EditorBlockType, ModuleContent } from '@/types/content'
 import type { VideoScene, DialogueSegment } from '@/types/content'
 
 interface QuizQuestion {
@@ -100,6 +105,9 @@ export default function CourseEditorPage() {
   const [podcastGenStep, setPodcastGenStep] = useState<'script' | 'audio' | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deletingCourse, setDeletingCourse] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [activeRegionKey, setActiveRegionKey] = useState<CourseContentRegionKey | null>(null)
+  const moduleContentTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const [learnerGroups, setLearnerGroups] = useState<Array<{ id: string; name: string }>>([])
   const [orgLearners, setOrgLearners] = useState<Array<{ id: string; full_name: string }>>([])
 
@@ -267,34 +275,16 @@ export default function CourseEditorPage() {
     setGeneratingOutline(false)
   }, [course, addModule])
 
-  // Inject content development panel into sidebar while on this page
   const sidebarContent = useSidebarContent()
   useEffect(() => {
-    if (!sidebarContent?.setSidebarContent || !course) return
-    sidebarContent.setSidebarContent(
-      <ContentToolsPanel
-        onGenerateOutline={generateOutline}
-        onAddModule={() => addModule()}
-        generatingOutline={generatingOutline}
-        modules={course.modules.map((m) => ({ id: m.id, title: m.title }))}
-        expandedModuleId={expandedModule}
-        onJumpToModule={(moduleId, index) => {
-          setExpandedModule(moduleId)
-          setTimeout(() => {
-            document.getElementById(`module-${index + 1}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }, 100)
-        }}
-        onPromptIdeaSelect={(idea) => {
-          if (expandedModule) {
-            setAiPrompt((p) => ({ ...p, [expandedModule]: idea }))
-            if (idea === 'Research from the web and cite sources') setIncludeWebResearch(true)
-          }
-        }}
-        onOpenMediaPeek={() => setShowMediaPeek(true)}
-      />
-    )
+    if (!sidebarContent?.setSidebarContent) return
+    sidebarContent.setSidebarContent(null)
     return () => { sidebarContent?.setSidebarContent(null) }
-  }, [sidebarContent, course, generatingOutline, expandedModule, generateOutline, addModule])
+  }, [sidebarContent])
+
+  useEffect(() => {
+    setActiveRegionKey(null)
+  }, [expandedModule])
 
   async function saveCourse(updates: Partial<Course>): Promise<void> {
     if (!course) return
@@ -349,6 +339,38 @@ export default function CourseEditorPage() {
       ...c, modules: c.modules.map((m) => m.id === moduleId ? { ...m, ...updates } : m),
     } : c)
   }
+
+  function patchModuleContentOptimistic(moduleId: string, content: ModuleContent) {
+    setCourse((c) =>
+      c
+        ? {
+            ...c,
+            modules: c.modules.map((m) => (m.id === moduleId ? { ...m, content } : m)),
+          }
+        : c
+    )
+  }
+
+  function scheduleModuleContentPersist(moduleId: string, content: ModuleContent) {
+    const prev = moduleContentTimersRef.current.get(moduleId)
+    if (prev) clearTimeout(prev)
+    const t = setTimeout(() => {
+      void saveModule(moduleId, { content })
+      moduleContentTimersRef.current.delete(moduleId)
+    }, 450)
+    moduleContentTimersRef.current.set(moduleId, t)
+  }
+
+  function handleCanvasContentChange(moduleId: string, content: ModuleContent) {
+    patchModuleContentOptimistic(moduleId, content)
+    scheduleModuleContentPersist(moduleId, content)
+  }
+
+  useEffect(() => {
+    return () => {
+      moduleContentTimersRef.current.forEach((tm) => clearTimeout(tm))
+    }
+  }, [])
 
   async function deleteModule(moduleId: string) {
     await fetch(`/api/courses/${id}/modules/${moduleId}`, { method: 'DELETE' })
@@ -603,23 +625,50 @@ export default function CourseEditorPage() {
   if (!course) return null
 
   const isPublished = course.status === 'published'
+  const activeMod = course.modules.find((m) => m.id === expandedModule) ?? null
+
+  const AI_PROMPT_CHIPS = [
+    'Explain with real-world examples',
+    'Include key takeaways',
+    'Add a short summary',
+    'Use simple language for beginners',
+    'Add definitions for key terms',
+    'Research from the web and cite sources',
+  ] as const
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-6">
+    <div className="-mx-2 flex min-h-0 flex-1 flex-col gap-3 overflow-hidden px-1 pb-1 max-xl:overflow-y-auto max-xl:min-h-[min(100dvh,100%)] xl:h-full">
       {/* Top bar */}
-      <div className="flex items-center justify-between gap-4">
-        <Link href="/courses" className="flex items-center gap-2 text-slate-400 hover:text-slate-200 text-sm transition-colors shrink-0">
-          <ArrowLeft className="w-4 h-4" />Courses
-        </Link>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <Link href="/courses" className="flex items-center gap-2 text-slate-400 hover:text-slate-200 text-sm transition-colors shrink-0">
+            <ArrowLeft className="w-4 h-4" />Courses
+          </Link>
+          <span className="text-slate-600 hidden sm:inline">/</span>
+          <p className="text-sm text-slate-300 truncate max-w-[200px] font-medium" title={course.title}>
+            {course.title || 'Untitled course'}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           {saved && <span className="flex items-center gap-1.5 text-green-400 text-xs"><CheckCircle2 className="w-3.5 h-3.5" />Saved</span>}
           {saving && <SudarInlineLoader size="sm" className="h-3.5 w-auto text-slate-500" starFill="var(--background)" />}
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-slate-100 hover:bg-slate-800 transition-all"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            Course settings
+          </button>
           {course.modules.length > 0 && (
             <>
               <button
                 type="button"
-                onClick={() => document.getElementById('video-podcast-section')?.scrollIntoView({ behavior: 'smooth' })}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-slate-100 hover:bg-slate-800 transition-all"
+                onClick={() => {
+                  setSettingsOpen(true)
+                  setTimeout(() => document.getElementById('video-podcast-section')?.scrollIntoView({ behavior: 'smooth' }), 200)
+                }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-slate-100 hover:bg-slate-800 transition-all"
               >
                 <Video className="w-3.5 h-3.5" />Video &amp; Podcast
               </button>
@@ -627,7 +676,7 @@ export default function CourseEditorPage() {
               href={`/courses/${id}/preview`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-slate-100 hover:bg-slate-800 transition-all"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-slate-100 hover:bg-slate-800 transition-all"
             >
               <Eye className="w-3.5 h-3.5" />Preview
             </Link>
@@ -680,572 +729,219 @@ export default function CourseEditorPage() {
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">{error}</div>
       )}
 
-      {/* Course metadata */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full',
-            isPublished ? 'bg-green-500/15 text-green-400 border border-green-500/20' : 'bg-slate-700 text-slate-300'
-          )}>
-            {isPublished ? 'Published' : 'Draft'}
-          </span>
-        </div>
-        <input
-          type="text" defaultValue={course.title}
-          onBlur={(e) => { if (e.target.value !== course.title) saveCourse({ title: e.target.value }) }}
-          className="w-full bg-transparent text-white text-2xl font-semibold focus:outline-none placeholder-slate-600 border-b border-transparent focus:border-slate-700 pb-1 transition-colors"
-          placeholder="Course title"
-        />
-        <textarea
-          defaultValue={course.description ?? ''}
-          onBlur={(e) => saveCourse({ description: e.target.value || null })}
-          rows={2} placeholder="Add a description..."
-          className="w-full bg-transparent text-slate-400 text-sm focus:outline-none placeholder-slate-600 resize-none border-b border-transparent focus:border-slate-700 pb-1 transition-colors"
-        />
-        <div className="flex items-center gap-6 pt-1">
-          <div className="space-y-1">
-            <label className="text-xs text-slate-500 font-medium">Difficulty</label>
-            <select value={course.difficulty ?? 'intermediate'} onChange={(e) => saveCourse({ difficulty: e.target.value })}
-              className="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs text-slate-500 font-medium">Duration (mins)</label>
-            <input type="number" defaultValue={course.estimated_duration_mins ?? ''}
-              onBlur={(e) => saveCourse({ estimated_duration_mins: e.target.value ? Number(e.target.value) : null })}
-              placeholder="e.g. 30"
-              className="w-24 bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-        </div>
-
-        {/* Adaptive learning + personalization scope */}
-        <div className="border-t border-slate-800 pt-4 mt-2 space-y-3">
-          <button
-            type="button"
-            onClick={() => saveCourse({ is_adaptive: !course.is_adaptive })}
-            className={cn(
-              'w-full flex items-start gap-4 p-4 rounded-xl border transition-all text-left',
-              course.is_adaptive
-                ? 'bg-violet-950/40 border-violet-500/30 hover:border-violet-400/50'
-                : 'bg-slate-800/60 border-slate-700 hover:border-slate-600'
+      {generatingAllModules && (
+        <div className="flex items-center gap-3 rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] px-4 py-3 text-sm text-zinc-200">
+          <SudarInlineLoader size="sm" className="shrink-0 text-slate-500" starFill="var(--background)" />
+          <div className="flex flex-col gap-0.5">
+            <span className="font-medium">Generating curriculum-aware content…</span>
+            {autoFillProgress && (
+              <span className="text-xs text-blue-300/90">{autoFillProgress}</span>
             )}
-          >
-            <div className={cn(
-              'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
-              course.is_adaptive ? 'bg-violet-600/20 border border-violet-500/30' : 'bg-slate-700 border border-slate-600'
-            )}>
-              <Zap className={cn('w-5 h-5', course.is_adaptive ? 'text-violet-400' : 'text-slate-500')} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className={cn('text-sm font-semibold', course.is_adaptive ? 'text-violet-200' : 'text-slate-300')}>
-                  Adaptive personalization
-                </p>
-                {course.is_adaptive && (
-                  <span className="text-[10px] px-2 py-0.5 bg-violet-500/20 text-violet-300 rounded-full border border-violet-500/30 font-medium">
-                    ON
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                {course.is_adaptive
-                  ? 'Learners opt in inside Sudar Learn. Sudar can add a course welcome and optional per-module helpers using their profile — canonical module content is never overwritten.'
-                  : 'Turn on to allow opt-in AI personalization for this course (subject to org policy and audience you configure below).'}
-              </p>
-            </div>
-            <div className={cn(
-              'w-10 h-6 rounded-full flex items-center transition-all shrink-0 mt-0.5 px-0.5',
-              course.is_adaptive ? 'bg-violet-600 justify-end' : 'bg-slate-700 justify-start'
-            )}>
-              <div className="w-5 h-5 bg-white rounded-full shadow-sm" />
-            </div>
-          </button>
-
-          {course.is_adaptive && (() => {
-            const p = course.settings?.personalization ?? {}
-            const aud: PersonalizationAudience = p.audience ?? 'org'
-            const gids = new Set(p.group_ids ?? [])
-            const uids = new Set(p.user_ids ?? [])
-            const fw = p.features?.course_welcome !== false
-            const fRole = p.features?.module_role_explain !== false
-            const fBrief = p.features?.module_brief !== false
-            return (
-              <div className="ml-0 sm:ml-14 space-y-4 rounded-xl border border-slate-700 bg-slate-900/40 p-4">
-                <p className="text-[10px] text-slate-500">
-                  Org-wide AI limits and learner consent live in{' '}
-                  <Link href="/settings" className="text-indigo-400 hover:underline">Settings</Link>.
-                </p>
-                <div>
-                  <p className="text-xs font-medium text-slate-400 mb-2">What learners may use</p>
-                  <div className="space-y-2">
-                    {([
-                      ['course_welcome', 'Course welcome (opt-in)', fw],
-                      ['module_role_explain', 'Explain this module for my role', fRole],
-                      ['module_brief', '3-minute version', fBrief],
-                    ] as const).map(([key, label, on]) => (
-                      <label key={key} className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={on}
-                          onChange={() => patchCoursePersonalization({
-                            features: {
-                              course_welcome: key === 'course_welcome' ? !on : fw,
-                              module_role_explain: key === 'module_role_explain' ? !on : fRole,
-                              module_brief: key === 'module_brief' ? !on : fBrief,
-                            },
-                          })}
-                          className="rounded border-slate-600"
-                        />
-                        {label}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-slate-400 mb-2">Who can personalize</p>
-                  <div className="space-y-2">
-                    {([
-                      ['org', 'Everyone in your org (enrolled learners)'],
-                      ['groups', 'Only selected learner groups'],
-                      ['individuals', 'Only selected individuals'],
-                    ] as const).map(([value, lab]) => (
-                      <label key={value} className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="pers-audience"
-                          checked={aud === value}
-                          onChange={() => {
-                            if (value === 'org') {
-                              patchCoursePersonalization({ audience: 'org', group_ids: [], user_ids: [] })
-                            } else if (value === 'groups') {
-                              patchCoursePersonalization({
-                                audience: 'groups',
-                                user_ids: [],
-                                group_ids: p.group_ids ?? [],
-                              })
-                            } else {
-                              patchCoursePersonalization({
-                                audience: 'individuals',
-                                group_ids: [],
-                                user_ids: p.user_ids ?? [],
-                              })
-                            }
-                          }}
-                          className="border-slate-600"
-                        />
-                        {lab}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                {aud === 'groups' && (
-                  <div>
-                    <p className="text-xs text-slate-500 mb-2 flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5" /> Groups (manage under org tools / API)
-                    </p>
-                    {learnerGroups.length === 0 ? (
-                      <p className="text-[10px] text-slate-600">No groups yet. Create groups via Studio API or future Groups UI.</p>
-                    ) : (
-                      <div className="max-h-36 overflow-y-auto space-y-1 border border-slate-700 rounded-lg p-2">
-                        {learnerGroups.map((g) => (
-                          <label key={g.id} className="flex items-center gap-2 text-xs text-slate-300">
-                            <input
-                              type="checkbox"
-                              checked={gids.has(g.id)}
-                              onChange={() => {
-                                const next = new Set(gids)
-                                if (next.has(g.id)) next.delete(g.id)
-                                else next.add(g.id)
-                                patchCoursePersonalization({ group_ids: [...next] })
-                              }}
-                              className="rounded border-slate-600"
-                            />
-                            {g.name}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-                {aud === 'individuals' && (
-                  <div>
-                    <p className="text-xs text-slate-500 mb-2">Org members</p>
-                    <div className="max-h-36 overflow-y-auto space-y-1 border border-slate-700 rounded-lg p-2">
-                      {orgLearners.map((u) => (
-                        <label key={u.id} className="flex items-center gap-2 text-xs text-slate-300">
-                          <input
-                            type="checkbox"
-                            checked={uids.has(u.id)}
-                            onChange={() => {
-                              const next = new Set(uids)
-                              if (next.has(u.id)) next.delete(u.id)
-                              else next.add(u.id)
-                              patchCoursePersonalization({ user_ids: [...next] })
-                            }}
-                            className="rounded border-slate-600"
-                          />
-                          {u.full_name}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })()}
-        </div>
-
-        {/* Visual Persona (course theme) */}
-        <div className="border-t border-slate-800 pt-4 mt-2">
-          <div className="flex items-center gap-2 mb-3">
-            <Palette className="w-4 h-4 text-slate-500 shrink-0" />
-            <span className="text-xs font-medium text-slate-400">Visual persona</span>
           </div>
-          <p className="text-[10px] text-slate-600 mb-3">
-            Choose how this course looks to learners. Affects typography, colors, and card style in Sudar Learn.
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        </div>
+      )}
+
+      <div className="flex min-h-0 flex-1 gap-0 overflow-hidden rounded-2xl border border-white/[0.06] bg-zinc-950 max-xl:min-h-[560px]">
+        {/* Module rail */}
+        <aside className="flex w-56 shrink-0 flex-col border-r border-white/[0.06] bg-zinc-900/95 min-h-0">
+          <div className="p-3 border-b border-slate-800 space-y-2">
             <button
               type="button"
-              onClick={() => saveCourse({ template: null })}
-              className={cn(
-                'flex flex-col items-start gap-1.5 p-3 rounded-xl border text-left transition-all',
-                !course.template
-                  ? 'bg-slate-700 border-slate-500 ring-1 ring-slate-400'
-                  : 'bg-slate-800/60 border-slate-700 hover:border-slate-600'
-              )}
+              onClick={() => setShowMediaPeek(true)}
+              className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800 text-left"
             >
-              <div className="w-full h-8 rounded border border-slate-600 bg-slate-900 flex items-center justify-center">
-                <span className="text-[10px] text-slate-500">Default</span>
-              </div>
-              <span className="text-xs font-medium text-slate-300">Platform default</span>
+              <ImageIcon className="w-3.5 h-3.5 shrink-0" />
+              Project media
             </button>
-            {(Object.keys(LEARNING_PERSONAS) as LearningPersonaSlug[]).map((slug) => {
-              const p = LEARNING_PERSONAS[slug]
-              const selected = course.template === slug
-              return (
-                <button
-                  key={slug}
-                  type="button"
-                  onClick={() => saveCourse({ template: slug })}
-                  className={cn(
-                    'flex flex-col items-start gap-1.5 p-3 rounded-xl border text-left transition-all',
-                    selected ? 'ring-1 ring-indigo-400 border-indigo-500/50 bg-indigo-950/30' : 'bg-slate-800/60 border-slate-700 hover:border-slate-600'
-                  )}
-                >
-                  <div
-                    className="w-full h-8 rounded border flex items-center justify-center text-[10px] font-medium"
-                    style={{
-                      backgroundColor: p.colorBackground,
-                      color: p.colorForeground,
-                      borderColor: p.borderColor,
-                    }}
-                  >
-                    {p.label}
-                  </div>
-                  <span className="text-xs font-medium text-slate-300">{p.label}</span>
-                  <span className="text-[10px] text-slate-500 line-clamp-1">{p.bestFor[0]}</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Video & Podcast */}
-        <div id="video-podcast-section" className="border-t border-slate-800 pt-4 mt-2 space-y-3">
-          <div className="flex items-center gap-2">
-            <Video className="w-4 h-4 text-slate-500 shrink-0" />
-            <span className="text-xs font-medium text-slate-400">Video &amp; Podcast</span>
-          </div>
-
-          {/* Video toggle */}
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={course.settings?.include_video ?? false}
-                disabled={generatingVideo || !course.modules?.length}
-                onChange={(e) => handleVideoToggle(e.target.checked)}
-                className="rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500 disabled:opacity-50"
-              />
-              Include video overview
-            </label>
-            {course.settings?.include_video && (
-              <div className="ml-6 text-[11px]">
-                {generatingVideo ? (
-                  <span className="flex items-center gap-1.5 text-indigo-400">
-                    <SudarInlineLoader size="sm" className="h-3 w-auto text-slate-500" starFill="var(--background)" />
-                    {videoGenStep === 'script' ? 'Generating script…' : 'Generating audio…'}
-                  </span>
-                ) : (course.settings?.video_scenes?.length ?? 0) > 0 ? (
-                  <div className="space-y-1">
-                    <span className="flex items-center gap-1.5 text-green-400">
-                      ✓ Ready — {course.settings!.video_scenes!.length} scenes
-                      {course.settings!.video_scenes!.some((s) => s.audioDataURL)
-                        ? ', audio generated'
-                        : ' (no audio yet)'}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={generatingVideo || generatingPodcast}
-                      onClick={() => generateVideoScriptAndAudio(course.id)}
-                      className="text-slate-500 hover:text-slate-300 underline underline-offset-2 disabled:opacity-40"
-                    >
-                      Regenerate
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMediaSheet('video')}
-                      className="block mt-1 text-slate-500 hover:text-slate-300 underline underline-offset-2"
-                    >
-                      View scenes
-                    </button>
-                  </div>
-                ) : !course.modules?.length ? (
-                  <span className="text-amber-600">Add modules with content first</span>
-                ) : (
-                  <span className="text-slate-600">Pending generation…</span>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Podcast toggle */}
-          <div className="space-y-1.5">
-            <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={course.settings?.include_podcast ?? false}
-                disabled={generatingPodcast || !course.modules?.length}
-                onChange={(e) => handlePodcastToggle(e.target.checked)}
-                className="rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500 disabled:opacity-50"
-              />
-              Include podcast
-            </label>
-            {course.settings?.include_podcast && (
-              <div className="ml-6 text-[11px]">
-                {generatingPodcast ? (
-                  <span className="flex items-center gap-1.5 text-indigo-400">
-                    <SudarInlineLoader size="sm" className="h-3 w-auto text-slate-500" starFill="var(--background)" />
-                    {podcastGenStep === 'script' ? 'Generating script…' : 'Generating audio…'}
-                  </span>
-                ) : (course.settings?.podcast_dialogue?.length ?? 0) > 0 ? (
-                  <div className="space-y-1">
-                    <span className="flex items-center gap-1.5 text-green-400">
-                      ✓ Ready — {course.settings!.podcast_dialogue!.length} segments
-                      {course.settings!.podcast_dialogue!.some((s) => s.audioDataURL)
-                        ? ', audio generated'
-                        : ' (no audio yet)'}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={generatingVideo || generatingPodcast}
-                      onClick={() => generatePodcastScriptAndAudio(course.id)}
-                      className="text-slate-500 hover:text-slate-300 underline underline-offset-2 disabled:opacity-40"
-                    >
-                      Regenerate
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMediaSheet('podcast')}
-                      className="block mt-1 text-slate-500 hover:text-slate-300 underline underline-offset-2"
-                    >
-                      View dialogue
-                    </button>
-                  </div>
-                ) : !course.modules?.length ? (
-                  <span className="text-amber-600">Add modules with content first</span>
-                ) : (
-                  <span className="text-slate-600">Pending generation…</span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Modules */}
-      <div className="space-y-3">
-        {generatingAllModules && (
-          <div className="flex items-center gap-3 px-4 py-3 bg-violet-950/30 border border-violet-500/20 rounded-xl text-violet-200 text-sm">
-            <SudarInlineLoader size="sm" className="shrink-0 text-slate-500" starFill="var(--background)" />
-            <div className="flex flex-col gap-0.5">
-              <span className="font-medium">Generating curriculum-aware content…</span>
-              {autoFillProgress && (
-                <span className="text-xs text-violet-400">{autoFillProgress}</span>
-              )}
-            </div>
-          </div>
-        )}
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white">
-            Modules <span className="text-slate-500 font-normal">({course.modules.length})</span>
-          </h2>
-          <div className="flex items-center gap-2">
             {course.modules.length === 0 && (
               <button
+                type="button"
                 onClick={generateOutline}
                 disabled={generatingOutline}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 text-violet-300 text-xs font-medium rounded-lg transition-all"
+                className="w-full flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium border border-blue-500/25 bg-blue-500/10 text-blue-200 disabled:opacity-60"
               >
-                {generatingOutline ? <SudarInlineLoader size="sm" className="h-3.5 w-auto text-violet-400" starFill="var(--background)" /> : <Sparkles className="w-3.5 h-3.5" />}
-                {generatingOutline ? 'Generating outline...' : 'Generate outline with AI'}
+                {generatingOutline ? <SudarInlineLoader size="sm" className="h-3.5 w-auto text-blue-300" starFill="var(--background)" /> : <Sparkles className="w-3.5 h-3.5" />}
+                {generatingOutline ? 'Outline…' : 'AI outline'}
               </button>
             )}
-            <button onClick={() => addModule()} className="flex items-center gap-1.5 text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
-              <Plus className="w-4 h-4" />Add module
+            <button
+              type="button"
+              onClick={() => addModule()}
+              className="w-full flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium text-zinc-300 hover:bg-white/[0.06] text-left"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add module
             </button>
           </div>
-        </div>
-
-        {course.modules.length === 0 && (
-          <div className="bg-slate-900 border border-slate-800 border-dashed rounded-xl p-10 text-center space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-violet-600/15 border border-violet-500/20 flex items-center justify-center mx-auto">
-              <Sparkles className="w-6 h-6 text-violet-400" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-slate-300 text-sm font-medium">No modules yet</p>
-              <p className="text-slate-500 text-xs">Generate a complete course outline with AI, or add modules manually.</p>
-            </div>
-            <div className="flex items-center justify-center gap-3">
-              <button
-                onClick={generateOutline}
-                disabled={generatingOutline}
-                className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                {generatingOutline ? <SudarInlineLoader size="sm" className="text-violet-400" starFill="var(--background)" /> : <Sparkles className="w-4 h-4" />}
-                {generatingOutline ? 'Generating...' : 'Generate outline with AI'}
-              </button>
-              <button onClick={() => addModule()} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors">
-                <LayoutList className="w-4 h-4" />Add manually
-              </button>
-            </div>
-          </div>
-        )}
-
-        {course.modules.map((mod, idx) => (
-          <div key={mod.id} id={`module-${idx + 1}`} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-            {/* Module header */}
-            <div className="flex items-center gap-3 px-4 py-3">
-              <GripVertical className="w-4 h-4 text-slate-600 shrink-0" />
-              <span className="text-xs font-medium text-slate-600 w-5">{idx + 1}</span>
-              <input
-                type="text" defaultValue={mod.title}
-                onBlur={(e) => { if (e.target.value !== mod.title) saveModule(mod.id, { title: e.target.value }) }}
-                className="flex-1 bg-transparent text-slate-200 text-sm font-medium focus:outline-none placeholder-slate-600"
-                placeholder="Module title"
-              />
-              <div className="flex items-center gap-1">
+          <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
+            {course.modules.map((m, idx) => (
+              <div key={m.id} className="flex items-center gap-1">
                 <button
-                  onClick={() => deleteModule(mod.id)}
-                  className="p-1.5 text-slate-600 hover:text-red-400 rounded-md hover:bg-slate-800 transition-all"
+                  type="button"
+                  onClick={() => setExpandedModule(m.id)}
+                  className={cn(
+                    'flex-1 text-left px-2 py-2 rounded-lg text-xs transition-all truncate',
+                    expandedModule === m.id
+                      ? 'border border-blue-500/30 bg-blue-500/10 text-zinc-100'
+                      : 'text-zinc-500 hover:bg-white/[0.06] hover:text-zinc-200'
+                  )}
+                >
+                  <span className="text-slate-600 mr-1">{idx + 1}.</span>
+                  {m.title || 'Untitled'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteModule(m.id)}
+                  className="p-1.5 text-slate-600 hover:text-red-400 rounded shrink-0"
+                  title="Delete module"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
-                <button
-                  onClick={() => setExpandedModule(expandedModule === mod.id ? null : mod.id)}
-                  className="p-1.5 text-slate-500 hover:text-slate-300 rounded-md hover:bg-slate-800 transition-all"
-                >
-                  {expandedModule === mod.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
               </div>
+            ))}
+          </nav>
+          <div className="p-3 border-t border-slate-800">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">AI prompt ideas</p>
+            <div className="flex flex-wrap gap-1">
+              {AI_PROMPT_CHIPS.map((idea) => (
+                <button
+                  key={idea}
+                  type="button"
+                  onClick={() => {
+                    if (expandedModule) {
+                      setAiPrompt((p) => ({ ...p, [expandedModule]: idea }))
+                      if (idea === 'Research from the web and cite sources') setIncludeWebResearch(true)
+                    }
+                  }}
+                  className="rounded px-1.5 py-0.5 text-[10px] border border-transparent text-zinc-500 hover:bg-blue-500/10 hover:text-blue-200"
+                >
+                  {idea}
+                </button>
+              ))}
             </div>
+          </div>
+        </aside>
 
-            {/* Module content editor */}
-            {expandedModule === mod.id && (
-              <div className="border-t border-slate-800 p-4 space-y-3">
-                {/* AI panel toggle */}
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-slate-500">Content saves automatically when you click outside.</p>
+        {/* Canvas + module options */}
+        <div className="flex-1 flex flex-col min-w-0 min-h-0">
+          {activeMod ? (
+            <>
+              <div className="shrink-0 space-y-3 border-b border-white/[0.06] p-4">
+                <input
+                  type="text"
+                  defaultValue={activeMod.title}
+                  key={activeMod.id + activeMod.title}
+                  onBlur={(e) => {
+                    if (e.target.value !== activeMod.title) saveModule(activeMod.id, { title: e.target.value })
+                  }}
+                  className="w-full bg-transparent text-white text-xl font-semibold focus:outline-none border-b border-transparent focus:border-slate-700 pb-1"
+                  placeholder="Module title"
+                />
+              </div>
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+                  <CourseModuleContent
+                    module={{
+                      id: activeMod.id,
+                      title: activeMod.title,
+                      content: activeMod.content as never,
+                      order_index: activeMod.order_index,
+                    }}
+                    wrapRegion={(key, node) => (
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            setActiveRegionKey(key)
+                          }
+                        }}
+                        className={cn(
+                          'cursor-pointer rounded-xl transition-[box-shadow]',
+                          activeRegionKey === key
+                            ? 'ring-2 ring-blue-500/70 ring-offset-2 ring-offset-zinc-950'
+                            : 'hover:ring-1 hover:ring-white/10'
+                        )}
+                        onClick={() => setActiveRegionKey(key)}
+                      >
+                        {node}
+                      </div>
+                    )}
+                  />
+                </div>
+                {activeMod && (
+                  <div className="shrink-0 px-3 pb-3 md:px-5">
+                    <CourseCanvasFloatingBar
+                      activeKey={activeRegionKey}
+                      content={activeMod.content}
+                      courseId={id}
+                      onContentChange={(c) => handleCanvasContentChange(activeMod.id, c)}
+                      onClearSelection={() => setActiveRegionKey(null)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="max-h-[45vh] shrink-0 space-y-4 overflow-y-auto border-t border-white/[0.06] bg-zinc-900/40 p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium text-slate-400">AI &amp; blocks</p>
                   <button
-                    onClick={() => setShowAiPanel(showAiPanel === mod.id ? null : mod.id)}
+                    type="button"
+                    onClick={() => setShowAiPanel(showAiPanel === activeMod.id ? null : activeMod.id)}
                     disabled={generatingAllModules}
                     className={cn(
                       'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all',
-                      showAiPanel === mod.id
-                        ? 'bg-violet-600/20 border border-violet-500/30 text-violet-300'
-                        : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-violet-300'
+                      showAiPanel === activeMod.id
+                        ? 'border border-blue-500/30 bg-blue-500/10 text-blue-200'
+                        : 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-800'
                     )}
                   >
                     <Wand2 className="w-3.5 h-3.5" />
-                    {getModuleBodyText(mod.content) ? 'Regenerate with AI' : 'Generate with AI'}
+                    {getModuleBodyText(activeMod.content) ? 'Regenerate with AI' : 'Generate with AI'}
                   </button>
                 </div>
 
-                {/* AI generation panel */}
-                {showAiPanel === mod.id && (
-                  <div className="bg-violet-950/30 border border-violet-500/20 rounded-xl p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-violet-400 shrink-0" />
-                      <p className="text-violet-200 text-xs font-medium">What should this module cover?</p>
-                    </div>
+                {showAiPanel === activeMod.id && (
+                  <div className="space-y-3 rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] p-4">
                     <textarea
-                      value={aiPrompt[mod.id] ?? ''}
-                      onChange={(e) => setAiPrompt((p) => ({ ...p, [mod.id]: e.target.value }))}
-                      placeholder={`e.g. "Explain ${mod.title} with real-world examples and key takeaways"`}
+                      value={aiPrompt[activeMod.id] ?? ''}
+                      onChange={(e) => setAiPrompt((p) => ({ ...p, [activeMod.id]: e.target.value }))}
+                      placeholder={`What should this module cover?`}
                       rows={2}
-                      className="w-full bg-slate-800/80 border border-violet-500/20 rounded-lg text-slate-200 text-xs p-3 focus:outline-none focus:border-violet-400 resize-none placeholder-slate-500"
+                      className="w-full resize-none rounded-xl border border-white/[0.08] bg-zinc-900/80 p-3 text-xs text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
                     />
-                    <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
+                    <label className="flex items-center gap-2 text-xs text-slate-400">
                       <input
                         type="checkbox"
                         checked={includeWebResearch}
                         onChange={(e) => setIncludeWebResearch(e.target.checked)}
-                        className="rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500"
+                        className="rounded border-slate-600"
                       />
-                      Include web research and citations
+                      Web research &amp; citations
                     </label>
-                    <p className="text-[10px] text-slate-500">When enabled, Sudar will search the web and cite sources in the content.</p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex gap-2">
                       <button
-                        onClick={() => generateModuleContent(mod.id)}
-                        disabled={generatingAllModules || !aiPrompt[mod.id]?.trim() || generatingModule === mod.id}
-                        className={cn(
-                          'flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg transition-all',
-                          includeWebResearch
-                            ? 'bg-violet-600 hover:bg-violet-500 disabled:bg-slate-700 disabled:text-slate-500 text-white'
-                            : 'bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:opacity-50'
-                        )}
+                        type="button"
+                        onClick={() => generateModuleContent(activeMod.id)}
+                        disabled={generatingAllModules || !aiPrompt[activeMod.id]?.trim() || generatingModule === activeMod.id}
+                        className="rounded-xl bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-500 disabled:opacity-50"
                       >
-                        {generatingModule === mod.id ? (
-                          <><SudarInlineLoader size="sm" className="h-3.5 w-auto text-violet-400" starFill="var(--background)" />Generating...</>
-                        ) : includeWebResearch ? (
-                          <><Sparkles className="w-3.5 h-3.5" />Research &amp; generate</>
-                        ) : (
-                          <><Sparkles className="w-3.5 h-3.5" />Generate content</>
-                        )}
+                        {generatingModule === activeMod.id ? 'Generating…' : 'Generate'}
                       </button>
-                      <button
-                        onClick={() => {
-                          setShowAiPanel(null)
-                          setAiPrompt((p) => ({ ...p, [mod.id]: '' }))
-                        }}
-                        className="px-3 py-1.5 text-slate-400 hover:text-slate-200 text-xs rounded-lg hover:bg-slate-800 transition-all"
-                      >
-                        Cancel
+                      <button type="button" onClick={() => setShowAiPanel(null)} className="text-xs text-slate-500">
+                        Close
                       </button>
                     </div>
                   </div>
                 )}
 
-                {lastGeneratedReferences?.moduleId === mod.id && lastGeneratedReferences.references.length > 0 && (
-                  <details className="rounded-lg border border-slate-700 bg-slate-800/60 overflow-hidden">
-                    <summary className="px-3 py-2 text-xs font-medium text-slate-300 cursor-pointer hover:bg-slate-800">
-                      References — generated with web sources ({lastGeneratedReferences.references.length})
-                    </summary>
-                    <ul className="px-3 py-2 space-y-1.5 list-none">
+                {lastGeneratedReferences?.moduleId === activeMod.id && lastGeneratedReferences.references.length > 0 && (
+                  <details className="rounded-lg border border-slate-700 bg-slate-800/60 overflow-hidden text-xs">
+                    <summary className="px-3 py-2 cursor-pointer text-slate-300">References ({lastGeneratedReferences.references.length})</summary>
+                    <ul className="px-3 py-2 space-y-1">
                       {lastGeneratedReferences.references.map((ref, i) => (
                         <li key={i}>
-                          <a
-                            href={ref.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[11px] text-violet-400 hover:text-violet-300 underline truncate block"
-                            title={ref.title}
-                          >
+                          <a href={ref.link} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
                             [{i + 1}] {ref.title || ref.link}
                           </a>
                         </li>
@@ -1254,168 +950,138 @@ export default function CourseEditorPage() {
                   </details>
                 )}
 
-                {/* Content: SCORM placeholder or block editor */}
-                {(mod.content as { type?: string })?.type === 'scorm' ? (
-                  <div className="rounded-xl border border-amber-500/20 bg-amber-950/20 p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold px-2 py-0.5 bg-amber-500/15 text-amber-400 border border-amber-500/20 rounded-full">SCORM module</span>
-                    </div>
-                    <p className="text-xs text-slate-400">
-                      This module is a SCORM SCO hosted in Supabase Storage. Learners experience it as an interactive iframe. You can edit the title above; the SCORM content itself is read-only here.
-                    </p>
-                    {(() => {
-                      const raw = (mod.content as { launch_url?: string }).launch_url ?? ''
-                      const url = raw.startsWith('http')
-                        ? (() => { const m = raw.match(/\/course-media\/(.+)$/); return m ? `/api/scorm/${m[1]}` : raw })()
-                        : raw ? `/api/scorm/${raw}` : '#'
-                      return (
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 underline underline-offset-2"
-                        >
-                          Open launch file ↗
-                        </a>
-                      )
-                    })()}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-medium text-slate-500 uppercase">Add block to page</p>
+                  <div className="flex flex-wrap gap-1">
+                    {(
+                      [
+                        'text', 'image', 'expandable', 'quiz', 'video', 'timeline', 'flipcard', 'hotspot', 'matching', 'tabs', 'audio', 'flashcard',
+                      ] as EditorBlockType[]
+                    ).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() =>
+                          handleCanvasContentChange(activeMod.id, appendEditorBlockToModuleContent(activeMod.content, t))
+                        }
+                        className="px-2 py-0.5 rounded text-[10px] bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200"
+                      >
+                        +{t}
+                      </button>
+                    ))}
                   </div>
-                ) : (
-                  <div className="relative">
-                    {generatingModule === mod.id && (
-                      <div className="absolute inset-0 bg-slate-900/80 rounded-lg flex items-center justify-center z-10">
-                        <div className="flex items-center gap-2 text-violet-300 text-sm">
-                          <SudarInlineLoader size="sm" className="text-violet-400" starFill="var(--background)" />
-                          Writing module content...
-                        </div>
-                      </div>
-                    )}
-                    <ModuleBlockEditor
-                      key={mod.id}
-                      content={mod.content}
-                      disabled={generatingModule === mod.id}
-                      placeholder="Write your module content here, or use 'Generate with AI' above and add blocks below..."
-                      onContentChange={(content) => saveModule(mod.id, { content })}
-                      courseId={id}
-                    />
-                  </div>
-                )}
+                </div>
 
-                {(mod.content as { type?: string })?.type !== 'scorm' && getModuleBodyText(mod.content) && (
-                  <p className="text-xs text-slate-600 text-right">
-                    {getModuleBodyText(mod.content).split(/\s+/).filter(Boolean).length} words
-                  </p>
-                )}
+                <ReorderModuleBlocksPanel
+                  content={activeMod.content}
+                  onContentChange={(c) => handleCanvasContentChange(activeMod.id, c)}
+                />
 
-                {/* Completion rule — how learner can complete this section */}
-                <div className="border-t border-slate-800 pt-4 space-y-3">
-                  <div className="flex items-center justify-between">
+                <div className="border-t border-slate-800 pt-3 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <Timer className="w-3.5 h-3.5 text-slate-500" />
                       <span className="text-xs font-medium text-slate-400">Completion rule</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <select
-                        value={course.settings?.module_completion?.[mod.id]?.type ?? 'mark_button'}
+                        value={course.settings?.module_completion?.[activeMod.id]?.type ?? 'mark_button'}
                         onChange={(e) => {
-                          const t = e.target.value as 'mark_button' | 'min_time'
-                          const next = { ...(course.settings || {}), module_completion: { ...(course.settings?.module_completion || {}), [mod.id]: t === 'min_time' ? { type: 'min_time' as const, min_time_secs: 60 } : { type: 'mark_button' as const } } }
+                          const typ = e.target.value as 'mark_button' | 'min_time'
+                          const next = {
+                            ...(course.settings || {}),
+                            module_completion: {
+                              ...(course.settings?.module_completion || {}),
+                              [activeMod.id]:
+                                typ === 'min_time'
+                                  ? { type: 'min_time' as const, min_time_secs: 60 }
+                                  : { type: 'mark_button' as const },
+                            },
+                          }
                           saveCourse({ settings: next })
                         }}
-                        className="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500"
+                        className="bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-2 py-1.5"
                       >
                         <option value="mark_button">Learner marks complete</option>
                         <option value="min_time">Minimum time on section</option>
                       </select>
-                      {course.settings?.module_completion?.[mod.id]?.type === 'min_time' && (
-                        <label className="flex items-center gap-1.5 text-xs text-slate-500">
+                      {course.settings?.module_completion?.[activeMod.id]?.type === 'min_time' && (
+                        <label className="flex items-center gap-1 text-xs text-slate-500">
                           <input
                             type="number"
                             min={1}
                             max={60}
-                            value={Math.round((course.settings?.module_completion?.[mod.id]?.min_time_secs ?? 60) / 60)}
+                            value={Math.round((course.settings?.module_completion?.[activeMod.id]?.min_time_secs ?? 60) / 60)}
                             onChange={(e) => {
                               const mins = Math.max(1, Math.min(60, Number(e.target.value) || 1))
-                              const next = { ...(course.settings || {}), module_completion: { ...(course.settings?.module_completion || {}), [mod.id]: { type: 'min_time' as const, min_time_secs: mins * 60 } } }
+                              const next = {
+                                ...(course.settings || {}),
+                                module_completion: {
+                                  ...(course.settings?.module_completion || {}),
+                                  [activeMod.id]: { type: 'min_time' as const, min_time_secs: mins * 60 },
+                                },
+                              }
                               saveCourse({ settings: next })
                             }}
-                            className="w-12 bg-slate-800 border border-slate-600 rounded px-1.5 py-1 text-slate-200 text-xs"
+                            className="w-10 bg-slate-800 border border-slate-600 rounded px-1 py-0.5 text-slate-200 text-xs"
                           />
                           min
                         </label>
                       )}
                     </div>
                   </div>
-                  <p className="text-[10px] text-slate-600">Require learners to spend minimum time (tab active) before they can mark this section complete.</p>
                 </div>
 
-                {/* Quiz section */}
-                <div className="border-t border-slate-800 pt-4 space-y-3">
-                  <div className="flex items-center justify-between">
+                <div className="border-t border-slate-800 pt-3 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <CircleHelp className="w-3.5 h-3.5 text-slate-500" />
-                      <span className="text-xs font-medium text-slate-400">Module Quiz</span>
-                      {mod.quiz?.questions?.length ? (
+                      <span className="text-xs font-medium text-slate-400">Module quiz</span>
+                      {activeMod.quiz?.questions?.length ? (
                         <span className="text-[10px] px-2 py-0.5 bg-green-500/15 text-green-400 border border-green-500/20 rounded-full">
-                          {mod.quiz.questions.length} questions
+                          {activeMod.quiz.questions.length} questions
                         </span>
                       ) : null}
                     </div>
                     <div className="flex items-center gap-1.5">
-                      {mod.quiz?.questions?.length ? (
+                      {activeMod.quiz?.questions?.length ? (
                         <button
                           type="button"
-                          onClick={() => deleteQuiz(mod.id)}
-                          title="Remove quiz from this module"
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-slate-700 hover:border-red-500/30 text-xs font-medium rounded-lg transition-all"
+                          onClick={() => deleteQuiz(activeMod.id)}
+                          className="text-xs text-slate-500 hover:text-red-400 px-2 py-1 rounded border border-slate-700"
                         >
-                          <Trash2 className="w-3 h-3" />Delete quiz
+                          Delete quiz
                         </button>
                       ) : null}
                       <button
-                        onClick={() => generateQuiz(mod.id)}
-                        disabled={generatingQuiz === mod.id || !getModuleBodyText(mod.content)?.trim()}
-                        title={!getModuleBodyText(mod.content)?.trim() ? 'Add content before generating a quiz' : ''}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 border border-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-all"
+                        type="button"
+                        onClick={() => generateQuiz(activeMod.id)}
+                        disabled={generatingQuiz === activeMod.id || !getModuleBodyText(activeMod.content)?.trim()}
+                        className="text-xs px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-300 disabled:opacity-40"
                       >
-                        {generatingQuiz === mod.id
-                          ? <><SudarInlineLoader size="sm" className="h-3 w-auto text-violet-400" starFill="var(--background)" />Generating...</>
-                          : mod.quiz?.questions?.length
-                            ? <><RefreshCcw className="w-3 h-3" />Regenerate quiz</>
-                            : <><CircleHelp className="w-3 h-3" />Generate quiz</>}
+                        {generatingQuiz === activeMod.id ? 'Generating…' : activeMod.quiz?.questions?.length ? 'Regenerate' : 'Generate quiz'}
                       </button>
                     </div>
                   </div>
-
-                  {mod.quiz?.questions?.length ? (
-                    <div className="space-y-2">
-                      {mod.quiz.questions.map((q, qi) => (
-                        <div key={q.id} className="bg-slate-800/60 border border-slate-700 rounded-lg p-3 space-y-2">
-                          <div className="flex items-start gap-1.5">
-                            <span className="text-slate-600 text-xs font-medium shrink-0 pt-0.5">Q{qi + 1}.</span>
+                  {activeMod.quiz?.questions?.length ? (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {activeMod.quiz.questions.map((q, qi) => (
+                        <div key={q.id} className="bg-slate-800/60 border border-slate-700 rounded-lg p-2 space-y-1.5 text-[11px]">
+                          <div className="flex gap-1">
+                            <span className="text-slate-600 pt-0.5">Q{qi + 1}</span>
                             <input
                               type="text"
                               defaultValue={q.question}
                               onBlur={(e) => {
                                 const v = e.target.value.trim()
-                                if (v !== q.question) updateQuizQuestion(mod.id, qi, { question: v })
+                                if (v !== q.question) updateQuizQuestion(activeMod.id, qi, { question: v })
                               }}
-                              placeholder="Question text"
-                              className="flex-1 min-w-0 bg-slate-900/80 border border-slate-600 rounded px-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-slate-500"
+                              className="flex-1 bg-slate-900/80 border border-slate-600 rounded px-2 py-1 text-slate-200"
                             />
-                            <button
-                              type="button"
-                              onClick={() => deleteQuizQuestion(mod.id, qi)}
-                              title="Remove this question"
-                              className="p-1 text-slate-500 hover:text-red-400 rounded shrink-0"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
                           </div>
-                          <div className="grid grid-cols-2 gap-1.5 pl-5">
+                          <div className="grid grid-cols-2 gap-1 pl-5">
                             {q.options.map((opt, oi) => (
-                              <div key={oi} className="flex items-center gap-1.5">
-                                <span className="text-[10px] text-slate-500 shrink-0 w-4">{String.fromCharCode(65 + oi)}.</span>
+                              <div key={oi} className="flex items-center gap-1">
                                 <input
                                   type="text"
                                   defaultValue={opt}
@@ -1424,22 +1090,17 @@ export default function CourseEditorPage() {
                                     if (v !== opt) {
                                       const options = [...q.options]
                                       options[oi] = v
-                                      updateQuizQuestion(mod.id, qi, { options })
+                                      updateQuizQuestion(activeMod.id, qi, { options })
                                     }
                                   }}
-                                  placeholder={`Option ${String.fromCharCode(65 + oi)}`}
-                                  className={cn(
-                                    'flex-1 min-w-0 bg-slate-900/80 border rounded px-2 py-1 text-[10px] placeholder-slate-500 focus:outline-none',
-                                    oi === q.correct ? 'border-green-500/50 text-green-400 focus:border-green-500' : 'border-slate-600 text-slate-400 focus:border-slate-500'
-                                  )}
+                                  className="flex-1 bg-slate-900/80 border border-slate-600 rounded px-1 py-0.5 text-slate-400"
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => updateQuizQuestion(mod.id, qi, { correct: oi })}
-                                  title="Mark as correct answer"
+                                  onClick={() => updateQuizQuestion(activeMod.id, qi, { correct: oi })}
                                   className={cn(
-                                    'shrink-0 w-5 h-5 rounded border flex items-center justify-center text-[10px] font-medium transition-colors',
-                                    oi === q.correct ? 'bg-green-500/20 border-green-500/50 text-green-400' : 'border-slate-600 text-slate-500 hover:border-slate-500'
+                                    'text-[10px] px-1 rounded',
+                                    oi === q.correct ? 'bg-green-500/20 text-green-400' : 'text-slate-600'
                                   )}
                                 >
                                   {oi === q.correct ? '✓' : '○'}
@@ -1447,52 +1108,111 @@ export default function CourseEditorPage() {
                               </div>
                             ))}
                           </div>
-                          <div className="flex items-start gap-1.5 pl-5">
-                            <span className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded font-medium shrink-0 mt-0.5">topic</span>
-                            <input
-                              type="text"
-                              defaultValue={q.topic}
-                              onBlur={(e) => {
-                                const v = e.target.value.trim()
-                                if (v !== q.topic) updateQuizQuestion(mod.id, qi, { topic: v })
-                              }}
-                              placeholder="Topic tag"
-                              className="flex-1 min-w-0 bg-slate-900/80 border border-slate-600 rounded px-2 py-1 text-[10px] text-slate-500 placeholder-slate-600 focus:outline-none focus:border-slate-500"
-                            />
-                          </div>
-                          <div className="pl-5 space-y-0.5">
-                            <span className="text-[10px] text-slate-500 font-medium">Explanation (shown after answer)</span>
-                            <input
-                              type="text"
-                              defaultValue={q.explanation}
-                              onBlur={(e) => {
-                                const v = e.target.value.trim()
-                                if (v !== q.explanation) updateQuizQuestion(mod.id, qi, { explanation: v })
-                              }}
-                              placeholder="Optional explanation"
-                              className="w-full bg-slate-900/80 border border-slate-600 rounded px-2 py-1 text-[10px] text-slate-400 placeholder-slate-600 focus:outline-none focus:border-slate-500"
-                            />
-                          </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-600 italic">
-                      {getModuleBodyText(mod.content)?.trim() ? 'No quiz yet — generate one above.' : 'Add module content first.'}
+                    <p className="text-[11px] text-slate-600 italic">
+                      {getModuleBodyText(activeMod.content)?.trim() ? 'No quiz yet.' : 'Add content first.'}
                     </p>
                   )}
                 </div>
               </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-10 text-slate-500 text-sm">
+              {course.modules.length === 0 ? (
+                <>
+                  <Sparkles className="mb-3 h-10 w-10 text-blue-500/40" />
+                  <p className="text-slate-400 mb-4">No modules yet — generate an outline or add one.</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={generateOutline}
+                      disabled={generatingOutline}
+                      className="rounded-xl bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-500 disabled:opacity-50"
+                    >
+                      {generatingOutline ? '…' : 'Generate outline'}
+                    </button>
+                    <button type="button" onClick={() => addModule()} className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-sm">
+                      Add module
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p>Select a module from the list.</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Inspector */}
+        <aside
+          id="course-wysiwyg-inspector"
+          className="hidden min-h-0 w-80 shrink-0 flex-col border-l border-white/[0.06] bg-zinc-900/98 xl:flex"
+        >
+          <div className="shrink-0 border-b border-white/[0.06] p-3">
+            <p className="text-[11px] font-medium tracking-wide text-zinc-500">Inspector</p>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+              Click the canvas to choose a region. Edits save automatically.
+            </p>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {activeMod && (
+              <CourseWysiwygInspector
+                content={activeMod.content}
+                activeKey={activeRegionKey}
+                onContentChange={(c) => handleCanvasContentChange(activeMod.id, c)}
+                courseId={id}
+              />
             )}
           </div>
-        ))}
+        </aside>
       </div>
+
+      {/* Mobile / small screens: inspector below */}
+      <div className="mt-2 overflow-hidden rounded-2xl border border-white/[0.06] bg-zinc-900/95 xl:hidden">
+        <div className="border-b border-white/[0.06] p-3">
+          <p className="text-[11px] font-medium text-zinc-500">Inspector</p>
+        </div>
+        {activeMod && (
+          <CourseWysiwygInspector
+            content={activeMod.content}
+            activeKey={activeRegionKey}
+            onContentChange={(c) => handleCanvasContentChange(activeMod.id, c)}
+            courseId={id}
+          />
+        )}
+      </div>
+
+      <CourseSettingsSheet
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        course={course}
+        isPublished={isPublished}
+        saveCourse={async (u) => { await saveCourse(u as Partial<Course>) }}
+        patchCoursePersonalization={patchCoursePersonalization}
+        learnerGroups={learnerGroups}
+        orgLearners={orgLearners}
+        generatingVideo={generatingVideo}
+        generatingPodcast={generatingPodcast}
+        videoGenStep={videoGenStep}
+        podcastGenStep={podcastGenStep}
+        generateVideoScriptAndAudio={generateVideoScriptAndAudio}
+        generatePodcastScriptAndAudio={generatePodcastScriptAndAudio}
+        handleVideoToggle={handleVideoToggle}
+        handlePodcastToggle={handlePodcastToggle}
+        setViewMediaSheet={setViewMediaSheet}
+      />
 
       <ProjectMediaPeek
         open={showMediaPeek}
         onClose={() => setShowMediaPeek(false)}
         course={course}
-        onScrollToVideoSection={() => document.getElementById('video-podcast-section')?.scrollIntoView({ behavior: 'smooth' })}
+        onScrollToVideoSection={() => {
+          setSettingsOpen(true)
+          setTimeout(() => document.getElementById('video-podcast-section')?.scrollIntoView({ behavior: 'smooth' }), 200)
+        }}
       />
 
       {viewMediaSheet && (

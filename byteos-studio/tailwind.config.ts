@@ -57,6 +57,13 @@ const config: Config = {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.78" },
         },
+        "sudar-star-rim-glow": {
+          "0%, 64%, 100%": { opacity: "0" },
+          "70%": { opacity: "0.55" },
+          "74%": { opacity: "0.08" },
+          "79%": { opacity: "0.42" },
+          "85%, 100%": { opacity: "0" },
+        },
         "sudar-loader-glow": {
           "0%, 100%": { opacity: "0.35", transform: "scale(0.9)" },
           "50%": { opacity: "0.7", transform: "scale(1.06)" },
@@ -66,6 +73,7 @@ const config: Config = {
         "sudar-logo-pulse": "sudar-logo-pulse 2.8s ease-in-out infinite",
         "sudar-logo-drift": "sudar-logo-drift 1.85s ease-in-out infinite",
         "sudar-star-shimmer": "sudar-star-shimmer 1.85s ease-in-out infinite",
+        "sudar-star-rim-glow": "sudar-star-rim-glow 6.5s ease-in-out infinite",
         "sudar-loader-glow": "sudar-loader-glow 2.2s ease-in-out infinite",
       },
     },

@@ -332,6 +332,15 @@ export function mainTextAndBlocksToContent(
   }
 }
 
+/** Append a new block after existing main text + blocks (used by WYSIWYG “Add block”). */
+export function appendEditorBlockToModuleContent(
+  content: ModuleContent | null | undefined,
+  type: EditorBlock['type']
+): ModuleContent {
+  const { mainText, blocks } = contentToMainTextAndBlocks(content)
+  return mainTextAndBlocksToContent(mainText, [...blocks, createNewBlock(type)])
+}
+
 export function createNewBlock(type: EditorBlock['type']): EditorBlock {
   const id = genId()
   switch (type) {

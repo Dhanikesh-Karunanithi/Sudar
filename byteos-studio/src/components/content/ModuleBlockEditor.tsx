@@ -43,6 +43,8 @@ export interface ModuleBlockEditorProps {
   placeholder?: string
   className?: string
   courseId?: string
+  /** Hide main text + add-block toolbar — use for single-block inspector (WYSIWYG panel). */
+  blocksOnly?: boolean
 }
 
 function BlockRow({
@@ -520,6 +522,7 @@ export function ModuleBlockEditor({
   placeholder = 'Write your module content here, or use blocks below...',
   className,
   courseId,
+  blocksOnly = false,
 }: ModuleBlockEditorProps) {
   const [mainText, setMainText] = useState(() => contentToMainTextAndBlocks(content).mainText)
   const [blocks, setBlocks] = useState<EditorBlock[]>(() => contentToMainTextAndBlocks(content).blocks)
@@ -846,19 +849,21 @@ export function ModuleBlockEditor({
 
   return (
     <div className={cn('space-y-3', className)}>
-      <textarea
-        ref={mainTextareaRef}
-        value={mainText}
-        onChange={(e) => setMainText(e.target.value)}
-        onBlur={handleMainTextBlur}
-        onContextMenu={handleMainContextMenu}
-        disabled={disabled}
-        rows={10}
-        placeholder={placeholder}
-        className="w-full bg-slate-800 border border-slate-700 rounded-lg text-slate-200 text-sm p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 resize-none leading-relaxed font-mono"
-      />
+      {!blocksOnly && (
+        <textarea
+          ref={mainTextareaRef}
+          value={mainText}
+          onChange={(e) => setMainText(e.target.value)}
+          onBlur={handleMainTextBlur}
+          onContextMenu={handleMainContextMenu}
+          disabled={disabled}
+          rows={10}
+          placeholder={placeholder}
+          className="w-full bg-slate-800 border border-slate-700 rounded-lg text-slate-200 text-sm p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 resize-none leading-relaxed font-mono"
+        />
+      )}
 
-      {contextMenu && (
+      {!blocksOnly && contextMenu && (
         <div
           ref={contextMenuRef}
           className="fixed z-50 min-w-[160px] py-1 rounded-lg border border-slate-700 bg-slate-800 shadow-xl"
@@ -885,6 +890,7 @@ export function ModuleBlockEditor({
         </div>
       )}
 
+      {!blocksOnly && (
       <div className="flex items-center gap-2">
         <span className="text-xs text-slate-500">Add block:</span>
         <div className="flex gap-1 flex-wrap">
@@ -930,20 +936,6 @@ export function ModuleBlockEditor({
           >
             <Video className="w-3 h-3" />Search video
           </button>
-          <input
-            ref={uploadInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp"
-            className="hidden"
-            onChange={handleUploadImage}
-          />
-          <input
-            ref={audioUploadInputRef}
-            type="file"
-            accept=".mp3,.wav,.ogg,.m4a,audio/mpeg,audio/wav,audio/ogg,audio/x-m4a,audio/mp4"
-            className="hidden"
-            onChange={handleAudioUpload}
-          />
           <button
             type="button"
             onClick={() => uploadInputRef.current?.click()}
@@ -955,6 +947,24 @@ export function ModuleBlockEditor({
           </button>
         </div>
       </div>
+      )}
+
+      <input
+        ref={uploadInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        className="hidden"
+        aria-hidden
+        onChange={handleUploadImage}
+      />
+      <input
+        ref={audioUploadInputRef}
+        type="file"
+        accept=".mp3,.wav,.ogg,.m4a,audio/mpeg,audio/wav,audio/ogg,audio/x-m4a,audio/mp4"
+        className="hidden"
+        aria-hidden
+        onChange={handleAudioUpload}
+      />
 
       {mediaSearchOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setMediaSearchOpen(false)}>

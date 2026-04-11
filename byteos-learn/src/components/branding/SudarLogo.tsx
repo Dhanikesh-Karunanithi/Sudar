@@ -53,6 +53,17 @@ export function SudarLogoMark({
           fillRule="nonzero"
           className={motion === 'loading' ? 'motion-safe:animate-sudar-star-shimmer' : undefined}
         />
+        {motion === 'pulse' && (
+          <path
+            d={STAR_PATH}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.35}
+            strokeLinejoin="round"
+            vectorEffect="nonScalingStroke"
+            className="motion-safe:animate-sudar-star-rim-glow pointer-events-none"
+          />
+        )}
       </g>
     </svg>
   )
