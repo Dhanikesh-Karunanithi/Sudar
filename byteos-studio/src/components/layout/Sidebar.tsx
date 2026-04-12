@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   Plug,
   Key,
+  Tags,
   HelpCircle,
   ShieldCheck,
   GraduationCap,
@@ -37,6 +38,7 @@ interface SidebarProps {
 const contentNavItems = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Courses', href: '/courses', icon: BookOpen },
+  { label: 'Tag library', href: '/settings/tags', icon: Tags },
   { label: 'Learning Paths', href: '/paths', icon: Route },
   { label: 'Analytics', href: '/analytics', icon: BarChart2 },
   { label: 'Training compliance', href: '/compliance', icon: Shield },

@@ -247,6 +247,67 @@ export type Database = {
         }
         Relationships: []
       }
+      tag_groups: {
+        Row: {
+          id: string
+          org_id: string
+          name: string
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          name: string
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      org_tags: {
+        Row: {
+          id: string
+          org_id: string
+          group_id: string | null
+          slug: string
+          label: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          group_id?: string | null
+          slug: string
+          label: string
+          created_at?: string
+        }
+        Update: {
+          group_id?: string | null
+          slug?: string
+          label?: string
+        }
+        Relationships: []
+      }
+      course_org_tags: {
+        Row: {
+          course_id: string
+          org_tag_id: string
+          created_at: string
+        }
+        Insert: {
+          course_id: string
+          org_tag_id: string
+          created_at?: string
+        }
+        Update: {
+          created_at?: string
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           id: string
@@ -255,6 +316,7 @@ export type Database = {
           title: string
           description: string | null
           thumbnail_url: string | null
+          banner_url: string | null
           status: string
           template: string | null
           difficulty: string | null
@@ -274,6 +336,7 @@ export type Database = {
           title: string
           description?: string | null
           thumbnail_url?: string | null
+          banner_url?: string | null
           status?: string
           template?: string | null
           difficulty?: string | null
@@ -290,6 +353,7 @@ export type Database = {
           title?: string
           description?: string | null
           thumbnail_url?: string | null
+          banner_url?: string | null
           status?: string
           template?: string | null
           difficulty?: string | null

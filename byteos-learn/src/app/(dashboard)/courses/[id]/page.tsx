@@ -1,6 +1,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowLeft, BookOpen, Clock, List, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { EnrollButton } from './EnrollButton'
@@ -18,7 +19,9 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
 
   const { data: course } = await admin
     .from('courses')
-    .select('id, title, description, difficulty, estimated_duration_mins, modules(id, title, order_index)')
+    .select(
+      'id, title, description, difficulty, estimated_duration_mins, tags, thumbnail_url, banner_url, modules(id, title, order_index)'
+    )
     .eq('id', params.id)
     .eq('status', 'published')
     .order('order_index', { referencedTable: 'modules', ascending: true })
@@ -55,32 +58,60 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
       </Link>
 
       {/* Hero */}
-      <div className="bg-primary/5 rounded-card-xl p-8 border border-primary/20">
-        <div className="flex items-start gap-5">
-          <div className="w-14 h-14 rounded-card bg-card shadow-sm border border-border flex items-center justify-center shrink-0">
-            <BookOpen className="w-7 h-7 text-primary" />
+      <div className="relative overflow-hidden rounded-card-xl border border-primary/20 bg-primary/5">
+        {course.banner_url ? (
+          <div className="relative h-40 w-full sm:h-48">
+            <Image
+              src={course.banner_url}
+              alt=""
+              fill
+              className="object-cover"
+              unoptimized
+              sizes="100vw"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/70 to-background/20" />
           </div>
-          <div className="flex-1 space-y-2">
-            <h1 className="text-2xl font-bold text-card-foreground">{course.title}</h1>
-            {course.description && (
-              <p className="text-muted-foreground text-sm leading-relaxed">{course.description}</p>
-            )}
-            <div className="flex items-center gap-3 flex-wrap pt-1">
-              {diff && (
-                <span className={cn('text-xs font-medium px-2.5 py-1 rounded-pill', diff.class)}>
-                  {diff.label}
-                </span>
+        ) : null}
+        <div className={cn('p-8', course.banner_url && '-mt-12 relative')}>
+          <div className="flex items-start gap-5">
+            <div className="w-14 h-14 rounded-card bg-card shadow-sm border border-border flex items-center justify-center shrink-0">
+              <BookOpen className="w-7 h-7 text-primary" />
+            </div>
+            <div className="flex-1 space-y-2">
+              <h1 className="text-2xl font-bold text-card-foreground">{course.title}</h1>
+              {course.description && (
+                <p className="text-muted-foreground text-sm leading-relaxed">{course.description}</p>
               )}
-              {course.estimated_duration_mins && (
+              {Array.isArray(course.tags) && course.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {course.tags.slice(0, 8).map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-[10px] font-medium bg-muted text-muted-foreground px-2 py-0.5 rounded-pill"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-3 flex-wrap pt-1">
+                {diff && (
+                  <span className={cn('text-xs font-medium px-2.5 py-1 rounded-pill', diff.class)}>
+                    {diff.label}
+                  </span>
+                )}
+                {course.estimated_duration_mins && (
+                  <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Clock className="w-4 h-4" />
+                    {course.estimated_duration_mins} minutes
+                  </span>
+                )}
                 <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  {course.estimated_duration_mins} minutes
+                  <List className="w-4 h-4" />
+                  {course.modules?.length ?? 0} modules
                 </span>
-              )}
-              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <List className="w-4 h-4" />
-                {course.modules?.length ?? 0} modules
-              </span>
+              </div>
             </div>
           </div>
         </div>

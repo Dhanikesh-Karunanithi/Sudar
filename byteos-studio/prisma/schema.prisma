@@ -77,6 +77,8 @@ model Organisation {
   orgInvites           OrgInvite[]
   integrationApiKeys   IntegrationApiKey[]
   learnerGroups        LearnerGroup[]
+  tagGroups            TagGroup[]
+  orgTags              OrgTag[]
 
   @@map("organisations")
 }
@@ -278,6 +280,55 @@ model SkillGap {
 }
 
 // ============================================
+// ORG MASTER TAGS (course categorization)
+// ============================================
+
+model TagGroup {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId     String   @map("org_id") @db.Uuid
+  name      String
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  tags OrgTag[]
+
+  @@index([orgId])
+  @@map("tag_groups")
+}
+
+model OrgTag {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId     String   @map("org_id") @db.Uuid
+  groupId   String?  @map("group_id") @db.Uuid
+  slug      String
+  label     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org           Organisation   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  group         TagGroup?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  courseOrgTags CourseOrgTag[]
+
+  @@unique([orgId, slug])
+  @@index([orgId])
+  @@index([groupId])
+  @@map("org_tags")
+}
+
+model CourseOrgTag {
+  courseId  String   @map("course_id") @db.Uuid
+  orgTagId  String   @map("org_tag_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  orgTag OrgTag @relation(fields: [orgTagId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, orgTagId])
+  @@index([orgTagId])
+  @@map("course_org_tags")
+}
+
+// ============================================
 // CONTENT
 // ============================================
 
@@ -288,6 +339,7 @@ model Course {
   title                 String
   description           String?
   thumbnailUrl          String?   @map("thumbnail_url")
+  bannerUrl             String?   @map("banner_url")
   status                String    @default("draft")
   template              String?
   difficulty            String?
@@ -301,11 +353,12 @@ model Course {
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
 
-  org         Organisation    @relation(fields: [orgId], references: [id])
-  creator     Profile         @relation("CourseCreator", fields: [createdBy], references: [id])
-  modules     Module[]
-  enrollments Enrollment[]
-  events      LearningEvent[]
+  org             Organisation    @relation(fields: [orgId], references: [id])
+  creator         Profile         @relation("CourseCreator", fields: [createdBy], references: [id])
+  modules         Module[]
+  enrollments     Enrollment[]
+  events          LearningEvent[]
+  courseOrgTags   CourseOrgTag[]
 
   @@map("courses")
 }

@@ -4,6 +4,7 @@
  */
 
 import type { RichInteractiveElement, QuizMode } from '@/types/content'
+import { isUnverifiedOrBadVideoUrl } from '@/lib/media/videoSearch'
 
 export type ComponentType =
   | 'timeline'
@@ -93,11 +94,16 @@ export const COMPONENT_PROFILES: ComponentProfile[] = [
 ]
 
 /** Build a prompt snippet describing available components for the LLM. */
-export function buildComponentPromptSnippet(): string {
-  return COMPONENT_PROFILES.map(
-    (p) =>
-      `- ${p.type}: ${p.description} Best for: ${p.bestFor.join(', ')}. Bloom: ${p.bloomLevels.join(', ')}.`
-  ).join('\n')
+export function buildComponentPromptSnippet(allowedTypes?: ComponentType[]): string {
+  const list = allowedTypes?.length
+    ? COMPONENT_PROFILES.filter((p) => allowedTypes.includes(p.type))
+    : COMPONENT_PROFILES
+  return list
+    .map(
+      (p) =>
+        `- ${p.type}: ${p.description} Best for: ${p.bestFor.join(', ')}. Bloom: ${p.bloomLevels.join(', ')}.`
+    )
+    .join('\n')
 }
 
 import { chatCompletion } from './chat'
@@ -140,41 +146,121 @@ export interface SelectedComponent {
   data: Record<string, unknown>
 }
 
+export interface SelectComponentsOptions {
+  /** Types the model must not use (e.g. recently used to force variety). */
+  excludeTypes?: ComponentType[]
+  /** When set, these types are removed from the available list entirely. */
+  disallowedTypes?: ComponentType[]
+  /**
+   * When false, video is not offered and any video URL from the model is dropped later.
+   * When true, do not invent video URLs — omit video or leave url empty (platform may fill from search).
+   */
+  allowVideoInPrompt?: boolean
+  /** If provided, instructs the model it may only reference this URL for a video component. */
+  verifiedVideoUrl?: string | null
+  /** Optional chat context for org private AI keys. */
+  chatContext?: import('@/lib/ai/chat').ChatCompletionContext
+}
+
+/** Drop or fix video components: no hallucinated YouTube URLs. */
+export function sanitizeVideoComponents(
+  components: SelectedComponent[],
+  opts: { verifiedWatchUrl: string | null; allowExternalVideo: boolean }
+): SelectedComponent[] {
+  let usedVerified = false
+  const out: SelectedComponent[] = []
+  for (const c of components) {
+    if (c.type !== 'video') {
+      out.push(c)
+      continue
+    }
+    if (!opts.allowExternalVideo) continue
+    const data = c.data && typeof c.data === 'object' ? { ...c.data } : {}
+    const url = typeof data.url === 'string' ? data.url.trim() : ''
+    if (opts.verifiedWatchUrl && !usedVerified) {
+      data.url = opts.verifiedWatchUrl
+      usedVerified = true
+      out.push({ type: 'video', data })
+      continue
+    }
+    if (url && !isUnverifiedOrBadVideoUrl(url)) {
+      out.push({ type: 'video', data })
+      continue
+    }
+    // Drop unverified / blocklisted / empty
+  }
+  return out
+}
+
 /** Call AI to select 1-3 interactive components for the module. Returns empty array on failure. */
 export async function selectComponentsForModule(
   moduleTitle: string,
   contentSummary: string,
-  moduleRole: ModuleRole
+  moduleRole: ModuleRole,
+  options?: SelectComponentsOptions
 ): Promise<SelectedComponent[]> {
-  const snippet = buildComponentPromptSnippet()
+  const exclude = new Set(options?.excludeTypes ?? [])
+  const disallowed = new Set(options?.disallowedTypes ?? [])
+  /** Default false when omitted — avoids offering video unless caller verified a URL. */
+  const allowVideo = options?.allowVideoInPrompt === true
+  const allTypes = COMPONENT_PROFILES.map((p) => p.type).filter((t) => !disallowed.has(t))
+  const allowedTypes = allTypes.filter((t) => {
+    if (t === 'video' && !allowVideo) return false
+    return !exclude.has(t)
+  })
+  if (allowedTypes.length === 0) return []
+
+  const snippet = buildComponentPromptSnippet(allowedTypes)
+  const videoRule = allowVideo
+    ? options?.verifiedVideoUrl
+      ? `If you include type "video", set data.url to exactly: "${options.verifiedVideoUrl}" and nothing else.`
+      : `Do NOT include type "video" — there is no verified embed URL for this module.`
+    : `Do NOT use type "video".`
+
+  const varietyRule =
+    exclude.size > 0
+      ? `Do NOT use these types (already used recently in this course): ${[...exclude].join(', ')}. Pick different types.`
+      : ''
+
   const systemPrompt = `You are an expert instructional designer. Given a module's title, content summary, and role in the course, select 1-3 interactive components that would be most effective for learning. Return ONLY valid JSON. No markdown, no explanation.
 
 Available components:
 ${snippet}
 
+${videoRule}
+${varietyRule}
+
 Return format: { "components": [ { "type": "<component type>", "data": { ... } }, ... ] }
-For each component, populate "data" with the full structure needed by that type (e.g. timeline needs "steps": [{ "title", "description" }], quiz needs "question", "options", "correctAnswer", "explanation"). Generate realistic, concise content that fits the module.`
+For each component, populate "data" with the full structure needed by that type (e.g. timeline needs "steps": [{ "title", "description" }], quiz needs "question", "options", "correctAnswer", "explanation"). Generate realistic, concise content that fits the module.
+For video data use shape { "url": string, "title"?: string } only when video is allowed and a verified URL was provided above.`
 
   const userPrompt = `Module title: "${moduleTitle}"
 Module role: ${moduleRole}
 Content summary: ${contentSummary.slice(0, 500)}
 
-Return JSON with 1-3 components (use "components" array). Only use types from the list. Generate full "data" for each.`
+Return JSON with 1-3 components (use "components" array). Only use types from the allowed list. Generate full "data" for each.`
 
   try {
-    const { content: text } = await chatCompletion({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      max_tokens: 1500,
-      temperature: 0.5,
-    })
+    const { content: text } = await chatCompletion(
+      {
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        max_tokens: 1500,
+        temperature: 0.5,
+      },
+      options?.chatContext
+    )
     if (!text) return []
     const jsonStr = extractJson(text)
     const parsed = JSON.parse(jsonStr) as { components?: SelectedComponent[] }
     const components = Array.isArray(parsed.components) ? parsed.components : []
-    return components.filter((c) => c && c.type && typeof c.data === 'object').slice(0, 3)
+    const filtered = components
+      .filter((c) => c && c.type && typeof c.data === 'object')
+      .filter((c) => allowedTypes.includes(c.type as ComponentType))
+      .slice(0, 3)
+    return filtered
   } catch {
     return []
   }

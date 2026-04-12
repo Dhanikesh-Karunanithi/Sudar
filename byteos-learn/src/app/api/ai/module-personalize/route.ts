@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { checkPersonalizationEligibility } from '@/lib/personalization/eligibility'
+import { loadPersonalizationMemoryForCourse, type PersonalizationSignal } from '@/lib/personalization/memoryContext'
 import { checkAndIncrementUsage } from '@/lib/usage-limits'
 import { moduleContentToPlainText } from '@/lib/learn/modulePlainText'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
@@ -73,11 +74,15 @@ export async function POST(request: NextRequest) {
   const existingMod = overlays[module_id] as Record<string, unknown> | undefined
   const cacheKey = mode === 'role_explain' ? 'role_explanation' : 'brief_3min'
   if (!force && existingMod?.[cacheKey] && typeof existingMod[cacheKey] === 'string') {
+    const cachedSignals = existingMod.personalization_signals_used
     return NextResponse.json({
       ok: true,
       cached: true,
       overlay: existingMod,
       module_id: module_id,
+      personalization_signals_used: Array.isArray(cachedSignals)
+        ? (cachedSignals as PersonalizationSignal[])
+        : undefined,
     })
   }
 
@@ -92,21 +97,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Module not found' }, { status: 404 })
   }
 
-  const [{ data: profile }, { data: learnerProfile }] = await Promise.all([
+  const [{ data: profile }, memoryBundle] = await Promise.all([
     admin.from('profiles').select('full_name').eq('id', user.id).single(),
-    admin.from('learner_profiles').select('ai_tutor_context').eq('user_id', user.id).single(),
+    loadPersonalizationMemoryForCourse(admin, { userId: user.id, courseId: course_id }),
   ])
 
-  const memory = (learnerProfile?.ai_tutor_context as Record<string, unknown>) ?? {}
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
-  const background = (memory.self_reported_background as string) ?? ''
-  const goals = (memory.learning_goals as string) ?? ''
-  const known = ((memory.known_concepts as string[]) ?? []).join(', ') || 'none yet'
-  const struggles = ((memory.struggles_with as string[]) ?? []).join(', ') || 'none identified'
 
   const plain = moduleContentToPlainText(modRow.content as never)
 
-  const blockedPers = await rejectSensitiveLearnerAiInput(admin, user.id, [modRow.title, plain, background, goals])
+  const blockedPers = await rejectSensitiveLearnerAiInput(admin, user.id, [
+    modRow.title,
+    plain,
+    memoryBundle.learnerProfileBlock,
+  ])
   if (blockedPers) return blockedPers
 
   const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
@@ -122,32 +126,41 @@ export async function POST(request: NextRequest) {
   }
   const chatCtx = { privateOpenAi: privateRuntime }
 
+  const styleHint = memoryBundle.explanationPreferencesActive
+    ? ' Match their preferred explanation style and length preferences shown above when choosing tone and density.'
+    : ''
+
   const rolePrompt = `You are Sudar. The learner "${firstName}" is studying this module.
 
 Module title: ${modRow.title}
-Their background (self-reported): ${background || 'not provided'}
-Learning goals: ${goals || 'not stated'}
-Known concepts: ${known}
-Areas they find harder: ${struggles}
+
+${memoryBundle.learnerProfileBlock}
+
+${memoryBundle.courseActivityBlock}
 
 Module content (source of truth — do not invent facts beyond it):
 ---
 ${plain}
 ---
 
-Write 2–4 short paragraphs explaining how this module applies to THEIR role and goals. Use "you". Plain text only, no markdown, no bullet lists. If background is thin, give a warm generic workplace angle. Max ~350 words.`
+Write 2–4 short paragraphs explaining how this module applies to THEIR role and goals. Use "you". Plain text only, no markdown, no bullet lists. If background is thin, give a warm generic workplace angle. Max ~350 words.${styleHint}
+Where this course surfaces topics they marked for review from quizzes, connect those ideas gently to this module without inventing new facts.`
 
   const briefPrompt = `You are Sudar. Create a ~3-minute read summary for "${firstName}".
 
 Module title: ${modRow.title}
-Their goals: ${goals || 'general learning'}
+
+${memoryBundle.learnerProfileBlock}
+
+${memoryBundle.courseActivityBlock}
 
 Module content:
 ---
 ${plain}
 ---
 
-Produce a dense but readable summary: key ideas only, plain text, no markdown, no bullets. Target 450–600 words so a quick reader finishes in about 3 minutes. Do not add facts not supported by the module.`
+Produce a dense but readable summary: key ideas only, plain text, no markdown, no bullets. Target 450–600 words so a quick reader finishes in about 3 minutes. Do not add facts not supported by the module.${styleHint}
+Prioritize ideas that relate to their stated goals or review topics when those align with the module; otherwise stay neutral and comprehensive.`
 
   const userPrompt = mode === 'role_explain' ? rolePrompt : briefPrompt
 
@@ -177,11 +190,13 @@ Produce a dense but readable summary: key ideas only, plain text, no markdown, n
   }
 
   const updatedAt = new Date().toISOString()
-  const prevEntry = (overlays[module_id] as Record<string, string>) ?? {}
+  const prevEntry = (overlays[module_id] as Record<string, unknown>) ?? {}
+  const personalization_signals_used: PersonalizationSignal[] = [...memoryBundle.signalsUsed]
   const nextEntry = {
     ...prevEntry,
     [cacheKey]: text,
     updated_at: updatedAt,
+    personalization_signals_used,
   }
   const nextOverlays = { ...overlays, [module_id]: nextEntry }
 
@@ -196,7 +211,7 @@ Produce a dense but readable summary: key ideas only, plain text, no markdown, n
     course_id,
     module_id,
     event_type: 'module_personalize',
-    payload: { mode },
+    payload: { mode, personalization_signals_used },
   })
 
   return NextResponse.json({
@@ -204,5 +219,6 @@ Produce a dense but readable summary: key ideas only, plain text, no markdown, n
     cached: false,
     overlay: nextEntry,
     module_id,
+    personalization_signals_used,
   })
 }

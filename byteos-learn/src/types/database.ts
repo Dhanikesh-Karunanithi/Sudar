@@ -139,6 +139,7 @@ export type Database = {
           title: string
           description: string | null
           thumbnail_url: string | null
+          banner_url: string | null
           status: string
           template: string | null
           difficulty: string | null

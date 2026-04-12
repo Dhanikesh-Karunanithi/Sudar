@@ -18,6 +18,8 @@ interface Course {
   tags: string[] | null
   estimated_duration_mins: number | null
   published_at: string | null
+  thumbnail_url?: string | null
+  banner_url?: string | null
 }
 
 interface Enrollment {
@@ -91,6 +93,19 @@ function CourseCardGrid({ course, enrollment }: { course: Course; enrollment?: E
       <div className="h-full bg-card rounded-card-lg border border-border hover:border-primary/30 hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col">
         {/* Accent strip */}
         <div className={`h-1 w-full bg-gradient-to-r ${diff?.strip ?? 'from-primary/40 to-primary/10'}`} />
+
+        {course.thumbnail_url ? (
+          <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+            <Image
+              src={course.thumbnail_url}
+              alt=""
+              fill
+              className="object-cover"
+              unoptimized
+              sizes="(max-width: 768px) 100vw, 33vw"
+            />
+          </div>
+        ) : null}
 
         <div className="p-4 flex flex-col gap-3 flex-1">
           {/* Header row */}

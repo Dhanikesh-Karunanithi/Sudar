@@ -41,6 +41,14 @@ export default function NewCoursePage() {
   const [documentFile, setDocumentFile] = useState<File | null>(null)
   const [documentUrl, setDocumentUrl] = useState('')
   const [scormFile, setScormFile] = useState<File | null>(null)
+  const [previewTagLabels, setPreviewTagLabels] = useState<string[]>([])
+  const [generatingMeta, setGeneratingMeta] = useState(false)
+
+  const [targetAudience, setTargetAudience] = useState('')
+  const [learningOutcomes, setLearningOutcomes] = useState('')
+  const [tone, setTone] = useState('')
+  const [industry, setIndustry] = useState('')
+  const [noExternalVideo, setNoExternalVideo] = useState(false)
 
   // ─── AI generation ──────────────────────────────────────────────
   async function handleCreateWithAI(e: React.FormEvent) {
@@ -53,10 +61,24 @@ export default function NewCoursePage() {
       setAiStep((s) => Math.min(s + 1, AI_STEPS.length - 1))
     }, 3500)
 
+    const outcomes = learningOutcomes
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
     const res = await fetch('/api/ai/generate-course', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: title.trim(), description: description.trim() || null, difficulty, num_modules: numModules }),
+      body: JSON.stringify({
+        title: title.trim(),
+        brief: description.trim() || null,
+        difficulty,
+        num_modules: numModules,
+        target_audience: targetAudience.trim() || undefined,
+        learning_outcomes: outcomes.length > 0 ? outcomes : undefined,
+        tone: tone.trim() || undefined,
+        industry: industry.trim() || undefined,
+        no_external_video: noExternalVideo || undefined,
+      }),
     })
 
     clearInterval(stepInterval)
@@ -70,6 +92,40 @@ export default function NewCoursePage() {
 
     const { course_id } = await res.json()
     router.push(`/courses/${course_id}`)
+  }
+
+  async function handleGenerateMetadata() {
+    if (!title.trim()) return
+    setGeneratingMeta(true)
+    setError(null)
+    try {
+      const outcomes = learningOutcomes
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean)
+      const res = await fetch('/api/ai/generate-course-metadata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          brief: description.trim() || null,
+          difficulty,
+          target_audience: targetAudience.trim() || undefined,
+          learning_outcomes: outcomes.length > 0 ? outcomes : undefined,
+          tone: tone.trim() || undefined,
+          industry: industry.trim() || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? 'Could not generate metadata')
+        return
+      }
+      if (data.description) setDescription(data.description)
+      if (Array.isArray(data.tag_labels)) setPreviewTagLabels(data.tag_labels)
+    } finally {
+      setGeneratingMeta(false)
+    }
   }
 
   // ─── Manual creation ─────────────────────────────────────────────
@@ -105,15 +161,31 @@ export default function NewCoursePage() {
     const stepInterval = setInterval(() => setAiStep((s) => Math.min(s + 1, AI_STEPS.length - 1)), 3500)
     try {
       let res: Response
+      const outcomes = learningOutcomes
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean)
       if (documentFile) {
         const form = new FormData()
         form.append('file', documentFile)
+        if (targetAudience.trim()) form.append('target_audience', targetAudience.trim())
+        if (tone.trim()) form.append('tone', tone.trim())
+        if (industry.trim()) form.append('industry', industry.trim())
+        if (noExternalVideo) form.append('no_external_video', 'true')
+        if (outcomes.length > 0) form.append('learning_outcomes', JSON.stringify(outcomes))
         res = await fetch('/api/ai/generate-from-document', { method: 'POST', body: form })
       } else {
         res = await fetch('/api/ai/generate-from-document', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: documentUrl.trim() }),
+          body: JSON.stringify({
+            url: documentUrl.trim(),
+            target_audience: targetAudience.trim() || undefined,
+            tone: tone.trim() || undefined,
+            industry: industry.trim() || undefined,
+            no_external_video: noExternalVideo || undefined,
+            learning_outcomes: outcomes.length > 0 ? outcomes : undefined,
+          }),
         })
       }
       clearInterval(stepInterval)
@@ -162,11 +234,9 @@ export default function NewCoursePage() {
       <div className="min-h-screen flex items-center justify-center p-8">
         <div className="max-w-sm w-full text-center space-y-6">
           <SudarBrandLoader
-            className="mx-auto"
+            className="mx-auto max-w-md"
             size="lg"
-            starFill="#0f172a"
-            markClassName="text-violet-300"
-            glowClassName="bg-violet-500/30"
+            frostClassName="border border-violet-500/20 bg-violet-950/20"
           />
           <div className="space-y-2">
             <h2 className="text-lg font-semibold text-white">Sudar is building your course</h2>
@@ -359,6 +429,45 @@ export default function NewCoursePage() {
                   className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 text-sm"
                 />
               </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-300">Target audience <span className="text-slate-600 text-xs font-normal">(optional)</span></label>
+                <input
+                  type="text"
+                  value={targetAudience}
+                  onChange={(e) => setTargetAudience(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 text-sm"
+                  placeholder="Who will take this course?"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-300">Learning outcomes <span className="text-slate-600 text-xs font-normal">(optional, one per line)</span></label>
+                <textarea
+                  value={learningOutcomes}
+                  onChange={(e) => setLearningOutcomes(e.target.value)}
+                  rows={2}
+                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 text-sm resize-none"
+                  placeholder="One outcome per line"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-300">Tone</label>
+                  <input type="text" value={tone} onChange={(e) => setTone(e.target.value)} className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm" placeholder="Optional" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-300">Industry</label>
+                  <input type="text" value={industry} onChange={(e) => setIndustry(e.target.value)} className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm" placeholder="Optional" />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={noExternalVideo}
+                  onChange={(e) => setNoExternalVideo(e.target.checked)}
+                  className="rounded border-slate-600 bg-slate-800 text-emerald-600 focus:ring-emerald-500/30"
+                />
+                Do not embed external videos
+              </label>
               <div className="flex items-center gap-3 pt-2">
                 <button type="submit" disabled={loading || (!documentFile && !documentUrl.trim())}
                   className="flex-1 py-2.5 font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-sm flex items-center justify-center gap-2">
@@ -406,15 +515,49 @@ export default function NewCoursePage() {
 
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-slate-300">
-                Description{' '}
-                {mode === 'ai' && <span className="text-violet-400 text-xs font-normal">(helps AI write better content)</span>}
-                {mode === 'manual' && <span className="text-slate-600 text-xs font-normal">(optional)</span>}
+                {mode === 'ai' ? (
+                  <>
+                    Author brief{' '}
+                    <span className="text-violet-400 text-xs font-normal">
+                      (your intent — Sudar writes the catalog description and tags)
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Catalog description{' '}
+                    <span className="text-slate-600 text-xs font-normal">
+                      (optional — use &quot;Generate with AI&quot; or write your own)
+                    </span>
+                  </>
+                )}
               </label>
               <textarea
                 value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
-                placeholder={mode === 'ai' ? 'What will learners achieve? What level are they at? The more detail, the better the AI output.' : 'What will learners achieve?'}
+                placeholder={
+                  mode === 'ai'
+                    ? 'What should this course cover? Who is it for? The more detail, the better the outline and catalog copy.'
+                    : 'Learner-facing course summary for the catalog…'
+                }
                 className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm resize-none"
               />
+              {mode === 'manual' && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleGenerateMetadata()}
+                    disabled={generatingMeta || !title.trim()}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-500/40 bg-indigo-600/15 px-3 py-1.5 text-xs font-medium text-indigo-200 hover:bg-indigo-600/25 disabled:opacity-50"
+                  >
+                    {generatingMeta ? <SudarInlineLoader size="sm" className="h-3 w-auto" starFill="#818cf8" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    Generate description &amp; tags with AI
+                  </button>
+                  {previewTagLabels.length > 0 && (
+                    <span className="text-[10px] text-slate-500">
+                      Tags: {previewTagLabels.join(', ')}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -433,20 +576,73 @@ export default function NewCoursePage() {
             </div>
 
             {mode === 'ai' && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-300">Number of modules</label>
-                <div className="flex gap-2">
-                  {numModulesOptions.map((n) => (
-                    <button key={n} type="button" onClick={() => setNumModules(n)}
-                      className={cn('px-4 py-2 rounded-lg border text-sm font-medium transition-all',
-                        numModules === n ? 'border-indigo-500 bg-indigo-600/10 text-white' : 'border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-600'
-                      )}>
-                      {n}
-                    </button>
-                  ))}
+              <>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-300">Target audience <span className="text-slate-600 text-xs font-normal">(optional)</span></label>
+                  <input
+                    type="text"
+                    value={targetAudience}
+                    onChange={(e) => setTargetAudience(e.target.value)}
+                    placeholder="e.g. New managers, engineers without prior security training"
+                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm"
+                  />
                 </div>
-                <p className="text-xs text-slate-600">Each module will be ~500 words of structured content.</p>
-              </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-300">Learning outcomes <span className="text-slate-600 text-xs font-normal">(optional, one per line)</span></label>
+                  <textarea
+                    value={learningOutcomes}
+                    onChange={(e) => setLearningOutcomes(e.target.value)}
+                    rows={3}
+                    placeholder={'After this course, learners can…\n…'}
+                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm resize-none"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-slate-300">Tone <span className="text-slate-600 text-xs font-normal">(optional)</span></label>
+                    <input
+                      type="text"
+                      value={tone}
+                      onChange={(e) => setTone(e.target.value)}
+                      placeholder="e.g. Professional, conversational"
+                      className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-slate-300">Industry / context <span className="text-slate-600 text-xs font-normal">(optional)</span></label>
+                    <input
+                      type="text"
+                      value={industry}
+                      onChange={(e) => setIndustry(e.target.value)}
+                      placeholder="e.g. Healthcare, SaaS, manufacturing"
+                      className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm"
+                    />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={noExternalVideo}
+                    onChange={(e) => setNoExternalVideo(e.target.checked)}
+                    className="rounded border-slate-600 bg-slate-800 text-violet-600 focus:ring-violet-500/30"
+                  />
+                  Do not embed external videos (YouTube, etc.)
+                </label>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-300">Number of modules</label>
+                  <div className="flex gap-2">
+                    {numModulesOptions.map((n) => (
+                      <button key={n} type="button" onClick={() => setNumModules(n)}
+                        className={cn('px-4 py-2 rounded-lg border text-sm font-medium transition-all',
+                          numModules === n ? 'border-indigo-500 bg-indigo-600/10 text-white' : 'border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-600'
+                        )}>
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-600">Sudar builds a curriculum-aware lesson for each module (varied structure and activities).</p>
+                </div>
+              </>
             )}
 
             <div className="flex items-center gap-3 pt-2">

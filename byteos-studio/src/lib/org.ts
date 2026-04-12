@@ -89,6 +89,20 @@ export async function getOrgIdAndRole(userId: string): Promise<{ orgId: string; 
  * Ensures the current user is an org Admin or Manager. Returns orgId.
  * Use in API routes that manage users or org settings.
  */
+/**
+ * Org members who can edit courses and the tag library (Admin, Manager, Creator).
+ */
+export async function requireOrgContentEditor(userId: string): Promise<string> {
+  if (await isSuperAdmin(userId)) {
+    return getOrCreateOrg(userId)
+  }
+  const { orgId, role } = await getOrgIdAndRole(userId)
+  if (role !== 'ADMIN' && role !== 'MANAGER' && role !== 'CREATOR') {
+    throw new Error('Forbidden: requires Admin, Manager, or Creator role')
+  }
+  return orgId
+}
+
 export async function requireOrgAdmin(userId: string): Promise<string> {
   if (await isSuperAdmin(userId)) {
     // Super admins are allowed to act as org admins; ensure they have an org for features that require one.

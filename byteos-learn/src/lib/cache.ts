@@ -11,7 +11,7 @@ export async function getCachedPublishedCourses() {
       const admin = createAdminClient()
       const { data } = await admin
         .from('courses')
-        .select('id, title, description, difficulty, tags, estimated_duration_mins, published_at')
+        .select('id, title, description, difficulty, tags, estimated_duration_mins, published_at, thumbnail_url, banner_url')
         .eq('status', 'published')
         .order('published_at', { ascending: false })
       return data ?? []

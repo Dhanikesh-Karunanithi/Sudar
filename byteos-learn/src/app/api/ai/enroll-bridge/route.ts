@@ -14,6 +14,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { checkPersonalizationEligibility } from '@/lib/personalization/eligibility'
+import {
+  loadPersonalizationMemoryForCourse,
+  mergeCourseWelcomeSignals,
+} from '@/lib/personalization/memoryContext'
 import { checkAndIncrementUsage } from '@/lib/usage-limits'
 
 export async function POST(request: NextRequest) {
@@ -72,11 +76,16 @@ export async function POST(request: NextRequest) {
   }
   const chatCtx = { privateOpenAi: privateRuntime }
 
-  // ── Load learner profile and memory ────────────────────────────────
-  const [{ data: profile }, { data: learnerProfile }, { data: newCourse }] = await Promise.all([
+  // ── Load learner profile, shared memory bundle, course ──────────────
+  const [{ data: profile }, { data: newCourse }, memoryBundle] = await Promise.all([
     admin.from('profiles').select('full_name').eq('id', user.id).single(),
-    admin.from('learner_profiles').select('ai_tutor_context, learning_pace, difficulty_comfort').eq('user_id', user.id).single(),
-    admin.from('courses').select('title, description, difficulty, modules(title, order_index)').eq('id', course_id).order('order_index', { referencedTable: 'modules', ascending: true }).single(),
+    admin
+      .from('courses')
+      .select('title, description, difficulty, modules(title, order_index)')
+      .eq('id', course_id)
+      .order('order_index', { referencedTable: 'modules', ascending: true })
+      .single(),
+    loadPersonalizationMemoryForCourse(admin, { userId: user.id, courseId: course_id }),
   ])
 
   if (!newCourse) return NextResponse.json({ error: 'Course not found' }, { status: 404 })
@@ -105,15 +114,9 @@ export async function POST(request: NextRequest) {
     }).join('\n')
   }
 
-  // ── Build memory summary ────────────────────────────────────────────
-  const memory = (learnerProfile?.ai_tutor_context as Record<string, unknown>) ?? {}
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
 
-  const knownConcepts = (memory.known_concepts as string[] | undefined) ?? []
-  const struggles = (memory.struggles_with as string[] | undefined) ?? []
-  const background = (memory.self_reported_background as string) ?? ''
-  const goals = (memory.learning_goals as string) ?? ''
-  const preferredStyle = (memory.preferred_explanation_style as string) ?? ''
+  const knownConcepts = memoryBundle.knownConceptsList
 
   const moduleTitles = ((newCourse.modules as Array<{ title: string; order_index: number }>) ?? [])
     .sort((a, b) => a.order_index - b.order_index)
@@ -131,12 +134,9 @@ ${moduleTitles}
 Prior learning history:
 ${priorCoursesText}
 
-What Sudar knows about this learner:
-- Known concepts: ${knownConcepts.length ? knownConcepts.join(', ') : 'none yet'}
-- Known struggles: ${struggles.length ? struggles.join(', ') : 'none identified'}
-- Background: ${background || 'not provided'}
-- Learning goals: ${goals || 'not stated'}
-- Preferred style: ${preferredStyle || 'not set'}
+${memoryBundle.learnerProfileBlock}
+
+${memoryBundle.courseActivityBlock}
 
 Write a short personalized welcome (3–4 sentences max). It should:
 1. Greet them by first name warmly
@@ -199,7 +199,11 @@ If there's no prior history, make it a genuine warm welcome that references what
     user_id: user.id,
     course_id,
     event_type: 'course_personalize',
-    payload: { enrollment_id, course_title: newCourse.title },
+    payload: {
+      enrollment_id,
+      course_title: newCourse.title,
+      personalization_signals_used,
+    },
   })
 
   return NextResponse.json({ ok: true, welcome })

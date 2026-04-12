@@ -545,3 +545,138 @@ body {
     transform: translate(-50%, -50%) scale(1);
   }
 }
+
+/* ── Course immersive experience packs (Learn shell; respects prefers-reduced-motion) ── */
+.course-experience-ambient {
+  contain: strict;
+}
+
+.course-experience-ambient-base {
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+}
+
+.course-experience-ambient-shimmer {
+  position: absolute;
+  inset: -20%;
+  opacity: 0.35;
+  mix-blend-mode: soft-light;
+}
+
+.course-experience-ambient[data-experience='ocean'] .course-experience-ambient-base {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 120%, rgba(14, 165, 233, 0.35), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 10% 20%, rgba(59, 130, 246, 0.2), transparent 45%),
+    linear-gradient(165deg, rgba(15, 23, 42, 0.25), transparent 60%);
+  animation: course-exp-ocean-base 14s ease-in-out infinite;
+}
+
+.course-experience-ambient[data-experience='ocean'] .course-experience-ambient-shimmer {
+  background: radial-gradient(circle at 30% 40%, rgba(34, 211, 238, 0.15), transparent 50%);
+  animation: course-exp-ocean-shimmer 18s ease-in-out infinite;
+}
+
+.course-experience-ambient[data-experience='forest'] .course-experience-ambient-base {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 100%, rgba(22, 163, 74, 0.28), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 85% 15%, rgba(180, 83, 9, 0.12), transparent 45%),
+    linear-gradient(180deg, rgba(20, 30, 25, 0.2), transparent 65%);
+  animation: course-exp-forest-base 16s ease-in-out infinite;
+}
+
+.course-experience-ambient[data-experience='forest'] .course-experience-ambient-shimmer {
+  background: radial-gradient(circle at 70% 30%, rgba(74, 222, 128, 0.12), transparent 55%);
+  animation: course-exp-forest-shimmer 20s ease-in-out infinite;
+}
+
+.course-experience-ambient[data-experience='space'] .course-experience-ambient-base {
+  background:
+    radial-gradient(ellipse 100% 80% at 50% -10%, rgba(76, 29, 149, 0.35), transparent 55%),
+    radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.12), transparent 40%),
+    linear-gradient(200deg, rgba(15, 23, 42, 0.65), rgba(30, 27, 75, 0.35));
+  animation: course-exp-space-base 22s linear infinite;
+}
+
+.course-experience-ambient[data-experience='space'] .course-experience-ambient-shimmer {
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 80% 40%, rgba(255, 255, 255, 0.25), transparent),
+    radial-gradient(1px 1px at 40% 70%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(1px 1px at 65% 85%, rgba(255, 255, 255, 0.3), transparent);
+  background-size: 100% 100%;
+  animation: course-exp-space-shimmer 24s linear infinite;
+}
+
+@keyframes course-exp-ocean-base {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, -1%, 0) scale(1.02);
+  }
+}
+
+@keyframes course-exp-ocean-shimmer {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate3d(-3%, 2%, 0);
+    opacity: 0.45;
+  }
+}
+
+@keyframes course-exp-forest-base {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-1.5%, 1%, 0);
+  }
+}
+
+@keyframes course-exp-forest-shimmer {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: rotate(0deg);
+  }
+  50% {
+    opacity: 0.4;
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes course-exp-space-base {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-3%, 2%, 0);
+  }
+}
+
+@keyframes course-exp-space-shimmer {
+  0% {
+    opacity: 0.25;
+  }
+  100% {
+    opacity: 0.38;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .course-experience-ambient .course-experience-ambient-base,
+  .course-experience-ambient .course-experience-ambient-shimmer {
+    animation: none !important;
+  }
+}
+
+[data-motion='calm'] .course-experience-ambient {
+  display: none;
+}

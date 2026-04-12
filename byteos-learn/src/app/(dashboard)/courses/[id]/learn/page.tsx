@@ -1,6 +1,6 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
-import { CourseViewer } from './CourseViewer'
+import { CourseViewer, type ModulePersonalizationOverlay } from './CourseViewer'
 import type { ComponentProps } from 'react'
 import { resolvePersonalizationAccess } from '@/lib/personalization/eligibility'
 import type { PersonalizationEligibility } from '@/lib/personalization/eligibility'
@@ -93,7 +93,7 @@ export default async function CourseLearnPage({
         hasConsent: personalizationAccess.hasConsent,
       }}
       personalizationOverlays={
-        (enrollment.personalization_overlays as Record<string, Record<string, string>> | null) ?? null
+        (enrollment.personalization_overlays as Record<string, ModulePersonalizationOverlay> | null) ?? null
       }
     />
   )
