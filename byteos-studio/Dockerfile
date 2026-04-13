@@ -37,6 +37,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Build the application
 RUN npm run build
 
+# Debug: show what was built
+RUN echo "=== Contents of .next/standalone ===" && \
+    ls -la .next/standalone && \
+    echo "=== Looking for server.js in standalone ===" && \
+    find .next/standalone -name "server.js" 2>/dev/null
+
 # Stage 3: Runner
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -49,18 +55,26 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy necessary files from builder
-# Next.js standalone in monorepo outputs to .next/standalone/byteos-studio/
+# Copy standalone output - Next.js monorepo structure has nested directories
+# The standalone output preserves the project structure under .next/standalone/
 COPY --from=builder /app/.next/standalone ./
+
+# Check if server.js is in a subdirectory and move it to root
+RUN if [ -f app/server.js ]; then \
+        echo "Found server.js in app/ - moving to root"; \
+        mv app/* . 2>/dev/null || true; \
+    fi
+
+# Copy static files and public assets
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
 # Copy prisma schema and migrations if needed at runtime
 COPY --from=builder /app/prisma ./prisma
 
-# Debug: list contents to find server.js location
-RUN echo "=== Contents of /app ===" && ls -la /app && \
-    echo "=== Looking for server.js ===" && find /app -name "server.js" 2>/dev/null
+# Debug: show final structure
+RUN echo "=== Final /app structure ===" && ls -la /app && \
+    echo "=== server.js location ===" && find /app -name "server.js" -maxdepth 3
 
 # Set correct ownership
 RUN chown -R nextjs:nodejs /app
@@ -76,5 +90,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000}/ || exit 1
 
 # Start the application
-# server.js location depends on monorepo structure
-CMD ["sh", "-c", "node server.js 2>/dev/null || node byteos-studio/server.js 2>/dev/null || (echo 'Looking for server.js:' && find /app -name 'server.js' && exit 1)"]
+CMD ["node", "server.js"]
