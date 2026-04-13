@@ -56,14 +56,7 @@ RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
 # Copy standalone output - Next.js monorepo structure has nested directories
-# The standalone output preserves the project structure under .next/standalone/
 COPY --from=builder /app/.next/standalone ./
-
-# Check if server.js is in a subdirectory and move it to root
-RUN if [ -f app/server.js ]; then \
-        echo "Found server.js in app/ - moving to root"; \
-        mv app/* . 2>/dev/null || true; \
-    fi
 
 # Copy static files and public assets
 COPY --from=builder /app/.next/static ./.next/static
@@ -72,9 +65,19 @@ COPY --from=builder /app/public ./public
 # Copy prisma schema and migrations if needed at runtime
 COPY --from=builder /app/prisma ./prisma
 
-# Debug: show final structure
-RUN echo "=== Final /app structure ===" && ls -la /app && \
-    echo "=== server.js location ===" && find /app -name "server.js" -maxdepth 3
+# Debug: show structure
+RUN echo "=== /app structure ===" && ls -la /app && \
+    echo "=== /app/app structure ===" && ls -la /app/app 2>/dev/null || true && \
+    echo "=== Looking for server.js ===" && find /app -name "server.js" -maxdepth 3
+
+# If server.js is in app/ subdirectory, create symlinks for .next and public
+# so relative paths work correctly when running from app/
+RUN if [ -f app/server.js ]; then \
+        echo "server.js found in app/ - creating symlinks"; \
+        ln -s /app/.next /app/app/.next; \
+        ln -s /app/public /app/app/public; \
+        ln -s /app/prisma /app/app/prisma 2>/dev/null || true; \
+    fi
 
 # Set correct ownership
 RUN chown -R nextjs:nodejs /app
@@ -90,4 +93,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000}/ || exit 1
 
 # Start the application
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "if [ -f server.js ]; then exec node server.js; elif [ -f app/server.js ]; then cd app && exec node server.js; else echo 'ERROR: server.js not found' && ls -la && exit 1; fi"]
