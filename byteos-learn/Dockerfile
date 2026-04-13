@@ -50,9 +50,10 @@ RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
 # Copy necessary files from builder
-COPY --from=builder /app/public ./public
+# Next.js standalone in monorepo outputs to .next/standalone/byteos-learn/
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
 # Note: byteos-learn does not have a prisma directory (uses Supabase directly)
 
@@ -70,5 +71,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3001}/ || exit 1
 
 # Start the application
-# PORT can be set at runtime via environment variable
-CMD ["sh", "-c", "node server.js"]
+# In monorepo, server.js may be in a subdirectory named after the project
+CMD ["sh", "-c", "if [ -f server.js ]; then node server.js; elif [ -f byteos-learn/server.js ]; then cd byteos-learn && node server.js; else echo 'server.js not found' && ls -la && exit 1; fi"]

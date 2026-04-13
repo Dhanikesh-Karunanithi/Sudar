@@ -50,9 +50,10 @@ RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
 # Copy necessary files from builder
-COPY --from=builder /app/public ./public
+# Next.js standalone in monorepo outputs to .next/standalone/byteos-studio/
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
 # Copy prisma schema and migrations if needed at runtime
 COPY --from=builder /app/prisma ./prisma
@@ -71,5 +72,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000}/ || exit 1
 
 # Start the application
-# PORT can be set at runtime via environment variable
-CMD ["sh", "-c", "node server.js"]
+# In monorepo, server.js may be in a subdirectory named after the project
+CMD ["sh", "-c", "if [ -f server.js ]; then node server.js; elif [ -f byteos-studio/server.js ]; then cd byteos-studio && node server.js; else echo 'server.js not found' && ls -la && exit 1; fi"]
