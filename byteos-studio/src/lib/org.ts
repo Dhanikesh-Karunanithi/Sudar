@@ -20,10 +20,25 @@ export async function getOrCreateOrg(userId: string): Promise<string> {
 
   if (membership?.org_id) return membership.org_id
 
-  // Create a personal workspace org — use admin client to bypass RLS
+  // Ensure profile exists first (required for org_members foreign key)
+  const { data: existingProfile } = await admin
+    .from('profiles')
+    .select('id')
+    .eq('id', userId)
+    .single()
+
+  if (!existingProfile) {
+    // Create profile if it doesn't exist
+    await admin
+      .from('profiles')
+      .upsert({ id: userId, role: 'CREATOR' }, { onConflict: 'id' })
+  }
+
+  // Get user's profile for full_name
   const { data: profile } = await supabase
     .from('profiles')
     .select('full_name')
+    .eq('id', userId)
     .single()
 
   const orgName = profile?.full_name
@@ -86,7 +101,7 @@ export async function isSuperAdmin(userId: string): Promise<boolean> {
     .eq('id', userId)
     .single()
 
-  return (profile as { role?: string } | null)?.role === 'super_admin'
+  return (profile as { role?: string } | null)?.role === 'SUPER_ADMIN'
 }
 
 /**
