@@ -58,6 +58,10 @@ COPY --from=builder /app/public ./public
 # Copy prisma schema and migrations if needed at runtime
 COPY --from=builder /app/prisma ./prisma
 
+# Debug: list contents to find server.js location
+RUN echo "=== Contents of /app ===" && ls -la /app && \
+    echo "=== Looking for server.js ===" && find /app -name "server.js" 2>/dev/null
+
 # Set correct ownership
 RUN chown -R nextjs:nodejs /app
 
@@ -72,5 +76,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000}/ || exit 1
 
 # Start the application
-# In monorepo, server.js may be in a subdirectory named after the project
-CMD ["sh", "-c", "if [ -f server.js ]; then node server.js; elif [ -f byteos-studio/server.js ]; then cd byteos-studio && node server.js; else echo 'server.js not found' && ls -la && exit 1; fi"]
+# server.js location depends on monorepo structure
+CMD ["sh", "-c", "node server.js 2>/dev/null || node byteos-studio/server.js 2>/dev/null || (echo 'Looking for server.js:' && find /app -name 'server.js' && exit 1)"]
