@@ -14,7 +14,9 @@ from src.api.logging_middleware import LoggingMiddleware
 from src.sudarplay.router import router as sudarplay_router
 
 # CORS: default localhost; in production set CORS_ORIGINS (comma-separated) e.g. https://sudar-studio.vercel.app,https://sudar-learn.vercel.app
-_default_origins = ["http://localhost:3000", "http://localhost:3001"]
+# CORS_DEFAULT_ORIGINS provides fallback when CORS_ORIGINS is not set
+_default_origins_str = os.getenv("CORS_DEFAULT_ORIGINS", "http://localhost:3000,http://localhost:3001")
+_default_origins = [o.strip() for o in _default_origins_str.split(",") if o.strip()]
 _cors_origins_env = os.getenv("CORS_ORIGINS", "")
 CORS_ORIGINS = [o.strip() for o in _cors_origins_env.split(",") if o.strip()] or _default_origins
 

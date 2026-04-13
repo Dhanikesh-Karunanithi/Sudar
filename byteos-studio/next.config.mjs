@@ -16,8 +16,15 @@ const distDirWin = useExternalDistOnWin
     )
   : undefined
 
+// Base path for relative path deployment (e.g., /studio when deployed under same domain)
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || undefined
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable standalone output for Docker deployment
+  output: 'standalone',
+  // Base path for relative path deployment
+  ...(basePath ? { basePath } : {}),
   ...(distDirWin ? { distDir: distDirWin } : {}),
   // Monorepo: avoid inferring a parent folder (e.g. stray lockfile outside the repo) as the workspace root
   outputFileTracingRoot: path.join(__dirname, '..'),

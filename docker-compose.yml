@@ -1,0 +1,172 @@
+# Sudar — Production Docker Compose Configuration
+# Unified deployment for Studio, Learn, and Intelligence services
+#
+# Usage:
+#   1. Copy .env.docker.example to .env and configure all variables
+#   2. Run: docker-compose up -d --build
+#   3. Access services at configured ports (default: Studio:3000, Learn:3001, Intelligence:8000)
+
+services:
+  # ============================================
+  # Studio — Admin/Creator Application
+  # ============================================
+  studio:
+    build:
+      context: ./byteos-studio
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH_STUDIO:-}
+    container_name: sudar-studio
+    restart: unless-stopped
+    ports:
+      - "${PORT_STUDIO:-3000}:${PORT_STUDIO:-3000}"
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT_STUDIO:-3000}
+      # Supabase
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      # Database (Prisma)
+      - DATABASE_URL=${DATABASE_URL}
+      # Intelligence API
+      - NEXT_PUBLIC_INTELLIGENCE_URL=${INTELLIGENCE_URL:-http://intelligence:8000}
+      # Auth
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL_STUDIO:-http://localhost:${PORT_STUDIO:-3000}}
+      # AI Providers
+      - TOGETHER_API_KEY=${TOGETHER_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # Base Path (for relative path deployment)
+      - NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH_STUDIO:-}
+    networks:
+      - sudar-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${PORT_STUDIO:-3000}/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      intelligence:
+        condition: service_healthy
+
+  # ============================================
+  # Learn — Learner Application
+  # ============================================
+  learn:
+    build:
+      context: ./byteos-learn
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH_LEARN:-}
+    container_name: sudar-learn
+    restart: unless-stopped
+    ports:
+      - "${PORT_LEARN:-3001}:${PORT_LEARN:-3001}"
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT_LEARN:-3001}
+      # Supabase
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      # Database (Prisma)
+      - DATABASE_URL=${DATABASE_URL}
+      # Intelligence API
+      - NEXT_PUBLIC_INTELLIGENCE_URL=${INTELLIGENCE_URL:-http://intelligence:8000}
+      # Auth
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL_LEARN:-http://localhost:${PORT_LEARN:-3001}}
+      # AI Providers
+      - TOGETHER_API_KEY=${TOGETHER_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # Base Path (for relative path deployment)
+      - NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH_LEARN:-}
+    networks:
+      - sudar-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${PORT_LEARN:-3001}/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      intelligence:
+        condition: service_healthy
+
+  # ============================================
+  # Intelligence — AI Engine
+  # ============================================
+  intelligence:
+    build:
+      context: ./byteos-intelligence
+      dockerfile: Dockerfile
+    container_name: sudar-intelligence
+    restart: unless-stopped
+    ports:
+      - "${PORT_INTEL:-8000}:${PORT_INTEL:-8000}"
+    environment:
+      - ENV=production
+      - PORT=${PORT_INTEL:-8000}
+      # Supabase
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      # CORS Configuration (comma-separated origins)
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
+      - CORS_DEFAULT_ORIGINS=${CORS_DEFAULT_ORIGINS:-http://localhost:3000,http://localhost:3001}
+      # AI Providers
+      - TOGETHER_API_KEY=${TOGETHER_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    networks:
+      - sudar-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:${PORT_INTEL:-8000}/api/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ============================================
+# Network Configuration
+# ============================================
+networks:
+  sudar-network:
+    driver: bridge
+    name: sudar-network

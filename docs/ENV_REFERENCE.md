@@ -154,6 +154,65 @@ Security hardening vars:
 | `RESEND_FROM` | Studio | From address (e.g. `Sudar <onboarding@resend.dev>`). |
 | `LANGFUSE_*` | Studio | Optional observability (Langfuse). |
 
+
+---
+
+## Docker Deployment
+
+For containerized production deployment, use the root `.env` file with Docker Compose. See [docs/DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for full guide.
+
+### Port Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT_STUDIO` | `3000` | Studio container port (host mapping) |
+| `PORT_LEARN` | `3001` | Learn container port (host mapping) |
+| `PORT_INTEL` | `8000` | Intelligence container port (host mapping) |
+
+### Relative Path Deployment
+
+For deploying all services under a single domain with different base paths:
+
+| Variable | App | Description |
+|----------|-----|-------------|
+| `NEXT_PUBLIC_BASE_PATH_STUDIO` | Studio | Base path for Studio (e.g., `/studio`). Set at build time. |
+| `NEXT_PUBLIC_BASE_PATH_LEARN` | Learn | Base path for Learn (e.g., `/learn`). Set at build time. |
+
+**Important**: These are build-time variables. After changing, rebuild containers:
+```bash
+docker compose build studio learn
+docker compose up -d
+```
+
+### CORS Configuration (Intelligence)
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `CORS_ORIGINS` | Production CORS origins (comma-separated). Takes precedence over `CORS_DEFAULT_ORIGINS`. | `https://sudar.example.com` |
+| `CORS_DEFAULT_ORIGINS` | Development CORS origins (fallback). | `http://localhost:3000,http://localhost:3001` |
+
+### Internal Service URLs
+
+When using Docker Compose, services communicate via Docker network:
+
+| Variable | Docker Value | Description |
+|----------|--------------|-------------|
+| `INTELLIGENCE_URL` | `http://intelligence:8000` | Internal Docker network URL for Intelligence |
+
+### Docker Compose Quick Start
+
+```bash
+# 1. Copy environment template
+cp .env.docker.example .env
+
+# 2. Edit .env with your values
+# 3. Build and start
+docker compose up -d --build
+
+# 4. Check status
+docker compose ps
+```
+
 ---
 
 *This document is the canonical reference. Studio’s "AI & API Keys" page and in-app "How to get this key" steps are driven from the same provider list where possible.*
