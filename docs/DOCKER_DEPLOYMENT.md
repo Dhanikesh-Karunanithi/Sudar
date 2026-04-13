@@ -94,6 +94,9 @@ curl http://localhost:3000
 # Check Learn (default port 3001)
 curl http://localhost:3001
 
+# Check Website (default port 3002)
+curl http://localhost:3002
+
 # Check Intelligence health (default port 8000)
 curl http://localhost:8000/api/health
 ```
@@ -115,13 +118,19 @@ curl http://localhost:8000/api/health
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PORT_STUDIO` | Studio container port | `3000` |
-| `PORT_LEARN` | Learn container port | `3001` |
-| `PORT_INTEL` | Intelligence container port | `8000` |
+| `PORT_STUDIO_HOST` | Studio host port | `3000` |
+| `PORT_STUDIO_CONTAINER` | Studio container port | `3000` |
+| `PORT_LEARN_HOST` | Learn host port | `3001` |
+| `PORT_LEARN_CONTAINER` | Learn container port | `3001` |
+| `PORT_WEBSITE_HOST` | Website host port | `3002` |
+| `PORT_WEBSITE_CONTAINER` | Website container port | `3002` |
+| `PORT_INTEL_HOST` | Intelligence host port | `8000` |
+| `PORT_INTEL_CONTAINER` | Intelligence container port | `8000` |
 | `NEXT_PUBLIC_BASE_PATH_STUDIO` | Base path for Studio | (none) |
 | `NEXT_PUBLIC_BASE_PATH_LEARN` | Base path for Learn | (none) |
+| `NEXT_PUBLIC_BASE_PATH_WEBSITE` | Base path for Website | (none) |
 | `CORS_ORIGINS` | Production CORS origins | (none) |
-| `CORS_DEFAULT_ORIGINS` | Development CORS origins | `http://localhost:3000,http://localhost:3001` |
+| `CORS_DEFAULT_ORIGINS` | Development CORS origins | `http://localhost:3000,http://localhost:3001,http://localhost:3002` |
 | `OPENAI_API_KEY` | OpenAI API key | (none) |
 | `ANTHROPIC_API_KEY` | Anthropic API key | (none) |
 
@@ -157,11 +166,19 @@ CORS_DEFAULT_ORIGINS=http://localhost:3000,http://localhost:3001
 
 All service ports are configurable via environment variables:
 
+| Service | Default Port | Description |
+|---------|--------------|-------------|
+| Studio | 3000 | Admin/Creator application |
+| Learn | 3001 | Learner application |
+| Website | 3002 | Public marketing website |
+| Intelligence | 8000 | AI engine |
+
 ```bash
 # Custom ports
 PORT_STUDIO=8080
 PORT_LEARN=8081
-PORT_INTEL=8082
+PORT_WEBSITE=8082
+PORT_INTEL=8083
 ```
 
 After changing ports, rebuild and restart:
@@ -347,19 +364,23 @@ server {
 │  │   studio    │  │    learn    │  │    intelligence     │  │
 │  │  :${PORT_STUDIO}│ │  :${PORT_LEARN} │ │   :${PORT_INTEL}   │  │
 │  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+│  ┌─────────────┐                                            │
+│  │   website   │                                            │
+│  │ :${PORT_WEBSITE}│                                            │
+│  └─────────────┘                                            │
 └─────────────────────────────────────────────────────────────┘
          │                  │                    │
          └──────────────────┼────────────────────┘
                             │
               ┌─────────────┴─────────────┐
-              │  External Nginx (用户管理)  │
-              │     同域名 + 相对路径       │
-              │  /studio, /learn, /api     │
+              │  External Nginx (User-facing) │
+              │  Same domain + relative paths  │
+              │  /studio, /learn, /api         │
               └───────────────────────────┘
                             │
               ┌─────────────┴─────────────┐
               │     External Services      │
-              │  - Supabase (云 PostgreSQL)│
+              │  - Supabase (PostgreSQL)   │
               │  - AI Providers API        │
               └───────────────────────────┘
 ```
@@ -518,6 +539,7 @@ Default resource limits in `docker-compose.yml`:
 |---------|--------------|-------------------|
 | Studio | 1 GB | 512 MB |
 | Learn | 1 GB | 512 MB |
+| Website | 512 MB | 256 MB |
 | Intelligence | 2 GB | 1 GB |
 
 Adjust in `docker-compose.yml` if needed:

@@ -1,0 +1,22 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366F1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#06B6D4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#gradient)"/>
+  
+  <!-- Lightning bolt (Zap) icon -->
+  <g transform="translate(180, 140)">
+    <path 
+      d="M120 0L40 160H100L80 320L160 120H100L120 0Z" 
+      fill="white"
+      stroke="white"
+      stroke-width="8"
+      stroke-linejoin="round"
+    />
+  </g>
+</svg>
