@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root {
+  /* Fixed `Header`: max of py-8 (2rem×2) + single-row bar (~3rem) ≈ 7rem; keep extra for logo line-height. */
+  --site-header-offset: 7.75rem;
   --bg: #050505;
   --design-accent: #ff4500;
   --card: #111111;
@@ -17,6 +19,10 @@
   --card-bg: #111111;
   --card-border: rgba(255, 255, 255, 0.1);
   --link: #ff4500;
+}
+
+html {
+  scroll-padding-top: var(--site-header-offset);
 }
 
 body {

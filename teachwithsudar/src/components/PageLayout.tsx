@@ -10,7 +10,7 @@ export function PageLayout({ children }: { children: ReactNode }) {
       <NoiseOverlay />
       <RevealObserver />
       <Header />
-      <main className="flex-1 w-full">{children}</main>
+      <main className="flex-1 w-full pt-[var(--site-header-offset)]">{children}</main>
       <Footer />
     </div>
   );

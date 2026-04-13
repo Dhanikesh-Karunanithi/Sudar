@@ -29,7 +29,7 @@ export function HeroSection() {
 
   return (
     <section
-      className="relative min-h-screen flex flex-col items-center justify-start overflow-hidden bg-[#050505] pt-[7.5rem] sm:pt-32 pb-20"
+      className="relative flex min-h-[calc(100dvh_-_var(--site-header-offset))] flex-col items-center justify-start overflow-hidden bg-[#050505] pb-20"
       aria-label="Hero — Sudar"
     >
       {/* Atmospheric glow layers */}
