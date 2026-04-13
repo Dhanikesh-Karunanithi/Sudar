@@ -58,10 +58,6 @@ RUN addgroup --system --gid 1001 nodejs && \
 # Copy standalone output - Next.js monorepo structure has nested directories
 COPY --from=builder /app/.next/standalone ./
 
-# Copy static files and public assets
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
-
 # Note: byteos-learn does not have a prisma directory (uses Supabase directly)
 
 # Debug: show structure
@@ -69,13 +65,17 @@ RUN echo "=== /app structure ===" && ls -la /app && \
     echo "=== /app/app structure ===" && ls -la /app/app 2>/dev/null || true && \
     echo "=== Looking for server.js ===" && find /app -name "server.js" -maxdepth 3
 
-# If server.js is in app/ subdirectory, create symlinks for .next and public
-# so relative paths work correctly when running from app/
+# If server.js is in app/ subdirectory, we need to set up paths correctly
 RUN if [ -f app/server.js ]; then \
-        echo "server.js found in app/ - creating symlinks"; \
-        ln -s /app/.next /app/app/.next; \
-        ln -s /app/public /app/app/public; \
+        echo "server.js found in app/ - setting up correct paths"; \
+        mkdir -p /app/app/.next; \
+        ln -sf /app/.next/static /app/app/.next/static; \
+        ln -sf /app/public /app/app/public; \
     fi
+
+# Copy static files and public assets (after symlink setup)
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
 # Set correct ownership
 RUN chown -R nextjs:nodejs /app
