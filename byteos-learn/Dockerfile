@@ -54,8 +54,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Copy prisma schema if needed at runtime
-COPY --from=builder /app/prisma ./prisma 2>/dev/null || true
+# Note: byteos-learn does not have a prisma directory (uses Supabase directly)
 
 # Set correct ownership
 RUN chown -R nextjs:nodejs /app
