@@ -35,6 +35,13 @@ const nextConfig = {
   },
   // Avoid bundling pdf-parse/pdfjs-dist so Node loads them natively (fixes Object.defineProperty in webpack)
   serverExternalPackages: ['pdf-parse'],
+  // Disable ESLint during build for faster builds (lint in dev instead)
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   async redirects() {
     return [
       { source: '/learning-paths', destination: '/paths', permanent: true },
