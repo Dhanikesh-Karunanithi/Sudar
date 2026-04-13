@@ -21,10 +21,10 @@ services:
     container_name: sudar-studio
     restart: unless-stopped
     ports:
-      - "${PORT_STUDIO:-3000}:${PORT_STUDIO:-3000}"
+      - "${PORT_STUDIO_HOST:-3000}:${PORT_STUDIO_CONTAINER:-3000}"
     environment:
       - NODE_ENV=production
-      - PORT=${PORT_STUDIO:-3000}
+      - PORT=${PORT_STUDIO_CONTAINER:-3000}
       # Supabase
       - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
@@ -35,7 +35,7 @@ services:
       - NEXT_PUBLIC_INTELLIGENCE_URL=${INTELLIGENCE_URL:-http://intelligence:8000}
       # Auth
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=${NEXTAUTH_URL_STUDIO:-http://localhost:${PORT_STUDIO:-3000}}
+      - NEXTAUTH_URL=${NEXTAUTH_URL_STUDIO:-http://localhost:${PORT_STUDIO_HOST:-3000}}
       # AI Providers
       - TOGETHER_API_KEY=${TOGETHER_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -45,7 +45,7 @@ services:
     networks:
       - sudar-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${PORT_STUDIO:-3000}/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${PORT_STUDIO_CONTAINER:-3000}/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -79,10 +79,10 @@ services:
     container_name: sudar-learn
     restart: unless-stopped
     ports:
-      - "${PORT_LEARN:-3001}:${PORT_LEARN:-3001}"
+      - "${PORT_LEARN_HOST:-3001}:${PORT_LEARN_CONTAINER:-3001}"
     environment:
       - NODE_ENV=production
-      - PORT=${PORT_LEARN:-3001}
+      - PORT=${PORT_LEARN_CONTAINER:-3001}
       # Supabase
       - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
@@ -93,7 +93,7 @@ services:
       - NEXT_PUBLIC_INTELLIGENCE_URL=${INTELLIGENCE_URL:-http://intelligence:8000}
       # Auth
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - NEXTAUTH_URL=${NEXTAUTH_URL_LEARN:-http://localhost:${PORT_LEARN:-3001}}
+      - NEXTAUTH_URL=${NEXTAUTH_URL_LEARN:-http://localhost:${PORT_LEARN_HOST:-3001}}
       # AI Providers
       - TOGETHER_API_KEY=${TOGETHER_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -103,7 +103,7 @@ services:
     networks:
       - sudar-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${PORT_LEARN:-3001}/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${PORT_LEARN_CONTAINER:-3001}/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -133,10 +133,10 @@ services:
     container_name: sudar-intelligence
     restart: unless-stopped
     ports:
-      - "${PORT_INTEL:-8000}:${PORT_INTEL:-8000}"
+      - "${PORT_INTEL_HOST:-8000}:${PORT_INTEL_CONTAINER:-8000}"
     environment:
       - ENV=production
-      - PORT=${PORT_INTEL:-8000}
+      - PORT=${PORT_INTEL_CONTAINER:-8000}
       # Supabase
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
@@ -150,7 +150,7 @@ services:
     networks:
       - sudar-network
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:${PORT_INTEL:-8000}/api/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:${PORT_INTEL_CONTAINER:-8000}/api/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
