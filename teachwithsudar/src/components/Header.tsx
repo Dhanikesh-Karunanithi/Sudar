@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { SudarLogoMark } from "@/components/brand/SudarLogoMark";
 import { GITHUB_URL } from "@/lib/site-nav";
 
 const NAV_LINKS = [
-  { href: "/#expertise", label: "Expertise" },
-  { href: "/#works", label: "How it works" },
+  { href: "/features", label: "Platform" },
+  { href: "/research", label: "Research" },
   { href: "/story", label: "About" },
   { href: "/blog", label: "Blog" },
   { href: "/self-host", label: "Get Started" },
@@ -41,9 +42,12 @@ export function Header() {
         <div className="mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
           <Link
             href="/"
-            className="text-xl sm:text-2xl font-bold tracking-tighter font-serif text-white shrink-0"
+            className="flex items-center gap-2.5 sm:gap-3 text-xl sm:text-2xl font-bold tracking-tighter font-serif text-white shrink-0"
             onClick={() => setMobileOpen(false)}
           >
+            <span className="inline-flex shrink-0" aria-hidden="true">
+              <SudarLogoMark size={36} variant="on-dark" />
+            </span>
             Sudar.
           </Link>
 

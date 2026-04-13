@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Sudar wordmark — square canvas (1:1). Artwork bounds ~407–617 × 36–164; viewBox is a centered 210×210 square.
+  Sudar mark — GEOMETRY LOCKED (light background variant).
+
+  NOTICE FOR REUSE (human + AI): Do NOT modify the path `d` values or the transform attributes
+  below unless you are deliberately rebranding. The mark is two identical rounded capsules,
+  vertically staggered and horizontally offset; the centre is a four-point concave star formed
+  by the white path on top of black pills (evenodd group). Common mistakes that BREAK the logo:
+  (1) Rebuilding the pills with <rect rx="…"> — radii/position drift and cause hairline “cracks”
+  or a wrong star. (2) Animating the two pills independently — breaks registration. (3) Replacing
+  the star with a different curve — the star must match this path exactly. To use on a dark
+  background, invert fills only (pills #ffffff, star #050505 or #111111)—keep the same d and
+  transforms. Canonical React mirror: teachwithsudar/src/components/brand/SudarLogoMark.tsx
 -->
 <svg xmlns="http://www.w3.org/2000/svg"
      viewBox="407 -5 210 210"
@@ -9,14 +19,15 @@
      fill="none"
      role="img"
      aria-label="Sudar">
+  <metadata>SUDAR_LOGO_GEOMETRY_LOCK — see XML comment above; path data must match SudarLogoMark.tsx.</metadata>
   <g fill-rule="evenodd">
-    <g fill="#ffffff" transform="translate(407,100)">
+    <g fill="#000000" transform="translate(407,100)">
       <path d="M32,0 L138,0 C155.673,0 170,14.3269 170,32 C170,49.6731 155.673,64 138,64 L32,64 C14.3269,64 0,49.6731 0,32 C0,14.3269 14.3269,0 32,0"/>
     </g>
-    <g fill="#ffffff" transform="translate(447,36)">
+    <g fill="#000000" transform="translate(447,36)">
       <path d="M32,0 L138,0 C155.673,0 170,14.3269 170,32 C170,49.6731 155.673,64 138,64 L32,64 C14.3269,64 0,49.6731 0,32 C0,14.3269 14.3269,0 32,0"/>
     </g>
-    <g fill="#111111" transform="matrix(0.9,0,0,0.9,467,55)">
+    <g fill="#ffffff" transform="matrix(0.9,0,0,0.9,467,55)">
       <path fill-rule="nonzero" d="M50,2 C51,49 51,49 98,50 C51,51 51,51 50,98 C49,51 49,51 2,50 C49,49 49,49 50,2"/>
     </g>
   </g>

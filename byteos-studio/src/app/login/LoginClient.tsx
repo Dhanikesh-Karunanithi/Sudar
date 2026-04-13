@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
+import { AuthMarketingDecor } from '@/components/auth/AuthMarketingDecor'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { GoogleIcon } from '@/components/ui/GoogleIcon'
 import { createClient } from '@/lib/supabase/client'
@@ -58,69 +59,76 @@ export function LoginClient() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex">
-      <div className="hidden lg:flex lg:w-[480px] flex-col justify-between p-12 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 border-r border-slate-800 relative overflow-hidden shrink-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(99,102,241,0.12),transparent_60%)] pointer-events-none" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(139,92,246,0.08),transparent_60%)] pointer-events-none" />
+    <div className="min-h-screen flex bg-[#050505]">
+      <div className="relative hidden lg:flex lg:w-[480px] shrink-0 flex-col justify-between border-r border-white/[0.06] bg-[#080808] p-12">
+        <AuthMarketingDecor />
 
         <div className="relative flex items-center gap-3">
-          <SudarLogoMark className="h-9 w-auto shrink-0 text-white" starFill="#0f172a" animated />
+          <SudarLogoMark className="h-10 w-10 shrink-0 text-white" starFill="#080808" animated />
           <div>
-            <p className="text-white font-semibold text-base leading-tight">Sudar Studio</p>
-            <p className="text-indigo-400 text-xs">Admin & Creator</p>
+            <p className="font-display text-base font-semibold leading-tight text-white">Sudar Studio</p>
+            <p className="text-xs font-medium tracking-wide text-[#FF4500]/80">Admin &amp; creator</p>
           </div>
         </div>
 
         <div className="relative space-y-8">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-              <span className="text-indigo-300 text-xs font-medium">AI-powered learning creation</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#FF4500]/20 bg-[#FF4500]/[0.06] px-3 py-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#FF4500]" />
+              <span className="text-xs font-medium tracking-widest text-[#FF4500]/90">AI-native authoring</span>
             </div>
-            <blockquote className="text-2xl font-light text-white leading-relaxed">
-              Build world-class training content without needing a team of designers.
-            </blockquote>
+            <p className="font-display text-2xl font-light leading-snug text-white text-balance">
+              Build adaptive courses once. Deliver across seven modalities—with a tutor that remembers.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: 'Course templates', value: '14' },
+              { label: 'Visual templates', value: '14' },
               { label: 'Modalities', value: '7' },
-              { label: 'AI providers', value: '3' },
-              { label: 'Export formats', value: 'SCORM' },
+              { label: 'Learner model', value: 'Twin' },
+              { label: 'Exports', value: 'SCORM' },
             ].map((stat) => (
-              <div key={stat.label} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-                <p className="text-2xl font-bold text-white">{stat.value}</p>
-                <p className="text-slate-400 text-xs mt-0.5">{stat.label}</p>
+              <div
+                key={stat.label}
+                className="rounded-xl border border-white/[0.06] bg-black/30 p-4 backdrop-blur-sm"
+              >
+                <p className="text-2xl font-semibold tabular-nums text-white">{stat.value}</p>
+                <p className="mt-0.5 text-xs text-zinc-500">{stat.label}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="relative text-slate-600 text-xs">© 2026 Sudar · Learns with you, for you.</p>
+        <p className="relative text-xs text-zinc-600">© 2026 Sudar · Learns with you, for you.</p>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-sm space-y-8">
-          <div className="lg:hidden flex items-center gap-3 justify-center">
-            <SudarLogoMark className="h-9 w-auto shrink-0 text-white" starFill="#0f172a" />
-            <p className="text-white font-semibold text-base">Sudar Studio</p>
+      <div className="relative flex flex-1 items-center justify-center p-8">
+        <div className="pointer-events-none absolute inset-0 opacity-[0.03]" aria-hidden style={{
+          backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }} />
+
+        <div className="relative w-full max-w-sm space-y-8">
+          <div className="flex items-center justify-center gap-3 lg:hidden">
+            <SudarLogoMark className="h-10 w-10 shrink-0 text-white" starFill="#050505" />
+            <p className="font-display text-base font-semibold text-white">Sudar Studio</p>
           </div>
 
           <div className="space-y-1.5">
-            <h1 className="text-2xl font-semibold text-white">Welcome back</h1>
-            <p className="text-slate-400 text-sm">Sign in to your Studio workspace</p>
+            <h1 className="font-display text-2xl font-semibold text-white">Welcome back</h1>
+            <p className="text-sm text-zinc-500">Sign in to your Studio workspace</p>
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">
+            <div className="rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-300">
               {error}
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-300" htmlFor="email">
+              <label className="text-sm font-medium text-zinc-400" htmlFor="email">
                 Email address
               </label>
               <input
@@ -130,12 +138,12 @@ export function LoginClient() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="you@company.com"
-                className="w-full px-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 text-sm transition-all"
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-600 transition-colors focus:border-[#FF4500]/50 focus:outline-none focus:ring-1 focus:ring-[#FF4500]/30"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-300" htmlFor="password">
+              <label className="text-sm font-medium text-zinc-400" htmlFor="password">
                 Password
               </label>
               <input
@@ -145,38 +153,38 @@ export function LoginClient() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="••••••••"
-                className="w-full px-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 text-sm transition-all"
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-600 transition-colors focus:border-[#FF4500]/50 focus:outline-none focus:ring-1 focus:ring-[#FF4500]/30"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors text-sm mt-2"
+              className="mt-2 w-full rounded-full bg-[#FF4500] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#FF5722] disabled:cursor-not-allowed disabled:bg-[#FF4500]/40"
             >
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
 
-          <div className="flex items-center gap-3 my-2">
-            <div className="h-px flex-1 bg-slate-800" />
-            <span className="text-xs text-slate-500">or</span>
-            <div className="h-px flex-1 bg-slate-800" />
+          <div className="my-2 flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/[0.08]" />
+            <span className="text-xs text-zinc-600">or</span>
+            <div className="h-px flex-1 bg-white/[0.08]" />
           </div>
 
           <button
             type="button"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-900/70 disabled:cursor-not-allowed border border-slate-700 rounded-lg text-slate-100 text-sm font-medium transition-colors"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/[0.1] bg-white/[0.04] py-2.5 text-sm font-medium text-zinc-200 transition-colors hover:border-white/[0.16] hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <GoogleIcon size={18} className="shrink-0" />
             <span>Sign in with Google</span>
           </button>
 
-          <p className="text-center text-slate-500 text-sm">
+          <p className="text-center text-sm text-zinc-500">
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+            <Link href="/signup" className="font-medium text-[#FF4500]/90 transition-colors hover:text-[#FF5722]">
               Create one
             </Link>
           </p>
@@ -185,4 +193,3 @@ export function LoginClient() {
     </div>
   )
 }
-

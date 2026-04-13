@@ -5,12 +5,12 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-            <div className="h-6 w-40 bg-slate-100 rounded animate-pulse" />
-            <div className="h-4 w-64 bg-slate-100 rounded mt-3 animate-pulse" />
-            <div className="h-10 w-full bg-slate-100 rounded mt-6 animate-pulse" />
-            <div className="h-10 w-full bg-slate-100 rounded mt-3 animate-pulse" />
+        <div className="flex min-h-screen items-center justify-center bg-[#050505] p-6">
+          <div className="w-full max-w-md rounded-2xl border border-white/[0.06] bg-zinc-950/50 p-8">
+            <div className="h-6 w-40 animate-pulse rounded bg-white/[0.06]" />
+            <div className="mt-3 h-4 w-64 animate-pulse rounded bg-white/[0.05]" />
+            <div className="mt-6 h-10 w-full animate-pulse rounded-lg bg-white/[0.05]" />
+            <div className="mt-3 h-10 w-full animate-pulse rounded-lg bg-white/[0.05]" />
           </div>
         </div>
       }

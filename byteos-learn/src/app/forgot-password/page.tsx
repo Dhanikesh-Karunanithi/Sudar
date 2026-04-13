@@ -31,19 +31,20 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#050505] p-6">
         <div className="w-full max-w-md space-y-6 text-center">
-          <div className="relative mx-auto flex h-12 w-40 max-w-[11rem] items-center justify-center">
+          <div className="relative mx-auto flex h-12 w-12 items-center justify-center">
             <span className="sr-only">Sudar</span>
-            <SudarLogoMark className="h-full w-full text-slate-900" starFill="#f8fafc" />
+            <SudarLogoMark className="h-full w-full text-white" starFill="#050505" />
           </div>
-          <h1 className="text-xl font-bold text-slate-900">Check your email</h1>
-          <p className="text-slate-600 text-sm">
-            We&apos;ve sent a password reset link to <strong>{email}</strong>. Click the link to set a new password.
+          <h1 className="font-display text-xl font-semibold text-white">Check your email</h1>
+          <p className="text-sm text-zinc-500">
+            We&apos;ve sent a password reset link to <strong className="text-zinc-300">{email}</strong>. Click the link
+            to set a new password.
           </p>
           <Link
             href="/login"
-            className="inline-block text-primary font-medium hover:opacity-90 text-sm"
+            className="inline-block text-sm font-medium text-[#FF4500]/90 transition-colors hover:text-[#FF5722]"
           >
             Back to sign in
           </Link>
@@ -53,27 +54,36 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center space-y-3">
-          <div className="relative mx-auto flex h-12 w-40 max-w-[11rem] items-center justify-center">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#050505] p-6">
+      <div
+        className="pointer-events-none fixed inset-0 opacity-[0.03]"
+        aria-hidden
+        style={{
+          backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }}
+      />
+
+      <div className="relative w-full max-w-md space-y-8">
+        <div className="space-y-3 text-center">
+          <div className="relative mx-auto flex h-12 w-12 items-center justify-center">
             <span className="sr-only">Sudar</span>
-            <SudarLogoMark className="h-full w-full text-slate-900" starFill="#f8fafc" />
+            <SudarLogoMark className="h-full w-full text-white" starFill="#050505" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">Reset password</h1>
-          <p className="text-slate-500 text-sm">Enter your email and we&apos;ll send you a link to reset your password.</p>
+          <h1 className="font-display text-2xl font-semibold text-white">Reset password</h1>
+          <p className="text-sm text-zinc-500">Enter your email and we&apos;ll send you a link to reset your password.</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-6">
+        <div className="space-y-6 rounded-2xl border border-white/[0.08] bg-zinc-950/60 p-8 backdrop-blur-sm">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-600 text-sm">
+            <div className="rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-300">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700" htmlFor="email">
+              <label className="text-sm font-medium text-zinc-400" htmlFor="email">
                 Email address
               </label>
               <input
@@ -83,20 +93,20 @@ export default function ForgotPasswordPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="you@example.com"
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-sm transition-all"
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-600 transition-colors focus:border-[#FF4500]/50 focus:outline-none focus:ring-1 focus:ring-[#FF4500]/30"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-all text-sm shadow-sm shadow-indigo-500/20"
+              className="w-full rounded-full bg-[#FF4500] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#FF5722] disabled:cursor-not-allowed disabled:bg-[#FF4500]/40"
             >
               {loading ? 'Sending...' : 'Send reset link'}
             </button>
           </form>
 
-          <p className="text-center text-slate-500 text-sm">
-            <Link href="/login" className="text-primary hover:opacity-90 font-medium transition-colors">
+          <p className="text-center text-sm text-zinc-500">
+            <Link href="/login" className="font-medium text-[#FF4500]/90 transition-colors hover:text-[#FF5722]">
               Back to sign in
             </Link>
           </p>

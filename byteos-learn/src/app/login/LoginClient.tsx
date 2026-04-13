@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
+import { CheckCircle2 } from 'lucide-react'
+import { AuthMarketingDecor } from '@/components/auth/AuthMarketingDecor'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { GoogleIcon } from '@/components/ui/GoogleIcon'
 import { createClient } from '@/lib/supabase/client'
@@ -58,103 +60,153 @@ export function LoginClient() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center space-y-3">
-          <div className="relative mx-auto flex h-12 w-40 max-w-[11rem] items-center justify-center">
-            <span className="sr-only">Sudar</span>
-            <SudarLogoMark className="h-full w-full text-slate-900" starFill="#f8fafc" animated />
-          </div>
+    <div className="flex min-h-screen bg-[#050505]">
+      <div className="relative hidden shrink-0 flex-col justify-between border-r border-white/[0.06] bg-[#080808] p-12 lg:flex lg:w-[480px]">
+        <AuthMarketingDecor />
+
+        <div className="relative flex items-center gap-3">
+          <SudarLogoMark className="h-10 w-10 shrink-0 text-white" starFill="#080808" animated />
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Sudar Learn</h1>
-            <p className="text-slate-500 text-sm mt-1">Your personalized learning experience</p>
+            <p className="font-display text-base font-semibold leading-tight text-white">Sudar Learn</p>
+            <p className="text-xs font-medium tracking-wide text-[#FF4500]/80">Learner experience</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-6">
-          <div className="space-y-1">
-            <h2 className="text-lg font-semibold text-slate-900">Sign in</h2>
-            <p className="text-slate-500 text-sm">Welcome back — pick up where you left off.</p>
+        <div className="relative space-y-8">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#FF4500]/20 bg-[#FF4500]/[0.06] px-3 py-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#FF4500]" />
+              <span className="text-xs font-medium tracking-widest text-[#FF4500]/90">Adaptive learning</span>
+            </div>
+            <p className="font-display text-2xl font-light leading-snug text-white text-balance">
+              Seven modalities, one tutor that remembers you — pick up exactly where you left off.
+            </p>
           </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-600 text-sm">
-              {error}
-            </div>
-          )}
+          <ul className="space-y-3">
+            {[
+              'Personalized paths from your Digital Learner Twin',
+              'Text, video, audio, mind map, flashcards, feed, and play',
+              'Sudar tutor: proactive help without judgment',
+            ].map((line) => (
+              <li key={line} className="flex items-start gap-3">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#FF4500]/80" />
+                <span className="text-sm text-zinc-400">{line}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700" htmlFor="email">
-                Email address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="you@example.com"
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-sm transition-all"
-              />
-            </div>
+        <p className="relative text-xs text-zinc-600">© 2026 Sudar · Learns with you, for you.</p>
+      </div>
 
-            <div className="space-y-1.5 flex flex-col">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-slate-700" htmlFor="password">
-                  Password
-                </label>
-                <Link href="/forgot-password" className="text-xs text-primary hover:opacity-90 font-medium">
-                  Forgot password?
-                </Link>
+      <div className="relative flex flex-1 flex-col items-center justify-center p-6 sm:p-8">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.03]"
+          aria-hidden
+          style={{
+            backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }}
+        />
+
+        <div className="relative w-full max-w-md space-y-8">
+          <div className="flex flex-col items-center gap-3 text-center lg:hidden">
+            <SudarLogoMark className="h-10 w-10 shrink-0 text-white" starFill="#050505" />
+            <div>
+              <h1 className="font-display text-xl font-semibold text-white">Sudar Learn</h1>
+              <p className="mt-1 text-sm text-zinc-500">Your personalized learning experience</p>
+            </div>
+          </div>
+
+          <div className="mb-6 space-y-1 text-center">
+            <h1 className="font-display text-2xl font-semibold text-white">Welcome back</h1>
+            <p className="text-sm text-zinc-500">Sign in to continue your learning.</p>
+          </div>
+
+          <div className="rounded-2xl border border-white/[0.08] bg-zinc-950/60 p-8 backdrop-blur-sm">
+
+            {error && (
+              <div className="mb-4 rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                {error}
               </div>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="••••••••"
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-sm transition-all"
-              />
+            )}
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-zinc-400" htmlFor="email">
+                  Email address
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="you@example.com"
+                  className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-600 transition-colors focus:border-[#FF4500]/50 focus:outline-none focus:ring-1 focus:ring-[#FF4500]/30"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-zinc-400" htmlFor="password">
+                    Password
+                  </label>
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs font-medium text-[#FF4500]/85 transition-colors hover:text-[#FF5722]"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-600 transition-colors focus:border-[#FF4500]/50 focus:outline-none focus:ring-1 focus:ring-[#FF4500]/30"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-2 w-full rounded-full bg-[#FF4500] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#FF5722] disabled:cursor-not-allowed disabled:bg-[#FF4500]/40"
+              >
+                {loading ? 'Signing in...' : 'Sign in'}
+              </button>
+            </form>
+
+            <div className="my-4 flex items-center gap-3">
+              <div className="h-px flex-1 bg-white/[0.08]" />
+              <span className="text-xs text-zinc-600">or</span>
+              <div className="h-px flex-1 bg-white/[0.08]" />
             </div>
 
             <button
-              type="submit"
+              type="button"
+              onClick={handleGoogleSignIn}
               disabled={loading}
-              className="w-full py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-all text-sm shadow-sm shadow-indigo-500/20 mt-2"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/[0.1] bg-white/[0.04] py-2.5 text-sm font-medium text-zinc-200 transition-colors hover:border-white/[0.16] hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? 'Signing in...' : 'Sign in'}
+              <GoogleIcon size={18} className="shrink-0" />
+              <span>Sign in with Google</span>
             </button>
-          </form>
 
-          <div className="flex items-center gap-3 my-2">
-            <div className="h-px flex-1 bg-slate-200" />
-            <span className="text-xs text-slate-400">or</span>
-            <div className="h-px flex-1 bg-slate-200" />
+            <p className="mt-6 text-center text-sm text-zinc-500">
+              Don&apos;t have an account?{' '}
+              <Link href="/signup" className="font-medium text-[#FF4500]/90 transition-colors hover:text-[#FF5722]">
+                Create one
+              </Link>
+            </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 py-2.5 bg-white hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed border border-slate-300 rounded-lg text-slate-800 text-sm font-medium transition-colors"
-          >
-            <GoogleIcon size={18} className="shrink-0" />
-            <span>Sign in with Google</span>
-          </button>
-
-          <p className="text-center text-slate-500 text-sm">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-primary hover:opacity-90 font-medium transition-colors">
-              Create one
-            </Link>
-          </p>
+          <p className="text-center text-xs text-zinc-600">© 2026 Sudar · Learns with you, for you.</p>
         </div>
-
-        <p className="text-center text-slate-400 text-xs">© 2026 Sudar · Learns with you, for you.</p>
       </div>
     </div>
   )
 }
-
