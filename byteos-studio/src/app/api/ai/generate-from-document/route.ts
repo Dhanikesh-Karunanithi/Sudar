@@ -1,10 +1,13 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getOrCreateOrg } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
-import type { Json } from '@/types/database'
+import type { Database, Json } from '@/types/database'
+
+type CourseInsert = Database['public']['Tables']['courses']['Insert']
 import { chatCompletion, resolveChatConfigError, type ChatCompletionContext } from '@/lib/ai/chat'
 import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
-import type { AiGenerationCourseSettings } from '@/lib/ai/courseGeneration/types'
+import { mergeBlueprintAnswersIntoSettings } from '@/lib/ai/courseGeneration/blueprintMerge'
+import type { AiGenerationCourseSettings, BlueprintQuestionAnswer, CourseBlueprintQuestion } from '@/lib/ai/courseGeneration/types'
 import { generateCourseMetadata, suggestCourseCoverImages } from '@/lib/ai/courseGeneration/courseMetadata'
 import {
   fetchOrgTagCatalog,
@@ -12,6 +15,7 @@ import {
   setCourseOrgTagIds,
 } from '@/lib/courseTags'
 import { suggestExperiencePackFromText } from '@/lib/themes/experiencePacks'
+import { fillEmptyModulesForCourse } from '@/lib/ai/courseGeneration'
 
 const MAX_DOC_CHARS = 45000
 
@@ -110,6 +114,17 @@ export async function POST(request: NextRequest) {
         /* ignore */
       }
     }
+    const ba = formData.get('blueprint_answers')
+    const bq = formData.get('blueprint_questions')
+    if (typeof ba === 'string' && typeof bq === 'string' && ba.trim() && bq.trim()) {
+      try {
+        const answers = JSON.parse(ba) as BlueprintQuestionAnswer[]
+        const questions = JSON.parse(bq) as CourseBlueprintQuestion[]
+        Object.assign(extraGen, mergeBlueprintAnswersIntoSettings(questions, answers))
+      } catch {
+        /* ignore */
+      }
+    }
   } else {
     const body = await request.json().catch(() => ({}))
     if (body.url) documentText = await extractTextFromUrl(body.url)
@@ -124,6 +139,19 @@ export async function POST(request: NextRequest) {
       extraGen.learning_outcomes = b.learning_outcomes
         .filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
         .map((s) => s.trim())
+    }
+    if (Array.isArray(b.blueprint_answers) && Array.isArray(b.blueprint_questions)) {
+      try {
+        Object.assign(
+          extraGen,
+          mergeBlueprintAnswersIntoSettings(
+            b.blueprint_questions as CourseBlueprintQuestion[],
+            b.blueprint_answers as BlueprintQuestionAnswer[]
+          )
+        )
+      } catch {
+        /* ignore invalid blueprint */
+      }
     }
   }
 
@@ -206,22 +234,22 @@ Return ONLY a JSON array of ${numModules} module titles. Example: ["Introduction
   }
 
   const now = new Date().toISOString()
-  const { data: course, error: courseError } = await admin
-    .from('courses')
-    .insert({
-      org_id: orgId,
-      created_by: user.id,
-      title,
-      description: metaDescription,
-      thumbnail_url: cover.thumbnail_url,
-      banner_url: cover.banner_url,
-      difficulty: 'intermediate',
-      status: 'draft',
-      tags: [],
-      settings: settingsRecord as unknown as Json,
-      created_at: now,
-      updated_at: now,
-    })
+  const insertCourse: CourseInsert = {
+    org_id: orgId,
+    created_by: user.id,
+    title,
+    description: metaDescription,
+    difficulty: 'intermediate',
+    status: 'draft',
+    tags: [],
+    settings: settingsRecord as unknown as Json,
+    created_at: now,
+    updated_at: now,
+  }
+  if (cover.thumbnail_url) insertCourse.thumbnail_url = cover.thumbnail_url
+  if (cover.banner_url) insertCourse.banner_url = cover.banner_url
+
+  const { data: course, error: courseError } = await admin.from('courses').insert(insertCourse)
     .select('id')
     .single()
 
@@ -245,6 +273,37 @@ Return ONLY a JSON array of ${numModules} module titles. Example: ["Introduction
       content: emptyModuleContent as unknown as Json,
       order_index: i,
     })
+  }
+
+  const { data: moduleRows } = await admin
+    .from('modules')
+    .select('id, title, content, order_index')
+    .eq('course_id', course.id)
+    .order('order_index', { ascending: true })
+
+  const fillResult = await fillEmptyModulesForCourse(admin, {
+    course: {
+      id: course.id,
+      title,
+      description: metaDescription,
+      difficulty: 'intermediate',
+      settings: settingsRecord as Record<string, unknown>,
+    },
+    modules: moduleRows ?? [],
+    chatAiCtx,
+  })
+
+  if (fillResult.error || !fillResult.completed) {
+    return NextResponse.json(
+      {
+        error:
+          fillResult.error ??
+          'Course was created but module content generation did not finish. Try generating again or shorten the source document.',
+        course_id: course.id,
+        modules_generated: fillResult.modules_generated,
+      },
+      { status: 502 }
+    )
   }
 
   return NextResponse.json({ course_id: course.id })

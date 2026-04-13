@@ -33,6 +33,15 @@ Current working assets are maintained in:
 - On busy media, use a solid or blurred backing plate before placing the mark.
 - Do not stretch, rotate, recolor star separately, or alter the relative pill/star geometry.
 
+### Product UI (Sudar Learn + Sudar Studio)
+- **Top navigation / light surfaces:** colored mark with star matching the bar or card — e.g. `text-primary` and `starFill="var(--card)"` (Learn top nav).
+- **Sidebar / neutral lockup on light:** `text-card-foreground` with `starFill="var(--background)"` so the star reads as cut out of the sidebar (Studio).
+- **Floating chat launcher:** squircle control (`SudarChatLaunchButton`), not a full circular FAB — `rounded-2xl`, lighter plate (`border-primary/25`, `bg-primary/10`), mark at ~28–32px height, `starFill="var(--background)"`, optional `animated` pulse.
+- **Open chat header (Learn):** mascot avatar at `lg` in a `rounded-2xl` frame; title uses display type (`font-display`).
+- **Open chat header (Studio):** Sudar mark in a **rounded-2xl** framed cell (`border-border`, `bg-muted/40`) matching avatar size (~44px); subtitle stays uppercase small caps style; inline actions align with Learn (icon buttons `p-2`, `rounded-lg`).
+- **Chat panel container:** glass surface uses `--radius-chat-panel` (32px) for outer corners; composer uses pill input (`rounded-pill`) and a 40×40 primary send control.
+- **Dark mode shells:** Learn uses **deep night** (`#0D1026`) for the learner canvas; Studio uses a **neutral black** page background (`#000000`) with zinc-style borders so the admin surface stays crisp and avoids a blue-gray wash—brand color remains on controls and focus, not the canvas.
+
 ## Color System (Approved: Option A)
 
 ### Core Palette

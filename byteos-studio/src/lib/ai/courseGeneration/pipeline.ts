@@ -4,13 +4,14 @@ import type { ModuleContent } from '@/types/content'
 import { getOneImage } from '@/lib/media/imageSearch'
 import { searchYouTubeWatchUrl } from '@/lib/media/videoSearch'
 import {
+  COMPONENT_PROFILES,
   selectComponentsForModule,
   toInteractiveElements,
   sanitizeVideoComponents,
   type ModuleRole,
   type ComponentType,
 } from '@/lib/ai/componentSelector'
-import { LESSON_ARCHETYPES, type LessonArchetype, selectArchetype } from '@/lib/ai/archetypeSelector'
+import type { LessonArchetype } from '@/lib/ai/archetypeSelector'
 import { chatCompletion, type ChatCompletionContext } from '@/lib/ai/chat'
 import { getModuleBodyText } from '@/lib/contentBlocks'
 import { curriculumPlanSchema } from './schemas'
@@ -21,7 +22,13 @@ import type {
   FillEmptyModulesResult,
   ModuleRowForGeneration,
 } from './types'
-import { buildCurriculumPlanPrompt, buildEnvelopePrompt, buildModuleContentPrompt } from './prompts'
+import {
+  buildCritiqueRefinePrompt,
+  buildCurriculumPlanPrompt,
+  buildEnvelopePrompt,
+  buildModuleContentPrompt,
+} from './prompts'
+import { normalizeCurriculumToModules } from './curriculumResolve'
 import { extractSummary, parseEnvelope, parseMarkdownSections } from './parse'
 import { getAiGenerationSettings } from './settings'
 
@@ -55,6 +62,18 @@ function recentExcludes(recentTypes: ComponentType[]): ComponentType[] {
   return [...new Set(recentTypes)].slice(-2)
 }
 
+/** Spread hero images across sections instead of always attaching to section 0. */
+function pickImageSectionIndices(sectionCount: number, modIndex: number): number[] {
+  if (sectionCount <= 0) return []
+  if (sectionCount === 1) return [0]
+  const primary = modIndex % sectionCount
+  if (sectionCount >= 6) {
+    const secondary = (modIndex + Math.max(2, Math.floor(sectionCount / 3))) % sectionCount
+    if (secondary !== primary) return [primary, secondary].sort((a, b) => a - b)
+  }
+  return [primary]
+}
+
 export async function fillEmptyModulesForCourse(
   admin: SupabaseClient<Database>,
   input: {
@@ -70,12 +89,13 @@ export async function fillEmptyModulesForCourse(
     return { completed: true, modules_generated: 0 }
   }
 
-  const emptyModules = allModules.filter((m) => !getModuleBodyText(m.content as ModuleContent)?.trim())
+  const modulesOrdered = [...allModules].sort((a, b) => a.order_index - b.order_index)
+  const emptyModules = modulesOrdered.filter((m) => !getModuleBodyText(m.content as ModuleContent)?.trim())
   if (emptyModules.length === 0) {
     return { completed: true, modules_generated: 0 }
   }
 
-  const allTitles = allModules.map((m) => m.title)
+  const allTitles = modulesOrdered.map((m) => m.title)
   const difficulty = course.difficulty ?? 'intermediate'
   const documentFull = gen?.document_text?.trim() ?? ''
 
@@ -92,29 +112,15 @@ export async function fillEmptyModulesForCourse(
     const match = raw.match(/\[[\s\S]*\]/)
     if (!match) throw new Error('Curriculum plan response did not contain a JSON array')
     const parsed = JSON.parse(match[0]) as unknown
-    curriculum = curriculumPlanSchema.parse(parsed) as CurriculumEntry[]
-    let prevArchetype: LessonArchetype | null = null
-    for (let i = 0; i < curriculum.length; i++) {
-      const e = curriculum[i]
-      const ar = e.archetype?.trim().toLowerCase()
-      const valid: LessonArchetype = LESSON_ARCHETYPES.includes(ar as LessonArchetype)
-        ? (ar as LessonArchetype)
-        : selectArchetype(e.bloomLevel, e.pedagogicalRole ?? '', i, prevArchetype)
-      e.archetype = valid
-      prevArchetype = valid
-    }
+    const rawPlan = curriculumPlanSchema.parse(parsed) as CurriculumEntry[]
+    curriculum = normalizeCurriculumToModules(rawPlan, allTitles)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     return { completed: false, modules_generated: 0, error: `Curriculum plan generation failed: ${msg}` }
   }
 
-  const curriculumByTitle = new Map<string, CurriculumEntry>()
-  for (const entry of curriculum) {
-    curriculumByTitle.set(entry.title.toLowerCase().trim(), entry)
-  }
-
   const priorSummaries: { title: string; summary: string }[] = []
-  for (const mod of allModules) {
+  for (const mod of modulesOrdered) {
     const body = getModuleBodyText(mod.content as ModuleContent)?.trim()
     if (body) {
       priorSummaries.push({ title: mod.title, summary: extractSummary(body, mod.title) })
@@ -123,32 +129,34 @@ export async function fillEmptyModulesForCourse(
 
   let generated = 0
   const recentComponentTypes: ComponentType[] = []
+  const courseComponentCounts: Partial<Record<ComponentType, number>> = {}
+  const telemetryArchetypes: string[] = []
+  const telemetryComponents: string[] = []
+  let critiquePasses = 0
+
+  const validTypes = new Set(COMPONENT_PROFILES.map((p) => p.type))
+  const forbiddenDisallowed: ComponentType[] | undefined = (() => {
+    if (!Array.isArray(gen?.forbidden_component_types) || gen!.forbidden_component_types!.length === 0) return undefined
+    const f = gen!.forbidden_component_types!.filter(
+      (t): t is ComponentType => typeof t === 'string' && validTypes.has(t as ComponentType)
+    )
+    return f.length > 0 ? f : undefined
+  })()
 
   for (const mod of emptyModules) {
-    let entry = curriculumByTitle.get(mod.title.toLowerCase().trim())
-    if (!entry) {
-      const idx = allModules.findIndex((m) => m.id === mod.id)
-      const fallback: CurriculumEntry = {
-        title: mod.title,
-        bloomLevel: idx <= 1 ? 'Understand' : idx <= 3 ? 'Apply' : 'Analyze',
-        pedagogicalRole: idx === 0 ? 'Foundation / orientation' : 'Concept exploration',
-        sectionStructure: ['Why this matters', 'Core ideas', 'Practical application', 'Key takeaways'],
-        brief: `Covers ${mod.title} within the course curriculum.`,
-        buildOn:
-          priorSummaries.length > 0
-            ? `Builds on ${priorSummaries[priorSummaries.length - 1].title}`
-            : 'None — this is the foundation',
+    const modIndex = modulesOrdered.findIndex((m) => m.id === mod.id)
+    const resolvedEntry = curriculum[modIndex]
+    if (!resolvedEntry) {
+      return {
+        completed: false,
+        modules_generated: generated,
+        error: `Internal error: no curriculum entry for module index ${modIndex}`,
       }
-      curriculumByTitle.set(mod.title.toLowerCase().trim(), fallback)
-      entry = fallback
     }
-
-    const resolvedEntry = entry
-    const modIndex = allModules.findIndex((m) => m.id === mod.id)
 
     const docChunk =
       documentFull && gen?.source === 'document'
-        ? documentChunkForModule(documentFull, modIndex, allModules.length, 12000)
+        ? documentChunkForModule(documentFull, modIndex, modulesOrdered.length, 12000)
         : undefined
 
     const contentMessages = buildModuleContentPrompt(
@@ -157,22 +165,39 @@ export async function fillEmptyModulesForCourse(
       difficulty,
       resolvedEntry,
       modIndex,
-      allModules.length,
+      modulesOrdered.length,
       curriculum,
       priorSummaries,
       { documentGrounding: docChunk, gen }
     )
 
     try {
-      const content = await callAI(contentMessages, 1800, chatAiCtx)
+      let content = await callAI(contentMessages, 1800, chatAiCtx)
 
-      const imageResult = await getOneImage(mod.title, course.title)
+      const isCapstone = modIndex >= modulesOrdered.length - 1
+      if (isCapstone) {
+        try {
+          const critiqueMessages = buildCritiqueRefinePrompt(
+            course.title,
+            mod.title,
+            gen?.learning_outcomes,
+            content
+          )
+          const refined = await callAI(critiqueMessages, 2200, chatAiCtx)
+          if (refined.trim()) {
+            content = refined
+            critiquePasses++
+          }
+        } catch {
+          // keep draft
+        }
+      }
 
       const contentSummary = content.slice(0, 500)
       const role: ModuleRole =
         modIndex === 0
           ? 'intro'
-          : modIndex >= allModules.length - 1
+          : modIndex >= modulesOrdered.length - 1
             ? 'capstone'
             : resolvedEntry.pedagogicalRole?.toLowerCase().includes('assessment')
               ? 'assessment'
@@ -189,9 +214,20 @@ export async function fillEmptyModulesForCourse(
 
       let selected = await selectComponentsForModule(mod.title, contentSummary, role, {
         excludeTypes: recentExcludes(recentComponentTypes),
+        disallowedTypes: forbiddenDisallowed,
         allowVideoInPrompt: allowVideo,
         verifiedVideoUrl: verifiedVideo?.url ?? null,
         chatContext: chatAiCtx,
+        bloomLevel: resolvedEntry.bloomLevel,
+        archetype: resolvedEntry.archetype,
+        learningOutcomes: gen?.learning_outcomes,
+        assessmentDensity: gen?.assessment_density,
+        interactivityLevel: gen?.interactivity_level,
+        primaryPedagogy: gen?.primary_pedagogy,
+        moduleFullText: content,
+        courseTypeCounts: { ...courseComponentCounts },
+        moduleIndex: modIndex,
+        totalModules: modulesOrdered.length,
       })
 
       selected = sanitizeVideoComponents(selected, {
@@ -201,17 +237,32 @@ export async function fillEmptyModulesForCourse(
 
       for (const c of selected) {
         recentComponentTypes.push(c.type)
+        courseComponentCounts[c.type] = (courseComponentCounts[c.type] ?? 0) + 1
+        telemetryComponents.push(c.type)
       }
+
+      telemetryArchetypes.push((resolvedEntry.archetype ?? 'cold-open') as string)
 
       const interactiveElements =
         selected.length > 0 ? toInteractiveElements(selected, resolvedEntry.bloomLevel) : []
 
       const parsedSections = parseMarkdownSections(content)
+      const imageIndices = pickImageSectionIndices(parsedSections.length, modIndex)
+      const sectionImages = new Map<number, NonNullable<Awaited<ReturnType<typeof getOneImage>>>>()
+      for (let imgIdx = 0; imgIdx < imageIndices.length; imgIdx++) {
+        const secIdx = imageIndices[imgIdx]!
+        const heading = parsedSections[secIdx]?.heading ?? ''
+        const query =
+          imgIdx === 0 ? mod.title : `${mod.title} ${heading}`.slice(0, 100)
+        const imageResult = await getOneImage(query, course.title)
+        if (imageResult) sectionImages.set(secIdx, imageResult)
+      }
+
       const sections = parsedSections.map((sec, i) => ({
         heading: sec.heading,
         content: sec.content,
         type: 'text' as const,
-        ...(i === 0 && imageResult ? { image: imageResult } : {}),
+        ...(sectionImages.has(i) ? { image: sectionImages.get(i)! } : {}),
       }))
 
       let entryState: { type: string; content: string } | undefined
@@ -268,6 +319,31 @@ export async function fillEmptyModulesForCourse(
       }
     }
   }
+
+  const baseSettings =
+    course.settings && typeof course.settings === 'object' ? { ...(course.settings as Record<string, unknown>) } : {}
+  const prevAg =
+    baseSettings.ai_generation && typeof baseSettings.ai_generation === 'object'
+      ? { ...(baseSettings.ai_generation as Record<string, unknown>) }
+      : {}
+  const mergedGen = { ...prevAg, ...(gen ?? {}) }
+  await admin
+    .from('courses')
+    .update({
+      settings: {
+        ...baseSettings,
+        ai_generation: {
+          ...mergedGen,
+          generation_telemetry: {
+            completed_at: new Date().toISOString(),
+            archetypes_used: telemetryArchetypes,
+            component_types_used: telemetryComponents,
+            critique_passes: critiquePasses,
+          },
+        },
+      } as unknown as Json,
+    })
+    .eq('id', course.id)
 
   return { completed: true, modules_generated: generated }
 }

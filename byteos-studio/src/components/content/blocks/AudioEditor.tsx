@@ -97,7 +97,7 @@ export function AudioBlockRow({
             disabled={uploadLoading}
             className="flex items-center gap-1.5 px-2 py-1 rounded text-xs text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 disabled:opacity-60"
           >
-            {uploadLoading ? <SudarInlineLoader size="sm" className="h-3 w-auto text-slate-500" starFill="var(--background)" /> : <Upload className="w-3 h-3" />}
+            {uploadLoading ? <SudarInlineLoader size="sm" className="text-slate-500" starFill="var(--background)" /> : <Upload className="w-3 h-3" />}
             Upload audio
           </button>
         )}

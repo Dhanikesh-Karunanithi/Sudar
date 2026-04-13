@@ -4,6 +4,28 @@ import { createAdminClient } from '@/lib/supabase/server'
 const CATALOG_REVALIDATE_SECONDS = 90
 const PATHS_REVALIDATE_SECONDS = 90
 
+type CourseCatalogRow = {
+  id: string
+  title: string
+  description: string | null
+  difficulty: string | null
+  tags: string[] | null
+  estimated_duration_mins: number | null
+  published_at: string | null
+  thumbnail_url: string | null
+  banner_url: string | null
+  modules?: { count: number }[] | null
+}
+
+function withModuleCount(row: CourseCatalogRow) {
+  const { modules, ...rest } = row
+  const c = modules?.[0]?.count
+  return {
+    ...rest,
+    module_count: typeof c === 'number' ? c : 0,
+  }
+}
+
 /** Cached published courses list (shared by catalog page and tutor API). */
 export async function getCachedPublishedCourses() {
   return unstable_cache(
@@ -11,10 +33,13 @@ export async function getCachedPublishedCourses() {
       const admin = createAdminClient()
       const { data } = await admin
         .from('courses')
-        .select('id, title, description, difficulty, tags, estimated_duration_mins, published_at, thumbnail_url, banner_url')
+        .select(
+          'id, title, description, difficulty, tags, estimated_duration_mins, published_at, thumbnail_url, banner_url, modules(count)'
+        )
         .eq('status', 'published')
         .order('published_at', { ascending: false })
-      return data ?? []
+      const rows = (data ?? []) as CourseCatalogRow[]
+      return rows.map(withModuleCount)
     },
     ['courses-published'],
     { revalidate: CATALOG_REVALIDATE_SECONDS }

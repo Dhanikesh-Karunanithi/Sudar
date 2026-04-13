@@ -160,6 +160,20 @@ export interface SelectComponentsOptions {
   verifiedVideoUrl?: string | null
   /** Optional chat context for org private AI keys. */
   chatContext?: import('@/lib/ai/chat').ChatCompletionContext
+  /** Bloom level for this module — steers component choice. */
+  bloomLevel?: string
+  /** Lesson archetype — steers variety. */
+  archetype?: string
+  learningOutcomes?: string[]
+  assessmentDensity?: 'light' | 'moderate' | 'heavy'
+  interactivityLevel?: 'low' | 'balanced' | 'high'
+  primaryPedagogy?: string
+  /** Full module markdown — ground timelines/cards/quizzes in this text. */
+  moduleFullText?: string
+  /** Running counts of each type already placed in prior modules this course. */
+  courseTypeCounts?: Partial<Record<ComponentType, number>>
+  moduleIndex?: number
+  totalModules?: number
 }
 
 /** Drop or fix video components: no hallucinated YouTube URLs. */
@@ -192,6 +206,51 @@ export function sanitizeVideoComponents(
   return out
 }
 
+const COURSE_CAPS: Partial<Record<ComponentType, number>> = {
+  timeline: 2,
+  flipcard: 2,
+}
+
+function targetComponentCount(interactivity?: SelectComponentsOptions['interactivityLevel']): number {
+  if (interactivity === 'low') return 1
+  if (interactivity === 'high') return 3
+  return 2
+}
+
+/** Drop components that would exceed per-course caps; ensure at least one remains when possible. */
+export function applyCourseTypeCaps(
+  components: SelectedComponent[],
+  priorCounts: Partial<Record<ComponentType, number>>
+): SelectedComponent[] {
+  const local: Partial<Record<ComponentType, number>> = { ...priorCounts }
+  const out: SelectedComponent[] = []
+  for (const c of components) {
+    const t = c.type as ComponentType
+    const cap = COURSE_CAPS[t] ?? 99
+    const next = (local[t] ?? 0) + 1
+    if (next > cap) continue
+    local[t] = next
+    out.push(c)
+  }
+  return out
+}
+
+function minimalFallbackQuiz(moduleTitle: string): SelectedComponent {
+  return {
+    type: 'quiz',
+    data: {
+      question: `Which statement best reflects a key idea from "${moduleTitle}"?`,
+      options: [
+        'The concepts apply to real decisions, not abstract memorization.',
+        'This topic is unrelated to workplace practice.',
+        'Skipping practice is the fastest path to mastery.',
+      ],
+      correctAnswer: 0,
+      explanation: 'Effective learning ties ideas to how you will use them.',
+    },
+  }
+}
+
 /** Call AI to select 1-3 interactive components for the module. Returns empty array on failure. */
 export async function selectComponentsForModule(
   moduleTitle: string,
@@ -204,11 +263,17 @@ export async function selectComponentsForModule(
   /** Default false when omitted — avoids offering video unless caller verified a URL. */
   const allowVideo = options?.allowVideoInPrompt === true
   const allTypes = COMPONENT_PROFILES.map((p) => p.type).filter((t) => !disallowed.has(t))
+  const prior = options?.courseTypeCounts ?? {}
   const allowedTypes = allTypes.filter((t) => {
     if (t === 'video' && !allowVideo) return false
-    return !exclude.has(t)
+    if (exclude.has(t)) return false
+    const cap = COURSE_CAPS[t as ComponentType]
+    if (cap != null && (prior[t as ComponentType] ?? 0) >= cap) return false
+    return true
   })
-  if (allowedTypes.length === 0) return []
+  if (allowedTypes.length === 0) {
+    return [minimalFallbackQuiz(moduleTitle)]
+  }
 
   const snippet = buildComponentPromptSnippet(allowedTypes)
   const videoRule = allowVideo
@@ -219,26 +284,98 @@ export async function selectComponentsForModule(
 
   const varietyRule =
     exclude.size > 0
-      ? `Do NOT use these types (already used recently in this course): ${[...exclude].join(', ')}. Pick different types.`
+      ? `Do NOT use these types (already used in the last modules): ${[...exclude].join(', ')}. Pick different types.`
       : ''
 
-  const systemPrompt = `You are an expert instructional designer. Given a module's title, content summary, and role in the course, select 1-3 interactive components that would be most effective for learning. Return ONLY valid JSON. No markdown, no explanation.
+  const countsHint = Object.entries(prior)
+    .filter(([, n]) => (n ?? 0) > 0)
+    .map(([k, n]) => `${k}:${n}`)
+    .join(', ')
+  const capHint =
+    countsHint.length > 0
+      ? `Components already used in prior modules in this course: ${countsHint}. Prefer types that are not overused. Do NOT add another timeline if timelines were already used twice. Do NOT add another flipcard if flipcards were already used twice.`
+      : ''
+
+  const bloom = options?.bloomLevel?.trim() ?? ''
+  const arche = options?.archetype?.trim() ?? ''
+  const bloomHint =
+    bloom === 'Evaluate' || bloom === 'Create'
+      ? 'This module is high on Bloom — prefer tabs, matching, scenario-style quiz, or case-like interactives over simple recall cards.'
+      : bloom === 'Remember' || bloom === 'Understand'
+        ? 'This module emphasizes understanding — flipcards, matching, or short quizzes are appropriate; avoid over-complex layouts unless the content demands it.'
+        : ''
+
+  const ped = options?.primaryPedagogy?.trim() ?? ''
+  const pedHint =
+    ped === 'procedural'
+      ? 'Favor ordering/timeline, checklist-style expandables, or scenario quiz.'
+      : ped === 'scenario'
+        ? 'Favor quiz, tabs (alternatives), or matching — minimize abstract timelines unless the scenario is chronological.'
+        : ped === 'declarative'
+          ? 'Favor flipcards, matching, and short quizzes for definitions.'
+          : ''
+
+  const assess = options?.assessmentDensity ?? 'moderate'
+  const assessHint =
+    assess === 'light'
+      ? 'Assessment density is LIGHT — include at most one short quiz or skip quiz in favor of a non-test interactive.'
+      : assess === 'heavy'
+        ? 'Assessment density is HEAVY — include a quiz and at least one other practice-oriented component if space allows.'
+        : 'Assessment density is MODERATE — one knowledge check is enough.'
+
+  const iLevel = options?.interactivityLevel ?? 'balanced'
+  const maxComponents = targetComponentCount(iLevel)
+  const ixHint =
+    iLevel === 'low'
+      ? 'Interactivity is LOW — return exactly ONE component.'
+      : iLevel === 'high'
+        ? 'Interactivity is HIGH — return three distinct, complementary components.'
+        : `Return ${maxComponents} components unless the content clearly needs only one.`
+
+  const outcomes = options?.learningOutcomes
+  const outcomeHint =
+    outcomes && outcomes.length > 0
+      ? `Align interactives to these course outcomes:\n${outcomes.map((o, i) => `${i + 1}. ${o}`).join('\n')}`
+      : ''
+
+  const fullText = options?.moduleFullText?.trim() ?? ''
+  const grounding =
+    fullText.length > 0
+      ? `FULL MODULE TEXT (ground timelines, flipcards, matching pairs, and quiz items in specific phrases and ideas from this text — do not invent unrelated examples):\n---\n${fullText.slice(0, 7000)}\n---`
+      : `Content summary (module text not available — use this):\n${contentSummary.slice(0, 1200)}`
+
+  const modIdx = options?.moduleIndex ?? 0
+  const total = options?.totalModules ?? 1
+
+  const systemPrompt = `You are an expert instructional designer. Choose interactive components that fit THIS module's cognitive level and the creator's settings — avoid defaulting every lesson to "timeline + flipcard + quiz". Vary formats across the course.
 
 Available components:
 ${snippet}
 
 ${videoRule}
 ${varietyRule}
+${capHint}
+
+Module context:
+- Bloom level: ${bloom || 'not specified'}
+- Structural archetype: ${arche || 'not specified'}
+- Module index: ${modIdx + 1} of ${total}
+${bloomHint}
+${pedHint}
+${assessHint}
+${ixHint}
+${outcomeHint}
 
 Return format: { "components": [ { "type": "<component type>", "data": { ... } }, ... ] }
-For each component, populate "data" with the full structure needed by that type (e.g. timeline needs "steps": [{ "title", "description" }], quiz needs "question", "options", "correctAnswer", "explanation"). Generate realistic, concise content that fits the module.
+For each component, populate "data" with the full structure (timeline: "steps": [{ "title", "description" }]; flipcard: "cards": [{ "front", "back" }]; quiz: "question", "options" (array of strings), "correctAnswer" (0-based index), "explanation"; matching: "pairs": [{ "left", "right" }]; tabs: "tabs": [{ "label", "content" }]; etc.).
 For video data use shape { "url": string, "title"?: string } only when video is allowed and a verified URL was provided above.`
 
   const userPrompt = `Module title: "${moduleTitle}"
 Module role: ${moduleRole}
-Content summary: ${contentSummary.slice(0, 500)}
 
-Return JSON with 1-3 components (use "components" array). Only use types from the allowed list. Generate full "data" for each.`
+${grounding}
+
+Return JSON with "components" only. Max ${maxComponents} components. Only use allowed types.`
 
   try {
     const { content: text } = await chatCompletion(
@@ -247,22 +384,40 @@ Return JSON with 1-3 components (use "components" array). Only use types from th
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        max_tokens: 1500,
-        temperature: 0.5,
+        max_tokens: 2200,
+        temperature: 0.62,
       },
       options?.chatContext
     )
     if (!text) return []
     const jsonStr = extractJson(text)
     const parsed = JSON.parse(jsonStr) as { components?: SelectedComponent[] }
-    const components = Array.isArray(parsed.components) ? parsed.components : []
-    const filtered = components
+    let components = Array.isArray(parsed.components) ? parsed.components : []
+    components = components
       .filter((c) => c && c.type && typeof c.data === 'object')
       .filter((c) => allowedTypes.includes(c.type as ComponentType))
-      .slice(0, 3)
-    return filtered
+      .slice(0, maxComponents)
+
+    components = applyCourseTypeCaps(components, prior)
+
+    if (assess === 'light') {
+      components = components.filter((c, i) => !(c.type === 'quiz' && i > 0))
+      if (components.length > 1) {
+        const quizzes = components.filter((c) => c.type === 'quiz')
+        if (quizzes.length > 1) {
+          const firstQuiz = components.findIndex((c) => c.type === 'quiz')
+          components = components.filter((c, idx) => c.type !== 'quiz' || idx === firstQuiz)
+        }
+      }
+    }
+
+    if (components.length === 0) {
+      components = [minimalFallbackQuiz(moduleTitle)]
+    }
+
+    return components
   } catch {
-    return []
+    return [minimalFallbackQuiz(moduleTitle)]
   }
 }
 

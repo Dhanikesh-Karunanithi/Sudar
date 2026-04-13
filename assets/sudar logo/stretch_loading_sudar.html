@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stretch Loading – Inverted</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --stretch-duration: 2.85s;
+    --stretch-scale-x: 1;
+    --stretch-scale-y: 0.95;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  #sudar-logo {
+    position: relative;
+    width: 360px;
+    height: 220px;
+  }
+
+  .scene {
+    position: relative;
+    width: 360px;
+    height: 220px;
+    transform-style: preserve-3d;
+    transform-origin: center;
+  }
+
+  .pill {
+    position: absolute;
+    border-radius: 999px;
+    background: #111111;
+    height: 64px;
+    overflow: hidden;
+  }
+
+  .pill--top {
+    width: 170px;
+    top: 36px;
+    left: 50%;
+    transform: translateX(calc(-50% + 20px));
+    z-index: 2;
+    animation: stretch-top var(--stretch-duration) ease-in-out infinite;
+  }
+
+  .pill--bottom {
+    width: 170px;
+    top: 100px;
+    left: 50%;
+    transform: translateX(calc(-50% - 20px));
+    z-index: 1;
+    animation: stretch-bottom var(--stretch-duration) ease-in-out infinite;
+  }
+
+  .star {
+    position: absolute;
+    left: 50%;
+    top: 100px;
+    width: 90px;
+    height: 90px;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  #star-core { width: 100%; height: 100%; }
+
+  @keyframes stretch-top {
+    0%,100% {
+      transform: translateX(calc(-50% + 20px)) scaleX(1) scaleY(1);
+    }
+    50% {
+      transform: translateX(calc(-50% + 20px))
+                 scaleX(var(--stretch-scale-x))
+                 scaleY(var(--stretch-scale-y));
+    }
+  }
+
+  @keyframes stretch-bottom {
+    0%,100% {
+      transform: translateX(calc(-50% - 20px)) scaleX(1) scaleY(1);
+    }
+    50% {
+      transform: translateX(calc(-50% - 20px))
+                 scaleX(var(--stretch-scale-x))
+                 scaleY(var(--stretch-scale-y));
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="sudar-logo">
+  <div class="scene">
+    <div class="pill pill--top"></div>
+    <div class="pill pill--bottom"></div>
+    <div class="star">
+      <svg id="star-core" viewBox="0 0 100 100"
+           xmlns="http://www.w3.org/2000/svg"
+           aria-label="Sparkle star mark" role="img">
+        <path
+          d="M 50 2 C 51 49, 51 49, 98 50 C 51 51, 51 51, 50 98 C 49 51, 49 51, 2 50 C 49 49, 49 49, 50 2 Z"
+          fill="#ffffff"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

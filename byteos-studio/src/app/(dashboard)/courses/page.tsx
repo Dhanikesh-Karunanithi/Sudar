@@ -13,11 +13,42 @@ export default async function CoursesPage() {
   const orgId = await getOrCreateOrg(user!.id)
   const admin = createAdminClient()
 
-  const { data: courses } = await admin
+  const { data: rawCourses } = await admin
     .from('courses')
-    .select('id, title, description, status, difficulty, estimated_duration_mins, updated_at')
+    .select('id, title, description, status, difficulty, estimated_duration_mins, updated_at, thumbnail_url, banner_url, modules(count)')
     .eq('org_id', orgId)
     .order('updated_at', { ascending: false })
+
+  type Row = {
+    id: string
+    title: string
+    description: string | null
+    status: string
+    difficulty: string | null
+    estimated_duration_mins: number | null
+    updated_at: string
+    thumbnail_url: string | null
+    banner_url: string | null
+    modules?: { count: number }[] | null
+  }
+
+  const courses =
+    rawCourses?.map((c) => {
+      const row = c as Row
+      const n = row.modules?.[0]?.count
+      return {
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        status: row.status,
+        difficulty: row.difficulty,
+        estimated_duration_mins: row.estimated_duration_mins,
+        updated_at: row.updated_at,
+        thumbnail_url: row.thumbnail_url,
+        banner_url: row.banner_url,
+        module_count: typeof n === 'number' ? n : 0,
+      }
+    }) ?? []
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-6">
@@ -25,7 +56,7 @@ export default async function CoursesPage() {
         <div>
           <h1 className="text-xl font-semibold text-white">Courses</h1>
           <p className="text-slate-400 text-sm mt-0.5">
-            {courses?.length ?? 0} course{courses?.length !== 1 ? 's' : ''} in your workspace
+            {courses.length} course{courses.length !== 1 ? 's' : ''} in your workspace
           </p>
         </div>
         <Link
@@ -37,7 +68,7 @@ export default async function CoursesPage() {
         </Link>
       </div>
 
-      {!courses || courses.length === 0 ? (
+      {courses.length === 0 ? (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-16 text-center space-y-4">
           <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto">
             <BookOpen className="w-7 h-7 text-slate-600" />

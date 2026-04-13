@@ -3,20 +3,20 @@
 import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { X, Send, ExternalLink, Maximize2, Minimize2 } from 'lucide-react'
 import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { cn, stripTutorActionsFromText } from '@/lib/utils'
 import type { TutorAction, TutorBlock } from '@/types/tutor'
 import { GenerativeBlockRenderer } from './GenerativeBlockRenderer'
 import { ChatMarkdown } from './ChatMarkdown'
-import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { MascotAvatar } from '@/components/mascot/MascotAvatar'
 import { buildMascotResponse, normalizeMascotPreferences, pickActiveMascot } from '@/lib/mascot/engine'
 import { trackMascotEvent } from '@/lib/mascot/tracking'
 import { MascotModeBadge } from '@/components/mascot/MascotModeBadge'
 import type { MascotPreferences } from '@/types/mascot'
 import { MASCOT_ROLLOUT } from '@/lib/mascot/rollout'
+import { SudarChatLaunchButton } from '@/components/tutor/SudarChatLaunchButton'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -154,15 +154,7 @@ export function FloatingSudarChat() {
       {/* Hide FAB and panel on course learn page (inline tutor is shown there) */}
       {!/\/courses\/[^/]+\/learn/.test(pathname ?? '') && (
       <>
-      <motion.button
-        type="button"
-        whileHover={{
-          y: -5,
-          scale: 1.06,
-          transition: { type: 'spring', stiffness: 420, damping: 24 },
-        }}
-        whileTap={{ scale: 0.94 }}
-        transition={{ type: 'spring', stiffness: 460, damping: 28 }}
+      <SudarChatLaunchButton
         onClick={() => {
           if (isOpen) {
             void trackMascotEvent({
@@ -176,11 +168,8 @@ export function FloatingSudarChat() {
           }
           setIsOpen(!isOpen)
         }}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full border border-primary/35 bg-primary/15 text-primary shadow-2xl backdrop-blur-md transition-[box-shadow,background-color,border-color] duration-300 hover:border-primary/55 hover:bg-primary/28 hover:shadow-[0_18px_50px_-12px_color-mix(in_oklab,var(--primary)_42%,transparent)] motion-reduce:backdrop-blur-none motion-reduce:hover:shadow-2xl"
         aria-label={isOpen ? 'Close Sudar chat' : 'Open Sudar chat'}
-      >
-        <SudarLogoMark className="h-8 w-auto md:h-9" starFill="var(--background)" animated />
-      </motion.button>
+      />
 
       <AnimatePresence>
         {isOpen && (
@@ -190,7 +179,7 @@ export function FloatingSudarChat() {
             exit={{ opacity: 0, y: 24, scale: 0.95 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              'fixed z-[60] liquid-glass flex flex-col overflow-hidden rounded-[2rem] shadow-2xl transition-all duration-200',
+              'fixed z-[60] liquid-glass flex flex-col overflow-hidden rounded-[var(--radius-chat-panel)] shadow-2xl transition-all duration-200',
               isExpanded
                 ? 'top-4 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-[calc(100vw-3rem)] max-w-[720px] h-[calc(100vh-6rem)]'
                 : 'bottom-24 right-6 w-[calc(100vw-3rem)] max-w-[420px] h-[520px]'
@@ -361,13 +350,13 @@ export function FloatingSudarChat() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                  className="w-full bg-card/80 border border-border rounded-full py-3 px-5 pr-14 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                  className="w-full bg-card/80 border border-border rounded-pill py-3 px-5 pr-14 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                 />
                 <button
                   type="button"
                   onClick={handleSend}
                   disabled={!input.trim() || thinking}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 h-10 w-10 shrink-0 bg-primary text-primary-foreground rounded-pill flex items-center justify-center shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100"
                   aria-label="Send"
                 >
                   <Send className="w-4 h-4" />

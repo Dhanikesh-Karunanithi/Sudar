@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import { chatCompletion, type ChatCompletionContext } from '@/lib/ai/chat'
-import { refineImageQuery, searchImages } from '@/lib/media/imageSearch'
 
 const MAX_DESCRIPTION_LEN = 580
 
@@ -108,20 +107,13 @@ Rules:
   return { description, tag_labels }
 }
 
-/** Stock images for card + banner; may share one URL if only one result. */
+/**
+ * Sudar uses in-app CSS art for default thumbnails and banners (see SudarCourseDefaultArt).
+ * No stock-image fetch — keeps catalog cohesive and avoids brittle remote URLs.
+ */
 export async function suggestCourseCoverImages(
-  courseTitle: string,
-  tagLabels: string[]
+  _courseTitle: string,
+  _tagLabels: string[]
 ): Promise<{ thumbnail_url: string | null; banner_url: string | null }> {
-  const query = refineImageQuery(
-    tagLabels.slice(0, 3).join(' ') || 'learning',
-    courseTitle
-  )
-  const results = await searchImages(query, { count: 2 })
-  const first = results[0]?.url ?? null
-  const second = results[1]?.url ?? first
-  return {
-    thumbnail_url: first,
-    banner_url: second ?? first,
-  }
+  return { thumbnail_url: null, banner_url: null }
 }

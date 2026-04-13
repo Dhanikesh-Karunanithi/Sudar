@@ -2,9 +2,12 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Plus, BookOpen, Clock, Globe, FileText, Search, Trash2 } from 'lucide-react'
+import { Clock, Globe, FileText, Search, Trash2 } from 'lucide-react'
 import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
+import { SudarCourseThumbnailArt } from '@/components/branding/SudarCourseDefaultArt'
+import { CourseArtPatternSelect } from '@/components/branding/CourseArtPatternSelect'
 import { cn } from '@/lib/utils'
 
 const statusConfig = {
@@ -29,6 +32,9 @@ interface CourseRow {
   difficulty: string | null
   estimated_duration_mins: number | null
   updated_at: string
+  thumbnail_url: string | null
+  banner_url: string | null
+  module_count: number
 }
 
 export function CourseListClient({ courses: initialCourses }: { courses: CourseRow[] }) {
@@ -81,6 +87,11 @@ export function CourseListClient({ courses: initialCourses }: { courses: CourseR
 
   return (
     <div className="space-y-6">
+      <CourseArtPatternSelect
+        compact
+        id="studio-courses-art-pattern"
+        className="rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2.5"
+      />
       {/* Search, filter, sort */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-xs">
@@ -141,7 +152,7 @@ export function CourseListClient({ courses: initialCourses }: { courses: CourseR
             return (
               <div
                 key={course.id}
-                className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-all group relative"
+                className="bg-slate-900 border border-slate-800 rounded-xl hover:border-slate-700 transition-all group relative overflow-hidden"
               >
                 {showConfirm ? (
                   <div className="absolute inset-0 bg-slate-900/95 rounded-xl p-4 flex flex-col items-center justify-center gap-3 z-10">
@@ -151,9 +162,9 @@ export function CourseListClient({ courses: initialCourses }: { courses: CourseR
                         type="button"
                         onClick={() => handleDelete(course.id)}
                         disabled={isDeleting}
-                        className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-medium flex items-center gap-1.5"
+                        className="shrink-0 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-medium inline-flex items-center gap-1.5"
                       >
-                        {isDeleting ? <SudarInlineLoader size="sm" className="h-3.5 w-auto text-white" starFill="#dc2626" /> : <Trash2 className="w-3.5 h-3.5" />}
+                        {isDeleting ? <SudarInlineLoader size="sm" className="text-white" starFill="#dc2626" /> : <Trash2 className="w-3.5 h-3.5" />}
                         {isDeleting ? 'Deleting...' : 'Delete'}
                       </button>
                       <button
@@ -168,27 +179,43 @@ export function CourseListClient({ courses: initialCourses }: { courses: CourseR
                   </div>
                 ) : null}
 
-                <div className="flex items-start justify-between gap-2">
+                <Link href={`/courses/${course.id}`} className="relative block aspect-[16/9] w-full overflow-hidden border-b border-slate-800 bg-slate-950">
+                  {course.thumbnail_url ? (
+                    <Image
+                      src={course.thumbnail_url}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      unoptimized
+                    />
+                  ) : (
+                    <SudarCourseThumbnailArt
+                      courseId={course.id}
+                      title={course.title}
+                      difficulty={course.difficulty}
+                      estimatedDurationMins={course.estimated_duration_mins}
+                      moduleCount={course.module_count}
+                    />
+                  )}
+                </Link>
+
+                <div className="flex items-start justify-between gap-2 p-5 pb-0">
                   <Link
                     href={`/courses/${course.id}`}
-                    className="flex-1 min-w-0 flex items-start gap-3 space-y-4 group/link"
+                    className="flex-1 min-w-0 space-y-1.5 group/link"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-indigo-600/15 border border-indigo-500/20 flex items-center justify-center shrink-0">
-                      <BookOpen className="w-5 h-5 text-indigo-400" />
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-1.5">
-                      <span className={cn('text-xs font-medium px-2 py-1 rounded-full shrink-0', status.class)}>
-                        {status.label}
-                      </span>
-                      <h3 className="text-white font-medium text-sm leading-snug group-hover/link:text-indigo-300 transition-colors line-clamp-2">
-                        {course.title}
-                      </h3>
-                      {course.description && (
-                        <p className="text-slate-500 text-xs line-clamp-2 leading-relaxed">
-                          {course.description}
-                        </p>
-                      )}
-                    </div>
+                    <span className={cn('inline-flex text-xs font-medium px-2 py-1 rounded-full shrink-0', status.class)}>
+                      {status.label}
+                    </span>
+                    <h3 className="text-white font-medium text-sm leading-snug group-hover/link:text-indigo-300 transition-colors line-clamp-2">
+                      {course.title}
+                    </h3>
+                    {course.description && (
+                      <p className="text-slate-500 text-xs line-clamp-2 leading-relaxed">
+                        {course.description}
+                      </p>
+                    )}
                   </Link>
                   <button
                     type="button"
@@ -200,7 +227,7 @@ export function CourseListClient({ courses: initialCourses }: { courses: CourseR
                   </button>
                 </div>
 
-                <Link href={`/courses/${course.id}`} className="block mt-3">
+                <Link href={`/courses/${course.id}`} className="block px-5 pb-5 pt-3">
                   <div className="flex items-center gap-3 pt-1">
                     {course.difficulty && (
                       <span className={cn('text-xs font-medium capitalize', diffClass)}>

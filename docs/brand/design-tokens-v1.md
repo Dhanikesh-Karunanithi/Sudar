@@ -78,6 +78,10 @@ This file defines brand-level primitives used by product and marketing surfaces.
 - `--radius-lg`: `18px`
 - `--radius-xl`: `24px`
 - `--radius-pill`: `999px`
+- `--radius-chat-panel`: `32px` (`2rem`) — floating Sudar chat panels (Learn + Studio); Tailwind: `rounded-[var(--radius-chat-panel)]` or `rounded-chat-panel` where configured
+
+### Product implementation (CSS variables)
+Sudar Learn and Sudar Studio both set semantic colors in `globals.css` using the neutral and brand values above. **Learn** dark mode uses the token “deep night” neutrals (`#0D1026` surface, `#161A38` elevated, `#2E3567` border). **Studio** dark mode intentionally uses a **neutral black** shell (`#000000` background/surface, `#0a0a0a` cards, zinc-style borders) so the creator surface avoids a generic blue-gray cast; brand indigo/orange still come through primary and accent controls only.
 
 ### Shadow
 - `--shadow-sm`: `0 1px 2px rgba(10, 15, 40, 0.08)`

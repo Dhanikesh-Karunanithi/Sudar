@@ -70,11 +70,12 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
     ? user.full_name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
     : user.email.slice(0, 2).toUpperCase()
 
-  const isCourseEditPage =
-    pathname.startsWith('/courses/') &&
-    pathname !== '/courses' &&
-    pathname !== '/courses/new' &&
-    pathname.split('/').filter(Boolean).length >= 2
+  /** Only `/courses/[id]` — not `/courses/new`, not `/courses/[id]/preview`, not deeper paths */
+  const isCourseDetailEditorPage =
+    /^\/courses\/[^/]+$/.test(pathname) && pathname !== '/courses/new'
+  const coursePreviewMatch = pathname.match(/^\/courses\/([^/]+)\/preview$/)
+  const isCoursePreviewPage = coursePreviewMatch !== null
+  const previewCourseId = coursePreviewMatch?.[1] ?? null
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -97,7 +98,7 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto flex flex-col min-h-0">
-        {isCourseEditPage ? (
+        {isCourseDetailEditorPage ? (
           <>
             <Link
               href="/courses"
@@ -114,6 +115,28 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
                 {sidebarContent.content}
               </div>
             )}
+          </>
+        ) : isCoursePreviewPage && previewCourseId ? (
+          <>
+            <Link
+              href="/courses"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-card-foreground hover:bg-muted transition-all group"
+            >
+              <ArrowLeft className="w-4 h-4 shrink-0 text-muted-foreground group-hover:text-card-foreground" />
+              <span className="flex-1">Back to courses</span>
+            </Link>
+            <p className="px-3 mt-2 text-[10px] font-semibold uppercase tracking-wider text-amber-500/90">
+              Learner preview (read-only)
+            </p>
+            <Link
+              href={`/courses/${previewCourseId}`}
+              className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Open course editor
+            </Link>
+            <p className="px-3 mt-2 text-xs leading-relaxed text-muted-foreground">
+              Editing, publish, and the WYSIWYG inspector are on the course editor page — not here.
+            </p>
           </>
         ) : (
           <>

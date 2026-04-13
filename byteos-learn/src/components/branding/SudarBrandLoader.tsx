@@ -1,8 +1,12 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { SudarLogoMark } from '@/components/branding/SudarLogo'
-import { SudarLoadingFrost, SudarPremiumMark } from '@/components/branding/SudarPremiumLoader'
+import {
+  SudarContentCreatingMark,
+  SudarLoadingFrost,
+  SudarMicroMark,
+  SudarPremiumMark,
+} from '@/components/branding/SudarPremiumLoader'
 
 export { SudarLoadingFrost } from '@/components/branding/SudarPremiumLoader'
 
@@ -17,13 +21,11 @@ export function SudarInlineLoader({
   starFill?: string
   size?: 'sm' | 'md' | 'lg'
 }) {
-  const dim = size === 'lg' ? 'h-6 w-auto' : size === 'md' ? 'h-5 w-auto' : 'h-4 w-auto'
   return (
-    <SudarLogoMark
-      className={cn(dim, 'shrink-0 text-primary', className)}
+    <SudarMicroMark
+      className={cn('shrink-0 text-primary', className)}
       starFill={starFill ?? 'var(--background)'}
-      motion="loading"
-      aria-hidden
+      size={size}
     />
   )
 }
@@ -41,7 +43,6 @@ export function SudarLoadingStrip({
       className={cn(
         'flex items-center gap-4 rounded-xl px-4 py-3',
         'bg-background/45 dark:bg-background/55 backdrop-blur-xl backdrop-saturate-150',
-        'border border-border/30',
         className
       )}
       role="status"
@@ -71,17 +72,22 @@ export function SudarBrandLoader({
   className,
   size = 'md',
   frostClassName,
+  /** `none` = no frosted panel or border; animation sits on the page background */
+  surface = 'frost',
 }: {
   message?: string
   className?: string
   size?: Size
   /** Extra classes on the outer wrapper */
   frostClassName?: string
+  surface?: 'frost' | 'none'
 }) {
+  const plain = surface === 'none'
   return (
     <div
       className={cn(
-        'relative flex flex-col items-stretch overflow-hidden rounded-2xl min-h-[260px] w-full',
+        'relative flex min-h-[260px] w-full flex-col items-stretch',
+        plain ? 'overflow-visible rounded-none border-0 bg-transparent' : 'overflow-hidden rounded-2xl',
         frostClassName
       )}
       role="status"
@@ -92,10 +98,14 @@ export function SudarBrandLoader({
         variant="section"
         layout="block"
         label={message}
-        className={cn('min-h-[260px] border-border/30', className)}
+        className={cn(
+          'min-h-[260px]',
+          plain && '!border-0 !bg-transparent !p-0 !shadow-none !backdrop-blur-none !backdrop-saturate-100',
+          className
+        )}
       >
         <div className={cn('origin-center motion-reduce:scale-100', sceneScale[size])}>
-          <SudarPremiumMark className="min-h-0" />
+          <SudarContentCreatingMark className="min-h-0" />
         </div>
       </SudarLoadingFrost>
     </div>

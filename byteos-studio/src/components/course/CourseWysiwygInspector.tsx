@@ -2,17 +2,19 @@
 
 import { useMemo } from 'react'
 import type { ModuleContent } from '@/types/content'
-import { isRichContent } from '@/types/content'
+import { isRichContent, isScormContent } from '@/types/content'
 import {
   patchRichIntroduction,
   patchRichSection,
   patchRichInteractive,
   patchRichSummary,
   patchTextBody,
+  patchScormTextContent,
 } from '@/lib/courseModulePatch'
 import { contentToMainTextAndBlocks, mainTextAndBlocksToContent } from '@/lib/contentBlocks'
 import { richInteractiveToEditorBlock, editorBlockToRichInteractive } from '@/lib/richInteractiveToEditorBlock'
 import { ModuleBlockEditor } from '@/components/content/ModuleBlockEditor'
+import { AssistTextareaWithAiToolbar } from '@/components/content/AssistTextareaWithAiToolbar'
 import type { CourseContentRegionKey } from '@/components/course/CourseModuleContent'
 import { SectionImageInspector } from '@/components/course/SectionImageInspector'
 import { cn } from '@/lib/utils'
@@ -89,31 +91,66 @@ export function CourseWysiwygInspector({
     return (
       <div className={cn('space-y-2 bg-transparent p-4', className)}>
         <p className="text-[11px] font-medium text-zinc-500">Inspector</p>
-        <p className="text-xs leading-relaxed text-zinc-400">Click a highlighted region on the canvas to edit it here.</p>
+        <p className="text-xs leading-relaxed text-zinc-400">
+          Click a highlighted region on the canvas. Then edit markdown here, or <span className="text-zinc-300">select any
+          passage</span> and use the <span className="text-violet-400/90">AI</span> buttons (improve, shorten, expand,
+          simplify) to rewrite the selection.
+        </p>
       </div>
     )
   }
 
   if (parsed.kind === 'scorm') {
+    if (!isScormContent(content)) {
+      return (
+        <div className={cn('bg-transparent p-4 text-xs text-zinc-500', className)}>
+          Invalid SCORM content.
+        </div>
+      )
+    }
     return (
-      <div className={cn('bg-transparent p-4 text-xs text-zinc-500', className)}>
-        SCORM packages are read-only in Studio. Replace the module or edit the title in the toolbar.
+      <div className={cn('space-y-3 bg-transparent p-4', className)}>
+        <p className="text-[11px] font-medium text-zinc-500">{label}</p>
+        <p className="text-xs leading-relaxed text-zinc-400">
+          The interactive package in the canvas is served as uploaded. Edit the extracted text here to change AI tutor
+          and search context; select a passage for quick AI rewrites.
+        </p>
+        <AssistTextareaWithAiToolbar
+          value={content.scorm_text_content ?? ''}
+          onTextChange={(v) => onContentChange(patchScormTextContent(content, v))}
+          rows={16}
+          toolbarLabel="AI assist for SCORM extracted text"
+          textareaClassName="w-full resize-none rounded-xl border border-white/[0.08] bg-zinc-900/80 p-3 font-mono text-sm leading-relaxed text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+        />
+        <p className="text-[10px] text-zinc-600">
+          Autosave is on for this course — this text is included when the module syncs (see the builder status line).
+        </p>
       </div>
     )
   }
+
+  const assistTextareaClass =
+    'min-h-[200px] w-full flex-1 resize-none rounded-xl border border-white/[0.08] bg-zinc-900/80 p-3 font-mono text-sm leading-relaxed text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/25'
 
   if (parsed.kind === 'text-body' && content.type === 'text') {
     return (
       <div className={cn('flex min-h-0 flex-col space-y-3 bg-transparent p-4', className)}>
         <p className="text-[11px] font-medium text-zinc-500">{label}</p>
-        <textarea
+        <p className="text-[10px] leading-relaxed text-zinc-500">
+          Edit markdown below. Select text to show AI rewrite options (improve, shorten, expand, simplify).
+        </p>
+        <AssistTextareaWithAiToolbar
           value={content.body ?? ''}
-          onChange={(e) => onContentChange(patchTextBody(content, e.target.value))}
+          onTextChange={(v) => onContentChange(patchTextBody(content, v))}
           rows={16}
-          className="min-h-[200px] w-full flex-1 resize-none rounded-xl border border-white/[0.08] bg-zinc-900/80 p-3 font-mono text-sm leading-relaxed text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+          toolbarLabel="AI assist for module text"
           placeholder="Markdown: ## Heading, lists, **bold**…"
+          textareaClassName={assistTextareaClass}
         />
-        <p className="text-[10px] text-zinc-600">Saves as you type (debounced from parent).</p>
+        <p className="text-[10px] text-zinc-600">
+          Autosave is on — edits sync shortly after you pause typing (see Course builder status). Use Undo in the builder
+          toolbar if needed.
+        </p>
       </div>
     )
   }
@@ -122,12 +159,14 @@ export function CourseWysiwygInspector({
     return (
       <div className={cn('space-y-3 bg-transparent p-4', className)}>
         <p className="text-[11px] font-medium text-zinc-500">{label}</p>
-        <textarea
+        <p className="text-[10px] leading-relaxed text-zinc-500">Select text for AI-assisted rewrites.</p>
+        <AssistTextareaWithAiToolbar
           value={content.introduction ?? ''}
-          onChange={(e) => onContentChange(patchRichIntroduction(content, e.target.value))}
+          onTextChange={(v) => onContentChange(patchRichIntroduction(content, v))}
           rows={12}
-          className="w-full resize-none rounded-xl border border-white/[0.08] bg-zinc-900/80 p-3 font-mono text-sm leading-relaxed text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+          toolbarLabel="AI assist for introduction"
           placeholder="Introduction (markdown)"
+          textareaClassName="w-full resize-none rounded-xl border border-white/[0.08] bg-zinc-900/80 p-3 font-mono text-sm leading-relaxed text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
         />
       </div>
     )
@@ -137,12 +176,14 @@ export function CourseWysiwygInspector({
     return (
       <div className={cn('space-y-3 bg-transparent p-4', className)}>
         <p className="text-[11px] font-medium text-zinc-500">{label}</p>
-        <textarea
+        <p className="text-[10px] leading-relaxed text-zinc-500">Select text for AI-assisted rewrites.</p>
+        <AssistTextareaWithAiToolbar
           value={content.summary ?? ''}
-          onChange={(e) => onContentChange(patchRichSummary(content, e.target.value))}
+          onTextChange={(v) => onContentChange(patchRichSummary(content, v))}
           rows={10}
-          className="w-full resize-none rounded-xl border border-white/[0.08] bg-zinc-900/80 p-3 font-mono text-sm leading-relaxed text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+          toolbarLabel="AI assist for summary"
           placeholder="Summary (markdown)"
+          textareaClassName="w-full resize-none rounded-xl border border-white/[0.08] bg-zinc-900/80 p-3 font-mono text-sm leading-relaxed text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
         />
       </div>
     )
@@ -172,17 +213,17 @@ export function CourseWysiwygInspector({
             placeholder="Optional section heading"
           />
         </label>
-        <label className="block space-y-1">
+        <div className="block space-y-1">
           <span className="text-[10px] text-zinc-500">Body (markdown)</span>
-          <textarea
+          <span className="mb-1 block text-[10px] text-zinc-500">Select text for AI-assisted rewrites.</span>
+          <AssistTextareaWithAiToolbar
             value={sec.content ?? ''}
-            onChange={(e) =>
-              onContentChange(patchRichSection(content, parsed.index, { content: e.target.value }))
-            }
+            onTextChange={(v) => onContentChange(patchRichSection(content, parsed.index, { content: v }))}
             rows={10}
-            className="w-full resize-none rounded-xl border border-white/[0.08] bg-zinc-900/80 p-3 font-mono text-sm leading-relaxed text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+            toolbarLabel="AI assist for section body"
+            textareaClassName="w-full resize-none rounded-xl border border-white/[0.08] bg-zinc-900/80 p-3 font-mono text-sm leading-relaxed text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
           />
-        </label>
+        </div>
         <SectionImageInspector
           section={sec}
           courseId={courseId}

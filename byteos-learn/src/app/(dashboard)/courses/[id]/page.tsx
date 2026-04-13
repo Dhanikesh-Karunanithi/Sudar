@@ -4,6 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft, BookOpen, Clock, List, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SudarCourseBannerArt } from '@/components/branding/SudarCourseDefaultArt'
+import { CourseArtPatternSelect } from '@/components/branding/CourseArtPatternSelect'
 import { EnrollButton } from './EnrollButton'
 
 const difficultyConfig = {
@@ -57,6 +59,12 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
         Course catalog
       </Link>
 
+      <CourseArtPatternSelect
+        compact
+        id="course-detail-art-pattern"
+        className="rounded-lg border border-border/80 bg-muted/20 px-3 py-2.5"
+      />
+
       {/* Hero */}
       <div className="relative overflow-hidden rounded-card-xl border border-primary/20 bg-primary/5">
         {course.banner_url ? (
@@ -72,7 +80,17 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/70 to-background/20" />
           </div>
-        ) : null}
+        ) : (
+          <div className="relative h-40 w-full sm:h-48">
+            <SudarCourseBannerArt
+              courseId={course.id}
+              title={course.title}
+              difficulty={course.difficulty}
+              estimatedDurationMins={course.estimated_duration_mins}
+              moduleCount={course.modules?.length ?? null}
+            />
+          </div>
+        )}
         <div className={cn('p-8', course.banner_url && '-mt-12 relative')}>
           <div className="flex items-start gap-5">
             <div className="w-14 h-14 rounded-card bg-card shadow-sm border border-border flex items-center justify-center shrink-0">

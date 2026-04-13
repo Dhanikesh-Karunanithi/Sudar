@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Micro Loading – Inverted</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --micro-duration: 2.75s;
+    --micro-scale-min: 0.94;
+    --micro-scale-max: 1.1;
+    --micro-shimmer-opacity: 0.36;
+    --micro-breathe-scale: 1.04;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  #sudar-logo {
+    position: relative;
+    width: 360px;
+    height: 220px;
+  }
+
+  .scene {
+    position: relative;
+    width: 360px;
+    height: 220px;
+    transform-style: preserve-3d;
+    transform-origin: center;
+    animation: logo-breathe calc(var(--micro-duration)*1.4) ease-in-out infinite;
+  }
+
+  .pill {
+    position: absolute;
+    border-radius: 999px;
+    background: #111111;
+    height: 64px;
+    overflow: hidden;
+  }
+
+  .pill--top {
+    width: 170px;
+    top: 36px;
+    left: 50%;
+    transform: translateX(calc(-50% + 20px));
+    z-index: 2;
+  }
+
+  .pill--bottom {
+    width: 170px;
+    top: 100px;
+    left: 50%;
+    transform: translateX(calc(-50% - 20px));
+    z-index: 1;
+  }
+
+  .star {
+    position: absolute;
+    left: 50%;
+    top: 100px;
+    width: 90px;
+    height: 90px;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    pointer-events: none;
+    animation: micro-pulse var(--micro-duration) ease-in-out infinite;
+  }
+
+  #star-core {
+    width: 100%;
+    height: 100%;
+  }
+
+  .pill--top::after,
+  .pill--bottom::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 0%,
+      rgba(0,0,0,var(--micro-shimmer-opacity)) 50%,
+      transparent 100%
+    );
+    animation: micro-shimmer var(--micro-duration) linear infinite;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+
+  @keyframes micro-pulse {
+    0%,100% {
+      transform: translate(-50%, -50%) scale(var(--micro-scale-min));
+      opacity: 0.9;
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(var(--micro-scale-max));
+      opacity: 1;
+    }
+  }
+
+  @keyframes micro-shimmer {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(100%); }
+  }
+
+  @keyframes logo-breathe {
+    0%,100% { transform: scale(1); }
+    50%     { transform: scale(var(--micro-breathe-scale)); }
+  }
+</style>
+</head>
+<body>
+
+<div id="sudar-logo">
+  <div class="scene">
+    <div class="pill pill--top"></div>
+    <div class="pill pill--bottom"></div>
+    <div class="star">
+      <svg id="star-core" viewBox="0 0 100 100"
+           xmlns="http://www.w3.org/2000/svg"
+           aria-label="Sparkle star mark" role="img">
+        <path
+          d="M 50 2 C 51 49, 51 49, 98 50 C 51 51, 51 51, 50 98 C 49 51, 49 51, 2 50 C 49 49, 49 49, 50 2 Z"
+          fill="#ffffff"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

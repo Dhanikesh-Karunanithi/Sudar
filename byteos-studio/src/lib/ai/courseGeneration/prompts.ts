@@ -10,6 +10,24 @@ function formatGenSettingsBlock(s: AiGenerationCourseSettings | undefined): stri
   if (Array.isArray(s.learning_outcomes) && s.learning_outcomes.length > 0) {
     parts.push(`Learning outcomes (align modules and assessments to these):\n${s.learning_outcomes.map((o, i) => `${i + 1}. ${o}`).join('\n')}`)
   }
+  if (s.primary_pedagogy) {
+    parts.push(
+      `Primary pedagogy: ${s.primary_pedagogy} — declarative = facts/concepts; procedural = how-to and steps; scenario = cases and decisions; mixed = balance as appropriate.`
+    )
+  }
+  if (s.assessment_density) {
+    parts.push(
+      `Assessment density: ${s.assessment_density} — light = fewer checks; moderate = regular knowledge checks; heavy = frequent practice and checks.`
+    )
+  }
+  if (s.interactivity_level) {
+    parts.push(
+      `Interactivity level: ${s.interactivity_level} — low = mostly reading; balanced = mix of interactives; high = rich practice (tabs, matching, scenarios, etc.).`
+    )
+  }
+  if (Array.isArray(s.forbidden_component_types) && s.forbidden_component_types.length > 0) {
+    parts.push(`Avoid these interactive formats unless impossible: ${s.forbidden_component_types.join(', ')}.`)
+  }
   if (parts.length === 0) return ''
   return `\n\nCREATOR CONTEXT:\n${parts.join('\n')}\n`
 }
@@ -27,6 +45,8 @@ export function buildCurriculumPlanPrompt(
 Design a curriculum plan for a corporate training course. The module titles are already defined — your job is to assign each module a UNIQUE pedagogical role, Bloom's taxonomy level, section structure, brief, and a structural archetype.
 ${ctx}
 Rules:
+- The JSON array MUST have exactly as many entries as there are module titles, in the SAME ORDER (index 0 = first module, etc.).
+- For each entry, "title" MUST be EXACTLY the corresponding string from the module list — copy it character-for-character including punctuation and spacing. Do not paraphrase titles.
 - Bloom's levels should PROGRESS across modules (early modules: Remember/Understand, middle: Apply/Analyze, later: Evaluate/Create).
 - Each module MUST have a DIFFERENT sectionStructure array. Do NOT give every module the same headings. Tailor sections to the module's role.
 - Assign exactly one "archetype" per module from this list: ${LESSON_ARCHETYPES.join(', ')}. Do NOT use the same archetype for two consecutive modules.
@@ -35,7 +55,7 @@ Rules:
 
 JSON schema for each entry:
 {
-  "title": "exact module title",
+  "title": "exact module title (must match the provided list entry exactly)",
   "bloomLevel": "Remember | Understand | Apply | Analyze | Evaluate | Create",
   "pedagogicalRole": "e.g. Foundation / orientation, Concept deep-dive, Practical application, Analysis and critical thinking, Synthesis / capstone",
   "sectionStructure": ["Section heading 1", "Section heading 2", ...],
@@ -125,7 +145,7 @@ ADULT LEARNING PRINCIPLES (Knowles' Andragogy):
 BLOOM'S LEVEL GUIDANCE:
 - Write at the "${entry.bloomLevel}" cognitive level. If Remember: define and identify. If Understand: explain and compare. If Apply: demonstrate with worked examples. If Analyze: break down scenarios and compare approaches. If Evaluate: judge trade-offs and recommend. If Create: synthesize and design solutions.
 
-PERSONALIZATION MARKERS (for the adaptive engine):
+PERSONALIZATION MARKERS (for the adaptive engine — Sudar Learn renders these as labeled callouts, not raw brackets):
 - Wrap each learning objective line in [objective]...[/objective]
 - Wrap key concept definitions in [concept:ConceptName]...[/concept]
 - Wrap application exercises or "try this" prompts in [apply]...[/apply]
@@ -186,6 +206,33 @@ Archetype: ${archetype}
 Content preview: ${contentPreview.slice(0, 600)}
 
 Return JSON with entryState, exitState, and sideCard.`
+
+  return [
+    { role: 'system', content: system },
+    { role: 'user', content: user },
+  ]
+}
+
+/** Optional second pass for capstone modules: tighten alignment to outcomes and remove generic phrasing. */
+export function buildCritiqueRefinePrompt(
+  courseTitle: string,
+  moduleTitle: string,
+  learningOutcomes: string[] | undefined,
+  draftMarkdown: string
+): { role: string; content: string }[] {
+  const outcomesBlock =
+    Array.isArray(learningOutcomes) && learningOutcomes.length > 0
+      ? `Course learning outcomes:\n${learningOutcomes.map((o, i) => `${i + 1}. ${o}`).join('\n')}`
+      : 'No explicit outcomes list — strengthen clarity and actionable takeaways anyway.'
+
+  const system = `You are a strict instructional editor. Revise the module markdown so it clearly supports the course outcomes, removes filler and generic phrases ("In this module", "It is important to"), and keeps all ## / ### headings and personalization markers ([objective], [concept:Name], [apply]) intact or improved. Preserve markdown structure. Return ONLY the revised full module text — no preamble.`
+
+  const user = `Course: "${courseTitle}"
+Module: "${moduleTitle}"
+${outcomesBlock}
+
+--- DRAFT ---
+${draftMarkdown.slice(0, 12000)}`
 
   return [
     { role: 'system', content: system },

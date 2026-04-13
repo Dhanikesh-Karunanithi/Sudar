@@ -104,7 +104,12 @@ export default function DashboardLoading() {
       </aside>
     </div>
       </div>
-      <SudarLoadingFrost label="Loading your space…" className="rounded-2xl" />
+      <SudarLoadingFrost
+        variant="fixed"
+        visual="fullpage"
+        label="Loading your space…"
+        className="rounded-none"
+      />
     </div>
   )
 }

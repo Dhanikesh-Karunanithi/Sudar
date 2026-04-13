@@ -1,10 +1,13 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getOrCreateOrg } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
-import type { Json } from '@/types/database'
+import type { Database, Json } from '@/types/database'
+
+type CourseInsert = Database['public']['Tables']['courses']['Insert']
 import { chatCompletion, resolveChatConfigError, type ChatCompletionContext } from '@/lib/ai/chat'
 import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
-import type { AiGenerationCourseSettings } from '@/lib/ai/courseGeneration/types'
+import { mergeBlueprintAnswersIntoSettings } from '@/lib/ai/courseGeneration/blueprintMerge'
+import type { AiGenerationCourseSettings, CourseBlueprintQuestion } from '@/lib/ai/courseGeneration/types'
 import { generateCourseMetadata, suggestCourseCoverImages } from '@/lib/ai/courseGeneration/courseMetadata'
 import {
   fetchOrgTagCatalog,
@@ -12,6 +15,7 @@ import {
   setCourseOrgTagIds,
 } from '@/lib/courseTags'
 import { suggestExperiencePackFromText } from '@/lib/themes/experiencePacks'
+import { fillEmptyModulesForCourse } from '@/lib/ai/courseGeneration'
 
 /** Strip markdown code fences and extract/repair JSON for parsing. */
 function extractJson(raw: string): string {
@@ -84,6 +88,8 @@ export async function POST(request: NextRequest) {
     tone,
     industry,
     no_external_video,
+    blueprint_answers,
+    blueprint_questions,
   } = body as {
     title?: string
     /** @deprecated use `brief` — kept for API compatibility; treated as author intent, not final copy */
@@ -97,6 +103,8 @@ export async function POST(request: NextRequest) {
     tone?: string
     industry?: string
     no_external_video?: boolean
+    blueprint_answers?: { question_id: string; option_id: string }[]
+    blueprint_questions?: CourseBlueprintQuestion[]
   }
 
   if (!title) return NextResponse.json({ error: 'title required' }, { status: 400 })
@@ -107,7 +115,7 @@ export async function POST(request: NextRequest) {
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })
   const chatAiCtx = { privateOpenAi: privateRuntime }
 
-  const aiGeneration: AiGenerationCourseSettings = {
+  let aiGeneration: AiGenerationCourseSettings = {
     source: 'prompt',
     ...(target_audience?.trim() ? { target_audience: target_audience.trim() } : {}),
     ...(Array.isArray(learning_outcomes) && learning_outcomes.length > 0
@@ -116,6 +124,19 @@ export async function POST(request: NextRequest) {
     ...(tone?.trim() ? { tone: tone.trim() } : {}),
     ...(industry?.trim() ? { industry: industry.trim() } : {}),
     ...(no_external_video === true ? { no_external_video: true } : {}),
+  }
+
+  if (
+    Array.isArray(blueprint_answers) &&
+    blueprint_answers.length > 0 &&
+    Array.isArray(blueprint_questions) &&
+    blueprint_questions.length > 0
+  ) {
+    const answers = blueprint_answers.filter(
+      (a) => a && typeof a.question_id === 'string' && typeof a.option_id === 'string'
+    )
+    const merged = mergeBlueprintAnswersIntoSettings(blueprint_questions, answers)
+    aiGeneration = { ...aiGeneration, ...merged }
   }
 
   const authorBrief = (brief ?? description ?? '').trim() || null
@@ -158,22 +179,22 @@ export async function POST(request: NextRequest) {
   }
 
   const now = new Date().toISOString()
-  const { data: course, error: courseError } = await admin
-    .from('courses')
-    .insert({
-      org_id: orgId,
-      created_by: user.id,
-      title,
-      description: aiDescription,
-      thumbnail_url: cover.thumbnail_url,
-      banner_url: cover.banner_url,
-      difficulty,
-      status: 'draft',
-      tags: [],
-      settings: settingsPayload as unknown as Json,
-      created_at: now,
-      updated_at: now,
-    })
+  const insertCourse: CourseInsert = {
+    org_id: orgId,
+    created_by: user.id,
+    title,
+    description: aiDescription,
+    difficulty,
+    status: 'draft',
+    tags: [],
+    settings: settingsPayload as unknown as Json,
+    created_at: now,
+    updated_at: now,
+  }
+  if (cover.thumbnail_url) insertCourse.thumbnail_url = cover.thumbnail_url
+  if (cover.banner_url) insertCourse.banner_url = cover.banner_url
+
+  const { data: course, error: courseError } = await admin.from('courses').insert(insertCourse)
     .select('id')
     .single()
 
@@ -222,6 +243,37 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
       content: emptyModuleContent as unknown as Json,
       order_index: i,
     })
+  }
+
+  const { data: moduleRows } = await admin
+    .from('modules')
+    .select('id, title, content, order_index')
+    .eq('course_id', course.id)
+    .order('order_index', { ascending: true })
+
+  const fillResult = await fillEmptyModulesForCourse(admin, {
+    course: {
+      id: course.id,
+      title,
+      description: aiDescription,
+      difficulty,
+      settings: settingsPayload as Record<string, unknown>,
+    },
+    modules: moduleRows ?? [],
+    chatAiCtx,
+  })
+
+  if (fillResult.error || !fillResult.completed) {
+    return NextResponse.json(
+      {
+        error:
+          fillResult.error ??
+          'Course was created but module content generation did not finish. You can try again from the course page or contact support.',
+        course_id: course.id,
+        modules_generated: fillResult.modules_generated,
+      },
+      { status: 502 }
+    )
   }
 
   const moduleResults = moduleTitles.map((t, idx) => ({ title: t, order_index: idx }))

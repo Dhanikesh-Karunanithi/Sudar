@@ -84,9 +84,9 @@ export function PathListClient({
                     type="button"
                     onClick={() => handleDelete(path.id)}
                     disabled={isDeleting}
-                    className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-medium flex items-center gap-1.5"
+                    className="shrink-0 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-sm font-medium inline-flex items-center gap-1.5"
                   >
-                    {isDeleting ? <SudarInlineLoader size="sm" className="h-3.5 w-auto text-white" starFill="#dc2626" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    {isDeleting ? <SudarInlineLoader size="sm" className="text-white" starFill="#dc2626" /> : <Trash2 className="w-3.5 h-3.5" />}
                     {isDeleting ? 'Deleting...' : 'Delete'}
                   </button>
                   <button

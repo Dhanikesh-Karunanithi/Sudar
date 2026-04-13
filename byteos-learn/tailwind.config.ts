@@ -54,6 +54,7 @@ const config: Config = {
         "card-lg": "var(--radius-lg)",
         "card-xl": "var(--radius-xl)",
         shell: "var(--radius-shell)",
+        "chat-panel": "var(--radius-chat-panel)",
         "4xl": "var(--radius-4xl)",
         "5xl": "var(--radius-5xl)",
         "6xl": "var(--radius-6xl)",

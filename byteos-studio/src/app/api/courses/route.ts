@@ -2,6 +2,9 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getOrCreateOrg } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchOrgTagCatalog, resolveOrCreateOrgTagsForLabels, setCourseOrgTagIds } from '@/lib/courseTags'
+import type { Database } from '@/types/database'
+
+type CourseInsert = Database['public']['Tables']['courses']['Insert']
 
 export async function GET() {
   const supabase = await createClient()
@@ -40,21 +43,25 @@ export async function POST(request: NextRequest) {
   if (!body.title?.trim()) return NextResponse.json({ error: 'title required' }, { status: 400 })
 
   const now = new Date().toISOString()
-  const { data, error } = await admin
-    .from('courses')
-    .insert({
-      org_id: orgId,
-      created_by: user.id,
-      title: body.title.trim(),
-      description: body.description ?? null,
-      difficulty: body.difficulty ?? 'intermediate',
-      status: 'draft',
-      tags: [],
-      thumbnail_url: body.thumbnail_url ?? null,
-      banner_url: body.banner_url ?? null,
-      created_at: now,
-      updated_at: now,
-    })
+  // Only include optional image columns when set. If `banner_url` is absent from the DB (migration not
+  // applied), PostgREST still accepts the row; sending `banner_url: null` references the column and fails.
+  const insertRow: CourseInsert = {
+    org_id: orgId,
+    created_by: user.id,
+    title: body.title.trim(),
+    description: body.description ?? null,
+    difficulty: body.difficulty ?? 'intermediate',
+    status: 'draft',
+    tags: [],
+    created_at: now,
+    updated_at: now,
+  }
+  const thumb = body.thumbnail_url?.trim()
+  const banner = body.banner_url?.trim()
+  if (thumb) insertRow.thumbnail_url = thumb
+  if (banner) insertRow.banner_url = banner
+
+  const { data, error } = await admin.from('courses').insert(insertRow)
     .select('id')
     .single()
 

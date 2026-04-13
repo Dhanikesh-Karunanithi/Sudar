@@ -35,6 +35,8 @@ import { MatchingBlockRow } from '@/components/content/blocks/MatchingEditor'
 import { TabsBlockRow } from '@/components/content/blocks/TabsEditor'
 import { AudioBlockRow } from '@/components/content/blocks/AudioEditor'
 import { FlashcardBlockRow } from '@/components/content/blocks/FlashcardEditor'
+import { AssistTextareaWithAiToolbar } from '@/components/content/AssistTextareaWithAiToolbar'
+import { assistEditSelectedText } from '@/lib/assistEditClient'
 
 export interface ModuleBlockEditorProps {
   content: ModuleContent | null | undefined
@@ -713,14 +715,7 @@ export function ModuleBlockEditor({
       if (!contextMenu || assistLoading) return
       setAssistLoading(true)
       try {
-        const res = await fetch('/api/ai/assist-edit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: contextMenu.text, instruction }),
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error ?? 'Assist failed')
-        const revised = data.revised as string
+        const revised = await assistEditSelectedText(contextMenu.text, instruction)
         const newMainText = mainText.slice(0, contextMenu.start) + revised + mainText.slice(contextMenu.end)
         setMainText(newMainText)
         onContentChange(mainTextAndBlocksToContent(newMainText, blocks))
@@ -850,16 +845,21 @@ export function ModuleBlockEditor({
   return (
     <div className={cn('space-y-3', className)}>
       {!blocksOnly && (
-        <textarea
+        <AssistTextareaWithAiToolbar
           ref={mainTextareaRef}
           value={mainText}
-          onChange={(e) => setMainText(e.target.value)}
+          onTextChange={(v) => setMainText(v)}
+          onAiRevisionApplied={(v) => {
+            setMainText(v)
+            flushNow(mainTextAndBlocksToContent(v, blocks))
+          }}
           onBlur={handleMainTextBlur}
           onContextMenu={handleMainContextMenu}
           disabled={disabled}
           rows={10}
           placeholder={placeholder}
-          className="w-full bg-slate-800 border border-slate-700 rounded-lg text-slate-200 text-sm p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 resize-none leading-relaxed font-mono"
+          toolbarLabel="AI assist for selected module text"
+          textareaClassName="w-full bg-slate-800 border border-slate-700 rounded-lg text-slate-200 text-sm p-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 resize-none leading-relaxed font-mono"
         />
       )}
 
@@ -883,7 +883,7 @@ export function ModuleBlockEditor({
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAssistEdit(instruction) }}
               className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-700 disabled:opacity-60"
             >
-              {assistLoading ? <SudarInlineLoader size="sm" className="h-3.5 w-auto shrink-0 text-violet-400" starFill="var(--background)" /> : <Sparkles className="w-3.5 h-3.5 shrink-0 text-violet-400" />}
+              {assistLoading ? <SudarInlineLoader size="sm" className="shrink-0 text-violet-400" starFill="var(--background)" /> : <Sparkles className="w-3.5 h-3.5 shrink-0 text-violet-400" />}
               {label}
             </button>
           ))}
@@ -942,7 +942,7 @@ export function ModuleBlockEditor({
             disabled={disabled || uploadLoading}
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all disabled:opacity-60"
           >
-            {uploadLoading ? <SudarInlineLoader size="sm" className="h-3 w-auto text-slate-500" starFill="var(--background)" /> : <Upload className="w-3 h-3" />}
+            {uploadLoading ? <SudarInlineLoader size="sm" className="text-slate-500" starFill="var(--background)" /> : <Upload className="w-3 h-3" />}
             Upload image
           </button>
         </div>

@@ -3,6 +3,17 @@
 @tailwind utilities;
 
 :root {
+  /* Radius scale (parity with Sudar Learn — see docs/brand/design-tokens-v1.md) */
+  --radius-card: 1rem;
+  --radius-button: 0.75rem;
+  --radius-pill: 9999px;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.5rem;
+  --radius-shell: 1.75rem;
+  --radius-chat-panel: 2rem;
+  --font-display: var(--font-heading), "Manrope", "Inter", "Segoe UI", Arial, sans-serif;
+
+  --shell-bg: #f7f8fc;
   --surface: #f7f8fc;
   --surface-elevated: #ffffff;
   --background: #f7f8fc;
@@ -27,7 +38,9 @@
   --info: #4f7cff;
 }
 
+/* Neutral black shell (no blue-gray “AI slop” tint); brand color stays on primary controls only */
 .dark {
+  --shell-bg: #000000;
   --surface: #000000;
   --surface-elevated: #0a0a0a;
   --background: #000000;
@@ -38,7 +51,7 @@
   --primary: #5e5ad7;
   --primary-strong: #2f2a8a;
   --primary-foreground: #ffffff;
-  --primary-hover: #4f46e5;
+  --primary-hover: #2f2a8a;
   --accent: #ff7a45;
   --accent-soft: #ffd166;
   --accent-foreground: #12152b;
@@ -54,7 +67,7 @@
 
 body {
   color: var(--foreground);
-  background: var(--background);
+  background: var(--shell-bg);
 }
 
 @layer utilities {
@@ -83,7 +96,7 @@ body {
   @apply backdrop-blur-2xl shadow-2xl;
   background: color-mix(in srgb, var(--surface-elevated) 76%, transparent);
   border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
-  border-radius: 2rem;
+  border-radius: var(--radius-chat-panel);
 }
 
 .chat-bubble {
@@ -359,5 +372,1321 @@ body {
     opacity: 1;
     filter: none;
     transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* ── Sudar micro inline loader (simple_loading_sudar.html) ── */
+.sudar-micro-root {
+  position: relative;
+  width: 360px;
+  height: 220px;
+  flex-shrink: 0;
+}
+
+.sudar-micro-scene {
+  position: relative;
+  width: 360px;
+  height: 220px;
+  transform-origin: center center;
+  transform-style: preserve-3d;
+  animation: sudar-micro-logo-breathe calc(2.75s * 1.4) ease-in-out infinite;
+}
+
+.sudar-micro-pill {
+  position: absolute;
+  border-radius: 999px;
+  height: 64px;
+  overflow: hidden;
+}
+
+.sudar-micro-pill--top {
+  width: 170px;
+  top: 36px;
+  left: 50%;
+  transform: translateX(calc(-50% + 20px));
+  z-index: 2;
+}
+
+.sudar-micro-pill--bottom {
+  width: 170px;
+  top: 100px;
+  left: 50%;
+  transform: translateX(calc(-50% - 20px));
+  z-index: 1;
+}
+
+.sudar-micro-pill--top::after,
+.sudar-micro-pill--bottom::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    color-mix(in srgb, var(--foreground) 22%, transparent) 50%,
+    transparent 100%
+  );
+  animation: sudar-micro-shimmer 2.75s linear infinite;
+  pointer-events: none;
+}
+
+.sudar-micro-star {
+  position: absolute;
+  left: 50%;
+  top: 100px;
+  width: 90px;
+  height: 90px;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  pointer-events: none;
+  animation: sudar-micro-pulse 2.75s ease-in-out infinite;
+}
+
+.sudar-micro-star svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@keyframes sudar-micro-logo-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes sudar-micro-pulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(0.94);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes sudar-micro-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sudar-micro-scene,
+  .sudar-micro-star,
+  .sudar-micro-pill--top::after,
+  .sudar-micro-pill--bottom::after {
+    animation: none !important;
+  }
+}
+
+/* ── Sudar content-creating loader (content_creation_loading_animation_sudar.html) ── */
+.sudar-cc-stage {
+  position: relative;
+  width: 340px;
+  height: 340px;
+}
+
+.sudar-cc-orbit-ring {
+  position: absolute;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px dashed color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.sudar-cc-orbit-ring--1 {
+  width: 192px;
+  height: 192px;
+}
+
+.sudar-cc-orbit-ring--2 {
+  width: 296px;
+  height: 296px;
+}
+
+.sudar-cc-inner-orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  animation: sudar-cc-spin-cw 10s linear infinite;
+}
+
+.sudar-cc-orb-item {
+  position: absolute;
+}
+
+.sudar-cc-inner-orbit .sudar-cc-orb-item {
+  transform: translate(-50%, -50%);
+  animation: sudar-cc-unspin-cw 10s linear infinite;
+}
+
+.sudar-cc-orb-inner-1 {
+  top: -96px;
+  left: 0;
+}
+.sudar-cc-orb-inner-2 {
+  top: 0;
+  left: 96px;
+}
+.sudar-cc-orb-inner-3 {
+  top: 96px;
+  left: 0;
+}
+.sudar-cc-orb-inner-4 {
+  top: 0;
+  left: -96px;
+}
+
+.sudar-cc-outer-orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  animation: sudar-cc-spin-ccw 16s linear infinite;
+}
+
+.sudar-cc-outer-orbit .sudar-cc-orb-item {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  animation: sudar-cc-unspin-ccw 16s linear infinite;
+}
+
+.sudar-cc-orb-outer-1 {
+  top: -148px;
+  left: 0;
+}
+.sudar-cc-orb-outer-2 {
+  top: 0;
+  left: 148px;
+}
+.sudar-cc-orb-outer-3 {
+  top: 148px;
+  left: 0;
+}
+.sudar-cc-orb-outer-4 {
+  top: 0;
+  left: -148px;
+}
+
+.sudar-cc-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--foreground);
+  width: 44px;
+  height: 24px;
+  animation: sudar-cc-chip-breathe 3.8s ease-in-out infinite;
+}
+
+.sudar-cc-inner-orbit .sudar-cc-orb-item:nth-child(1) .sudar-cc-chip {
+  animation-delay: 0s;
+}
+.sudar-cc-inner-orbit .sudar-cc-orb-item:nth-child(2) .sudar-cc-chip {
+  animation-delay: -0.95s;
+}
+.sudar-cc-inner-orbit .sudar-cc-orb-item:nth-child(3) .sudar-cc-chip {
+  animation-delay: -1.9s;
+}
+.sudar-cc-inner-orbit .sudar-cc-orb-item:nth-child(4) .sudar-cc-chip {
+  animation-delay: -2.85s;
+}
+.sudar-cc-outer-orbit .sudar-cc-orb-item:nth-child(1) .sudar-cc-chip {
+  animation-delay: -0.5s;
+}
+.sudar-cc-outer-orbit .sudar-cc-orb-item:nth-child(2) .sudar-cc-chip {
+  animation-delay: -1.4s;
+}
+.sudar-cc-outer-orbit .sudar-cc-orb-item:nth-child(3) .sudar-cc-chip {
+  animation-delay: -2.3s;
+}
+.sudar-cc-outer-orbit .sudar-cc-orb-item:nth-child(4) .sudar-cc-chip {
+  animation-delay: -3.2s;
+}
+
+.sudar-cc-chip svg {
+  display: block;
+  color: var(--background);
+}
+
+@keyframes sudar-cc-spin-cw {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes sudar-cc-spin-ccw {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+@keyframes sudar-cc-unspin-cw {
+  to {
+    transform: translate(-50%, -50%) rotate(-360deg);
+  }
+}
+@keyframes sudar-cc-unspin-ccw {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes sudar-cc-chip-breathe {
+  0%,
+  100% {
+    transform: scaleX(1) scaleY(1);
+    box-shadow: 0 1px 6px color-mix(in srgb, var(--foreground) 15%, transparent);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scaleX(1.1) scaleY(1);
+    box-shadow: 0 2px 12px color-mix(in srgb, var(--foreground) 25%, transparent);
+    opacity: 1;
+  }
+}
+
+.sudar-cc-logo-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 137px;
+  height: 84px;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  animation: sudar-cc-logo-breathe 9.8s ease-in-out infinite;
+}
+
+.sudar-cc-logo-center svg {
+  display: block;
+  width: 137px;
+  height: 84px;
+}
+
+.sudar-cc-star-glow {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--background) 55%, transparent))
+    drop-shadow(0 0 14px color-mix(in srgb, var(--primary) 35%, transparent));
+}
+
+@keyframes sudar-cc-logo-breathe {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sudar-cc-inner-orbit,
+  .sudar-cc-outer-orbit,
+  .sudar-cc-chip,
+  .sudar-cc-logo-center {
+    animation: none !important;
+  }
+}
+
+/* ── Sudar full-page warp loader (fullpage_loading_animation_sudar.html) ── */
+.sudar-fp-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(360px, 90vw);
+  height: min(220px, 55vw);
+}
+
+.sudar-fp-tunnel {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  pointer-events: none;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  width: 320px;
+  height: 200px;
+  transform: translate(-50%, -50%) scale(0);
+  animation: sudar-fp-ring-expand 3.8s cubic-bezier(0.2, 0, 0.6, 1) infinite;
+}
+
+.sudar-fp-speed-lines {
+  position: absolute;
+  inset: -20% -40%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.85;
+}
+
+.sudar-fp-streak {
+  stroke: color-mix(in srgb, var(--foreground) 28%, transparent);
+  stroke-linecap: round;
+  animation-name: sudar-fp-streak-fly;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.sudar-fp-s1 {
+  animation-duration: 1.1s;
+  animation-delay: 0s;
+}
+.sudar-fp-s2 {
+  animation-duration: 1.3s;
+  animation-delay: -0.28s;
+}
+.sudar-fp-s3 {
+  animation-duration: 1s;
+  animation-delay: -0.62s;
+}
+.sudar-fp-s4 {
+  animation-duration: 1.2s;
+  animation-delay: -0.12s;
+}
+.sudar-fp-s5 {
+  animation-duration: 1.05s;
+  animation-delay: -0.75s;
+}
+.sudar-fp-s6 {
+  animation-duration: 1.4s;
+  animation-delay: -0.45s;
+}
+.sudar-fp-s7 {
+  animation-duration: 1s;
+  animation-delay: -0.9s;
+}
+.sudar-fp-s8 {
+  animation-duration: 1.25s;
+  animation-delay: -0.2s;
+}
+.sudar-fp-s9 {
+  animation-duration: 1.15s;
+  animation-delay: -0.68s;
+}
+.sudar-fp-s10 {
+  animation-duration: 0.95s;
+  animation-delay: -0.38s;
+}
+.sudar-fp-s11 {
+  animation-duration: 1.35s;
+  animation-delay: -0.82s;
+}
+.sudar-fp-s12 {
+  animation-duration: 1.05s;
+  animation-delay: -0.18s;
+}
+.sudar-fp-s13 {
+  animation-duration: 1.2s;
+  animation-delay: -0.52s;
+}
+.sudar-fp-s14 {
+  animation-duration: 1s;
+  animation-delay: -0.7s;
+}
+.sudar-fp-s15 {
+  animation-duration: 1.3s;
+  animation-delay: -0.32s;
+}
+.sudar-fp-s16 {
+  animation-duration: 1.1s;
+  animation-delay: -0.88s;
+}
+
+.sudar-fp-logo {
+  position: relative;
+  z-index: 10;
+  width: 360px;
+  height: 220px;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.sudar-fp-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: center center;
+  animation: sudar-fp-scene-lean 3.8s ease-in-out infinite;
+}
+
+.sudar-fp-pill {
+  position: absolute;
+  border-radius: 999px;
+  height: 64px;
+  overflow: hidden;
+  background: var(--foreground);
+}
+
+.sudar-fp-pill--top {
+  width: 170px;
+  top: 36px;
+  left: 50%;
+  z-index: 2;
+  transform-origin: center center;
+  animation: sudar-fp-pill-warp-top 3.8s ease-in-out infinite;
+}
+
+.sudar-fp-pill--bottom {
+  width: 170px;
+  top: 100px;
+  left: 50%;
+  z-index: 1;
+  transform-origin: center center;
+  animation: sudar-fp-pill-warp-bottom 3.8s ease-in-out infinite;
+  animation-delay: -0.3s;
+}
+
+.sudar-fp-ghost-wrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9;
+  animation: sudar-fp-ghost-drift 3.8s ease-in-out infinite;
+}
+
+.sudar-fp-ghost-pill {
+  position: absolute;
+  border-radius: 999px;
+  height: 64px;
+  background: var(--foreground);
+  opacity: 0.85;
+}
+
+.sudar-fp-side-vignette {
+  position: absolute;
+  inset: -8px;
+  pointer-events: none;
+  z-index: 25;
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--background) 95%, transparent) 0%,
+    transparent 22%,
+    transparent 78%,
+    color-mix(in srgb, var(--background) 95%, transparent) 100%
+  );
+  animation: sudar-fp-vignette-breathe 3.8s ease-in-out infinite;
+}
+
+.sudar-fp-star {
+  position: absolute;
+  left: 50%;
+  top: 100px;
+  width: 90px;
+  height: 90px;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  pointer-events: none;
+  animation: sudar-fp-star-anchor 3.8s ease-in-out infinite;
+}
+
+.sudar-fp-star svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes sudar-fp-streak-fly {
+  0% {
+    transform: translateX(-110%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  85% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateX(110%);
+    opacity: 0;
+  }
+}
+
+@keyframes sudar-fp-ring-expand {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0.5;
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(3);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(5);
+    opacity: 0;
+  }
+}
+
+@keyframes sudar-fp-scene-lean {
+  0% {
+    transform: skewX(-3deg);
+  }
+  50% {
+    transform: skewX(-6deg);
+  }
+  100% {
+    transform: skewX(-3deg);
+  }
+}
+
+@keyframes sudar-fp-pill-warp-top {
+  0% {
+    transform: translateX(calc(-50% + 20px)) scaleX(1.04) scaleY(0.97);
+    filter: blur(1px);
+  }
+  50% {
+    transform: translateX(calc(-50% + 20px)) scaleX(1.14) scaleY(0.91);
+    filter: blur(2.8px);
+  }
+  100% {
+    transform: translateX(calc(-50% + 20px)) scaleX(1.04) scaleY(0.97);
+    filter: blur(1px);
+  }
+}
+
+@keyframes sudar-fp-pill-warp-bottom {
+  0% {
+    transform: translateX(calc(-50% - 20px)) scaleX(1.04) scaleY(0.97);
+    filter: blur(1px);
+  }
+  50% {
+    transform: translateX(calc(-50% - 20px)) scaleX(1.14) scaleY(0.91);
+    filter: blur(2.8px);
+  }
+  100% {
+    transform: translateX(calc(-50% - 20px)) scaleX(1.04) scaleY(0.97);
+    filter: blur(1px);
+  }
+}
+
+@keyframes sudar-fp-ghost-drift {
+  0% {
+    transform: translateX(-10px) skewX(-3deg);
+    opacity: 0.06;
+  }
+  50% {
+    transform: translateX(-20px) skewX(-6deg);
+    opacity: 0.11;
+  }
+  100% {
+    transform: translateX(-10px) skewX(-3deg);
+    opacity: 0.06;
+  }
+}
+
+@keyframes sudar-fp-vignette-breathe {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes sudar-fp-star-anchor {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    filter: blur(0px);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(0.98);
+    filter: blur(0.5px);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    filter: blur(0px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sudar-fp-tunnel,
+  .sudar-fp-streak,
+  .sudar-fp-scene,
+  .sudar-fp-pill--top,
+  .sudar-fp-pill--bottom,
+  .sudar-fp-ghost-wrap,
+  .sudar-fp-side-vignette,
+  .sudar-fp-star {
+    animation: none !important;
+  }
+}
+
+/* ── Sudar default course art (catalog thumbnail + Learn banner) ── */
+.sudar-art-palette-0 {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 48%, #5b21b6 100%);
+}
+.sudar-art-palette-1 {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 48%, #0ea5e9 100%);
+}
+.sudar-art-palette-2 {
+  background: linear-gradient(135deg, #134e4a 0%, #115e59 48%, #14b8a6 100%);
+}
+.sudar-art-palette-3 {
+  background: linear-gradient(135deg, #3b0764 0%, #6b21a8 48%, #a855f7 100%);
+}
+.sudar-art-palette-4 {
+  background: linear-gradient(135deg, #1c1917 0%, #431407 48%, #ea580c 100%);
+}
+.sudar-art-palette-5 {
+  background: linear-gradient(135deg, #172554 0%, #1d4ed8 48%, #38bdf8 100%);
+}
+.sudar-art-palette-6 {
+  background: linear-gradient(135deg, #14532d 0%, #166534 48%, #84cc16 100%);
+}
+.sudar-art-palette-7 {
+  background: linear-gradient(135deg, #4c0519 0%, #9f1239 48%, #fb7185 100%);
+}
+
+.sudar-art-orb-tint {
+  background: radial-gradient(circle at 50% 50%, var(--sudar-orb-accent), transparent 68%);
+}
+.sudar-art-orb-diff-beginner {
+  --sudar-orb-accent: rgba(34, 197, 94, 0.35);
+}
+.sudar-art-orb-diff-intermediate {
+  --sudar-orb-accent: rgba(245, 158, 11, 0.35);
+}
+.sudar-art-orb-diff-advanced {
+  --sudar-orb-accent: rgba(244, 63, 94, 0.35);
+}
+.sudar-art-orb-diff-default {
+  --sudar-orb-accent: rgba(94, 90, 215, 0.4);
+}
+
+@keyframes sudar-art-gradient-pan {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.sudar-art-bg-animated {
+  background-size: 200% 200%;
+}
+.sudar-art-bg-shift {
+  animation: sudar-art-gradient-pan 18s ease-in-out infinite;
+}
+.sudar-art-bg-shift-expressive {
+  animation: sudar-art-gradient-pan 11s ease-in-out infinite;
+}
+
+.sudar-art-pattern-grid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.22) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+@keyframes sudar-art-grid-drift-kf {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(-24px, -24px);
+  }
+}
+.sudar-art-grid-drift {
+  animation: sudar-art-grid-drift-kf 32s linear infinite;
+}
+
+@keyframes sudar-art-mesh-pulse-kf {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.04);
+  }
+}
+.sudar-art-mesh-pulse {
+  animation: sudar-art-mesh-pulse-kf 14s ease-in-out infinite;
+}
+
+.sudar-art-noise {
+  background-image: repeating-linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.045) 0,
+    rgba(255, 255, 255, 0.045) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+@keyframes sudar-art-noise-shift-kf {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 40px 20px;
+  }
+}
+.sudar-art-noise-shift {
+  background-size: 200% 200%;
+  animation: sudar-art-noise-shift-kf 20s linear infinite;
+}
+
+@keyframes sudar-art-orb-a-kf {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-3%, 4%) scale(1.04);
+  }
+}
+.sudar-art-orb-a {
+  animation: sudar-art-orb-a-kf 16s ease-in-out infinite;
+}
+.sudar-art-orb-a-fast {
+  animation-duration: 9s;
+}
+
+@keyframes sudar-art-orb-b-kf {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(4%, -3%);
+  }
+}
+.sudar-art-orb-b {
+  animation: sudar-art-orb-b-kf 20s ease-in-out infinite;
+}
+
+/* Uiverse-inspired overlays (Sudar-tuned; attribution in docs/THIRD_PARTY_NOTICES.md) */
+.sudar-art-uiverse-stripes {
+  background-image: repeating-linear-gradient(
+    -33deg,
+    rgba(255, 255, 255, 0.075) 0,
+    rgba(255, 255, 255, 0.075) 1px,
+    transparent 1px,
+    transparent 14px
+  );
+}
+
+@keyframes sudar-art-uiverse-stripes-kf {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 28px 28px;
+  }
+}
+
+.sudar-art-uiverse-stripes-move {
+  animation: sudar-art-uiverse-stripes-kf 22s linear infinite;
+}
+
+.sudar-art-uiverse-stripes-move-expressive {
+  animation: sudar-art-uiverse-stripes-kf 14s linear infinite;
+}
+
+.sudar-art-uiverse-rings {
+  background-image: repeating-radial-gradient(
+    circle at 50% 46%,
+    transparent 0,
+    transparent 10px,
+    rgba(255, 255, 255, 0.05) 10px,
+    rgba(255, 255, 255, 0.05) 11px
+  );
+}
+
+@keyframes sudar-art-uiverse-rings-kf {
+  0%,
+  100% {
+    opacity: 0.32;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.44;
+    transform: scale(1.025);
+  }
+}
+
+.sudar-art-uiverse-rings-pulse {
+  animation: sudar-art-uiverse-rings-kf 18s ease-in-out infinite;
+}
+
+.sudar-art-uiverse-rings-pulse-expressive {
+  animation: sudar-art-uiverse-rings-kf 11s ease-in-out infinite;
+}
+
+.sudar-art-uiverse-hatch {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.055) 0 1px, transparent 1px 18px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.055) 0 1px, transparent 1px 18px);
+}
+
+@keyframes sudar-art-uiverse-hatch-kf {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 18px 18px, -18px 18px;
+  }
+}
+
+.sudar-art-uiverse-hatch-drift {
+  animation: sudar-art-uiverse-hatch-kf 38s linear infinite;
+}
+
+.sudar-art-uiverse-beams {
+  background-image: linear-gradient(
+    115deg,
+    transparent 0%,
+    transparent 38%,
+    rgba(255, 255, 255, 0.14) 50%,
+    transparent 62%,
+    transparent 100%
+  );
+  background-size: 220% 220%;
+}
+
+@keyframes sudar-art-uiverse-beams-kf {
+  0% {
+    background-position: 120% 40%;
+  }
+  100% {
+    background-position: -120% 60%;
+  }
+}
+
+.sudar-art-uiverse-beams-sweep {
+  animation: sudar-art-uiverse-beams-kf 16s ease-in-out infinite;
+}
+
+.sudar-art-uiverse-beams-sweep-expressive {
+  animation: sudar-art-uiverse-beams-kf 10s ease-in-out infinite;
+}
+
+/* Uiverse gallery picks — adapted for Sudar palettes (see docs/THIRD_PARTY_NOTICES.md) */
+.sudar-art-uiv-breezy-turkey {
+  background:
+    radial-gradient(ellipse 120% 80% at 30% 20%, rgba(34, 211, 238, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 100% 100% at 70% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 45%),
+    repeating-conic-gradient(from 0deg at 50% 50%, rgba(255, 255, 255, 0.035) 0deg 2deg, transparent 2deg 9deg);
+}
+
+@keyframes sudar-art-uiv-breezy-turkey-kf {
+  0%,
+  100% {
+    filter: hue-rotate(0deg) brightness(1);
+  }
+  50% {
+    filter: hue-rotate(14deg) brightness(1.04);
+  }
+}
+
+.sudar-art-uiv-breezy-turkey-m-subtle {
+  animation: sudar-art-uiv-breezy-turkey-kf 26s ease-in-out infinite;
+}
+
+.sudar-art-uiv-breezy-turkey-m-expressive {
+  animation: sudar-art-uiv-breezy-turkey-kf 11s ease-in-out infinite;
+}
+
+.sudar-art-uiv-slimy-gecko {
+  --uiv-sg-s: 80px;
+  --uiv-sg-c1: rgba(34, 211, 238, 0.55);
+  --uiv-sg-c2: rgba(30, 27, 75, 0.78);
+  --uiv-sg-g: var(--uiv-sg-c2) 6% 14%, var(--uiv-sg-c1) 16% 24%, var(--uiv-sg-c2) 26% 34%, var(--uiv-sg-c1) 36% 44%,
+    var(--uiv-sg-c2) 46% 54%, var(--uiv-sg-c1) 56% 64%, var(--uiv-sg-c2) 66% 74%, var(--uiv-sg-c1) 76% 84%,
+    var(--uiv-sg-c2) 86% 94%;
+  background:
+    radial-gradient(100% 100% at 100% 0, var(--uiv-sg-c1) 4%, var(--uiv-sg-g), rgba(15, 23, 42, 0.55) 96%, transparent),
+    radial-gradient(100% 100% at 0 100%, transparent, rgba(15, 23, 42, 0.42) 4%, var(--uiv-sg-g), var(--uiv-sg-c1) 96%)
+      rgba(15, 23, 42, 0.2);
+  background-size: var(--uiv-sg-s) var(--uiv-sg-s);
+}
+
+@keyframes sudar-art-uiv-slimy-gecko-kf {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 72px 36px, -36px -72px;
+  }
+}
+
+.sudar-art-uiv-slimy-gecko-m-subtle {
+  animation: sudar-art-uiv-slimy-gecko-kf 48s linear infinite;
+}
+
+.sudar-art-uiv-slimy-gecko-m-expressive {
+  animation: sudar-art-uiv-slimy-gecko-kf 22s linear infinite;
+}
+
+.sudar-art-uiv-mean-emu {
+  position: relative;
+}
+
+.sudar-art-uiv-mean-emu::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.12) 10%, transparent 20%),
+    radial-gradient(circle, transparent 10%, rgba(255, 255, 255, 0.09) 20%);
+  background-size: 28px 28px;
+}
+
+@keyframes sudar-art-uiv-mean-emu-move {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(18%, 18%);
+  }
+}
+
+.sudar-art-uiv-mean-emu-m-subtle::before {
+  animation: sudar-art-uiv-mean-emu-move 11s linear infinite;
+}
+
+.sudar-art-uiv-mean-emu-m-expressive::before {
+  animation: sudar-art-uiv-mean-emu-move 5.5s linear infinite;
+}
+
+.sudar-art-uiv-chilly-moth {
+  background:
+    linear-gradient(180deg, rgba(147, 197, 253, 0.09) 0%, transparent 42%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(0deg, rgba(186, 230, 253, 0.055) 0 1px, transparent 1px 17px);
+}
+
+@keyframes sudar-art-uiv-chilly-moth-kf {
+  0%,
+  100% {
+    opacity: 0.92;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.sudar-art-uiv-chilly-moth-m-subtle {
+  animation: sudar-art-uiv-chilly-moth-kf 18s ease-in-out infinite;
+}
+
+.sudar-art-uiv-chilly-moth-m-expressive {
+  animation: sudar-art-uiv-chilly-moth-kf 8s ease-in-out infinite;
+}
+
+.sudar-art-uiv-smart-lizard {
+  background-image:
+    repeating-linear-gradient(60deg, rgba(255, 255, 255, 0.05) 0, rgba(255, 255, 255, 0.05) 1px, transparent 1px 20px),
+    repeating-linear-gradient(-60deg, rgba(255, 255, 255, 0.045) 0, rgba(255, 255, 255, 0.045) 1px, transparent 1px 20px);
+}
+
+@keyframes sudar-art-uiv-smart-lizard-kf {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 24px 14px, -18px 12px;
+  }
+}
+
+.sudar-art-uiv-smart-lizard-m-subtle {
+  animation: sudar-art-uiv-smart-lizard-kf 42s linear infinite;
+}
+
+.sudar-art-uiv-smart-lizard-m-expressive {
+  animation: sudar-art-uiv-smart-lizard-kf 16s linear infinite;
+}
+
+.sudar-art-uiv-plastic-warthog {
+  background:
+    linear-gradient(118deg, rgba(255, 255, 255, 0.16) 0%, transparent 42%),
+    linear-gradient(122deg, transparent 55%, rgba(255, 255, 255, 0.11) 60%, transparent 65%),
+    linear-gradient(165deg, rgba(0, 0, 0, 0.14) 0%, transparent 38%);
+  background-size: 140% 140%, 120% 120%, 100% 100%;
+}
+
+@keyframes sudar-art-uiv-plastic-warthog-kf {
+  0% {
+    background-position: 0% 0%, 20% 10%, 0 0;
+  }
+  100% {
+    background-position: 100% 80%, 80% 60%, 0 0;
+  }
+}
+
+.sudar-art-uiv-plastic-warthog-m-subtle {
+  animation: sudar-art-uiv-plastic-warthog-kf 36s ease-in-out infinite;
+}
+
+.sudar-art-uiv-plastic-warthog-m-expressive {
+  animation: sudar-art-uiv-plastic-warthog-kf 14s ease-in-out infinite;
+}
+
+.sudar-art-uiv-clever-puma {
+  background-color: rgba(5, 8, 20, 0.82);
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 72px,
+      rgba(251, 146, 60, 0.22) 72px,
+      rgba(251, 146, 60, 0.22) 74px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 24px,
+      transparent 96px,
+      rgba(96, 165, 250, 0.14) 96px,
+      rgba(96, 165, 250, 0.14) 97px
+    );
+  background-size: 200px 200px, 180px 180px;
+}
+
+@keyframes sudar-art-uiv-clever-puma-scroll {
+  0% {
+    background-position: 0 0, 40px 0;
+  }
+  100% {
+    background-position: 0 2000px, 40px 1800px;
+  }
+}
+
+.sudar-art-uiv-clever-puma-m-subtle {
+  animation: sudar-art-uiv-clever-puma-scroll 90s linear infinite;
+}
+
+.sudar-art-uiv-clever-puma-m-expressive {
+  animation: sudar-art-uiv-clever-puma-scroll 34s linear infinite;
+}
+
+.sudar-art-uiv-polite-earwig {
+  background: repeating-radial-gradient(
+    circle at 50% 50%,
+    transparent 0,
+    transparent 20px,
+    rgba(255, 255, 255, 0.045) 20px,
+    rgba(255, 255, 255, 0.045) 21px
+  );
+}
+
+@keyframes sudar-art-uiv-polite-earwig-kf {
+  0%,
+  100% {
+    opacity: 0.88;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.025);
+  }
+}
+
+.sudar-art-uiv-polite-earwig-m-subtle {
+  animation: sudar-art-uiv-polite-earwig-kf 14s ease-in-out infinite;
+}
+
+.sudar-art-uiv-polite-earwig-m-expressive {
+  animation: sudar-art-uiv-polite-earwig-kf 6s ease-in-out infinite;
+}
+
+.sudar-art-uiv-sweet-dolphin {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(34, 211, 238, 0.14), transparent 60%),
+    repeating-linear-gradient(-8deg, rgba(59, 130, 246, 0.07) 0 2px, transparent 2px 16px);
+}
+
+@keyframes sudar-art-uiv-sweet-dolphin-kf {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 0 0, 48px 28px;
+  }
+}
+
+.sudar-art-uiv-sweet-dolphin-m-subtle {
+  animation: sudar-art-uiv-sweet-dolphin-kf 40s linear infinite;
+}
+
+.sudar-art-uiv-sweet-dolphin-m-expressive {
+  animation: sudar-art-uiv-sweet-dolphin-kf 16s linear infinite;
+}
+
+.sudar-art-uiv-smart-termite {
+  background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.038) 0 1px, transparent 1px 5px);
+}
+
+@keyframes sudar-art-uiv-smart-termite-kf {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 120px 0;
+  }
+}
+
+.sudar-art-uiv-smart-termite-m-subtle {
+  animation: sudar-art-uiv-smart-termite-kf 55s linear infinite;
+}
+
+.sudar-art-uiv-smart-termite-m-expressive {
+  animation: sudar-art-uiv-smart-termite-kf 20s linear infinite;
+}
+
+.sudar-art-uiv-wicked-fly {
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(255, 255, 255, 0.05) 0deg 18deg,
+    transparent 18deg 36deg
+  );
+}
+
+@keyframes sudar-art-uiv-wicked-fly-kf {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sudar-art-uiv-wicked-fly-m-subtle {
+  animation: sudar-art-uiv-wicked-fly-kf 120s linear infinite;
+}
+
+.sudar-art-uiv-wicked-fly-m-expressive {
+  animation: sudar-art-uiv-wicked-fly-kf 42s linear infinite;
+}
+
+.sudar-art-uiv-short-newt {
+  background:
+    radial-gradient(circle 45% at 25% 35%, rgba(167, 139, 250, 0.2) 0%, transparent 55%),
+    radial-gradient(circle 40% at 75% 65%, rgba(34, 211, 238, 0.14) 0%, transparent 50%);
+}
+
+@keyframes sudar-art-uiv-short-newt-kf {
+  0% {
+    background-position: 0% 0%, 100% 100%;
+  }
+  100% {
+    background-position: 8% 6%, 92% 94%;
+  }
+}
+
+.sudar-art-uiv-short-newt-m-subtle {
+  animation: sudar-art-uiv-short-newt-kf 32s ease-in-out infinite;
+}
+
+.sudar-art-uiv-short-newt-m-expressive {
+  animation: sudar-art-uiv-short-newt-kf 12s ease-in-out infinite;
+}
+
+.sudar-art-uiv-moody-eel {
+  background-color: transparent;
+  background-image:
+    linear-gradient(45deg, rgba(244, 63, 94, 0.22), transparent 90%),
+    radial-gradient(rgba(251, 113, 133, 0.34) 68%, transparent 5%);
+  background-size: 3.5rem 3.5rem;
+}
+
+@keyframes sudar-art-uiv-moody-eel-kf {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 3.5rem 3.5rem, 1.75rem 1.75rem;
+  }
+}
+
+.sudar-art-uiv-moody-eel-m-subtle {
+  animation: sudar-art-uiv-moody-eel-kf 28s linear infinite;
+}
+
+.sudar-art-uiv-moody-eel-m-expressive {
+  animation: sudar-art-uiv-moody-eel-kf 11s linear infinite;
+}
+
+.sudar-art-uiv-dull-mouse {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.065) 1px, transparent 1px);
+  background-size: 10px 10px;
+}
+
+@keyframes sudar-art-uiv-dull-mouse-kf {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 10px 6px;
+  }
+}
+
+.sudar-art-uiv-dull-mouse-m-subtle {
+  animation: sudar-art-uiv-dull-mouse-kf 48s linear infinite;
+}
+
+.sudar-art-uiv-dull-mouse-m-expressive {
+  animation: sudar-art-uiv-dull-mouse-kf 18s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sudar-art-bg-shift,
+  .sudar-art-bg-shift-expressive,
+  .sudar-art-grid-drift,
+  .sudar-art-mesh-pulse,
+  .sudar-art-noise-shift,
+  .sudar-art-orb-a,
+  .sudar-art-orb-a-fast,
+  .sudar-art-orb-b,
+  .sudar-art-uiverse-stripes-move,
+  .sudar-art-uiverse-stripes-move-expressive,
+  .sudar-art-uiverse-rings-pulse,
+  .sudar-art-uiverse-rings-pulse-expressive,
+  .sudar-art-uiverse-hatch-drift,
+  .sudar-art-uiverse-beams-sweep,
+  .sudar-art-uiverse-beams-sweep-expressive,
+  .sudar-art-uiv-breezy-turkey-m-subtle,
+  .sudar-art-uiv-breezy-turkey-m-expressive,
+  .sudar-art-uiv-slimy-gecko-m-subtle,
+  .sudar-art-uiv-slimy-gecko-m-expressive,
+  .sudar-art-uiv-mean-emu-m-subtle::before,
+  .sudar-art-uiv-mean-emu-m-expressive::before,
+  .sudar-art-uiv-chilly-moth-m-subtle,
+  .sudar-art-uiv-chilly-moth-m-expressive,
+  .sudar-art-uiv-smart-lizard-m-subtle,
+  .sudar-art-uiv-smart-lizard-m-expressive,
+  .sudar-art-uiv-plastic-warthog-m-subtle,
+  .sudar-art-uiv-plastic-warthog-m-expressive,
+  .sudar-art-uiv-clever-puma-m-subtle,
+  .sudar-art-uiv-clever-puma-m-expressive,
+  .sudar-art-uiv-polite-earwig-m-subtle,
+  .sudar-art-uiv-polite-earwig-m-expressive,
+  .sudar-art-uiv-sweet-dolphin-m-subtle,
+  .sudar-art-uiv-sweet-dolphin-m-expressive,
+  .sudar-art-uiv-smart-termite-m-subtle,
+  .sudar-art-uiv-smart-termite-m-expressive,
+  .sudar-art-uiv-wicked-fly-m-subtle,
+  .sudar-art-uiv-wicked-fly-m-expressive,
+  .sudar-art-uiv-short-newt-m-subtle,
+  .sudar-art-uiv-short-newt-m-expressive,
+  .sudar-art-uiv-moody-eel-m-subtle,
+  .sudar-art-uiv-moody-eel-m-expressive,
+  .sudar-art-uiv-dull-mouse-m-subtle,
+  .sudar-art-uiv-dull-mouse-m-expressive {
+    animation: none !important;
   }
 }

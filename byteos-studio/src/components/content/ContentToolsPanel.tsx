@@ -58,7 +58,7 @@ export function ContentToolsPanel({
             )}
           >
             {generatingOutline ? (
-              <SudarInlineLoader size="sm" className="h-3.5 w-auto shrink-0 text-violet-400" starFill="var(--background)" />
+              <SudarInlineLoader size="sm" className="shrink-0 text-violet-400" starFill="var(--background)" />
             ) : (
               <Sparkles className="w-3.5 h-3.5 shrink-0" />
             )}

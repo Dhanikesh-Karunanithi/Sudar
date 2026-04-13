@@ -1,11 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, Sparkles, LayoutList, CheckCircle2, Package, FileText, Upload } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { ArrowLeft, BookOpen, Sparkles, LayoutList, CheckCircle2, Package, FileText, Upload, Loader2, Bell } from 'lucide-react'
 import { SudarInlineLoader, SudarBrandLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
+import { useBrowserCompletionNotification } from '@/hooks/useBrowserCompletionNotification'
+import type { CourseBlueprintQuestion } from '@/lib/ai/courseGeneration/types'
+
+const COURSE_BUILD_EXIT_MS = 320
 
 const difficulties = [
   { value: 'beginner', label: 'Beginner', desc: 'No prior knowledge required' },
@@ -16,6 +21,8 @@ const difficulties = [
 const numModulesOptions = [3, 5, 7, 10]
 
 type Mode = 'choose' | 'ai' | 'manual' | 'document' | 'scorm'
+
+type AiWizardStep = 'details' | 'blueprint'
 
 const AI_STEPS = [
   'Creating course...',
@@ -30,12 +37,24 @@ const AI_STEPS = [
 
 export default function NewCoursePage() {
   const router = useRouter()
+  const {
+    notifyWhenReady,
+    toggleNotifyWhenReady,
+    notifyCourseReady,
+    notifyCourseFailed,
+    notificationsMissingApi,
+    notificationsNeedSecurePage,
+    notificationsUnavailable,
+    notificationPermissionDenied,
+  } = useBrowserCompletionNotification()
   const [mode, setMode] = useState<Mode>('choose')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [difficulty, setDifficulty] = useState('intermediate')
   const [numModules, setNumModules] = useState(5)
   const [loading, setLoading] = useState(false)
+  /** Fade overlay out before navigate so exit does not feel abrupt */
+  const [courseBuildExiting, setCourseBuildExiting] = useState(false)
   const [aiStep, setAiStep] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [documentFile, setDocumentFile] = useState<File | null>(null)
@@ -49,49 +68,187 @@ export default function NewCoursePage() {
   const [tone, setTone] = useState('')
   const [industry, setIndustry] = useState('')
   const [noExternalVideo, setNoExternalVideo] = useState(false)
+  const [manualThumbnailFile, setManualThumbnailFile] = useState<File | null>(null)
+  const [manualBannerFile, setManualBannerFile] = useState<File | null>(null)
+
+  const [aiWizardStep, setAiWizardStep] = useState<AiWizardStep>('details')
+  const [blueprintQuestions, setBlueprintQuestions] = useState<CourseBlueprintQuestion[]>([])
+  const [blueprintAnswers, setBlueprintAnswers] = useState<Record<string, string>>({})
+  const [blueprintLoading, setBlueprintLoading] = useState(false)
+
+  useEffect(() => {
+    if (mode === 'ai') {
+      setAiWizardStep('details')
+      setBlueprintQuestions([])
+      setBlueprintAnswers({})
+    }
+  }, [mode])
+
+  function documentNotifyLabel(): string {
+    if (documentFile?.name) return documentFile.name
+    const u = documentUrl.trim()
+    if (u) {
+      try {
+        return new URL(u).hostname
+      } catch {
+        return u.length > 80 ? `${u.slice(0, 77)}…` : u
+      }
+    }
+    return 'Your imported course'
+  }
+
+  function notifyWhenReadyCheckbox(className?: string) {
+    return (
+      <div className={cn('rounded-lg border border-slate-700/80 bg-slate-800/40 px-3.5 py-3', className)}>
+        <label className="flex cursor-pointer items-start gap-3 text-left">
+          <input
+            type="checkbox"
+            checked={notifyWhenReady}
+            onChange={(e) => void toggleNotifyWhenReady(e.target.checked)}
+            disabled={notificationsUnavailable}
+            className="mt-0.5 rounded border-slate-600 bg-slate-800 text-violet-600 focus:ring-violet-500/30 disabled:opacity-40"
+            aria-label="Notify me in the browser when generation finishes"
+          />
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-2 text-sm font-medium text-slate-200">
+              <Bell className="h-4 w-4 shrink-0 text-violet-400" aria-hidden />
+              Notify me when the course is ready
+            </span>
+            <span className="mt-1 block text-xs text-slate-500">
+              Uses your browser’s permission to show a normal system notification when generation finishes (like other sites), so you can switch tabs or work elsewhere.
+            </span>
+            {notificationsNeedSecurePage && (
+              <span className="mt-2 block text-xs text-amber-400/90">
+                Open Sudar Studio over HTTPS or localhost so the browser can show notifications.
+              </span>
+            )}
+            {notificationPermissionDenied && (
+              <span className="mt-2 block text-xs text-amber-400/90">
+                Notifications are blocked for this site. Enable them in your browser settings to use this option.
+              </span>
+            )}
+            {notificationsMissingApi && (
+              <span className="mt-2 block text-xs text-slate-500">This browser does not support notifications.</span>
+            )}
+          </span>
+        </label>
+      </div>
+    )
+  }
+
+  async function uploadCatalogAsset(file: File): Promise<string> {
+    const form = new FormData()
+    form.append('file', file)
+    form.append('course_id', 'shared')
+    const res = await fetch('/api/media/upload', { method: 'POST', body: form })
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { error?: string }
+      throw new Error(data.error ?? 'Upload failed')
+    }
+    const data = (await res.json()) as { url: string }
+    return data.url
+  }
+
+  async function handleContinueToBlueprint() {
+    if (!title.trim()) return
+    setError(null)
+    setBlueprintLoading(true)
+    try {
+      const res = await fetch('/api/ai/course-blueprint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          brief: description.trim() || null,
+        }),
+      })
+      const data = (await res.json()) as { error?: string; questions?: CourseBlueprintQuestion[] }
+      if (!res.ok) {
+        setError(data.error ?? 'Could not load lesson design options')
+        return
+      }
+      const questions = data.questions ?? []
+      setBlueprintQuestions(questions)
+      const init: Record<string, string> = {}
+      for (const q of questions) {
+        if (q.options[0]) init[q.id] = q.options[0].id
+      }
+      setBlueprintAnswers(init)
+      setAiWizardStep('blueprint')
+    } catch {
+      setError('Could not load lesson design options')
+    } finally {
+      setBlueprintLoading(false)
+    }
+  }
 
   // ─── AI generation ──────────────────────────────────────────────
   async function handleCreateWithAI(e: React.FormEvent) {
     e.preventDefault()
     if (!title.trim()) return
-    setLoading(true); setError(null); setAiStep(0)
+    if (blueprintQuestions.length === 0) {
+      setError('Complete the lesson design step first.')
+      return
+    }
+    setCourseBuildExiting(false)
+    setLoading(true)
+    setError(null)
+    setAiStep(0)
 
-    // Advance step indicator while waiting
     const stepInterval = setInterval(() => {
       setAiStep((s) => Math.min(s + 1, AI_STEPS.length - 1))
     }, 3500)
 
-    const outcomes = learningOutcomes
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean)
-    const res = await fetch('/api/ai/generate-course', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: title.trim(),
-        brief: description.trim() || null,
-        difficulty,
-        num_modules: numModules,
-        target_audience: targetAudience.trim() || undefined,
-        learning_outcomes: outcomes.length > 0 ? outcomes : undefined,
-        tone: tone.trim() || undefined,
-        industry: industry.trim() || undefined,
-        no_external_video: noExternalVideo || undefined,
-      }),
-    })
+    try {
+      const outcomes = learningOutcomes
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean)
+      const blueprint_answers = Object.entries(blueprintAnswers).map(([question_id, option_id]) => ({
+        question_id,
+        option_id,
+      }))
+      const res = await fetch('/api/ai/generate-course', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          brief: description.trim() || null,
+          difficulty,
+          num_modules: numModules,
+          target_audience: targetAudience.trim() || undefined,
+          learning_outcomes: outcomes.length > 0 ? outcomes : undefined,
+          tone: tone.trim() || undefined,
+          industry: industry.trim() || undefined,
+          no_external_video: noExternalVideo || undefined,
+          blueprint_answers,
+          blueprint_questions: blueprintQuestions,
+        }),
+      })
 
-    clearInterval(stepInterval)
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string }
+        setError(data.error ?? 'Generation failed')
+        setCourseBuildExiting(false)
+        setLoading(false)
+        notifyCourseFailed(title.trim(), data.error)
+        return
+      }
 
-    if (!res.ok) {
-      const data = await res.json()
-      setError(data.error ?? 'Generation failed')
+      const { course_id } = (await res.json()) as { course_id: string }
+      notifyCourseReady(title.trim())
+      setCourseBuildExiting(true)
+      window.setTimeout(() => {
+        router.push(`/courses/${course_id}`)
+      }, COURSE_BUILD_EXIT_MS)
+    } catch {
+      setError('Generation failed')
+      setCourseBuildExiting(false)
       setLoading(false)
-      return
+      notifyCourseFailed(title.trim(), 'Network or unexpected error.')
+    } finally {
+      clearInterval(stepInterval)
     }
-
-    const { course_id } = await res.json()
-    router.push(`/courses/${course_id}`)
   }
 
   async function handleGenerateMetadata() {
@@ -128,33 +285,65 @@ export default function NewCoursePage() {
     }
   }
 
+  function submitAIOrManual(e: React.FormEvent) {
+    e.preventDefault()
+    if (mode === 'manual') {
+      void handleCreateManual(e)
+      return
+    }
+    if (mode === 'ai') {
+      if (aiWizardStep === 'details') {
+        void handleContinueToBlueprint()
+        return
+      }
+      void handleCreateWithAI(e)
+    }
+  }
+
   // ─── Manual creation ─────────────────────────────────────────────
   async function handleCreateManual(e: React.FormEvent) {
     e.preventDefault()
     if (!title.trim()) return
     setLoading(true); setError(null)
 
-    const res = await fetch('/api/courses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: title.trim(), description: description.trim() || null, difficulty }),
-    })
+    try {
+      let thumbnail_url: string | undefined
+      let banner_url: string | undefined
+      if (manualThumbnailFile) thumbnail_url = await uploadCatalogAsset(manualThumbnailFile)
+      if (manualBannerFile) banner_url = await uploadCatalogAsset(manualBannerFile)
 
-    if (!res.ok) {
-      const data = await res.json()
-      setError(data.error ?? 'Failed to create course')
+      const res = await fetch('/api/courses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim() || null,
+          difficulty,
+          ...(thumbnail_url && { thumbnail_url }),
+          ...(banner_url && { banner_url }),
+        }),
+      })
+
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string }
+        setError(data.error ?? 'Failed to create course')
+        setLoading(false)
+        return
+      }
+
+      const { id } = (await res.json()) as { id: string }
+      router.push(`/courses/${id}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create course')
       setLoading(false)
-      return
     }
-
-    const { id } = await res.json()
-    router.push(`/courses/${id}`)
   }
 
   // ─── Import from document (RAG) ─────────────────────────────────
   async function handleImportFromDocument(e: React.FormEvent) {
     e.preventDefault()
     if (!documentFile && !documentUrl.trim()) return
+    setCourseBuildExiting(false)
     setLoading(true)
     setError(null)
     setAiStep(0)
@@ -188,19 +377,27 @@ export default function NewCoursePage() {
           }),
         })
       }
-      clearInterval(stepInterval)
       if (!res.ok) {
-        const data = await res.json()
+        const data = (await res.json()) as { error?: string; course_id?: string }
         setError(data.error ?? 'Import failed')
+        setCourseBuildExiting(false)
         setLoading(false)
+        notifyCourseFailed(documentNotifyLabel(), data.error)
         return
       }
-      const { course_id } = await res.json()
-      router.push(`/courses/${course_id}`)
+      const { course_id } = (await res.json()) as { course_id: string }
+      notifyCourseReady(documentNotifyLabel())
+      setCourseBuildExiting(true)
+      window.setTimeout(() => {
+        router.push(`/courses/${course_id}`)
+      }, COURSE_BUILD_EXIT_MS)
     } catch {
-      clearInterval(stepInterval)
       setError('Import failed')
+      setCourseBuildExiting(false)
       setLoading(false)
+      notifyCourseFailed(documentNotifyLabel(), 'Network or unexpected error.')
+    } finally {
+      clearInterval(stepInterval)
     }
   }
 
@@ -228,48 +425,61 @@ export default function NewCoursePage() {
     }
   }
 
-  // ─── AI loading overlay ───────────────────────────────────────────
+  // ─── AI / document full-screen build overlay (single branded loader; steps use a neutral spinner) ───
   if (loading && (mode === 'ai' || mode === 'document')) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8">
+      <motion.div
+        className="fixed inset-0 z-50 flex min-h-screen items-center justify-center bg-slate-950/88 backdrop-blur-[2px] p-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: courseBuildExiting ? 0 : 1 }}
+        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+      >
         <div className="max-w-sm w-full text-center space-y-6">
-          <SudarBrandLoader
-            className="mx-auto max-w-md"
-            size="lg"
-            frostClassName="border border-violet-500/20 bg-violet-950/20"
-          />
+          <SudarBrandLoader className="mx-auto max-w-md" size="lg" surface="none" />
           <div className="space-y-2">
             <h2 className="text-lg font-semibold text-white">Sudar is building your course</h2>
             <p className="text-slate-400 text-sm">This takes about 30–60 seconds for a full course.</p>
           </div>
 
-          {/* Step indicator */}
+          {/* Step rows: done = checkmark; active = simple spinner (not SudarInline — avoids duplicating the hero mark) */}
           <div className="space-y-2">
             {AI_STEPS.slice(0, Math.min(aiStep + 1, 3)).map((step, i) => (
-              <div key={i} className={cn(
-                'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all',
-                i === aiStep ? 'bg-violet-600/15 border border-violet-500/20 text-violet-200' : 'text-slate-500'
-              )}>
+              <div
+                key={i}
+                className={cn(
+                  'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors duration-200',
+                  i === aiStep ? 'bg-violet-600/15 border border-violet-500/20 text-violet-200' : 'text-slate-500'
+                )}
+              >
                 {i < aiStep ? (
                   <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
                 ) : (
-                  <SudarInlineLoader size="sm" className="shrink-0 text-violet-400" starFill="var(--background)" />
+                  <Loader2
+                    className="w-4 h-4 shrink-0 text-violet-400 motion-safe:animate-spin"
+                    aria-hidden
+                  />
                 )}
                 {step}
               </div>
             ))}
           </div>
 
-          {/* Progress bar */}
-          <div className="w-full bg-slate-800 rounded-full h-1.5">
-            <div
-              className="bg-gradient-to-r from-violet-500 to-indigo-500 h-1.5 rounded-full transition-all duration-1000"
-              style={{ width: `${Math.min(100, (aiStep / (AI_STEPS.length - 1)) * 100)}%` }}
+          <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+            <motion.div
+              className="bg-gradient-to-r from-violet-500 to-indigo-500 h-1.5 rounded-full"
+              initial={false}
+              animate={{ width: `${Math.min(100, (aiStep / (AI_STEPS.length - 1)) * 100)}%` }}
+              transition={{ duration: 0.85, ease: 'easeOut' }}
             />
           </div>
+          {notifyWhenReadyCheckbox(
+            mode === 'document'
+              ? 'border-emerald-500/20 bg-emerald-950/20 text-left'
+              : 'border-violet-500/20 bg-slate-900/80 text-left'
+          )}
           <p className="text-slate-600 text-xs">Do not close this tab</p>
         </div>
-      </div>
+      </motion.div>
     )
   }
 
@@ -468,6 +678,7 @@ export default function NewCoursePage() {
                 />
                 Do not embed external videos
               </label>
+              {notifyWhenReadyCheckbox('border-emerald-500/15 bg-emerald-950/10')}
               <div className="flex items-center gap-3 pt-2">
                 <button type="submit" disabled={loading || (!documentFile && !documentUrl.trim())}
                   className="flex-1 py-2.5 font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-sm flex items-center justify-center gap-2">
@@ -503,7 +714,45 @@ export default function NewCoursePage() {
           )}
 
           {mode !== 'document' && mode !== 'scorm' && (
-          <form onSubmit={mode === 'ai' ? handleCreateWithAI : handleCreateManual} className="space-y-5">
+          <form onSubmit={submitAIOrManual} className="space-y-5">
+            {mode === 'ai' && aiWizardStep === 'blueprint' && (
+              <div className="rounded-xl border border-violet-500/20 bg-violet-950/20 p-4 space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-white">Lesson design</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Fine-tune pedagogy and interactives for &quot;{title.trim() || 'your course'}&quot; ({numModules} modules). You can go back to edit the brief.
+                  </p>
+                </div>
+                {blueprintQuestions.map((q) => (
+                  <div key={q.id} className="space-y-2">
+                    <p className="text-sm text-slate-200">{q.prompt}</p>
+                    <div className="flex flex-wrap gap-2" role="group" aria-label={q.prompt}>
+                      {q.options.map((opt) => {
+                        const selected = blueprintAnswers[q.id] === opt.id
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => setBlueprintAnswers((prev) => ({ ...prev, [q.id]: opt.id }))}
+                            className={cn(
+                              'rounded-full border px-3 py-1.5 text-left text-xs leading-snug transition-colors max-w-full',
+                              selected
+                                ? 'border-violet-500 bg-violet-600/25 text-white'
+                                : 'border-slate-600 bg-slate-800/80 text-slate-300 hover:border-slate-500'
+                            )}
+                          >
+                            {opt.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!(mode === 'ai' && aiWizardStep === 'blueprint') && (
+              <>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-slate-300">Course title <span className="text-red-400">*</span></label>
               <input
@@ -548,7 +797,7 @@ export default function NewCoursePage() {
                     disabled={generatingMeta || !title.trim()}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-500/40 bg-indigo-600/15 px-3 py-1.5 text-xs font-medium text-indigo-200 hover:bg-indigo-600/25 disabled:opacity-50"
                   >
-                    {generatingMeta ? <SudarInlineLoader size="sm" className="h-3 w-auto" starFill="#818cf8" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    {generatingMeta ? <SudarInlineLoader size="sm" className="text-indigo-300" starFill="#818cf8" /> : <Sparkles className="w-3.5 h-3.5" />}
                     Generate description &amp; tags with AI
                   </button>
                   {previewTagLabels.length > 0 && (
@@ -574,6 +823,46 @@ export default function NewCoursePage() {
                 ))}
               </div>
             </div>
+
+            {mode === 'manual' && (
+              <div className="space-y-3 rounded-xl border border-slate-700/80 bg-slate-800/30 p-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-300">
+                    Catalog images{' '}
+                    <span className="text-slate-600 text-xs font-normal">(optional)</span>
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Card thumbnail and wide banner for Learn. You can upload or replace them later on the course page.
+                  </p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label htmlFor="catalog-thumb" className="text-xs font-medium text-slate-400">
+                      Thumbnail
+                    </label>
+                    <input
+                      id="catalog-thumb"
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={(e) => setManualThumbnailFile(e.target.files?.[0] ?? null)}
+                      className="w-full text-xs text-slate-300 file:mr-2 file:rounded file:border-0 file:bg-slate-700 file:px-2 file:py-1 file:text-slate-200"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor="catalog-banner" className="text-xs font-medium text-slate-400">
+                      Banner
+                    </label>
+                    <input
+                      id="catalog-banner"
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={(e) => setManualBannerFile(e.target.files?.[0] ?? null)}
+                      className="w-full text-xs text-slate-300 file:mr-2 file:rounded file:border-0 file:bg-slate-700 file:px-2 file:py-1 file:text-slate-200"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {mode === 'ai' && (
               <>
@@ -642,18 +931,54 @@ export default function NewCoursePage() {
                   </div>
                   <p className="text-xs text-slate-600">Sudar builds a curriculum-aware lesson for each module (varied structure and activities).</p>
                 </div>
+                {notifyWhenReadyCheckbox()}
+              </>
+            )}
               </>
             )}
 
-            <div className="flex items-center gap-3 pt-2">
-              <button type="submit" disabled={loading || !title.trim()}
-                className={cn('flex-1 py-2.5 font-medium rounded-lg transition-colors text-sm flex items-center justify-center gap-2',
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              {mode === 'ai' && aiWizardStep === 'blueprint' && (
+                <button
+                  type="button"
+                  onClick={() => setAiWizardStep('details')}
+                  className="px-4 py-2.5 text-slate-300 hover:text-white text-sm font-medium rounded-lg border border-slate-600 hover:bg-slate-800 transition-all"
+                >
+                  Back
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={
+                  loading ||
+                  !title.trim() ||
+                  (mode === 'ai' && aiWizardStep === 'details' && blueprintLoading)
+                }
+                className={cn(
+                  'flex-1 min-w-[12rem] py-2.5 font-medium rounded-lg transition-colors text-sm flex items-center justify-center gap-2',
                   mode === 'ai'
                     ? 'bg-violet-600 hover:bg-violet-500 disabled:bg-slate-800 disabled:text-slate-600 text-white'
                     : 'bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white'
-                )}>
-                {loading ? <SudarInlineLoader size="sm" className="text-white" starFill="#4f46e5" /> : mode === 'ai' ? <Sparkles className="w-4 h-4" /> : <BookOpen className="w-4 h-4" />}
-                {loading ? 'Creating...' : mode === 'ai' ? `Generate ${numModules}-module course` : 'Create course'}
+                )}
+              >
+                {loading || blueprintLoading ? (
+                  <SudarInlineLoader size="sm" className="text-white" starFill="#4f46e5" />
+                ) : mode === 'ai' ? (
+                  <Sparkles className="w-4 h-4" />
+                ) : (
+                  <BookOpen className="w-4 h-4" />
+                )}
+                {loading
+                  ? 'Creating...'
+                  : blueprintLoading
+                    ? 'Loading...'
+                    : mode === 'ai' && aiWizardStep === 'details'
+                      ? 'Continue to lesson design'
+                      : mode === 'ai' && aiWizardStep === 'blueprint'
+                        ? `Generate ${numModules}-module course`
+                        : mode === 'ai'
+                          ? `Generate ${numModules}-module course`
+                          : 'Create course'}
               </button>
               <Link href="/courses" className="px-4 py-2.5 text-slate-400 hover:text-slate-200 text-sm font-medium rounded-lg hover:bg-slate-800 transition-all">
                 Cancel

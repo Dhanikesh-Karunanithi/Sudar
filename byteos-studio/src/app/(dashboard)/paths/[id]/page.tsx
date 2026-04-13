@@ -191,7 +191,7 @@ export default function PathEditorPage() {
   if (loading) {
     return (
       <div className="relative flex min-h-[min(50vh,420px)] items-stretch justify-center p-8 overflow-hidden rounded-2xl">
-        <SudarLoadingFrost layout="block" label="Loading path…" className="min-h-[280px] w-full max-w-lg border-slate-800/80" />
+        <SudarLoadingFrost layout="block" label="Loading path…" className="min-h-[280px] w-full max-w-lg" />
       </div>
     )
   }
@@ -212,12 +212,12 @@ export default function PathEditorPage() {
         </Link>
         <div className="flex items-center gap-2">
           {saved && <span className="flex items-center gap-1.5 text-green-400 text-xs"><CheckCircle2 className="w-3.5 h-3.5" />Saved</span>}
-          {saving && <SudarInlineLoader size="sm" className="h-3.5 w-auto text-slate-500" starFill="var(--background)" />}
+          {saving && <SudarInlineLoader size="sm" className="text-slate-500" starFill="var(--background)" />}
           <button onClick={togglePublish} disabled={publishing}
             className={cn('flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
               isPublished ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-green-600 hover:bg-green-500 text-white'
             )}>
-            {publishing ? <SudarInlineLoader size="sm" className="h-3.5 w-auto text-slate-500" starFill="var(--background)" /> : isPublished ? <FileText className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+            {publishing ? <SudarInlineLoader size="sm" className="text-slate-500" starFill="var(--background)" /> : isPublished ? <FileText className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
             {isPublished ? 'Unpublish' : 'Publish'}
           </button>
           {showDeleteConfirm ? (
@@ -225,7 +225,7 @@ export default function PathEditorPage() {
               <span className="text-slate-400 text-sm">Delete path?</span>
               <button type="button" onClick={handleDeletePath} disabled={deletingPath}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-500 text-white disabled:opacity-50">
-                {deletingPath ? <SudarInlineLoader size="sm" className="h-3.5 w-auto text-slate-500" starFill="var(--background)" /> : <Trash2 className="w-3.5 h-3.5" />}
+                {deletingPath ? <SudarInlineLoader size="sm" className="text-slate-500" starFill="var(--background)" /> : <Trash2 className="w-3.5 h-3.5" />}
                 {deletingPath ? 'Deleting...' : 'Yes, delete'}
               </button>
               <button type="button" onClick={() => setShowDeleteConfirm(false)} disabled={deletingPath}

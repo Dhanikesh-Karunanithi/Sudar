@@ -8,6 +8,8 @@ declare module 'adm-zip' {
     constructor(path?: string | Buffer)
     getEntries(): ZipEntry[]
     readAsText(entry: ZipEntry, encoding?: string): string
+    addFile(entryPath: string, data: Buffer, comment?: string): void
+    toBuffer(): Buffer
   }
   export = AdmZip
 }

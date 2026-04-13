@@ -10,6 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        shell: "var(--shell-bg)",
         surface: "var(--surface)",
         "surface-elevated": "var(--surface-elevated)",
         background: "var(--background)",
@@ -38,6 +39,15 @@ const config: Config = {
         warning: "var(--warning)",
         destructive: "var(--destructive)",
         info: "var(--info)",
+      },
+      borderRadius: {
+        card: "var(--radius-card)",
+        button: "var(--radius-button)",
+        pill: "var(--radius-pill)",
+        "card-lg": "var(--radius-lg)",
+        "card-xl": "var(--radius-xl)",
+        shell: "var(--radius-shell)",
+        "chat-panel": "var(--radius-chat-panel)",
       },
       fontFamily: {
         sans: ["var(--font-body)", "Inter", "Segoe UI", "Arial", "sans-serif"],

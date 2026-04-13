@@ -111,7 +111,7 @@ export default function TagLibraryPage() {
   if (loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <SudarInlineLoader size="sm" className="h-6 w-auto text-slate-500" starFill="var(--background)" />
+        <SudarInlineLoader size="lg" className="text-slate-500" starFill="var(--background)" />
       </div>
     )
   }

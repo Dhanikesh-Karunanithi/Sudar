@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { BookOpen, ChevronDown, ChevronRight, Code } from 'lucide-react'
+import { BookOpen, ChevronDown, ChevronRight } from 'lucide-react'
+import { renderStudioCourseMarkdown } from '@/lib/studioCourseMarkdown'
 import { cn } from '@/lib/utils'
 import type { ImageAlignment, ImageSize, RichContent, RichContentSection, RichInteractiveElement } from '@/types/content'
 import { isRichContent, isScormContent } from '@/types/content'
@@ -55,73 +56,7 @@ function sectionImageFigureClassName(image: {
 }
 
 export function renderMarkdown(body: string): React.ReactNode {
-  if (!body?.trim()) return null
-  const lines = body.split('\n')
-  const out: React.ReactNode[] = []
-  let i = 0
-  let key = 0
-  while (i < lines.length) {
-    const line = lines[i]
-    const t = line.trim()
-    if (!t) {
-      i++
-      continue
-    }
-    if (t.startsWith('## ')) {
-      out.push(
-        <h2 key={key++} className="mt-6 mb-2 border-b border-white/[0.08] pb-2 text-xl font-semibold tracking-tight text-zinc-100">
-          {t.slice(3)}
-        </h2>
-      )
-      i++
-      continue
-    }
-    if (t.startsWith('### ')) {
-      out.push(<h3 key={key++} className="mt-4 mb-1.5 text-lg font-semibold tracking-tight text-zinc-100">{t.slice(4)}</h3>)
-      i++
-      continue
-    }
-    if (t.startsWith('- ') || t.startsWith('* ')) {
-      const items: React.ReactNode[] = []
-      while (i < lines.length && (lines[i].trim().startsWith('- ') || lines[i].trim().startsWith('* '))) {
-        items.push(
-          <li key={i} className="text-sm leading-relaxed text-zinc-400">
-            {lines[i].trim().slice(2)}
-          </li>
-        )
-        i++
-      }
-      out.push(
-        <ul key={key++} className="my-2 list-inside list-disc space-y-1 text-zinc-400">
-          {items}
-        </ul>
-      )
-      continue
-    }
-    if (t.startsWith('```')) {
-      const lang = t.slice(3)
-      const codeLines: string[] = []
-      i++
-      while (i < lines.length && !lines[i].trim().startsWith('```')) {
-        codeLines.push(lines[i])
-        i++
-      }
-      out.push(
-        <div key={key++} className="my-3 overflow-hidden rounded-xl border border-white/[0.08]">
-          <div className="flex items-center gap-2 border-b border-white/[0.06] bg-zinc-900/80 px-3 py-1.5">
-            <Code className="h-3.5 w-3.5 text-zinc-500" />
-            <span className="font-mono text-xs text-zinc-500">{lang || 'code'}</span>
-          </div>
-          <pre className="overflow-x-auto p-3 font-mono text-sm text-zinc-300">{codeLines.join('\n')}</pre>
-        </div>
-      )
-      i++
-      continue
-    }
-    out.push(<p key={key++} className="my-2 text-sm leading-relaxed text-zinc-400">{t}</p>)
-    i++
-  }
-  return <div className="space-y-0.5">{out}</div>
+  return renderStudioCourseMarkdown(body)
 }
 
 function ExpandablePreview({ title, content }: { title: string; content: string }) {
@@ -200,7 +135,8 @@ export function CourseModuleContent({ module, wrapRegion, className }: CourseMod
           />
         </div>
         <p className="text-xs text-slate-500 text-center">
-          SCORM {content.scorm_version ?? '1.2'} — Interactive module (read-only in Studio)
+          SCORM {content.scorm_version ?? '1.2'} — packaged lesson. Extracted text for Sudar AI is editable in Studio
+          below this preview.
         </p>
       </div>
     )
@@ -208,6 +144,18 @@ export function CourseModuleContent({ module, wrapRegion, className }: CourseMod
 
   if (content.type === 'text' && typeof (content as { body?: string }).body === 'string') {
     const body = (content as { body: string }).body
+    if (!body?.trim()) {
+      return (
+        <div className={cn('flex flex-col items-center justify-center py-16 text-muted-foreground', className)}>
+          {wrap('empty', (
+            <>
+              <BookOpen className="w-10 h-10 opacity-50" />
+              <p className="text-sm mt-2">No lesson text yet. Generate or edit this module in the course builder.</p>
+            </>
+          ))}
+        </div>
+      )
+    }
     return (
       <div className={cn('prose prose-invert max-w-none text-[15px] leading-relaxed text-zinc-300', className)}>
         {wrap('text-body', <div>{renderMarkdown(body)}</div>)}
@@ -217,8 +165,17 @@ export function CourseModuleContent({ module, wrapRegion, className }: CourseMod
 
   if (isRichContent(content)) {
     const rich = content as RichContent
+    const entry = rich.entryState
+    const exit = rich.exitState
+    const side = rich.sideCard
     return (
       <div className={cn('space-y-6 text-[15px] leading-relaxed text-zinc-300', className)}>
+        {entry?.content?.trim() ? (
+          <div className="rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm text-foreground">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-primary mb-1.5">Lesson open</p>
+            {renderMarkdown(entry.content)}
+          </div>
+        ) : null}
         {rich.introduction?.trim() ? (
           <div className="text-zinc-400">
             {wrap('rich-intro', <div>{renderMarkdown(rich.introduction)}</div>)}
@@ -496,12 +453,35 @@ export function CourseModuleContent({ module, wrapRegion, className }: CourseMod
           return null
         })}
 
+        {exit?.content?.trim() ? (
+          <div className="rounded-xl border border-accent/30 bg-accent/10 px-4 py-3 text-sm text-foreground">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-accent mb-1.5">Take forward</p>
+            {renderMarkdown(exit.content)}
+          </div>
+        ) : null}
+
+        {side?.title && side.content?.trim() ? (
+          <aside className="rounded-xl border border-border bg-card/80 p-4 text-sm text-card-foreground">
+            <p className="font-semibold text-foreground mb-2">{side.title}</p>
+            <div className="text-muted-foreground">{renderMarkdown(side.content)}</div>
+          </aside>
+        ) : null}
+
         {rich.summary?.trim() ? (
           <div className="pt-4 border-t border-slate-700">
             <p className="text-sm font-medium text-slate-200 mb-2">Summary</p>
             {wrap('rich-summary', <div className="text-slate-400 text-sm">{renderMarkdown(rich.summary)}</div>)}
           </div>
         ) : null}
+      </div>
+    )
+  }
+
+  if (typeof content === 'object' && content !== null && 'type' in content) {
+    const t = String((content as { type: unknown }).type)
+    return (
+      <div className={cn('rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground', className)}>
+        <p>This module uses a format preview can’t render yet ({t}). Open the editor to view or edit it.</p>
       </div>
     )
   }

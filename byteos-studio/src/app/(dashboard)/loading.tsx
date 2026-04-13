@@ -11,7 +11,12 @@ export default function DashboardLoading() {
           <div className="h-24 bg-slate-800/80 rounded-lg border border-slate-800" />
         </div>
       </div>
-      <SudarLoadingFrost label="Loading Studio…" className="rounded-2xl" />
+      <SudarLoadingFrost
+        variant="fixed"
+        visual="fullpage"
+        label="Loading Studio…"
+        className="rounded-none"
+      />
     </div>
   )
 }
