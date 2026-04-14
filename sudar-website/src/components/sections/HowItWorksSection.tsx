@@ -26,14 +26,14 @@ const steps = [
     number: '03',
     icon: Rocket,
     title: 'Publish & Enroll',
-    description: 'One-click publish to Sudar Learn. Assign to teams, set due dates, and track progress automatically.',
+    description: 'One-click publish to 知恵塾 Learn. Assign to teams, set due dates, and track progress automatically.',
     color: 'from-accent to-blue-500',
   },
   {
     number: '04',
     icon: Brain,
     title: 'AI Adapts Learning',
-    description: 'The Digital Learner Twin observes behavior. Sudar adapts modality, pace, and difficulty for each individual.',
+    description: 'The Digital Learner Twin observes behavior. 知恵塾 adapts modality, pace, and difficulty for each individual.',
     color: 'from-pink-500 to-rose-500',
   },
 ]
@@ -63,7 +63,7 @@ export function HowItWorksSection() {
             How It <span className="text-primary">Works</span>
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            From document to deployed course in four simple steps. Sudar handles the complexity so you can focus on outcomes.
+            From document to deployed course in four simple steps. 知恵塾 handles the complexity so you can focus on outcomes.
           </p>
         </motion.div>
 
@@ -116,7 +116,7 @@ export function HowItWorksSection() {
           <div className="flex items-center space-x-3 mb-8">
             <Sparkles className="w-6 h-6 text-primary" />
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Why Organizations Choose Sudar
+              Why Organizations Choose 知恵塾
             </h3>
           </div>
           

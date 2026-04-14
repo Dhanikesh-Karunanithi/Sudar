@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/Button'
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'Learn about Sudar\'s mission to democratize personalized, adaptive learning for everyone.',
+  description: 'Learn about 知恵塾\'s mission to democratize personalized, adaptive learning for everyone.',
 }
 
 const timeline = [
   {
     year: '2024',
     title: 'The Vision',
-    description: 'Sudar started as a solo builder\'s vision to fix the world of education and make adaptive learning accessible to everyone.',
+    description: '知恵塾 started as a solo builder\'s vision to fix the world of education and make adaptive learning accessible to everyone.',
   },
   {
     year: '2025',
@@ -22,7 +22,7 @@ const timeline = [
   {
     year: '2026',
     title: 'Open Source Release',
-    description: 'Sudar became fully open source under Apache-2.0. Self-host at $0 became a reality.',
+    description: '知恵塾 became fully open source under Apache-2.0. Self-host at $0 became a reality.',
   },
   {
     year: 'Future',
@@ -59,7 +59,6 @@ const team = [
     name: 'Dhanikesh Karunanithi',
     role: 'Creator & Maintainer',
     bio: 'Solo builder passionate about making adaptive learning accessible to everyone.',
-    github: 'Dhanikesh-Karunanithi',
   },
 ]
 
@@ -72,7 +71,7 @@ export default function AboutPage() {
           <div className="text-center">
             <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 dark:text-white mb-6 font-serif">
               The Story Behind{' '}
-              <span className="text-primary">Sudar</span>
+              <span className="text-primary">知恵塾</span>
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
               Built to democratize personalized learning. One platform that learns the learner.
@@ -87,7 +86,7 @@ export default function AboutPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6 font-serif">
-                Why Sudar Exists
+                Why 知恵塾 Exists
               </h2>
               <div className="space-y-4 text-gray-600 dark:text-gray-400 leading-relaxed">
                 <p>
@@ -100,7 +99,7 @@ export default function AboutPage() {
                   learner model or memory-aware tutoring.
                 </p>
                 <p>
-                  <span className="font-semibold text-gray-900 dark:text-white">Sudar closes that gap.</span> It started as a solo 
+                  <span className="font-semibold text-gray-900 dark:text-white">知恵塾 closes that gap.</span> It started as a solo 
                   builder's vision: one platform that unifies authoring, delivery, and intelligence around a 
                   persistent Digital Learner Twin, so that every learner can get the kind of adaptive, 
                   intelligent education that was previously reserved for the few.
@@ -108,7 +107,7 @@ export default function AboutPage() {
               </div>
               
               <div className="mt-8 flex flex-wrap gap-4">
-                <Button href="/get-started">
+                <Button href="https://learn.rhgj.jp">
                   Get Started
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
@@ -125,7 +124,7 @@ export default function AboutPage() {
                     "Learns with you, for you."
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    — Sudar's Core Promise
+                    — 知恵塾's Core Promise
                   </p>
                 </div>
               </div>
@@ -150,18 +149,18 @@ export default function AboutPage() {
             {[
               {
                 step: '01',
-                name: 'Sudar Studio',
+                name: '知恵塾 Studio',
                 description: 'Admin and creator surface. Build courses from documents, URLs, or prompts. AI generates structure and content. Publish to Learn.',
               },
               {
                 step: '02',
-                name: 'Sudar Learn',
+                name: '知恵塾 Learn',
                 description: 'Learner-facing delivery. Personalized dashboard, modality choice, and the AI tutor — all driven by the Digital Learner Twin.',
               },
               {
                 step: '03',
-                name: 'Sudar Intelligence',
-                description: 'The AI brain. Adaptive engine, longitudinal memory, next-best-action, and the tutor "Sudar" — curious, warm, and knowledgeable.',
+                name: '知恵塾 Intelligence',
+                description: 'The AI brain. Adaptive engine, longitudinal memory, next-best-action, and the tutor "知恵塾" — curious, warm, and knowledgeable.',
               },
             ].map((surface, index) => (
               <div
@@ -249,7 +248,7 @@ export default function AboutPage() {
               The Builder
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-              Sudar is a solo-built project, developed with care and passion.
+              知恵塾 is a solo-built project, developed with care and passion.
             </p>
           </div>
 
@@ -271,17 +270,6 @@ export default function AboutPage() {
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
                   {member.bio}
                 </p>
-                <a
-                  href={`https://github.com/${member.github}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
-                  </svg>
-                  @{member.github}
-                </a>
               </div>
             ))}
           </div>
@@ -292,28 +280,28 @@ export default function AboutPage() {
       <section className="py-20 bg-gradient-to-br from-primary to-purple-600">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold text-white mb-6 font-serif">
-            Join the Mission
+            Start Learning Today
           </h2>
           <p className="text-xl text-white/90 mb-8">
-            Help us democratize adaptive learning. Contribute, provide feedback, or spread the word.
+            Join us in democratizing adaptive learning. Start your personalized learning journey now.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
-              href="https://github.com/Dhanikesh-Karunanithi/Sudar"
+              href="https://learn.rhgj.jp"
               variant="secondary"
               size="lg"
               className="w-full sm:w-auto"
             >
-              <BookOpen className="mr-2 w-5 h-5" />
-              View on GitHub
+              Get Started
+              <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button
-              href="/contact"
+              href="/features"
               variant="outline"
               size="lg"
               className="w-full sm:w-auto border-white text-white hover:bg-white/10"
             >
-              Get in Touch
+              Explore Features
             </Button>
           </div>
         </div>

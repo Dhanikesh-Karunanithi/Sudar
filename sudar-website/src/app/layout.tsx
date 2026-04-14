@@ -8,35 +8,35 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
   title: {
-    default: 'Sudar - The Operating System for Learning',
-    template: '%s | Sudar',
+    default: '知恵塾 - The Operating System for Learning',
+    template: '%s | 知恵塾',
   },
-  description: 'Sudar is the AI-native Learning Operating System. Build training in minutes, deliver it adaptively, and give every learner a tutor that remembers. Learns with you, for you.',
+  description: '知恵塾 is the AI-native Learning Operating System. Build training in minutes, deliver it adaptively, and give every learner a tutor that remembers. Learns with you, for you.',
   keywords: ['learning management system', 'LMS', 'AI tutor', 'adaptive learning', 'eLearning', 'corporate training', 'instructional design', 'SCORM'],
   authors: [{ name: 'Dhanikesh Karunanithi' }],
   creator: 'Dhanikesh Karunanithi',
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://sudar.dev',
-    siteName: 'Sudar',
-    title: 'Sudar - The Operating System for Learning',
+    url: 'https://rhgj.jp',
+    siteName: '知恵塾',
+    title: '知恵塾 - The Operating System for Learning',
     description: 'Learns with you, for you. Build training in minutes, deliver it adaptively, and give every learner a tutor that remembers.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Sudar - The Operating System for Learning',
+        alt: '知恵塾 - The Operating System for Learning',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Sudar - The Operating System for Learning',
+    title: '知恵塾 - The Operating System for Learning',
     description: 'Learns with you, for you. Build training in minutes, deliver it adaptively, and give every learner a tutor that remembers.',
     images: ['/og-image.png'],
-    creator: '@sudar',
+    creator: '@知恵塾',
   },
   robots: {
     index: true,

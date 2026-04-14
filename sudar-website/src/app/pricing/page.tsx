@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button'
 
 export const metadata: Metadata = {
   title: 'Pricing',
-  description: 'Sudar is open source and free to self-host. Choose the option that works best for your organization.',
+  description: '知恵塾 is open source and free to self-host. Choose the option that works best for your organization.',
 }
 
 const plans = [
@@ -16,9 +16,9 @@ const plans = [
     description: 'Perfect for teams who want full control',
     icon: Zap,
     features: [
-      { name: 'Full Sudar Studio access', included: true },
-      { name: 'Full Sudar Learn access', included: true },
-      { name: 'Sudar Intelligence engine', included: true },
+      { name: 'Full 知恵塾 Studio access', included: true },
+      { name: 'Full 知恵塾 Learn access', included: true },
+      { name: '知恵塾 Intelligence engine', included: true },
       { name: 'All 7 learning modalities', included: true },
       { name: 'SCORM export/import', included: true },
       { name: 'AI tutor with memory', included: true },
@@ -29,7 +29,7 @@ const plans = [
       { name: 'SLA guarantee', included: false },
     ],
     cta: 'Get Started',
-    ctaLink: '/get-started',
+    ctaLink: 'https://learn.rhgj.jp',
     highlighted: false,
   },
   {
@@ -82,8 +82,8 @@ const plans = [
 
 const faqs = [
   {
-    question: 'Is Sudar really free?',
-    answer: 'Yes! Sudar is open source under the Apache-2.0 license. You can self-host at $0 cost. You only pay for your own infrastructure (Vercel, Railway/Render free tiers work great) and AI API usage (Together AI, OpenAI, etc.).',
+    question: 'Is 知恵塾 really free?',
+    answer: 'Yes! 知恵塾 is open source under the Apache-2.0 license. You can self-host at $0 cost. You only pay for your own infrastructure (Vercel, Railway/Render free tiers work great) and AI API usage (Together AI, OpenAI, etc.).',
   },
   {
     question: 'What\'s the catch with self-hosting?',
@@ -99,7 +99,7 @@ const faqs = [
   },
   {
     question: 'Can I migrate from another LMS?',
-    answer: 'Yes! Sudar supports SCORM 1.2 import, so you can bring existing courses. We also provide migration tools and documentation for common LMS platforms.',
+    answer: 'Yes! 知恵塾 supports SCORM 1.2 import, so you can bring existing courses. We also provide migration tools and documentation for common LMS platforms.',
   },
   {
     question: 'Is there a free trial for Cloud plans?',
@@ -122,7 +122,7 @@ export default function PricingPage() {
               <span className="text-primary">Pricing</span>
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-              Self-host Sudar for free, or let us manage it for you. No hidden fees, no surprises.
+              Self-host 知恵塾 for free, or let us manage it for you. No hidden fees, no surprises.
             </p>
           </div>
         </div>

@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Features',
-  description: 'Discover all the powerful features of Sudar - AI-powered course creation, adaptive learning, AI tutor, and more.',
+  description: 'Discover all the powerful features of 知恵塾 - AI-powered course creation, adaptive learning, AI tutor, and more.',
 }
 
 export default function FeaturesPage() {
@@ -32,7 +32,7 @@ export default function FeaturesPage() {
               For Creators
             </div>
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 font-serif">
-              Sudar Studio
+              知恵塾 Studio
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl">
               Build professional courses in minutes, not weeks. No instructional design expertise required.
@@ -106,7 +106,7 @@ export default function FeaturesPage() {
               For Learners
             </div>
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 font-serif">
-              Sudar Learn
+              知恵塾 Learn
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl">
               Personalized learning experiences that adapt to each individual. Your AI tutor remembers everything.
@@ -116,7 +116,7 @@ export default function FeaturesPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
-                title: 'AI Tutor "Sudar"',
+                title: 'AI Tutor "知恵塾"',
                 description: 'Your personal tutor with longitudinal memory. Answers questions, provides explanations, and remembers your context.',
                 features: ['RAG-powered Q&A', 'Longitudinal memory', 'Proactive nudges', 'Multi-language'],
               },
