@@ -22,7 +22,7 @@ const features = [
   {
     icon: Sparkles,
     title: 'AI Tutor with Memory',
-    description: 'Meet Sudar - your personal tutor that remembers every conversation across sessions.',
+    description: 'Meet 知恵塾 - your personal tutor that remembers every conversation across sessions.',
   },
   {
     icon: BookOpen,
@@ -66,7 +66,7 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6"
           >
-            <span className="text-gray-900 dark:text-white font-serif">Sudar</span>
+            <span className="text-gray-900 dark:text-white font-serif">知恵塾</span>
           </motion.h1>
 
           <motion.p
@@ -95,11 +95,11 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
           >
-            <Button href="/get-started" size="lg" className="w-full sm:w-auto">
+            <Button href="https://learn.rhgj.jp" size="lg" className="w-full sm:w-auto">
               Get Started Free
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <Button href="/demo" variant="outline" size="lg" className="w-full sm:w-auto">
+            <Button href="https://learn.rhgj.jp" variant="outline" size="lg" className="w-full sm:w-auto">
               <Play className="mr-2 w-5 h-5" />
               Watch Demo
             </Button>

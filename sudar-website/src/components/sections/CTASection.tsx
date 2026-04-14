@@ -3,35 +3,28 @@
 import React from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowRight, Zap, Github, BookOpen, Users, Sparkles } from 'lucide-react'
+import { ArrowRight, Zap, BookOpen, Users, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 const ctaOptions = [
   {
     icon: Zap,
-    title: 'Self-Host at $0',
+    title: 'Start Learning',
     description: 'Deploy on Vercel and Railway free tiers. Only pay for your Supabase and AI usage.',
-    href: '/get-started',
+    href: 'https://learn.rhgj.jp',
     primary: true,
   },
   {
-    icon: Github,
-    title: 'View on GitHub',
-    description: 'Star the repo, explore the code, and join the community.',
-    href: 'https://github.com/Dhanikesh-Karunanithi/Sudar',
-    external: true,
-  },
-  {
     icon: BookOpen,
-    title: 'Read the Docs',
-    description: 'Comprehensive guides for setup, customization, and integration.',
-    href: '/docs',
+    title: 'Explore Features',
+    description: 'Discover all the features that make learning adaptive and engaging.',
+    href: '/features',
   },
   {
     icon: Users,
-    title: 'Join Community',
-    description: 'Connect with other educators, L&D professionals, and developers.',
-    href: '/community',
+    title: 'View Pricing',
+    description: 'Simple, transparent pricing for teams and organizations.',
+    href: '/pricing',
   },
 ]
 
@@ -55,13 +48,13 @@ export function CTASection() {
             Ready to Transform Learning?
           </h2>
           <p className="text-lg sm:text-xl text-white/90 max-w-3xl mx-auto mb-8 leading-relaxed">
-            Join thousands of educators and organizations using Sudar to deliver personalized, 
+            Join thousands of educators and organizations using 知恵塾 to deliver personalized, 
             adaptive learning experiences. Start building today.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
-              href="/get-started"
+              href="https://learn.rhgj.jp"
               size="lg"
               variant="secondary"
               className="w-full sm:w-auto bg-white text-primary hover:bg-gray-100"
@@ -70,12 +63,12 @@ export function CTASection() {
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button
-              href="/demo"
+              href="/about"
               size="lg"
               variant="outline"
               className="w-full sm:w-auto border-white text-white hover:bg-white/10"
             >
-              Request Demo
+              Learn More
             </Button>
           </div>
         </motion.div>

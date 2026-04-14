@@ -11,8 +11,6 @@ const navigation = [
   { name: 'Features', href: '/features' },
   { name: 'Pricing', href: '/pricing' },
   { name: 'About', href: '/about' },
-  { name: 'Docs', href: '/docs' },
-  { name: 'Blog', href: '/blog' },
 ]
 
 export function Header() {
@@ -63,7 +61,7 @@ export function Header() {
               <Zap className="w-6 h-6 text-white" />
             </motion.div>
             <span className="text-2xl font-bold text-gray-900 dark:text-white font-serif">
-              Sudar
+              知恵塾
             </span>
           </Link>
 
@@ -93,15 +91,7 @@ export function Header() {
                 <Moon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               )}
             </button>
-            <Link
-              href="https://github.com/Dhanikesh-Karunanithi/Sudar"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors font-medium"
-            >
-              GitHub
-            </Link>
-            <Button href="/get-started" size="sm">
+            <Button href="https://learn.rhgj.jp" size="sm">
               Get Started
             </Button>
           </div>
@@ -156,15 +146,7 @@ export function Header() {
                 </Link>
               ))}
               <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-                <Link
-                  href="https://github.com/Dhanikesh-Karunanithi/Sudar"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors font-medium py-2"
-                >
-                  GitHub
-                </Link>
-                <Button href="/get-started" className="w-full mt-4">
+                <Button href="https://learn.rhgj.jp" className="w-full mt-4">
                   Get Started
                 </Button>
               </div>

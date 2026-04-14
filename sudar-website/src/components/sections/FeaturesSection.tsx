@@ -15,8 +15,8 @@ const modalities = [
   { icon: Headphones, name: 'Audio', description: 'Podcast-style narration' },
   { icon: Map, name: 'MindMap', description: 'Visual concept mapping' },
   { icon: Layers, name: 'Flashcards', description: 'Spaced repetition cards' },
-  { icon: Play, name: 'SudarFeed', description: 'TikTok-style micro-learning' },
-  { icon: Gamepad2, name: 'SudarPlay', description: 'Gamified learning experiences' },
+  { icon: Play, name: '知恵塾 Feed', description: 'TikTok-style micro-learning' },
+  { icon: Gamepad2, name: '知恵塾 Play', description: 'Gamified learning experiences' },
 ]
 
 const studioFeatures = [
@@ -29,7 +29,7 @@ const studioFeatures = [
 ]
 
 const learnFeatures = [
-  { icon: MessageSquare, title: 'AI Tutor "Sudar"', description: 'Personal tutor with memory' },
+  { icon: MessageSquare, title: 'AI Tutor "知恵塾"', description: 'Personal tutor with memory' },
   { icon: Users, title: 'Digital Learner Twin', description: 'Your learning profile evolves' },
   { icon: ArrowRight, title: 'Next Best Action', description: 'AI recommends what to do next' },
   { icon: Clock, title: 'Learning Streaks', description: 'Stay motivated with streaks' },
@@ -53,7 +53,7 @@ export function FeaturesSection() {
             One Platform, <span className="text-primary">Infinite Possibilities</span>
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            Sudar unifies course creation, delivery, and intelligent adaptation in one seamless experience.
+            知恵塾 unifies course creation, delivery, and intelligent adaptation in one seamless experience.
           </p>
         </motion.div>
 
@@ -79,7 +79,7 @@ export function FeaturesSection() {
                 {pillar.role}
               </div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 font-serif">
-                Sudar {pillar.name}
+                知恵塾 {pillar.name}
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
                 {pillar.description}
@@ -138,7 +138,7 @@ export function FeaturesSection() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h3 className="text-3xl font-bold text-gray-900 dark:text-white font-serif">
-                Sudar Studio
+                知恵塾 Studio
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
                 For L&D teams and content creators
@@ -187,7 +187,7 @@ export function FeaturesSection() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h3 className="text-3xl font-bold text-gray-900 dark:text-white font-serif">
-                Sudar Learn
+                知恵塾 Learn
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
                 For learners and training participants
