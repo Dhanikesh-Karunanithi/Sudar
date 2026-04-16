@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 
 const navigation = [
-  { name: 'Features', href: '/features' },
-  { name: 'Pricing', href: '/pricing' },
-  { name: 'About', href: '/about' },
+  { name: '機能', href: '/features' },
+  { name: '料金', href: '/pricing' },
+  { name: '概要', href: '/about' },
 ]
 
 export function Header() {
@@ -83,7 +83,7 @@ export function Header() {
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              aria-label="Toggle dark mode"
+              aria-label="ダークモード切替"
             >
               {darkMode ? (
                 <Sun className="w-5 h-5 text-gray-600 dark:text-gray-300" />
@@ -92,7 +92,7 @@ export function Header() {
               )}
             </button>
             <Button href="https://learn.rhgj.jp" size="sm">
-              Get Started
+              始めましょう
             </Button>
           </div>
 
@@ -101,7 +101,7 @@ export function Header() {
             <button
               onClick={toggleDarkMode}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              aria-label="Toggle dark mode"
+              aria-label="ダークモード切替"
             >
               {darkMode ? (
                 <Sun className="w-5 h-5 text-gray-600 dark:text-gray-300" />
@@ -147,7 +147,7 @@ export function Header() {
               ))}
               <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
                 <Button href="https://learn.rhgj.jp" className="w-full mt-4">
-                  Get Started
+                  始めましょう
                 </Button>
               </div>
             </div>

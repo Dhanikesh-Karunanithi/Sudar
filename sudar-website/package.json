@@ -1,7 +1,7 @@
 {
   "name": "sudar-website",
   "version": "1.0.0",
-  "description": "Sudar - The Operating System for Learning | Official Website",
+  "description": "知恵塾 - 学習のためのオペレーティングシステム | 公式ウェブサイト",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3002",

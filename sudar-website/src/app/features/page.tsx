@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Features',
-  description: 'Discover all the powerful features of 知恵塾 - AI-powered course creation, adaptive learning, AI tutor, and more.',
+  title: '機能',
+  description: '知恵塾のすべての強力な機能 - AI搭載コース作成、アダプティブラーニング、AIチューターなど。',
 }
 
 export default function FeaturesPage() {
@@ -13,12 +13,11 @@ export default function FeaturesPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 dark:text-white mb-6 font-serif">
-              Powerful Features for{' '}
-              <span className="text-primary">Modern Learning</span>
+              モダンな学習のための{' '}
+              <span className="text-primary">強力な機能</span>
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-              Everything you need to create, deliver, and optimize learning experiences. 
-              Powered by AI, designed for humans.
+              学習体験を作成、配信、最適化するために必要なすべて。AIが駆動し、人間のために設計。
             </p>
           </div>
         </div>
@@ -29,47 +28,47 @@ export default function FeaturesPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12">
             <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light text-sm font-medium mb-4">
-              For Creators
+              クリエイター向け
             </div>
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 font-serif">
               知恵塾 Studio
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl">
-              Build professional courses in minutes, not weeks. No instructional design expertise required.
+              数週間ではなく数分でプロフェッショナルなコースを構築。インストラクショナルデザインの専門知識は不要。
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
-                title: 'AI Course Generation',
-                description: 'Upload PDFs, DOCX, URLs, or text prompts. AI generates complete course structure, content, and assessments.',
-                features: ['Document upload', 'URL import', 'Text prompt generation', 'Multi-source combination'],
+                title: 'AIコース生成',
+                description: 'PDF、DOCX、URL、またはテキストプロンプトをアップロード。AIが完全なコース構造、コンテンツ、評価を生成。',
+                features: ['ドキュメントアップロード', 'URLインポート', 'テキストプロンプト生成', 'マルチソース組み合わせ'],
               },
               {
-                title: '14 Visual Templates',
-                description: 'Professional course designs that work for any subject. Change templates without losing content.',
-                features: ['Modern & Minimal', 'Corporate & Academic', 'Dark Mode', 'Mobile-responsive'],
+                title: '14のビジュアルテンプレート',
+                description: 'あらゆる科目に対応するプロフェッショナルなコースデザイン。コンテンツを失うことなくテンプレート変更。',
+                features: ['モダン＆ミニマル', 'コーポレート＆アカデミック', 'ダークモード', 'モバイルレスポンシブ'],
               },
               {
-                title: 'Multi-Source Media',
-                description: 'Search and integrate images, videos, and GIFs from multiple sources directly into your courses.',
-                features: ['Google Images', 'Pexels & Unsplash', 'Giphy', 'Custom uploads'],
+                title: 'マルチソースメディア',
+                description: '複数のソースから画像、ビデオ、GIFを検索してコースに直接統合。',
+                features: ['Google画像', 'Pexels＆Unsplash', 'Giphy', 'カスタムアップロード'],
               },
               {
-                title: 'SCORM Export',
-                description: 'Export courses as SCORM 1.2 packages for compatibility with any LMS.',
-                features: ['SCORM 1.2 compliant', 'Progress tracking', 'Quiz scoring', 'Offline capable'],
+                title: 'SCORMエクスポート',
+                description: 'あらゆるLMSと互換性のあるSCORM 1.2パッケージとしてコースをエクスポート。',
+                features: ['SCORM 1.2準拠', '進捗追跡', 'クイズ採点', 'オフライン対応'],
               },
               {
-                title: 'Learning Paths',
-                description: 'Create ordered sequences of courses with prerequisites and certifications.',
-                features: ['Course sequencing', 'Prerequisites', 'Due dates', 'Certificate issuance'],
+                title: 'ラーニングパス',
+                description: '前提条件と資格認定付きのコース順序シーケンスを作成。',
+                features: ['コース順序付け', '前提条件', '期限設定', '修了証発行'],
               },
               {
-                title: 'Analytics Dashboard',
-                description: 'Track completions, identify skill gaps, and analyze engagement patterns.',
-                features: ['Completion rates', 'Drop-off analysis', 'Team progress', 'Skill gap heatmap'],
+                title: '分析ダッシュボード',
+                description: '完了率を追跡、スキルギャップを特定、エンゲージメントパターンを分析。',
+                features: ['完了率', 'ドロップオフ分析', 'チーム進捗', 'スキルギャップヒートマップ'],
               },
             ].map((feature, index) => (
               <div
@@ -103,47 +102,47 @@ export default function FeaturesPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12">
             <div className="inline-flex items-center px-3 py-1 rounded-full bg-accent/10 text-accent dark:bg-accent/20 dark:text-accent-light text-sm font-medium mb-4">
-              For Learners
+              学習者向け
             </div>
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 font-serif">
               知恵塾 Learn
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl">
-              Personalized learning experiences that adapt to each individual. Your AI tutor remembers everything.
+              各個人に適応するパーソナライズされた学習体験。AIチューターがすべてを記憶します。
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
-                title: 'AI Tutor "知恵塾"',
-                description: 'Your personal tutor with longitudinal memory. Answers questions, provides explanations, and remembers your context.',
-                features: ['RAG-powered Q&A', 'Longitudinal memory', 'Proactive nudges', 'Multi-language'],
+                title: 'AIチューター「知恵塾」',
+                description: '縦断的記憶を持つパーソナルチューター。質問に答え、説明を提供し、あなたのコンテキストを記憶。',
+                features: ['RAG搭載Q&A', '縦断的記憶', 'プロアクティブなナッジ', '多言語対応'],
               },
               {
-                title: 'Digital Learner Twin',
-                description: 'Your learning profile that evolves with you. Tracks preferences, behavior, and learning patterns.',
-                features: ['Modality preferences', 'Skill tracking', 'Behavioral signals', 'Next best action'],
+                title: 'デジタル学習ツイン',
+                description: 'あなたと共に進化する学習プロファイル。好み、行動、学習パターンを追跡。',
+                features: ['モダリティ設定', 'スキル追跡', '行動シグナル', 'ネクストベストアクション'],
               },
               {
-                title: 'Seven Modalities',
-                description: 'Learn in the format that works best for you. Switch between modalities at any time.',
-                features: ['Reading & Video', 'Audio/Podcast', 'MindMap & Flashcards', 'Feed & Games'],
+                title: '7つのモダリティ',
+                description: 'あなたに最適な形式で学習。いつでもモダリティを切り替え可能。',
+                features: ['リーディング＆ビデオ', 'オーディオ/ポッドキャスト', 'マインドマップ＆フラッシュカード', 'フィード＆ゲーム'],
               },
               {
-                title: 'Adaptive Learning',
-                description: 'AI adjusts difficulty, pace, and content recommendations based on your performance.',
-                features: ['Difficulty calibration', 'Pace detection', 'Struggle detection', 'Smart recommendations'],
+                title: 'アダプティブラーニング',
+                description: 'AIがパフォーマンスに基づいて難易度、ペース、コンテンツ推奨を調整。',
+                features: ['難易度キャリブレーション', 'ペース検出', 'つまずき検出', 'スマート推奨'],
               },
               {
-                title: 'Progress Tracking',
-                description: 'Visual progress indicators, learning streaks, and achievement badges to keep you motivated.',
-                features: ['Learning streaks', 'Completion certificates', 'Skill proficiency', 'Time tracking'],
+                title: '進捗追跡',
+                description: 'ビジュアル進捗インジケーター、学習ストリーク、達成バッジでモチベーションを維持。',
+                features: ['学習ストリーク', '完了証明書', 'スキル習熟度', '時間追跡'],
               },
               {
-                title: 'Mobile-First Design',
-                description: 'Learn anywhere, on any device. Responsive design that works beautifully on mobile.',
-                features: ['PWA support', 'Touch gestures', 'Offline caching', 'Fast performance'],
+                title: 'モバイルファーストデザイン',
+                description: 'どこでも、どんなデバイスでも学習。モバイルで美しく動作するレスポンシブデザイン。',
+                features: ['PWAサポート', 'タッチジェスチャー', 'オフラインキャッシュ', '高速パフォーマンス'],
               },
             ].map((feature, index) => (
               <div

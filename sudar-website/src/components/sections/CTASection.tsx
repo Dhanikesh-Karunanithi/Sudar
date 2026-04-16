@@ -9,23 +9,23 @@ import { Button } from '@/components/ui/Button'
 const ctaOptions = [
   {
     icon: Zap,
-    title: 'Start Learning',
-    description: 'Deploy on Vercel and Railway free tiers. Only pay for your Supabase and AI usage.',
+    title: '学習を始める',
+    description: 'VercelとRailwayの無料枠にデプロイ。SupabaseとAIの使用量のみお支払い。',
     href: 'https://learn.rhgj.jp',
     primary: true,
     external: true,
   },
   {
     icon: BookOpen,
-    title: 'Explore Features',
-    description: 'Discover all the features that make learning adaptive and engaging.',
+    title: '機能を探す',
+    description: '学習をアダプティブで魅力的にするすべての機能を発見。',
     href: '/features',
     external: false,
   },
   {
     icon: Users,
-    title: 'View Pricing',
-    description: 'Simple, transparent pricing for teams and organizations.',
+    title: '料金を見る',
+    description: 'チームと組織のためのシンプルで透明な料金設定。',
     href: '/pricing',
     external: false,
   },
@@ -44,15 +44,15 @@ export function CTASection() {
         >
           <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-medium text-white mb-6">
             <Sparkles className="w-4 h-4" />
-            <span>Open Source • Apache-2.0 License</span>
+            <span>オープンソース • Apache-2.0 ライセンス</span>
           </div>
           
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 font-serif">
-            Ready to Transform Learning?
+            学習を変革する準備はできましたか？
           </h2>
           <p className="text-lg sm:text-xl text-white/90 max-w-3xl mx-auto mb-8 leading-relaxed">
-            Join thousands of educators and organizations using 知恵塾 to deliver personalized, 
-            adaptive learning experiences. Start building today.
+            知恵塾を使ってパーソナライズされたアダプティブラーニング体験を
+            提供している数千の教育者や組織に参加しましょう。今日から始めましょう。
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -62,7 +62,7 @@ export function CTASection() {
               variant="secondary"
               className="w-full sm:w-auto bg-white text-primary hover:bg-gray-100"
             >
-              Get Started Free
+              無料で始める
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button
@@ -71,7 +71,7 @@ export function CTASection() {
               variant="outline"
               className="w-full sm:w-auto border-white text-white hover:bg-white/10"
             >
-              Learn More
+              詳しく見る
             </Button>
           </div>
         </motion.div>

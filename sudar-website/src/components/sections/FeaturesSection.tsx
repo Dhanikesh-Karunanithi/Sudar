@@ -10,31 +10,31 @@ import {
 import Link from 'next/link'
 
 const modalities = [
-  { icon: FileText, name: 'Reading', description: 'Traditional text-based learning' },
-  { icon: Video, name: 'Video', description: 'AI-generated video content' },
-  { icon: Headphones, name: 'Audio', description: 'Podcast-style narration' },
-  { icon: Map, name: 'MindMap', description: 'Visual concept mapping' },
-  { icon: Layers, name: 'Flashcards', description: 'Spaced repetition cards' },
-  { icon: Play, name: '知恵塾 Feed', description: 'TikTok-style micro-learning' },
-  { icon: Gamepad2, name: '知恵塾 Play', description: 'Gamified learning experiences' },
+  { icon: FileText, name: 'リーディング', description: '従来のテキストベース学習' },
+  { icon: Video, name: 'ビデオ', description: 'AI生成ビデオコンテンツ' },
+  { icon: Headphones, name: 'オーディオ', description: 'ポッドキャスト形式のナレーション' },
+  { icon: Map, name: 'マインドマップ', description: 'ビジュアル概念マッピング' },
+  { icon: Layers, name: 'フラッシュカード', description: '間隔反復カード' },
+  { icon: Play, name: '知恵塾フィード', description: 'TikTok風マイクロラーニング' },
+  { icon: Gamepad2, name: '知恵塾プレイ', description: 'ゲーム化学習体験' },
 ]
 
 const studioFeatures = [
-  { icon: FileText, title: 'Document-to-Course', description: 'Upload PDF, DOCX, or paste a URL' },
-  { icon: Sparkles, title: 'AI Generation', description: 'Course structure and content in minutes' },
-  { icon: Layers, title: '14 Visual Templates', description: 'Beautiful, professional designs' },
-  { icon: Globe, title: 'Multi-Source Media', description: 'Google, Pexels, Unsplash, Giphy' },
-  { icon: CheckCircle, title: 'SCORM Export', description: 'Compatible with any LMS' },
-  { icon: BarChart3, title: 'Analytics Dashboard', description: 'Track completions and skill gaps' },
+  { icon: FileText, title: 'ドキュメントからコース', description: 'PDF、DOCXをアップロード、またはURLを貼り付け' },
+  { icon: Sparkles, title: 'AI生成', description: '数分でコース構造とコンテンツ' },
+  { icon: Layers, title: '14のビジュアルテンプレート', description: '美しくプロフェッショナルなデザイン' },
+  { icon: Globe, title: 'マルチソースメディア', description: 'Google、Pexels、Unsplash、Giphy' },
+  { icon: CheckCircle, title: 'SCORMエクスポート', description: 'あらゆるLMSと互換' },
+  { icon: BarChart3, title: '分析ダッシュボード', description: '完了率とスキルギャップを追跡' },
 ]
 
 const learnFeatures = [
-  { icon: MessageSquare, title: 'AI Tutor "知恵塾"', description: 'Personal tutor with memory' },
-  { icon: Users, title: 'Digital Learner Twin', description: 'Your learning profile evolves' },
-  { icon: ArrowRight, title: 'Next Best Action', description: 'AI recommends what to do next' },
-  { icon: Clock, title: 'Learning Streaks', description: 'Stay motivated with streaks' },
-  { icon: Shield, title: 'Compliance Tracking', description: 'Certifications and due dates' },
-  { icon: Globe, title: 'Mobile-First', description: 'Learn anywhere, anytime' },
+  { icon: MessageSquare, title: 'AIチューター「知恵塾」', description: '記憶するパーソナルチューター' },
+  { icon: Users, title: 'デジタル学習ツイン', description: 'あなたの学習プロファイルが進化' },
+  { icon: ArrowRight, title: 'ネクストベストアクション', description: 'AIが次にやるべきことを提案' },
+  { icon: Clock, title: '学習ストリーク', description: 'ストリークでモチベーション維持' },
+  { icon: Shield, title: 'コンプライアンス追跡', description: '資格認定と期限管理' },
+  { icon: Globe, title: 'モバイルファースト', description: 'いつでもどこでも学習' },
 ]
 
 export function FeaturesSection() {
@@ -50,10 +50,10 @@ export function FeaturesSection() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-serif">
-            One Platform, <span className="text-primary">Infinite Possibilities</span>
+            ひとつのプラットフォーム、<span className="text-primary">無限の可能性</span>
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            知恵塾 unifies course creation, delivery, and intelligent adaptation in one seamless experience.
+            知恵塾はコース作成、配信、インテリジェントな適応をひとつのシームレスな体験に統合します。
           </p>
         </motion.div>
 
@@ -66,9 +66,9 @@ export function FeaturesSection() {
           className="grid md:grid-cols-3 gap-8 mb-20"
         >
           {[
-            { name: 'Studio', role: 'Create', description: 'Build courses in minutes with AI-powered authoring' },
-            { name: 'Learn', role: 'Deliver', description: 'Personalized, adaptive learning experiences' },
-            { name: 'Intelligence', role: 'Adapt', description: 'AI brain that learns every learner' },
+            { name: 'Studio', role: '作成', description: 'AI搭載オーサリングで数分でコースを構築' },
+            { name: 'Learn', role: '配信', description: 'パーソナライズされたアダプティブラーニング体験' },
+            { name: 'Intelligence', role: '適応', description: 'すべての学習者を学習するAIブレイン' },
           ].map((pillar, index) => (
             <motion.div
               key={index}
@@ -97,10 +97,10 @@ export function FeaturesSection() {
           className="mb-20"
         >
           <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center font-serif">
-            Seven Learning Modalities
+            7つの学習モダリティ
           </h3>
           <p className="text-center text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-            Content is authored once, then delivered in the format that works best for each learner.
+            コンテンツは一度作成するだけで、各学習者に最適な形式で配信されます。
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
             {modalities.map((modality, index) => (
@@ -141,14 +141,14 @@ export function FeaturesSection() {
                 知恵塾 Studio
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
-                For L&D teams and content creators
+                L&Dチームとコンテンツクリエイター向け
               </p>
             </div>
             <Link
               href="/features/studio"
               className="hidden sm:flex items-center text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary font-medium transition-colors"
             >
-              Learn more <ArrowRight className="ml-1 w-4 h-4" />
+              詳しく見る <ArrowRight className="ml-1 w-4 h-4" />
             </Link>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -190,14 +190,14 @@ export function FeaturesSection() {
                 知恵塾 Learn
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
-                For learners and training participants
+                学習者と研修参加者向け
               </p>
             </div>
             <Link
               href="/features/learn"
               className="hidden sm:flex items-center text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary font-medium transition-colors"
             >
-              Learn more <ArrowRight className="ml-1 w-4 h-4" />
+              詳しく見る <ArrowRight className="ml-1 w-4 h-4" />
             </Link>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

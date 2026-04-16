@@ -7,32 +7,32 @@ import { ArrowRight, Play, Sparkles, Users, BookOpen, Brain, Zap, CheckCircle } 
 import { Button } from '@/components/ui/Button'
 
 const stats = [
-  { label: 'Courses Created', value: '10,000+' },
-  { label: 'Active Learners', value: '50,000+' },
-  { label: 'Organizations', value: '500+' },
-  { label: 'Countries', value: '30+' },
+  { label: '作成されたコース', value: '10,000+' },
+  { label: 'アクティブ学習者', value: '50,000+' },
+  { label: '組織', value: '500+' },
+  { label: '国', value: '30+' },
 ]
 
 const features = [
   {
     icon: Brain,
-    title: 'Digital Learner Twin',
-    description: 'AI that learns your learning style, preferences, and adapts content in real-time.',
+    title: 'デジタル学習ツイン',
+    description: 'あなたの学習スタイルや好みを学習し、リアルタイムでコンテンツを適応させるAI。',
   },
   {
     icon: Sparkles,
-    title: 'AI Tutor with Memory',
-    description: 'Meet 知恵塾 - your personal tutor that remembers every conversation across sessions.',
+    title: '記憶するAIチューター',
+    description: '知恵塾にお任せ - セッションを越えてすべての会話を記憶するパーソナルチューター。',
   },
   {
     icon: BookOpen,
-    title: 'Multi-Modal Delivery',
-    description: 'One course, seven formats: Text, Video, Audio, MindMap, Flashcards, Feed, Games.',
+    title: 'マルチモーダル配信',
+    description: '1つのコース、7つの形式：テキスト、ビデオ、オーディオ、マインドマップ、フラッシュカード、フィード、ゲーム。',
   },
   {
     icon: Users,
-    title: 'Team Collaboration',
-    description: 'Built for L&D teams to create, manage, and track learning at scale.',
+    title: 'チームコラボレーション',
+    description: 'L&Dチームが大規模に学習を作成、管理、追跡するために構築されています。',
   },
 ]
 
@@ -56,7 +56,7 @@ export function HeroSection() {
             className="inline-flex items-center space-x-2 bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-light rounded-full px-4 py-2 text-sm font-medium mb-8"
           >
             <Sparkles className="w-4 h-4" />
-            <span>Open Source • Self-Host at $0</span>
+            <span>オープンソース • セルフホスト $0</span>
           </motion.div>
 
           {/* Main heading */}
@@ -75,7 +75,7 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-2xl sm:text-3xl text-gray-600 dark:text-gray-300 font-light mb-4 italic"
           >
-            The Operating System for Learning
+            学習のためのオペレーティングシステム
           </motion.p>
 
           <motion.p
@@ -84,8 +84,8 @@ export function HeroSection() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="text-lg sm:text-xl text-gray-500 dark:text-gray-400 max-w-3xl mx-auto mb-8 leading-relaxed"
           >
-            <span className="text-primary dark:text-primary-light font-semibold">Learns with you, for you.</span> Build training in minutes, 
-            deliver it adaptively, and give every learner a tutor that remembers.
+            <span className="text-primary dark:text-primary-light font-semibold">あなたと共に、あなたのために学びます。</span> 数分で研修を作成、
+            アダプティブに配信し、すべての学習者に記憶するチューターを提供します。
           </motion.p>
 
           {/* CTA buttons */}
@@ -96,12 +96,12 @@ export function HeroSection() {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
           >
             <Button href="https://learn.rhgj.jp" size="lg" className="w-full sm:w-auto">
-              Get Started Free
+              無料で始める
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button href="https://learn.rhgj.jp" variant="outline" size="lg" className="w-full sm:w-auto">
               <Play className="mr-2 w-5 h-5" />
-              Watch Demo
+              デモを見る
             </Button>
           </motion.div>
 

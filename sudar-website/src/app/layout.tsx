@@ -8,33 +8,33 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
   title: {
-    default: '知恵塾 - The Operating System for Learning',
+    default: '知恵塾 - 学習のためのオペレーティングシステム',
     template: '%s | 知恵塾',
   },
-  description: '知恵塾 is the AI-native Learning Operating System. Build training in minutes, deliver it adaptively, and give every learner a tutor that remembers. Learns with you, for you.',
-  keywords: ['learning management system', 'LMS', 'AI tutor', 'adaptive learning', 'eLearning', 'corporate training', 'instructional design', 'SCORM'],
+  description: '知恵塾はAIネイティブな学習オペレーティングシステムです。数分で研修を作成、アダプティブに配信し、すべての学習者に記憶するチューターを提供します。あなたと共に、あなたのために学びます。',
+  keywords: ['学習管理システム', 'LMS', 'AIチューター', 'アダプティブラーニング', 'eラーニング', '企業研修', 'インストラクショナルデザイン', 'SCORM'],
   authors: [{ name: 'Dhanikesh Karunanithi' }],
   creator: 'Dhanikesh Karunanithi',
   openGraph: {
     type: 'website',
-    locale: 'en_US',
+    locale: 'ja_JP',
     url: 'https://rhgj.jp',
     siteName: '知恵塾',
-    title: '知恵塾 - The Operating System for Learning',
-    description: 'Learns with you, for you. Build training in minutes, deliver it adaptively, and give every learner a tutor that remembers.',
+    title: '知恵塾 - 学習のためのオペレーティングシステム',
+    description: 'あなたと共に、あなたのために学びます。数分で研修を作成、アダプティブに配信し、すべての学習者に記憶するチューターを提供します。',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: '知恵塾 - The Operating System for Learning',
+        alt: '知恵塾 - 学習のためのオペレーティングシステム',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: '知恵塾 - The Operating System for Learning',
-    description: 'Learns with you, for you. Build training in minutes, deliver it adaptively, and give every learner a tutor that remembers.',
+    title: '知恵塾 - 学習のためのオペレーティングシステム',
+    description: 'あなたと共に、あなたのために学びます。数分で研修を作成、アダプティブに配信し、すべての学習者に記憶するチューターを提供します。',
     images: ['/og-image.png'],
     creator: '@知恵塾',
   },
@@ -63,7 +63,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ja" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         <Header />
         <main className="min-h-screen">{children}</main>

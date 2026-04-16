@@ -11,40 +11,40 @@ const steps = [
   {
     number: '01',
     icon: Upload,
-    title: 'Create in Minutes',
-    description: 'Upload a PDF or paste a URL. AI generates the course structure, content, and quizzes. No instructional designer required.',
+    title: '数分で作成',
+    description: 'PDFをアップロードするかURLを貼り付けるだけ。AIがコース構造、コンテンツ、クイズを生成。インストラクショナルデザイナーは不要です。',
     color: 'from-orange-500 to-red-500',
   },
   {
     number: '02',
     icon: Wand2,
-    title: 'Customize & Brand',
-    description: 'Choose from 14 visual templates. Edit content, add media, and match your organization\'s branding. Preview in real-time.',
+    title: 'カスタマイズ＆ブランディング',
+    description: '14のビジュアルテンプレートから選択。コンテンツを編集、メディアを追加、組織のブランディングに合わせてリアルタイムプレビュー。',
     color: 'from-primary to-purple-500',
   },
   {
     number: '03',
     icon: Rocket,
-    title: 'Publish & Enroll',
-    description: 'One-click publish to 知恵塾 Learn. Assign to teams, set due dates, and track progress automatically.',
+    title: '公開＆登録',
+    description: 'ワンクリックで知恵塾 Learnに公開。チームに割り当て、期限を設定、進捗を自動追跡。',
     color: 'from-accent to-blue-500',
   },
   {
     number: '04',
     icon: Brain,
-    title: 'AI Adapts Learning',
-    description: 'The Digital Learner Twin observes behavior. 知恵塾 adapts modality, pace, and difficulty for each individual.',
+    title: 'AIが学習を適応',
+    description: 'デジタル学習ツインが行動を観察。知恵塾がモダリティ、ペース、難易度を各個人に適応させます。',
     color: 'from-pink-500 to-rose-500',
   },
 ]
 
 const benefits = [
-  '15 minutes vs 15 weeks compared to traditional authoring tools',
-  'Zero instructional design expertise required',
-  'Personalized learning for every student',
-  'Real-time analytics and skill gap detection',
-  'Open source and self-host at $0',
-  'SCORM compatible with existing LMS',
+  '従来のオーサリングツールと比較して15分 vs 15週間',
+  'インストラクショナルデザインの専門知識は不要',
+  'すべての学生にパーソナライズされた学習',
+  'リアルタイム分析とスキルギャップ検出',
+  'オープンソースでセルフホスト$0',
+  '既存のLMSとSCORM互換',
 ]
 
 export function HowItWorksSection() {
@@ -60,10 +60,10 @@ export function HowItWorksSection() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-serif">
-            How It <span className="text-primary">Works</span>
+            仕組みは<span className="text-primary">シンプル</span>
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            From document to deployed course in four simple steps. 知恵塾 handles the complexity so you can focus on outcomes.
+            ドキュメントからデプロイ済みコースまで、4つのステップで完了。知恵塾が複雑さを処理するので、あなたは結果に集中できます。
           </p>
         </motion.div>
 
@@ -116,7 +116,7 @@ export function HowItWorksSection() {
           <div className="flex items-center space-x-3 mb-8">
             <Sparkles className="w-6 h-6 text-primary" />
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Why Organizations Choose 知恵塾
+              組織が知恵塾を選ぶ理由
             </h3>
           </div>
           

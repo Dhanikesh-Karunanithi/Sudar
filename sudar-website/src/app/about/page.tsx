@@ -4,61 +4,61 @@ import { ArrowRight, Target, Heart, Globe, Sparkles, Users, BookOpen } from 'luc
 import { Button } from '@/components/ui/Button'
 
 export const metadata: Metadata = {
-  title: 'About',
-  description: 'Learn about 知恵塾\'s mission to democratize personalized, adaptive learning for everyone.',
+  title: '概要',
+  description: '知恵塾のミッション - すべての人にパーソナライズされたアダプティブラーニングを民主化する。',
 }
 
 const timeline = [
   {
     year: '2024',
-    title: 'The Vision',
-    description: '知恵塾 started as a solo builder\'s vision to fix the world of education and make adaptive learning accessible to everyone.',
+    title: 'ビジョン',
+    description: '知恵塾は、教育の世界を修正し、アダプティブラーニングを誰もが利用できるようにするという、一人のビルダーのビジョンから始まりました。',
   },
   {
     year: '2025',
-    title: 'Foundation Built',
-    description: 'Three core surfaces launched: Studio for creators, Learn for learners, and Intelligence as the AI brain.',
+    title: '基盤構築',
+    description: 'クリエイター向けのStudio、学習者向けのLearn、AIブレインとしてのIntelligenceという3つのコアサーフェスをローンチ。',
   },
   {
     year: '2026',
-    title: 'Open Source Release',
-    description: '知恵塾 became fully open source under Apache-2.0. Self-host at $0 became a reality.',
+    title: 'オープンソースリリース',
+    description: '知恵塾はApache-2.0の下で完全にオープンソース化。$0でのセルフホストが現実に。',
   },
   {
-    year: 'Future',
-    title: 'Scaling Impact',
-    description: 'Expanding with ALP plugins, more modalities, and reaching organizations worldwide.',
+    year: '未来',
+    title: 'インパクトの拡大',
+    description: 'ALPプラグイン、より多くのモダリティで拡張し、世界中の組織にリーチ。',
   },
 ]
 
 const values = [
   {
     icon: Target,
-    title: 'Learner-First',
-    description: 'Every decision asks: "Does this make the learner\'s experience better?" Nothing else matters.',
+    title: '学習者ファースト',
+    description: 'すべての決定において「これは学習者の体験を良くするか？」を問います。それ以外は重要ではありません。',
   },
   {
     icon: Heart,
-    title: 'Democratization',
-    description: 'World-class learning tools shouldn\'t require enterprise budgets. Open source keeps it accessible.',
+    title: '民主化',
+    description: '世界クラスの学習ツールにエンタープライズ予算は必要ありません。オープンソースがアクセシビリティを保証します。',
   },
   {
     icon: Globe,
-    title: 'Global Impact',
-    description: 'Building for learners everywhere, in every context. Mobile-first, offline-capable, multilingual.',
+    title: 'グローバルインパクト',
+    description: 'あらゆるコンテキストで、あらゆる場所の学習者のために構築。モバイルファースト、オフライン対応、多言語対応。',
   },
   {
     icon: Sparkles,
-    title: 'Innovation',
-    description: 'Pushing boundaries with AI-native learning. Not just automating old methods, but reimagining them.',
+    title: 'イノベーション',
+    description: 'AIネイティブラーニングで限界を突破。古い手法を自動化するだけでなく、再構想します。',
   },
 ]
 
 const team = [
   {
     name: 'Dhanikesh Karunanithi',
-    role: 'Creator & Maintainer',
-    bio: 'Solo builder passionate about making adaptive learning accessible to everyone.',
+    role: 'クリエイター＆メンテナー',
+    bio: 'アダプティブラーニングを誰もが利用できるようにすることに情熱を持つソロビルダー。',
   },
 ]
 
@@ -70,11 +70,11 @@ export default function AboutPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 dark:text-white mb-6 font-serif">
-              The Story Behind{' '}
-              <span className="text-primary">知恵塾</span>
+              知恵塾の{' '}
+              <span className="text-primary">ストーリー</span>
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-              Built to democratize personalized learning. One platform that learns the learner.
+              パーソナライズされた学習を民主化するために構築。学習者を学習するひとつのプラットフォーム。
             </p>
           </div>
         </div>
@@ -86,33 +86,33 @@ export default function AboutPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6 font-serif">
-                Why 知恵塾 Exists
+                知恵塾が存在する理由
               </h2>
               <div className="space-y-4 text-gray-600 dark:text-gray-400 leading-relaxed">
                 <p>
-                  Traditional learning management systems deliver the same content to everyone. They don't remember 
-                  who the learner is. They don't adapt sequence, difficulty, or support based on behavior or prior knowledge.
+                  従来の学習管理システムは、同じコンテンツを全員に配信します。学習者が誰であるかを記憶しません。
+                  行動や事前知識に基づいて順序、難易度、サポートを適応させることはありません。
                 </p>
                 <p>
-                  Research has shown for years that adaptive instruction and intelligent tutoring outperform 
-                  one-size-fits-all delivery — yet mainstream LMS products still don't offer a longitudinal 
-                  learner model or memory-aware tutoring.
+                  長年、アダプティブな指導とインテリジェントなチューティングがワンサイズフィットオールの配信を
+                  上回ることが研究で示されてきましたが、主流のLMS製品は依然として縦断的な学習者モデルや
+                  記憶対応チューティングを提供していません。
                 </p>
                 <p>
-                  <span className="font-semibold text-gray-900 dark:text-white">知恵塾 closes that gap.</span> It started as a solo 
-                  builder's vision: one platform that unifies authoring, delivery, and intelligence around a 
-                  persistent Digital Learner Twin, so that every learner can get the kind of adaptive, 
-                  intelligent education that was previously reserved for the few.
+                  <span className="font-semibold text-gray-900 dark:text-white">知恵塾がそのギャップを埋めます。</span> 
+                  一人のビルダーのビジョンとして始まりました：オーサリング、配信、インテリジェンスを
+                  永続的なデジタル学習ツインの周りに統一し、これまで一部の人にしか利用できなかった
+                  アダプティブでインテリジェントな教育をすべての学習者に提供するプラットフォーム。
                 </p>
               </div>
               
               <div className="mt-8 flex flex-wrap gap-4">
                 <Button href="https://learn.rhgj.jp">
-                  Get Started
+                  始めましょう
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
                 <Button href="/research" variant="outline">
-                  Read the Research
+                  研究を読む
                 </Button>
               </div>
             </div>
@@ -121,10 +121,10 @@ export default function AboutPage() {
               <div className="bg-gradient-to-br from-primary/20 to-accent/20 dark:from-primary/30 dark:to-accent/30 rounded-2xl p-12 backdrop-blur-sm">
                 <div className="text-center">
                   <p className="text-lg italic text-gray-700 dark:text-gray-300 mb-4">
-                    "Learns with you, for you."
+                    「あなたと共に、あなたのために学びます。」
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    — 知恵塾's Core Promise
+                    — 知恵塾のコアプロミス
                   </p>
                 </div>
               </div>
@@ -138,10 +138,10 @@ export default function AboutPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 font-serif">
-              Three Surfaces, One Vision
+              3つのサーフェス、1つのビジョン
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-              Studio, Learn, and Intelligence work together around one learner model.
+              Studio、Learn、Intelligenceがひとつの学習者モデルの周りで連携。
             </p>
           </div>
 
@@ -150,17 +150,17 @@ export default function AboutPage() {
               {
                 step: '01',
                 name: '知恵塾 Studio',
-                description: 'Admin and creator surface. Build courses from documents, URLs, or prompts. AI generates structure and content. Publish to Learn.',
+                description: '管理・クリエイター向けサーフェス。ドキュメント、URL、プロンプトからコースを構築。AIが構造とコンテンツを生成。Learnに公開。',
               },
               {
                 step: '02',
                 name: '知恵塾 Learn',
-                description: 'Learner-facing delivery. Personalized dashboard, modality choice, and the AI tutor — all driven by the Digital Learner Twin.',
+                description: '学習者向け配信サーフェス。パーソナライズされたダッシュボード、モダリティ選択、AIチューター - すべてデジタル学習ツインが駆動。',
               },
               {
                 step: '03',
                 name: '知恵塾 Intelligence',
-                description: 'The AI brain. Adaptive engine, longitudinal memory, next-best-action, and the tutor "知恵塾" — curious, warm, and knowledgeable.',
+                description: 'AIブレイン。アダプティブエンジン、縦断的記憶、ネクストベストアクション、チューター「知恵塾」 - 好奇心旺盛で温かく知識豊か。',
               },
             ].map((surface, index) => (
               <div
@@ -187,7 +187,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 font-serif">
-              What We Believe
+              私たちの信念
             </h2>
           </div>
 
@@ -214,7 +214,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 font-serif">
-              The Journey
+              ジャーニー
             </h2>
           </div>
 
@@ -245,10 +245,10 @@ export default function AboutPage() {
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 font-serif">
-              The Builder
+              ビルダー
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-              知恵塾 is a solo-built project, developed with care and passion.
+              知恵塾は愛情と情熱を持って開発されたソロビルドプロジェクトです。
             </p>
           </div>
 
@@ -280,10 +280,10 @@ export default function AboutPage() {
       <section className="py-20 bg-gradient-to-br from-primary to-purple-600">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold text-white mb-6 font-serif">
-            Start Learning Today
+            今日から学習を始めましょう
           </h2>
           <p className="text-xl text-white/90 mb-8">
-            Join us in democratizing adaptive learning. Start your personalized learning journey now.
+            アダプティブラーニングの民主化に参加しましょう。今すぐパーソナライズされた学習ジャーニーを始めましょう。
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
@@ -292,7 +292,7 @@ export default function AboutPage() {
               size="lg"
               className="w-full sm:w-auto"
             >
-              Get Started
+              始めましょう
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button
@@ -301,7 +301,7 @@ export default function AboutPage() {
               size="lg"
               className="w-full sm:w-auto border-white text-white hover:bg-white/10"
             >
-              Explore Features
+              機能を探す
             </Button>
           </div>
         </div>

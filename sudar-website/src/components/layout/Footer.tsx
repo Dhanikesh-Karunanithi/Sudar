@@ -4,13 +4,13 @@ import { Zap, Github, Twitter, Linkedin, Mail } from 'lucide-react'
 
 const footerLinks = {
   product: [
-    { name: 'Features', href: '/features' },
-    { name: 'Pricing', href: '/pricing' },
-    { name: 'About', href: '/about' },
+    { name: '機能', href: '/features' },
+    { name: '料金', href: '/pricing' },
+    { name: '概要', href: '/about' },
   ],
   legal: [
-    { name: 'Privacy Policy', href: '/privacy' },
-    { name: 'Terms of Service', href: '/terms' },
+    { name: 'プライバシーポリシー', href: '/privacy' },
+    { name: '利用規約', href: '/terms' },
   ],
 }
 
@@ -36,7 +36,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-              The Operating System for Learning. Learns with you, for you.
+              学習のためのオペレーティングシステム。あなたと共に、あなたのために学びます。
             </p>
             <div className="mt-6 flex space-x-4">
               {socialLinks.map((item) => (
@@ -57,7 +57,7 @@ export function Footer() {
           {/* Product */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
-              Product
+              プロダクト
             </h3>
             <ul className="mt-4 space-y-3">
               {footerLinks.product.map((link) => (
@@ -76,7 +76,7 @@ export function Footer() {
           {/* Legal */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
-              Legal
+              法務
             </h3>
             <ul className="mt-4 space-y-3">
               {footerLinks.legal.map((link) => (
@@ -101,7 +101,7 @@ export function Footer() {
             </p>
             <div className="flex items-center space-x-6">
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                Built with ❤️ for learners everywhere
+                ❤️ で世界中の学習者のために作られました
               </span>
             </div>
           </div>

@@ -4,77 +4,77 @@ import { Check, X, Sparkles, Zap, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 export const metadata: Metadata = {
-  title: 'Pricing',
-  description: '知恵塾 is open source and free to self-host. Choose the option that works best for your organization.',
+  title: '料金',
+  description: '知恵塾はオープンソースでセルフホスト無料。あなたの組織に最適なプランをお選びください。',
 }
 
 const plans = [
   {
-    name: 'Self-Host',
+    name: 'セルフホスト',
     price: '$0',
-    period: 'forever',
-    description: 'Perfect for teams who want full control',
+    period: '永久',
+    description: 'フルコントロールを求めるチームに最適',
     icon: Zap,
     features: [
-      { name: 'Full 知恵塾 Studio access', included: true },
-      { name: 'Full 知恵塾 Learn access', included: true },
-      { name: '知恵塾 Intelligence engine', included: true },
-      { name: 'All 7 learning modalities', included: true },
-      { name: 'SCORM export/import', included: true },
-      { name: 'AI tutor with memory', included: true },
-      { name: 'Unlimited courses', included: true },
-      { name: 'Community support', included: true },
-      { name: 'Priority support', included: false },
-      { name: 'Custom integrations', included: false },
-      { name: 'SLA guarantee', included: false },
+      { name: '知恵塾 Studioフルアクセス', included: true },
+      { name: '知恵塾 Learnフルアクセス', included: true },
+      { name: '知恵塾 Intelligenceエンジン', included: true },
+      { name: '7つの学習モダリティ', included: true },
+      { name: 'SCORMエクスポート/インポート', included: true },
+      { name: '記憶するAIチューター', included: true },
+      { name: '無制限のコース', included: true },
+      { name: 'コミュニティサポート', included: true },
+      { name: '優先サポート', included: false },
+      { name: 'カスタム連携', included: false },
+      { name: 'SLA保証', included: false },
     ],
-    cta: 'Get Started',
+    cta: '始めましょう',
     ctaLink: 'https://learn.rhgj.jp',
     highlighted: false,
   },
   {
-    name: 'Cloud Pro',
+    name: 'クラウドプロ',
     price: '$49',
-    period: '/month',
-    description: 'Managed hosting with priority support',
+    period: '/月',
+    description: 'マネージドホスティングと優先サポート',
     icon: Sparkles,
     features: [
-      { name: 'Everything in Self-Host', included: true },
-      { name: 'Managed cloud hosting', included: true },
-      { name: 'Automatic updates', included: true },
-      { name: 'Priority email support', included: true },
-      { name: 'Advanced analytics', included: true },
-      { name: 'Custom domain', included: true },
-      { name: 'API access', included: true },
-      { name: 'Up to 500 learners', included: true },
+      { name: 'セルフホストの全機能', included: true },
+      { name: 'マネージドクラウドホスティング', included: true },
+      { name: '自動アップデート', included: true },
+      { name: '優先メールサポート', included: true },
+      { name: '高度な分析', included: true },
+      { name: 'カスタムドメイン', included: true },
+      { name: 'APIアクセス', included: true },
+      { name: '最大500名の学習者', included: true },
       { name: 'SSO/SAML', included: false },
-      { name: 'Custom integrations', included: false },
-      { name: 'SLA guarantee', included: false },
+      { name: 'カスタム連携', included: false },
+      { name: 'SLA保証', included: false },
     ],
-    cta: 'Coming Soon',
+    cta: '近日公開',
     ctaLink: '#',
     highlighted: true,
   },
   {
-    name: 'Enterprise',
-    price: 'Custom',
+    name: 'エンタープライズ',
+    price: 'カスタム',
     period: '',
-    description: 'For large organizations with specific needs',
+    description: '特定のニーズを持つ大規模組織向け',
     icon: Building2,
     features: [
-      { name: 'Everything in Cloud Pro', included: true },
-      { name: 'Unlimited learners', included: true },
-      { name: 'SSO/SAML integration', included: true },
-      { name: 'Custom integrations', included: true },
-      { name: 'Dedicated account manager', included: true },
-      { name: '24/7 phone support', included: true },
-      { name: 'SLA guarantee (99.9%)', included: true },
-      { name: 'On-premise deployment', included: true },
-      { name: 'Custom training', included: true },
-      { name: 'White-label option', included: true },
-      { name: 'Priority feature requests', included: true },
+      { name: 'クラウドプロの全機能', included: true },
+      { name: '無制限の学習者', included: true },
+      { name: 'SSO/SAML連携', included: true },
+      { name: 'カスタム連携', included: true },
+      { name: '専任アカウントマネージャー', included: true },
+      { name: '24/7電話サポート', included: true },
+      { name: 'SLA保証 (99.9%)', included: true },
+      { name: 'オンプレミスデプロイ', included: true },
+      { name: 'カスタムトレーニング', included: true },
+      { name: 'ホワイトラベルオプション', included: true },
+      { name: '優先機能リクエスト', included: true },
     ],
-    cta: 'Contact Sales',
+    cta: '営業に連絡',
     ctaLink: '/contact',
     highlighted: false,
   },
@@ -82,28 +82,28 @@ const plans = [
 
 const faqs = [
   {
-    question: 'Is 知恵塾 really free?',
-    answer: 'Yes! 知恵塾 is open source under the Apache-2.0 license. You can self-host at $0 cost. You only pay for your own infrastructure (Vercel, Railway/Render free tiers work great) and AI API usage (Together AI, OpenAI, etc.).',
+    question: '知恵塾は本当に無料ですか？',
+    answer: 'はい！知恵塾はApache-2.0ライセンスのオープンソースです。$0でセルフホストできます。お支払いが必要なのは、ご自身のインフラ（Vercel、Railway/Renderの無料枠で動作します）とAI APIの使用量（Together AI、OpenAIなど）のみです。',
   },
   {
-    question: 'What\'s the catch with self-hosting?',
-    answer: 'There\'s no catch. You get the full feature set - no limits on courses, learners, or functionality. The trade-off is that you\'re responsible for deployment, maintenance, and scaling. We provide comprehensive documentation to help you.',
+    question: 'セルフホストの注意点は？',
+    answer: '注意点はありません。コース、学習者、機能に制限なく全機能を利用できます。トレードオフは、デプロイ、保守、スケーリングが自己責任になることです。包括的なドキュメントを提供しています。',
   },
   {
-    question: 'Do I need to be technical to self-host?',
-    answer: 'Basic technical knowledge helps, but we\'ve made it as simple as possible. Our Docker deployment works with a single command, and Vercel/Railway deployments are well-documented. Most teams can get started in under an hour.',
+    question: 'セルフホストに技術的な知識は必要ですか？',
+    answer: '基本的な技術知識があると便利ですが、できるだけシンプルにしています。Dockerデプロイは1つのコマンドで動作し、Vercel/Railwayデプロイは十分にドキュメント化されています。ほとんどのチームが1時間以内に始められます。',
   },
   {
-    question: 'What about AI costs?',
-    answer: 'AI costs are pay-as-you-go based on your usage. Course generation and tutor interactions use AI APIs. A typical small organization might spend $10-50/month on AI usage. You control which providers to use and can optimize costs.',
+    question: 'AIコストはどうなりますか？',
+    answer: 'AIコストは使用量に応じた従量課金制です。コース生成とチューター連携はAI APIを使用します。一般的な小規模組織の場合、月額$10〜50程度のAI使用量です。使用するプロバイダーを制御でき、コストを最適化できます。',
   },
   {
-    question: 'Can I migrate from another LMS?',
-    answer: 'Yes! 知恵塾 supports SCORM 1.2 import, so you can bring existing courses. We also provide migration tools and documentation for common LMS platforms.',
+    question: '他のLMSから移行できますか？',
+    answer: 'はい！知恵塾はSCORM 1.2インポートに対応しているため、既存のコースを移行できます。主要なLMSプラットフォーム向けの移行ツールとドキュメントも提供しています。',
   },
   {
-    question: 'Is there a free trial for Cloud plans?',
-    answer: 'Cloud Pro will offer a 14-day free trial when it launches. Join our waitlist to get early access and extended trial period.',
+    question: 'クラウドプランの無料トライアルはありますか？',
+    answer: 'クラウドプロはローンチ時に14日間の無料トライアルを提供予定です。ウェイティングリストに登録すると、アーリーアクセスと延長トライアル期間を利用できます。',
   },
 ]
 
@@ -115,14 +115,14 @@ export default function PricingPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm font-medium mb-4">
-              Open Source • Apache-2.0
+              オープンソース • Apache-2.0
             </div>
             <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 dark:text-white mb-6 font-serif">
-              Simple, Transparent{' '}
-              <span className="text-primary">Pricing</span>
+              シンプルで透明な{' '}
+              <span className="text-primary">料金設定</span>
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-              Self-host 知恵塾 for free, or let us manage it for you. No hidden fees, no surprises.
+              知恵塾を無料でセルフホストするか、私たちにお任せください。隠し料金もサプライズもありません。
             </p>
           </div>
         </div>
@@ -144,8 +144,8 @@ export default function PricingPage() {
                 {plan.highlighted && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <span className="inline-flex items-center px-4 py-1 rounded-full bg-accent text-white text-sm font-semibold">
-                      Most Popular
-                    </span>
+                        人気No.1
+                      </span>
                   </div>
                 )}
 
@@ -203,7 +203,7 @@ export default function PricingPage() {
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4 font-serif">
-              Frequently Asked Questions
+              よくある質問
             </h2>
           </div>
 
