@@ -13,18 +13,21 @@ const ctaOptions = [
     description: 'Deploy on Vercel and Railway free tiers. Only pay for your Supabase and AI usage.',
     href: 'https://learn.rhgj.jp',
     primary: true,
+    external: true,
   },
   {
     icon: BookOpen,
     title: 'Explore Features',
     description: 'Discover all the features that make learning adaptive and engaging.',
     href: '/features',
+    external: false,
   },
   {
     icon: Users,
     title: 'View Pricing',
     description: 'Simple, transparent pricing for teams and organizations.',
     href: '/pricing',
+    external: false,
   },
 ]
 
