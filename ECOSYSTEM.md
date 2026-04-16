@@ -675,5 +675,51 @@ REMOTION_SERVER_URL=http://localhost:3040
 
 ---
 
-*Last updated: February 2026 | Sudar v1.0 Foundation*
+## 13. Deployment Options
+
+Sudar supports multiple deployment strategies:
+
+### Option A: Docker Compose (Recommended for self-hosted)
+
+Unified containerized deployment with Docker Compose. All services run in a single Docker network with configurable ports and optional relative path deployment.
+
+**Quick start:**
+```bash
+cp .env.docker.example .env
+# Edit .env with your values
+docker compose up -d --build
+```
+
+**Key features:**
+- Single `docker-compose.yml` for all services
+- Environment variables managed via root `.env` file
+- Configurable ports (default: Studio 3000, Learn 3001, Intelligence 8000)
+- Relative path support for single-domain deployment (e.g., `/studio`, `/learn`, `/api`)
+- Health checks and automatic restarts
+- Resource limits configured
+
+**Documentation:** See [docs/DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md) for complete guide.
+
+### Option B: Vercel + Railway/Render (Hybrid)
+
+Deploy Studio and Learn on Vercel, Intelligence on Railway/Render/Fly.io.
+
+- **Studio/Learn**: Deploy to Vercel with environment variables from `.env.example`
+- **Intelligence**: Deploy to Railway/Render with `byteos-intelligence/Dockerfile`
+
+**Considerations:**
+- Services communicate over public internet
+- CORS configuration required for Intelligence API
+- Separate environment management per platform
+
+### Option C: Custom Infrastructure
+
+Deploy containers to any infrastructure (Kubernetes, AWS ECS, etc.) using the provided Dockerfiles:
+- `byteos-studio/Dockerfile`
+- `byteos-learn/Dockerfile`
+- `byteos-intelligence/Dockerfile`
+
+---
+
+*Last updated: April 2026 | Sudar v1.0 Foundation*
 *This document is the single source of truth for the Sudar ecosystem.*

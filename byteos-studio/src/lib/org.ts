@@ -20,7 +20,21 @@ export async function getOrCreateOrg(userId: string): Promise<string> {
 
   if (membership?.org_id) return membership.org_id
 
-  // Create a personal workspace org — use admin client to bypass RLS
+  // Ensure profile exists first (required for org_members foreign key)
+  const { data: existingProfile } = await admin
+    .from('profiles')
+    .select('id')
+    .eq('id', userId)
+    .single()
+
+  if (!existingProfile) {
+    // Create profile if it doesn't exist
+    await admin
+      .from('profiles')
+      .upsert({ id: userId, role: 'CREATOR' }, { onConflict: 'id' })
+  }
+
+  // Get user's profile for full_name
   const { data: profile } = await supabase
     .from('profiles')
     .select('full_name')
@@ -33,19 +47,41 @@ export async function getOrCreateOrg(userId: string): Promise<string> {
 
   const slug = `workspace-${userId.slice(0, 8)}`
 
-  const { data: org, error } = await admin
+  // Try to create the org, but handle duplicate slug (race condition or partial previous create)
+  let { data: org, error } = await admin
     .from('organisations')
     .insert({ name: orgName, slug, plan: 'free' })
     .select('id')
     .single()
 
-  if (error || !org) throw new Error(`Failed to create org: ${error?.message}`)
+  // If duplicate slug, fetch the existing org instead
+  if (error?.code === '23505') {
+    const { data: existingOrg, error: fetchError } = await admin
+      .from('organisations')
+      .select('id')
+      .eq('slug', slug)
+      .single()
+    
+    if (fetchError || !existingOrg) {
+      throw new Error(`Failed to create or fetch org: ${error.message}`)
+    }
+    org = existingOrg
+  } else if (error || !org) {
+    throw new Error(`Failed to create org: ${error?.message}`)
+  }
 
-  await admin.from('org_members').insert({
-    org_id: org.id,
-    user_id: userId,
-    role: 'ADMIN',
-  })
+  // Create membership (use upsert to handle race conditions)
+  const { error: memberError } = await admin
+    .from('org_members')
+    .upsert({
+      org_id: org.id,
+      user_id: userId,
+      role: 'ADMIN',
+    }, { onConflict: 'org_id,user_id' })
+
+  if (memberError) {
+    console.error('Failed to create org membership:', memberError)
+  }
 
   await admin
     .from('profiles')
@@ -65,7 +101,7 @@ export async function isSuperAdmin(userId: string): Promise<boolean> {
     .eq('id', userId)
     .single()
 
-  return (profile as { role?: string } | null)?.role === 'super_admin'
+  return (profile as { role?: string } | null)?.role === 'SUPER_ADMIN'
 }
 
 /**

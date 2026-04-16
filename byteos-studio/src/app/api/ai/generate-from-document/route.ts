@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
   const chatAiCtx = { privateOpenAi: privateRuntime }
 
   let documentText = ''
-  let extraGen: Partial<AiGenerationCourseSettings> = {}
+  const extraGen: Partial<AiGenerationCourseSettings> = {}
   const contentType = request.headers.get('content-type') ?? ''
 
   if (contentType.includes('multipart/form-data')) {

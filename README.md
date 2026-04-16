@@ -43,7 +43,7 @@ If you care about *evidence-informed* personalisation, not bolt-on chatbots, you
 
 ---
 
-## Architecture (three surfaces, one data layer)
+## Architecture (four surfaces, one data layer)
 
 ```mermaid
 flowchart TB

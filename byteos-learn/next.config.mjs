@@ -3,8 +3,15 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+// Base path for relative path deployment (e.g., /learn when deployed under same domain)
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || undefined
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable standalone output for Docker deployment
+  output: 'standalone',
+  // Base path for relative path deployment
+  ...(basePath ? { basePath } : {}),
   outputFileTracingRoot: path.join(__dirname),
   experimental: {
     optimizePackageImports: ['lucide-react'],

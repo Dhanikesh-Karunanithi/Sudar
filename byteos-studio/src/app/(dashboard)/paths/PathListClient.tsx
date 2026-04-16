@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   Route,
-  Plus,
   BookOpen,
   Lock,
   Zap,
