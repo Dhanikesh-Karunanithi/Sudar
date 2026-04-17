@@ -1,0 +1,7 @@
+{
+  "name": "@sudar/shared-sudarart",
+  "private": true,
+  "dependencies": {
+    "zod": "^4.3.6"
+  }
+}

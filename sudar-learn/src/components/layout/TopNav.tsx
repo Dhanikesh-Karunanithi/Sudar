@@ -1,0 +1,459 @@
+'use client'
+
+import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { motion } from 'framer-motion'
+import {
+  Search,
+  ChevronDown,
+  LogOut,
+  Palette,
+  Sun,
+  Moon,
+  Zap,
+  Target,
+  Award,
+  Settings,
+  Brain,
+  ArrowLeft,
+} from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
+import { useEffect, useState, type FormEvent } from 'react'
+import { useTheme, type PaletteId } from '@/contexts/ThemeContext'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
+import { CoinWidget } from '@/components/features/gamification/CoinWidget'
+import { RewardCatalogModal } from '@/components/features/gamification/RewardCatalogModal'
+import { NotificationCenter } from '@/components/features/notifications/NotificationCenter'
+import { UserAvatar } from '@/components/ui/UserAvatar'
+
+interface TopNavProps {
+  user: {
+    email: string
+    full_name?: string | null
+    avatar_url?: string | null
+  }
+  showOnboardingNudge?: boolean
+  coinBalance?: number
+}
+
+const PALETTES: { id: PaletteId; label: string; swatch: string }[] = [
+  { id: 'default', label: 'Sudar', swatch: 'bg-primary' },
+  { id: 'ocean', label: 'Ocean', swatch: 'bg-[#0ea5e9]' },
+  { id: 'forest', label: 'Forest', swatch: 'bg-[#059669]' },
+  { id: 'sunset', label: 'Sunset', swatch: 'bg-[#d97706]' },
+]
+
+const mainNavItems: { label: string; href: string }[] = [
+  { label: 'Learn', href: '/' },
+  { label: 'Courses', href: '/courses' },
+  { label: 'Paths', href: '/paths' },
+  { label: 'Progress', href: '/progress' },
+  { label: 'Memory', href: '/memory' },
+]
+
+export function TopNav({ user, showOnboardingNudge, coinBalance = 0 }: TopNavProps) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [rewardModalOpen, setRewardModalOpen] = useState(false)
+  const [currentCoinBalance, setCurrentCoinBalance] = useState(coinBalance)
+  const [query, setQuery] = useState('')
+  const { theme, setMode, setPalette } = useTheme()
+
+  useEffect(() => {
+    setMoreOpen(false)
+    setUserMenuOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    const q = searchParams.get('q') ?? ''
+    setQuery(q)
+  }, [searchParams])
+
+  useEffect(() => {
+    setCurrentCoinBalance(coinBalance)
+  }, [coinBalance])
+
+  async function handleSignOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
+
+  function handleHeaderSearchSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const trimmed = query.trim()
+    if (!trimmed) return
+    const encoded = encodeURIComponent(trimmed)
+    if (pathname === '/courses' || pathname.startsWith('/courses?')) {
+      router.push(`/courses?q=${encoded}`)
+      return
+    }
+    if (pathname === '/paths' || pathname.startsWith('/paths?')) {
+      router.push(`/paths?q=${encoded}`)
+      return
+    }
+    router.push(`/search?q=${encoded}`)
+  }
+
+  const isLearningFocusRoute = /^\/courses\/[^/]+\/learn(?:\/|$)/.test(pathname)
+
+  if (isLearningFocusRoute) {
+    return (
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-card px-4 md:px-6">
+        <Link href="/courses" className="flex items-center gap-2 shrink-0">
+          <span className="sr-only">Sudar</span>
+          <SudarLogoMark className="h-8 w-auto shrink-0 text-primary md:h-9" starFill="var(--card)" />
+          <span className="font-display text-xl font-bold tracking-tighter text-card-foreground hidden sm:block">
+            Sudar
+          </span>
+        </Link>
+
+        <div className="relative flex items-center gap-2 shrink-0">
+          <Link
+            href="/courses"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-medium text-card-foreground hover:bg-background transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Exit course
+          </Link>
+          <NotificationCenter variant="compact" />
+          <button
+            type="button"
+            onClick={() => setUserMenuOpen((v) => !v)}
+            className="flex items-center gap-2 rounded-button px-2 py-1.5 hover:bg-muted transition-colors"
+            aria-label="Open user menu"
+          >
+            <UserAvatar
+              email={user.email}
+              fullName={user.full_name}
+              avatarUrl={user.avatar_url}
+              size="sm"
+              className="h-9 w-9 text-xs"
+            />
+            <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', userMenuOpen && 'rotate-180')} />
+          </button>
+
+          {userMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[2px]" onClick={() => setUserMenuOpen(false)} aria-hidden />
+              <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-card/98 shadow-xl shadow-black/5 dark:shadow-black/20">
+                <div className="border-b border-border px-4 py-3 flex items-center gap-3">
+                  <UserAvatar
+                    email={user.email}
+                    fullName={user.full_name}
+                    avatarUrl={user.avatar_url}
+                    size="md"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-card-foreground">
+                      {user.full_name ?? 'Learner'}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                </div>
+                {showOnboardingNudge && (
+                  <div className="border-b border-border px-3 py-2.5 bg-primary/5">
+                    <Link
+                      href="/onboarding"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex w-full items-center gap-2 rounded-button bg-primary/15 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/25 transition-colors"
+                    >
+                      <Zap className="h-4 w-4 shrink-0" />
+                      Set up your profile
+                    </Link>
+                  </div>
+                )}
+                <div className="p-1.5">
+                  <Link
+                    href="/settings"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex w-full items-center gap-2.5 rounded-button px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Preferences
+                  </Link>
+                  <button
+                    onClick={() => { setUserMenuOpen(false); handleSignOut() }}
+                    className="flex w-full items-center gap-2.5 rounded-button px-3 py-2 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </header>
+    )
+  }
+
+  return (
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-6 pl-6 pr-4 md:px-6 py-3 border-b border-border bg-card">
+      {/* Logo — adequate left padding so logo isn't clipped */}
+      <Link href="/" className="flex items-center gap-3 shrink-0 min-w-0">
+        <span className="sr-only">Sudar</span>
+        <SudarLogoMark className="h-9 w-auto shrink-0 text-primary md:h-10" starFill="var(--card)" />
+        <span className="font-display text-2xl font-bold tracking-tighter text-card-foreground hidden sm:block">
+          Sudar
+        </span>
+      </Link>
+
+      {/* Center: nav pills — design-system aligned, animated */}
+      <nav className="shrink-0 min-w-0 flex items-center gap-1 p-1.5 rounded-full bg-muted border border-border">
+        <div className="min-w-0 overflow-x-auto no-scrollbar flex items-center gap-1">
+          {mainNavItems.map((item) => {
+            const isActive =
+              item.href === '/'
+                ? pathname === '/'
+                : pathname.startsWith(item.href)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'relative flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]',
+                  isActive
+                    ? 'text-primary-foreground'
+                    : 'text-card-foreground/80 hover:text-card-foreground hover:bg-card'
+                )}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="active-pill"
+                    className="absolute inset-0 rounded-full bg-primary"
+                    transition={{ type: 'spring', bounce: 0.2, stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{item.label}</span>
+              </Link>
+            )
+          })}
+        </div>
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setMoreOpen((v) => !v)}
+            className={cn(
+              'relative flex items-center justify-center gap-1 px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]',
+              moreOpen
+                ? 'text-primary-foreground bg-primary'
+                : 'text-card-foreground/80 hover:text-card-foreground hover:bg-card'
+            )}
+          >
+            <span className="relative z-10 flex items-center gap-1">
+              More <ChevronDown size={14} className={cn('transition-transform duration-200', moreOpen && 'rotate-180')} />
+            </span>
+          </button>
+          {moreOpen && (
+            <>
+              <div className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[2px]" onClick={() => setMoreOpen(false)} aria-hidden />
+              <div className="absolute right-0 left-auto top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-card/98 shadow-xl shadow-black/5 dark:shadow-black/20 py-1">
+                <Link
+                  href="/progress"
+                  onClick={() => setMoreOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                >
+                  <Target className="h-4 w-4" /> Goals
+                </Link>
+                <Link
+                  href="/progress#certifications"
+                  onClick={() => setMoreOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                >
+                  <Award className="h-4 w-4" /> Certifications
+                </Link>
+                <Link
+                  href="/achievements"
+                  onClick={() => setMoreOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                >
+                  <Award className="h-4 w-4" /> Achievements
+                </Link>
+                <Link
+                  href="/kpis"
+                  onClick={() => setMoreOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                >
+                  <Target className="h-4 w-4" /> My KPIs
+                </Link>
+                <Link
+                  href="/coins"
+                  onClick={() => setMoreOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                >
+                  <Zap className="h-4 w-4" /> Coins &amp; Rewards
+                </Link>
+                <Link
+                  href="/memory"
+                  onClick={() => setMoreOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                >
+                  <Brain className="h-4 w-4" /> Sudar&apos;s Memory
+                </Link>
+                <Link
+                  href="/settings"
+                  onClick={() => setMoreOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                >
+                  <Settings className="h-4 w-4" /> Preferences
+                </Link>
+              </div>
+            </>
+          )}
+        </div>
+      </nav>
+
+      {/* Right: coins, search, user (onboarding nudge lives in user menu when needed) */}
+      <div className="flex items-center gap-4 shrink-0">
+        <NotificationCenter />
+        <button
+          type="button"
+          onClick={() => setRewardModalOpen(true)}
+          aria-label="Open reward catalog"
+          className="hidden sm:block"
+        >
+          <CoinWidget initialBalance={currentCoinBalance} />
+        </button>
+        <RewardCatalogModal
+          open={rewardModalOpen}
+          onClose={() => setRewardModalOpen(false)}
+          currentBalance={currentCoinBalance}
+          onPurchase={(nb) => setCurrentCoinBalance(nb)}
+        />
+        <form onSubmit={handleHeaderSearchSubmit} className="relative group hidden md:block">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors h-5 w-5" />
+          <input
+            type="text"
+            placeholder="Search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="bg-muted border border-border rounded-full py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:bg-card transition-all w-40 focus:w-56"
+          />
+        </form>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setUserMenuOpen((v) => !v)}
+            className="flex items-center gap-2 rounded-button px-2.5 py-1.5 hover:bg-muted transition-colors"
+          >
+            <UserAvatar
+              email={user.email}
+              fullName={user.full_name}
+              avatarUrl={user.avatar_url}
+              size="md"
+              className="h-10 w-10 text-sm"
+            />
+            <span className="hidden sm:block max-w-[140px] truncate text-sm font-medium text-card-foreground">
+              {user.full_name ?? user.email}
+            </span>
+            <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', userMenuOpen && 'rotate-180')} />
+          </button>
+
+          {userMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[2px]" onClick={() => setUserMenuOpen(false)} aria-hidden />
+              <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-card/98 shadow-xl shadow-black/5 dark:shadow-black/20">
+                <div className="border-b border-border px-4 py-3 flex items-center gap-3">
+                  <UserAvatar
+                    email={user.email}
+                    fullName={user.full_name}
+                    avatarUrl={user.avatar_url}
+                    size="md"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-card-foreground">
+                      {user.full_name ?? 'Learner'}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                </div>
+                {showOnboardingNudge && (
+                  <div className="border-b border-border px-3 py-2.5 bg-primary/5">
+                    <Link
+                      href="/onboarding"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex w-full items-center gap-2 rounded-button bg-primary/15 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/25 transition-colors"
+                    >
+                      <Zap className="h-4 w-4 shrink-0" />
+                      Set up your profile
+                    </Link>
+                  </div>
+                )}
+                <div className="p-1.5">
+                  <div className="px-3 py-2 border-b border-border mb-1.5">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                      <Palette className="h-3.5 w-3.5" /> Theme
+                    </p>
+                    <div className="flex items-center gap-2 mb-2">
+                      <button
+                        onClick={() => setMode('light')}
+                        className={cn(
+                          'flex items-center gap-1.5 rounded-button px-2.5 py-1.5 text-xs font-medium transition-colors',
+                          theme.mode === 'light' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-card-foreground'
+                        )}
+                      >
+                        <Sun className="h-3.5 w-3.5" /> Light
+                      </button>
+                      <button
+                        onClick={() => setMode('dark')}
+                        className={cn(
+                          'flex items-center gap-1.5 rounded-button px-2.5 py-1.5 text-xs font-medium transition-colors',
+                          theme.mode === 'dark' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-card-foreground'
+                        )}
+                      >
+                        <Moon className="h-3.5 w-3.5" /> Dark
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mb-1.5">Palette</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {PALETTES.map((p) => (
+                        <button
+                          key={p.id}
+                          onClick={() => setPalette(p.id)}
+                          title={p.label}
+                          className={cn(
+                            'w-7 h-7 rounded-full border-2 transition-all',
+                            p.swatch,
+                            theme.palette === p.id ? 'border-card-foreground ring-2 ring-offset-2 ring-primary' : 'border-transparent hover:scale-110'
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <Link
+                    href="/settings"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex w-full items-center gap-2.5 rounded-button px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Preferences
+                  </Link>
+                  <Link
+                    href="/memory"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex w-full items-center gap-2.5 rounded-button px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                  >
+                    Sudar&apos;s Memory
+                  </Link>
+                  <button
+                    onClick={() => { setUserMenuOpen(false); handleSignOut() }}
+                    className="flex w-full items-center gap-2.5 rounded-button px-3 py-2 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </header>
+  )
+}

@@ -26,17 +26,17 @@ Reference tokens: [design-tokens-v1.md](./design-tokens-v1.md) (`--brand-primary
 
 ## Technical deliverables
 - **Primary format**: SVG (prefer single-file per pose) or **@2x PNG** (512×512 artboard, character ~60% height).
-- **Naming** (drop into `byteos-learn/public/mascots/`):  
+- **Naming** (drop into `sudar-learn/public/mascots/`):  
   `{id}-{emotion}.svg` e.g. `sudar-neutral.svg`, `focus-celebratory.svg`
 - **Safe area**: Keep face + shoulders inside inner **80%** circle; no critical detail in outer 10%.
 - **Accessibility**: Product will always show **name + icon** beside avatars; do not rely on color alone for meaning.
 
 ## Integration (engineering)
-- Neutral assets are referenced from `MASCOT_PERSONAS[].avatarSrc` in [byteos-learn/src/lib/mascot/personas.ts](../../byteos-learn/src/lib/mascot/personas.ts).
-- UI uses [MascotAvatar.tsx](../../byteos-learn/src/components/mascot/MascotAvatar.tsx): if a file fails to load, **Lucide icons** remain the fallback.
+- Personas live in [sudar-learn/src/lib/mascot/personas.ts](../../sudar-learn/src/lib/mascot/personas.ts); avatars in product today use **`SudarLogoMark`** (same geometry as the app header) via [MascotAvatar.tsx](../../sudar-learn/src/components/mascot/MascotAvatar.tsx).
+- When per-character illustrated assets ship, wire poses from `sudar-learn/public/mascots/` into `MascotAvatar` (or persona-driven `src`) without changing the geometry-lock mark in `SudarLogo.tsx`.
 
 ## Starter assets
-The current files in `byteos-learn/public/mascots/*-neutral.svg` are **placeholder vector busts** for layout and motion tests. Replace them with final illustration exports using the same filenames, or add new emotions and extend the persona map when ready.
+The current files in `sudar-learn/public/mascots/*-neutral.svg` are **placeholder vector busts** for layout and motion tests. Replace them with final illustration exports using the same filenames, or add new emotions and extend the persona map when ready.
 
 ## Review checklist (before merge)
 - [ ] Reads clearly at 32 px height  

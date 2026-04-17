@@ -24,7 +24,7 @@ Studio and Learn share the same Supabase project, so content and learner data st
 
 ### 2.1 Run Studio
 
-From the `byteos-studio` folder:
+From the `sudar-studio` folder:
 
 ```bash
 npm install
@@ -40,7 +40,7 @@ Copy `.env.example` to `.env` and set at least:
 - Supabase: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (or equivalent)
 - **Integrations**: `NEXT_PUBLIC_LEARN_APP_URL` — base URL of your Sudar Learn app (e.g. `https://learn.yourorg.com`). Required for Integrations to show correct ALP endpoints and for generating embed URLs.
 
-See `byteos-studio/.env.example` for the full list.
+See `sudar-studio/.env.example` for the full list.
 
 ---
 

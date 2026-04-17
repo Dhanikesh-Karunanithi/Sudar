@@ -120,9 +120,9 @@ If the remote already has a README/license and push is rejected:
 - **CONTRIBUTING.md** — How to contribute.
 - **.gitignore** — Excludes `.env`, `.env.local`, `node_modules`, `.cursor/`, build outputs.
 - **assets/sudar logo/sudar_static.html** — canonical Sudar logo source used for app logo components.
-- **byteos-studio/** — Admin app (Next.js 14).
-- **byteos-learn/** — Learner app (Next.js 14).
-- **byteos-intelligence/** — Python FastAPI service.
+- **sudar-studio/** — Admin app (Next.js 14).
+- **sudar-learn/** — Learner app (Next.js 14).
+- **sudar-intelligence/** — Python FastAPI service.
 - **docs/** — PRD, strategic path, action plans, features, personas, flows.
 - **ECOSYSTEM.md**, **AGENTS.md** — Architecture and agent instructions.
 

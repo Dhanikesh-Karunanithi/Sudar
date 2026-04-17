@@ -191,26 +191,26 @@ Sudar is open source. Vercel hosts Next.js apps for free (hobby tier). Railway, 
 
 ### Step 1: Deploy Sudar Studio
 1. Go to vercel.com/new and import the repo Dhanikesh-Karunanithi/Sudar.
-2. Set **Root Directory** to byteos-studio (monorepo).
-3. Add environment variables from byteos-studio/.env.example: Supabase keys, NEXTAUTH_URL, NEXTAUTH_SECRET, BYTEOS_INTELLIGENCE_URL, at least one AI key, NEXT_PUBLIC_LEARN_APP_URL (you'll set this after deploying Learn).
+2. Set **Root Directory** to sudar-studio (monorepo).
+3. Add environment variables from sudar-studio/.env.example: Supabase keys, NEXTAUTH_URL, NEXTAUTH_SECRET, BYTEOS_INTELLIGENCE_URL, at least one AI key, NEXT_PUBLIC_LEARN_APP_URL (you'll set this after deploying Learn).
 4. Deploy. Then set NEXTAUTH_URL to the actual Vercel URL and redeploy if needed.
 
 ### Step 2: Deploy Sudar Learn
 1. Create another Vercel project from the same repo.
-2. Set **Root Directory** to byteos-learn.
-3. Add env vars from byteos-learn/.env.example: Supabase, NEXTAUTH_URL (your Learn URL), NEXTAUTH_SECRET, BYTEOS_INTELLIGENCE_URL, NEXT_PUBLIC_APP_URL (same as NEXTAUTH_URL).
+2. Set **Root Directory** to sudar-learn.
+3. Add env vars from sudar-learn/.env.example: Supabase, NEXTAUTH_URL (your Learn URL), NEXTAUTH_SECRET, BYTEOS_INTELLIGENCE_URL, NEXT_PUBLIC_APP_URL (same as NEXTAUTH_URL).
 4. Deploy.
 
 ### Step 3: Deploy Sudar Intelligence
-Vercel only runs Node.js. The Python FastAPI service in byteos-intelligence/ must be hosted elsewhere. Recommended: **Railway**.
+Vercel only runs Node.js. The Python FastAPI service in sudar-intelligence/ must be hosted elsewhere. Recommended: **Railway**.
 
-1. Sign up at railway.app. New Project → Deploy from GitHub repo, root byteos-intelligence.
+1. Sign up at railway.app. New Project → Deploy from GitHub repo, root sudar-intelligence.
 2. Build: pip install -r requirements.txt. Start: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT.
 3. Set variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, at least one of TOGETHER_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY, CORS_ORIGINS (your Studio and Learn URLs), ENVIRONMENT=production.
 4. Generate a domain in Railway. Copy the URL (e.g. https://sudar-intelligence.up.railway.app).
 5. In both Vercel projects, set BYTEOS_INTELLIGENCE_URL to that URL and redeploy.
 
-Alternatives: **Render** (New Web Service, root byteos-intelligence, same build/start commands) or **Fly.io** (Docker or fly launch in byteos-intelligence). Free tiers may spin down after inactivity; Railway and Render paid tiers give always-on.
+Alternatives: **Render** (New Web Service, root sudar-intelligence, same build/start commands) or **Fly.io** (Docker or fly launch in sudar-intelligence). Free tiers may spin down after inactivity; Railway and Render paid tiers give always-on.
 
 ### Step 4: Wire URLs
 - In Studio (Vercel): set NEXT_PUBLIC_LEARN_APP_URL to your Learn URL.
@@ -376,7 +376,7 @@ Contact us at connect@dhanikeshkarunanithi.com for pilot discussions, partnershi
 
 - **Text (Read)** — Standard reading view with markdown, sections, and optional read-along. Core modality for every module.
 - **Listen (Audio TTS)** — Audiobook/podcast-style TTS. Generated on demand via Sudar Intelligence (Edge-TTS or Sarvam). Voice and rate configurable.
-- **Video** — Pre-generated or on-demand video from module content. Powered by Remotion and bytetexttovid.
+- **Video** — Pre-generated or on-demand video from module content. Powered by Remotion and SudarVid.
 - **Podcast** — Audio dialogue format; can use pre-generated or on-demand content.
 - **Flashcards (Cards)** — Cards generated from module content via AI. Learners study in Cards tab; completion rules apply.
 - **MindMap (SudarMind)** — Mindmap modality embedded in Learn. Visual structure of module content.
@@ -441,7 +441,7 @@ A: Sudar is the world's first AI-native Learning Operating System. It unifies au
 A: The software is open source (Apache-2.0). You can self-host at $0 using Vercel (Studio/Learn) and Railway/Render/Fly.io (Intelligence) free tiers. You pay for your own Supabase and AI API usage. There is no mandatory fee to use Sudar.
 
 **Q: How do I self-host?**  
-A: See the Self-Host at $0 page: deploy Studio and Learn as two Vercel projects (root dirs byteos-studio and byteos-learn), deploy Intelligence to Railway (or Render/Fly.io), set BYTEOS_INTELLIGENCE_URL in both Vercel projects. Full steps are in docs/VERCEL_DEPLOYMENT.md and docs/INTELLIGENCE_DEPLOYMENT.md in the repo.
+A: See the Self-Host at $0 page: deploy Studio and Learn as two Vercel projects (root dirs sudar-studio and sudar-learn), deploy Intelligence to Railway (or Render/Fly.io), set BYTEOS_INTELLIGENCE_URL in both Vercel projects. Full steps are in docs/VERCEL_DEPLOYMENT.md and docs/INTELLIGENCE_DEPLOYMENT.md in the repo.
 
 **Q: How do I get the Moodle plugin?**  
 A: ALP plugins (SudarMemory, SudarChat, SudarRecommend) are documented in the repo; Moodle connector packages will be published via GitHub Releases when ready. You can integrate today by calling the ALP API from your LMS backend; see docs/ALP_API.md and the Plugins page.

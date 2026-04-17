@@ -3,6 +3,12 @@
 import Link from "next/link";
 import { HeroSection } from "@/components/home/HeroSection";
 import { STUDIO_APP_URL, LEARN_APP_URL, GITHUB_URL } from "@/lib/site-nav";
+import * as React from "react";
+import {
+  ModalityPreviewPanel,
+  type ModalityPreviewId,
+  type ModalityPreviewMode,
+} from "@/components/home/ModalityPreviewPanel";
 
 // ─── Impact numbers ────────────────────────────────────────────────────────────
 
@@ -361,13 +367,14 @@ function DigitalLearnerTwin() {
 // ─── Modalities ────────────────────────────────────────────────────────────────
 
 function Modalities() {
-  const modes = [
+  const modes: Array<ModalityPreviewMode & { id: ModalityPreviewId; icon: React.ReactNode }> = [
     {
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
         </svg>
       ),
+      id: "Text",
       name: "Text",
       tag: "Default",
       desc: "Structured long-form reading. Clean typography, section navigation, AI-generated summaries.",
@@ -378,6 +385,7 @@ function Modalities() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
         </svg>
       ),
+      id: "Video",
       name: "Video",
       tag: "Visual",
       desc: "AI-generated narrated video presentations. No filming required. Full captions and transcripts.",
@@ -388,6 +396,7 @@ function Modalities() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
         </svg>
       ),
+      id: "Audio",
       name: "Audio",
       tag: "Auditory",
       desc: "Podcast-style lessons. Natural TTS narration. Ideal for commute learning and accessibility.",
@@ -398,6 +407,7 @@ function Modalities() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
         </svg>
       ),
+      id: "Mind Map",
       name: "Mind Map",
       tag: "Spatial",
       desc: "Visual knowledge architecture. See how concepts connect. Ideal for systems thinkers.",
@@ -408,6 +418,7 @@ function Modalities() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
         </svg>
       ),
+      id: "Flashcards",
       name: "Flashcards",
       tag: "Spaced Repetition",
       desc: "Adaptive recall sessions. Spaced repetition scheduling fights the Ebbinghaus forgetting curve.",
@@ -418,6 +429,7 @@ function Modalities() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 8.25h3m-3 2.25h3m-3 2.25h3M3 12h.008v.008H3V12zm0 2.25h.008v.008H3v-.008zm0 2.25h.008v.008H3V16.5z" />
         </svg>
       ),
+      id: "SudarFeed",
       name: "SudarFeed",
       tag: "Microlearning",
       desc: "Vertical short-form content — the TikTok-style learning feed. Bite-sized lessons for high engagement.",
@@ -428,11 +440,38 @@ function Modalities() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M14.25 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003 0-1.036-1.007-1.875-2.25-1.875s-2.25.84-2.25 1.875c0 .369.128.713.349 1.003.215.283.401.604.401.959v0a.64.64 0 01-.657.643 48.39 48.39 0 01-4.163-.3c.186 1.613.293 3.25.315 4.907a.656.656 0 01-.658.663v0c-.355 0-.676-.186-.959-.401a1.647 1.647 0 00-1.003-.349c-1.036 0-1.875 1.007-1.875 2.25s.84 2.25 1.875 2.25c.369 0 .713-.128 1.003-.349.283-.215.604-.401.959-.401v0c.31 0 .555.26.532.57a48.039 48.039 0 01-.642 5.056c1.518.19 3.058.309 4.616.354a.64.64 0 00.657-.643v0c0-.355-.186-.676-.401-.959a1.647 1.647 0 01-.349-1.003c0-1.035 1.008-1.875 2.25-1.875 1.243 0 2.25.84 2.25 1.875 0 .369-.128.713-.349 1.003-.215.283-.4.604-.4.959v0c0 .333.277.599.61.58a48.1 48.1 0 005.427-.63 48.05 48.05 0 00.582-4.717.532.532 0 00-.533-.57v0c-.355 0-.676.186-.959.401-.29.221-.634.349-1.003.349-1.035 0-1.875-1.007-1.875-2.25s.84-2.25 1.875-2.25c.37 0 .713.128 1.003.349.283.215.604.4.959.4v0a.656.656 0 00.658-.663 48.422 48.422 0 00-.37-5.36c-1.886.342-3.81.574-5.766.689a.578.578 0 01-.61-.58v0z" />
         </svg>
       ),
+      id: "SudarPlay",
       name: "SudarPlay",
       tag: "Gamified",
       desc: "Interactive scenario-based games. Applied learning in context. High retention, high engagement.",
     },
   ];
+
+  const [activeId, setActiveId] = React.useState<ModalityPreviewId | null>(null);
+
+  const active = React.useMemo(() => {
+    if (!activeId) return null;
+    const found = modes.find((m) => m.id === activeId);
+    return found
+      ? {
+          id: found.id,
+          name: found.name,
+          tag: found.tag,
+          desc: found.desc,
+        }
+      : null;
+  }, [activeId, modes]);
+
+  const close = React.useCallback(() => setActiveId(null), []);
+
+  React.useEffect(() => {
+    if (!activeId) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [activeId, close]);
 
   return (
     <section className="py-24 sm:py-32 bg-[#060606]" aria-label="Learning modalities">
@@ -452,10 +491,17 @@ function Modalities() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {modes.map((m, i) => (
-            <div
+            <button
               key={m.name}
-              className="reveal group p-6 rounded-2xl border border-white/[0.05] bg-[#0d0d0d] hover:border-white/[0.10] hover:bg-[#111] transition-all duration-400"
+              type="button"
+              onClick={() => setActiveId((cur) => (cur === m.id ? null : m.id))}
+              className={`reveal group p-6 rounded-2xl border bg-[#0d0d0d] hover:bg-[#111] transition-all duration-400 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4500]/50 ${
+                activeId === m.id ? "border-[#FF4500]/25" : "border-white/[0.05] hover:border-white/[0.10]"
+              }`}
               style={{ transitionDelay: `${(i % 4) * 80}ms` }}
+              aria-expanded={activeId === m.id}
+              aria-controls="modality-preview-overlay"
+              aria-label={`${activeId === m.id ? "Close" : "Open"} ${m.name} preview`}
             >
               <div className="flex items-start justify-between mb-5">
                 <div className="w-9 h-9 rounded-xl bg-white/[0.04] flex items-center justify-center text-[#FF4500]/70 group-hover:text-[#FF4500] group-hover:bg-[#FF4500]/[0.08] transition-all duration-300">
@@ -465,11 +511,22 @@ function Modalities() {
                   {m.tag}
                 </span>
               </div>
-              <h3 className="text-sm font-medium text-white/90 mb-2">{m.name}</h3>
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="text-sm font-medium text-white/90 mb-2">{m.name}</h3>
+                <span
+                  className={`mt-0.5 inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-mono tracking-widest transition-colors ${
+                    activeId === m.id
+                      ? "border-[#FF4500]/20 bg-[#FF4500]/[0.05] text-[#FF4500]/70"
+                      : "border-white/[0.06] bg-white/[0.02] text-zinc-700 group-hover:text-zinc-600"
+                  }`}
+                >
+                  Preview
+                </span>
+              </div>
               <p className="text-xs text-zinc-600 leading-relaxed group-hover:text-zinc-500 transition-colors">
                 {m.desc}
               </p>
-            </div>
+            </button>
           ))}
 
           {/* "And more" placeholder */}
@@ -482,6 +539,8 @@ function Modalities() {
             </Link>
           </div>
         </div>
+
+        <ModalityPreviewPanel active={active} onClose={close} />
       </div>
     </section>
   );

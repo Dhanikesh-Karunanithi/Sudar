@@ -2,9 +2,9 @@
 
 ## Scope
 Applies to:
-- `byteos-studio` (Sudar Studio)
-- `byteos-learn` (Sudar Learn)
-- `byteos-intelligence` (messaging surfaces, docs, and API-facing brand copy)
+- `sudar-studio` (Sudar Studio)
+- `sudar-learn` (Sudar Learn)
+- `sudar-intelligence` (messaging surfaces, docs, and API-facing brand copy)
 
 ## Product-Level Brand Roles
 - Studio tone: confident, productive, creator-focused.

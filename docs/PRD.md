@@ -135,7 +135,7 @@ The personalized learning experience for every learner.
 3. **Course Experience**: Multi-modality content consumption with Sudar (AI tutor) always available
 4. **Modality Switching**: Learner or AI switches between Text / Video / Audio / MindMap /
    Flashcards / SudarFeed / SudarPlay at any point
-5. **AI Tutor "Sudar"**: Reactive Q&A, proactive nudges, longitudinal memory across all sessions
+5. **AI Tutor "Sudar"**: Reactive Q&A, proactive nudges with **tap-to-reply (multiple-choice) chips** on dashboard, navigation, and idle-in-module flows, longitudinal memory across all sessions
 6. **Progress & Achievements**: Skill graph, streak tracking, certifications
 
 ### 5.3 Sudar Intelligence (AI Engine)
@@ -144,7 +144,7 @@ The backend AI layer that powers all adaptation and generation.
 
 **Core Services**:
 1. **Adaptive Engine**: Computes next best action, modality recommendations, difficulty adjustments
-2. **AI Tutor Service**: RAG-powered Q&A with learner context and longitudinal memory
+2. **AI Tutor Service**: RAG-powered Q&A with learner context and longitudinal memory; proactive nudge API may return structured **choices** (`id`, `label`, `follow_up_message`) for ALP-compatible LMS clients
 3. **Content Generation**: Multi-format course content from any input
 4. **Modality Dispatcher**: Generates video, audio, game, and mindmap variants of content
 5. **Learner Profile Scorer**: Updates Digital Learner Twin after every session
@@ -234,7 +234,8 @@ The backend AI layer that powers all adaptation and generation.
 #### AI Tutor "Sudar"
 - FR-LN-022: Sudar SHALL be accessible via a sidebar on every module page
 - FR-LN-023: Sudar SHALL answer questions about the current module content using RAG
-- FR-LN-024: Sudar SHALL proactively offer help after 90 seconds of inactivity on a module
+- FR-LN-024: Sudar SHALL proactively offer help after 90 seconds of inactivity on a module, using **tap-to-reply chips** where appropriate (follow-up text forwarded to the tutor query API)
+- FR-LN-024a: Sudar SHALL be able to surface proactive prompts on the learner dashboard (session start) and on major navigation changes with the same tap-to-reply pattern, subject to cooldowns and learner snooze
 - FR-LN-025: Sudar SHALL proactively offer an alternative explanation if a quiz is failed twice
 - FR-LN-026: Sudar SHALL remember previous interactions across sessions (longitudinal memory)
 - FR-LN-027: Learner SHALL be able to rate Sudar's responses (helpful / not helpful)
@@ -303,7 +304,7 @@ The following are explicitly out of scope for the initial build:
 | Pexels API | API | Stock images + video loops | Unsplash |
 | Edge-TTS | Library | Text-to-speech for audio/video | OpenAI TTS |
 | FFmpeg | Binary | Video assembly | — |
-| Remotion | Library | Programmatic video rendering | bytetexttovid |
+| Remotion | Library | Programmatic video rendering | SudarVid |
 | Phaser.js | Library | Game engine for SudarPlay | — |
 
 ---

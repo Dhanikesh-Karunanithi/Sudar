@@ -29,7 +29,7 @@ If you care about *evidence-informed* personalisation, not bolt-on chatbots, you
 | | Sudar | Typical LMS + “AI features” |
 |--|--------|-----------------------------|
 | **Learner model** | Persistent Digital Learner Twin | None or shallow |
-| **Tutor** | Sudar — reactive & proactive, cross-session | Often stateless |
+| **Tutor** | Sudar — reactive & proactive (**tap-to-reply** nudges + cross-session memory) | Often stateless |
 | **Delivery** | Text, video, audio, mind map, flashcards, feed, game, SCORM | Often text/video only |
 | **Your existing stack** | ALP: APIs & embed paths toward Moodle, Canvas, etc. | N/A |
 | **Source** | Open (Apache 2.0) | Usually closed |
@@ -73,7 +73,13 @@ flowchart TB
 
 ## Repository layout
 
-Product name is **Sudar**. Folder names `byteos-*` are **legacy** paths (kept for continuity); all user-facing naming is Sudar.
+Product name is **Sudar**. App folders are now renamed to `sudar-*` for consistency.
+
+**Compatibility window (temporary):**
+- `byteos-studio` -> `sudar-studio`
+- `byteos-learn` -> `sudar-learn`
+- `byteos-intelligence` -> `sudar-intelligence`
+- Legacy `byteos-*` path mentions in historical notes/docs may still exist briefly and will be removed after stabilization.
 
 ```
 Sudar/
@@ -82,10 +88,10 @@ Sudar/
 ├── RESEARCH_FOUNDATION.md    ← Evidence base & citations
 ├── AGENTS.md                 ← Conventions for humans & coding agents
 ├── docs/                     ← Product, ALP, trust, screenshots, brand (for implementers)
-├── byteos-studio/            ← Sudar Studio (Next.js)
-├── byteos-learn/             ← Sudar Learn (Next.js)
-├── byteos-intelligence/      ← Sudar Intelligence (FastAPI)
-├── byteos-video/             ← Optional video pipeline
+├── sudar-studio/            ← Sudar Studio (Next.js)
+├── sudar-learn/             ← Sudar Learn (Next.js)
+├── sudar-intelligence/      ← Sudar Intelligence (FastAPI)
+├── sudar_vid/                ← SudarVid (Watch modality; Python FastAPI)
 └── teachwithsudar/           ← Marketing & documentation site (Next.js)
 ```
 
@@ -101,9 +107,9 @@ cd Sudar
 ```
 
 1. **Supabase** — Create a project; align schema with [ECOSYSTEM.md](./ECOSYSTEM.md) (and Prisma in each app where used).  
-2. **Studio** — `cd byteos-studio`, copy `.env.example` → `.env.local`, set Supabase + AI keys, `npm install`, `npx prisma db push`, `npm run dev` → http://localhost:3000  
-3. **Learn** — `cd byteos-learn`, same pattern → http://localhost:3001  
-4. **Intelligence** (optional) — `cd byteos-intelligence`, `pip install -r requirements.txt`, `.env`, `uvicorn src.api.main:app --reload --port 8000`
+2. **Studio** — `cd sudar-studio`, copy `.env.example` → `.env.local`, set Supabase + AI keys, `npm install`, `npx prisma db push`, `npm run dev` → http://localhost:3000  
+3. **Learn** — `cd sudar-learn`, same pattern → http://localhost:3001  
+4. **Intelligence** (optional) — `cd sudar-intelligence`, `pip install -r requirements.txt`, `.env`, `uvicorn src.api.main:app --reload --port 8000`
 
 Marketing site (optional): `cd teachwithsudar`, `npm install`, `npm run dev` (see that package’s README for port).
 

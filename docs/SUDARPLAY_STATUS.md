@@ -33,7 +33,7 @@ Confirm: `sudarplay_maps`, `sudarplay_sessions` exist; `modules` has `sudarplay_
 
 ### 2. Configure Intelligence
 
-In `byteos-intelligence/.env` (or `.env.local`):
+In `sudar-intelligence/.env` (or `.env.local`):
 
 - **`SUDARPLAY_JWT_SECRET`** — Required. Min 32 characters (used to sign launch JWTs). Example: `openssl rand -base64 32`
 - **`WA_INSTANCE_URL`** — Base URL of your WorkAdventure instance (e.g. `https://play.sudar.app` or `http://localhost` if running WA locally)

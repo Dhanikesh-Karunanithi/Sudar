@@ -1,6 +1,6 @@
-# ByteOS — Updates & Development Log
+# Sudar — Updates & Development Log
 
-**Creator:** Dhanikesh "Dhani" Karunanithi · **Ecosystem:** ByteAI & ByteVerse → ByteOS
+**Creator:** Dhanikesh "Dhani" Karunanithi · **Ecosystem:** Sudar
 
 This file tracks **what we've built** (phase-wise) and **what's upcoming**. Update it at the end of each development day so every GitHub commit tells a clear story. Use the format below for new entries.
 
@@ -16,19 +16,66 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-04-17 — Sudar consolidation + engagement and proactive learning pass
+
+- **Repo and naming consolidation**:
+  - Continued broad migration from legacy `byteos-*` paths to `sudar-*` paths across apps, docs, scripts, and environment references.
+  - Removed legacy premium-LMS and older video surface remnants in favor of the current Sudar app structure.
+- **Learn product expansion (engagement + retention)**:
+  - Added gamification and motivation surfaces: achievements, quests/rewards, coins, check-in APIs, KPI/leaderboard/insight endpoints, and supporting UI components.
+  - Added notifications center and profile/avatar utilities for learner identity and re-engagement loops.
+  - Added inactivity hibernation handling and proactive nudge infrastructure to support safer, context-aware learner prompts.
+- **Tutor and AI interaction upgrades**:
+  - Added proactive tutor prompt/reply APIs and reusable response contract scaffolding for consistent tutor behavior.
+  - Added voice preview assets/routes and voice-provider status checks to improve audio modality reliability and learner choice.
+  - Extended generation/tutor route integrations and supporting libs for more resilient orchestration.
+- **Intelligence and docs alignment**:
+  - Updated Intelligence route/auth wiring and related deployment/environment guidance.
+  - Refreshed roadmap, trust, product, user-flow, and shipped-feature documentation to reflect current Sudar scope and naming.
+
+### 2026-04-15 — Gamification Fast MVP shipped (core parity + engagement polish)
+
+- **API parity (Learn)**:
+  - Added `POST /api/quests/progress` (`sudar-learn/src/app/api/quests/progress/route.ts`) to emit milestone events and run immediate gamification evaluation.
+  - Added missing quest lifecycle events on assignment (`quest_started`) in `sudar-learn/src/app/api/quests/route.ts`.
+- **Reward correctness**:
+  - Unified check-in reward handling through the central gamification engine (removed duplicate direct coin/xp writes from `sudar-learn/src/app/api/checkin/answer/route.ts`).
+  - Engine now emits structured `learning_events` for `level_up`, `achievement_unlocked`, `quest_step_completed`, and `quest_completed`.
+- **Profile completeness**:
+  - Added deterministic completeness rollup helper (`sudar-learn/src/lib/gamification/profileCompleteness.ts`).
+  - Wired completeness updates from check-ins and learner preference updates into `learner_profiles.profile_completeness_pct`.
+- **Animation + interaction (Learn)**:
+  - Added global gamification toast layer (`sudar-learn/src/components/features/gamification/GamificationToasts.tsx`) for level-up and badge unlock feedback.
+  - Mounted to dashboard layout for always-on milestone feedback.
+  - Check-in floating card now reflects actual earned coins and level-up state from backend response.
+- **Challenges (Studio + engine)**:
+  - Added org challenge progression endpoint: `sudar-studio/src/app/api/org/challenges/[id]/progress/route.ts`.
+  - Enhanced challenge listing API with aggregate `teamProgress`.
+  - Added org challenge progression and coin prize payout logic in `sudar-learn/src/lib/gamification/engine.ts`.
+
+### 2026-04-15 — Repository path rename migration (`byteos-*` -> `sudar-*`)
+
+- **Directory rename shipped**:
+  - `byteos-studio` -> `sudar-studio`
+  - `byteos-learn` -> `sudar-learn`
+  - `byteos-intelligence` -> `sudar-intelligence`
+- **Reference updates**: filesystem path references across docs/scripts/config were updated to `sudar-*`.
+- **Compatibility window active (temporary)**: historical notes may still mention `byteos-*`; treat them as aliases during this stabilization cycle.
+- **Cleanup target**: remove remaining legacy alias mentions after one full stabilization cycle (target date: 2026-05-15).
+
 ### 2026-04-11 — Sudar: brand, personalization v2, trust pack, governance, learner UX
 
 **Continuing this work (operators & agents)**  
-- **Database**: Apply `supabase/migrations/20260410000000_personalization_v2.sql` to the shared Supabase project (consent column, `personalization_overlays` on enrollments, `learner_groups` / `learner_group_members`). Then align Prisma: `byteos-studio` — `npx prisma db pull` or `db push` as you normally do for this repo.  
+- **Database**: Apply `supabase/migrations/20260410000000_personalization_v2.sql` to the shared Supabase project (consent column, `personalization_overlays` on enrollments, `learner_groups` / `learner_group_members`). Then align Prisma: `sudar-studio` — `npx prisma db pull` or `db push` as you normally do for this repo.  
 - **Policy & product docs**: Brand and messaging live under `docs/brand/`; security / procurement context under `docs/trust/` (indexed in `docs/trust/README.md`). Studio **Governance** (`/governance`) links learners to the trust pack.  
-- **Code map**: Learn personalization gates — `byteos-learn/src/lib/personalization/eligibility.ts`, module overlays API — `byteos-learn/src/app/api/ai/module-personalize/route.ts`, consent — `byteos-learn/src/app/api/learner/ai-consent/route.ts`. Studio org AI compliance + course personalization live in org/course settings and APIs (`byteos-studio/src/app/api/org/settings/route.ts`, course editor). Learner groups API — `byteos-studio/src/app/api/org/learner-groups/`. Mascot system — `byteos-learn/src/lib/mascot/*`, `byteos-learn/src/components/mascot/*`.  
-- **Windows / Studio dev**: Prefer `npm run dev` from `byteos-studio` (uses `scripts/run-next.mjs`) so Next resolves correctly; optional `NEXT_FORCE_PROJECT_DIST=1` if you want `.next` inside the app folder. See `byteos-studio/.env.example`.  
+- **Code map**: Learn personalization gates — `sudar-learn/src/lib/personalization/eligibility.ts`, module overlays API — `sudar-learn/src/app/api/ai/module-personalize/route.ts`, consent — `sudar-learn/src/app/api/learner/ai-consent/route.ts`. Studio org AI compliance + course personalization live in org/course settings and APIs (`sudar-studio/src/app/api/org/settings/route.ts`, course editor). Learner groups API — `sudar-studio/src/app/api/org/learner-groups/`. Mascot system — `sudar-learn/src/lib/mascot/*`, `sudar-learn/src/components/mascot/*`.  
+- **Windows / Studio dev**: Prefer `npm run dev` from `sudar-studio` (uses `scripts/run-next.mjs`) so Next resolves correctly; optional `NEXT_FORCE_PROJECT_DIST=1` if you want `.next` inside the app folder. See `sudar-studio/.env.example`.  
 - **Shipped feature summary**: [docs/SHIPPED_FEATURES.md](docs/SHIPPED_FEATURES.md) (April 2026 sections). Roadmap text: [docs/STRATEGIC_PATH.md](docs/STRATEGIC_PATH.md) §2.
 
 **What shipped**  
 - **Brand & UI**: Sudar logo components and static marks in Learn and Studio (`SudarLogo.tsx`, `public/sudar-logo.svg`, `public/sudar-logo-mark.svg`); logo assets under `assets/sudar logo/`. Learn theme/globals and Tailwind tokens refined for consistent Sudar visual language.  
-- **Mascot (Learn)**: Neutral mascot SVGs in `byteos-learn/public/mascots/`; `MascotAvatar`, `MascotJourneyCard`, `MascotModeBadge`; engine/personas/rollout/tracking under `byteos-learn/src/lib/mascot/`; types in `src/types/mascot.ts`.  
-- **Personalization v2**: Opt-in **per-module AI overlays** (`role_explain`, `brief_3min`) stored on `enrollments.personalization_overlays` without changing canonical `modules.content`. Eligibility respects `courses.settings.personalization`, `courses.is_adaptive`, and `organisations.settings.ai_compliance`; learner consent via `learner_profiles.generative_ai_consent_at` and `/api/learner/ai-consent`. Daily usage cap via `module_personalize` in usage limits. Plain-text extraction helper: `byteos-learn/src/lib/learn/modulePlainText.ts`.  
+- **Mascot (Learn)**: Neutral mascot SVGs in `sudar-learn/public/mascots/`; `MascotAvatar`, `MascotJourneyCard`, `MascotModeBadge`; engine/personas/rollout/tracking under `sudar-learn/src/lib/mascot/`; types in `src/types/mascot.ts`.  
+- **Personalization v2**: Opt-in **per-module AI overlays** (`role_explain`, `brief_3min`) stored on `enrollments.personalization_overlays` without changing canonical `modules.content`. Eligibility respects `courses.settings.personalization`, `courses.is_adaptive`, and `organisations.settings.ai_compliance`; learner consent via `learner_profiles.generative_ai_consent_at` and `/api/learner/ai-consent`. Daily usage cap via `module_personalize` in usage limits. Plain-text extraction helper: `sudar-learn/src/lib/learn/modulePlainText.ts`.  
 - **Studio**: **Governance** dashboard page; **Compliance** page cross-links; course detail/settings expanded for personalization and org policies; **learner groups** REST API (`/api/org/learner-groups`); Prisma/schema and `database` types updated; agent chat and platform knowledge touch-ups; `fetch-with-deadline` utility; **sensitive input guard** shared pattern with Learn. Middleware and `next.config.mjs` updates; dev scripts `scripts/run-next.mjs`, `scripts/rm-next-cache.mjs`.  
 - **Learn (learner experience)**: **Global search** route (`/search`); course viewer, onboarding, paths, settings (including AI consent UI), TopNav, Floating Sudar Chat, enroll-bridge and path-enrollments improvements; tutor and ALP query routes hardened; **sensitive input guard** for tutor-facing inputs.  
 - **Docs**: Full **brand** pack (`docs/brand/` — strategy, guidelines, tokens, mascot specs, rollout checklist, deck assets). **Trust** pack (`docs/trust/` — posture, data flows, subprocessors, AI system register, threat model, operations). Root **README**, **ECOSYSTEM**, **AGENTS**, **GITHUB_SETUP**, marketing/pitch decks aligned with Sudar positioning.
@@ -76,7 +123,7 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ### 2026-03-08
 - **Sudar Chat (Learn)**: Floating Sudar Chat widget (global access from dashboard), startup questions, paste context, generative blocks (enroll / continue / review), outcome logging (`tutor_action_taken` to learning_events), validate-memory quick preferences (response length: one_line, detailed, concise; modality: reading, listening, video, no_video). Tutor workflow API (summarize, extract_terms) for batch workflows.
-- **RAG (Learn)**: content_chunks migration (pgvector 1024), ingest API (index published courses or single course), embed/retrieve/cache libs, [RAG_SETUP_STEPS.md](byteos-learn/docs/RAG_SETUP_STEPS.md) for env, DB, and ingest.
+- **RAG (Learn)**: content_chunks migration (pgvector 1024), ingest API (index published courses or single course), embed/retrieve/cache libs, [RAG_SETUP_STEPS.md](sudar-learn/docs/RAG_SETUP_STEPS.md) for env, DB, and ingest.
 - **Memory & insights**: Insights builder from learner profile/events/enrollments/ai_interactions, InsightsCarousel component, memory/validate-memory alignment.
 - **Dashboard & paths**: DashboardSidebar, TopNav, ActivityChart, ProgressPieChart, PathNodeGraph, CourseThemeProvider and learning personas (themed learning experience).
 - **Auth**: Change password flow (require_password_change after admin reset) — page, form, complete-password-change API.
@@ -84,13 +131,13 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 - **Docs/assets**: Sudar Chat logo assets (light/dark), root doc tweaks (AGENTS, CONTRIBUTING, ECOSYSTEM, GITHUB_SETUP, README, RESEARCH_FOUNDATION).
 
 ### 2026-03-02
-- **Web presence**: README updated with "What makes ByteOS different" highlights (Sudar's memory, adaptive paths, compliance, open source). Updates section now references Phase 5 in progress (flashcards, document-to-course, SCORM 1.2 import).
+- **Web presence**: README updated with "What makes Sudar different" highlights (Sudar's memory, adaptive paths, compliance, open source). Updates section now references Phase 5 in progress (flashcards, document-to-course, SCORM 1.2 import).
 - **Phase 5**: Flashcards modality (Learn), document-to-course (Studio generate-from-document), and SCORM 1.2 import (Studio import-scorm) documented as implemented.
 
 ### 2026-02-26
 - **Learn (Memory)**: Info banner on Sudar's Memory page now uses explicit light/dark colors (amber-50/amber-950, amber-900/amber-100) so text is readable in both themes — no camouflaging when switching color mode.
 - **Roadmap**: SCORM & format import added to "What's upcoming" (upload SCORM 1.2 packages, parse manifest, map to courses; other formats later). Second modality and Document/URL import remain first priorities.
-- **Repo & docs**: ByteOS pushed to GitHub with README, RESEARCH_FOUNDATION, UPDATES, CONTRIBUTING, LICENSE. Creator story and problem/solution framing added; research-backed positioning for adaptive learning + learner memory.
+- **Repo & docs**: Sudar pushed to GitHub with README, RESEARCH_FOUNDATION, UPDATES, CONTRIBUTING, LICENSE. Creator story and problem/solution framing added; research-backed positioning for adaptive learning + learner memory.
 - **Phase summary**: UPDATES.md created; phase-wise “what we’ve built” and “what’s upcoming” documented for daily commits.
 
 ### 2026-02-24 (representative)
@@ -104,8 +151,8 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 ### Phase 1 — Foundation ✅
 - Supabase schema (profiles, organisations, courses, modules, enrollments, learning_events, ai_interactions, learner_profiles, learning_paths, certifications).
 - Shared auth (Supabase Auth) across Studio and Learn.
-- ByteOS Studio scaffold (Next.js 14): dashboard, courses CRUD, org/workspace.
-- ByteOS Learn scaffold (Next.js 14): dashboard, course catalog, enrollments.
+- Sudar Studio scaffold (Next.js 14): dashboard, courses CRUD, org/workspace.
+- Sudar Learn scaffold (Next.js 14): dashboard, course catalog, enrollments.
 - Environment contracts and RLS policies.
 
 ### Phase 2 — Integration ✅
@@ -168,4 +215,20 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ---
 
-*ByteOS — Learns with you, for you. | Updated as development progresses.*
+*Sudar — Learns with you, for you. | Updated as development progresses.*
+
+### 2026-04-15
+- **Area**: Hybrid analytics engine (admin + learner insights).
+- **Changes**:
+  - Added event contract hardening on Learn `/api/events` with event-type validation and required payload semantics for `section_heartbeat`, `session_end`, `drop_off`, and `modality_switch`.
+  - Added Supabase analytics migration with rollup tables/functions: `analytics_daily_user`, `analytics_daily_course`, `analytics_daily_module`, `analytics_org_rollup`, `analytics_risk_signals`, and `analytics_feedback`.
+  - Added Studio analytics APIs: `/api/analytics/overview`, `/api/analytics/courses/[id]`, `/api/analytics/learner-risk`, `/api/analytics/export` (CSV).
+  - Added Learn insights APIs: `/api/insights/me`, `/api/insights/time`, `/api/insights/feedback`.
+  - Extended Learn NBA route (`/api/intelligence/next-action`) to return explainable analytics fields (`action_type`, `target`, `recommended_duration_mins`, `confidence`).
+  - Added Intelligence endpoint `/api/learner/next-action-analytics` for analytics-driven recommendation output.
+  - Added learner dashboard insight cards for focused time, engagement state, and suggested next session duration.
+  - Added analytics feature-flag gate (`ENABLE_ANALYTICS_ENGINE=false` disables new analytics APIs).
+- **Docs**:
+  - Updated `docs/ALP_API.md`, `docs/STRATEGIC_PATH.md`, `docs/PRODUCT_FEATURES.md`, `docs/USER_FLOWS.md`, `docs/trust/DATA_FLOWS.md`, and `docs/trust/POSTURE.md`.
+  - Added rollout notes in `docs/ENV_REFERENCE.md` and `docs/VERCEL_DEPLOYMENT.md` for `ENABLE_ANALYTICS_ENGINE` and daily analytics cron scheduling.
+  - Added Studio cron endpoint `POST /api/cron/analytics-rollups` and manual admin trigger `POST /api/analytics/refresh` (via Analytics page “Refresh now”).

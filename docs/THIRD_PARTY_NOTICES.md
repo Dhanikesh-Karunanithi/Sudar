@@ -4,7 +4,7 @@
 
 Sudar course default art includes **CSS adapted** from the community pattern gallery at [uiverse.io/patterns](https://uiverse.io/patterns). The **Galaxy** library (MIT License) mirrors many submissions; see [uiverse-io/galaxy](https://github.com/uiverse-io/galaxy).
 
-**What we ship:** namespaced classes in `byteos-learn/src/app/globals.css` and `byteos-studio/src/app/globals.css` under `.sudar-art-uiverse-*` (generic stripes, rings, crosshatch, beams) and `.sudar-art-uiv-*` (curated gallery picks). Layers are **Sudar-tuned** (palette, opacity, frosted-panel pass, `prefers-reduced-motion`) and are not always byte-for-byte copies of the original component. The course art component renders each pattern **twice**: once full-bleed behind the card, and once inside the frosted panel (`forGlass`) with blend modes so the texture stays visible despite `backdrop-blur`.
+**What we ship:** namespaced classes in `sudar-learn/src/app/globals.css` and `sudar-studio/src/app/globals.css` under `.sudar-art-uiverse-*` (generic stripes, rings, crosshatch, beams) and `.sudar-art-uiv-*` (curated gallery picks). Layers are **Sudar-tuned** (palette, opacity, frosted-panel pass, `prefers-reduced-motion`) and are not always byte-for-byte copies of the original component. The course art component renders each pattern **twice**: once full-bleed behind the card, and once inside the frosted panel (`forGlass`) with blend modes so the texture stays visible despite `backdrop-blur`.
 
 **Pattern IDs in product:** see `CourseArtPattern` / `COURSE_ART_PATTERN_IDS` in `courseDefaultArt.ts`. Users can select via `localStorage` key `sudar.courseArt.pattern`.
 

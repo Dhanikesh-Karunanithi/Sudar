@@ -16,7 +16,7 @@ const modalities = [
   },
   {
     name: "Video",
-    desc: "Pre-generated or on-demand video from module content. Powered by Remotion and bytetexttovid.",
+    desc: "Pre-generated or on-demand video from module content. Powered by Remotion and SudarVid.",
   },
   {
     name: "Podcast",

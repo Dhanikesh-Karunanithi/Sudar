@@ -27,3 +27,10 @@ Document primary regions (EU/UK/US) to drive GDPR, UK GDPR, and state privacy la
 - [ ] Whether cardholder data or PHI will appear in course content or attributes (scopes HIPAA/PCI discussion).
 - [ ] `organisations.settings.ai_compliance` reviewed in Sudar Studio (Governance + Org settings).
 - [ ] Retention fields in Org settings treated as **policy intent** until automated jobs exist.
+- [ ] LLM subprocessors confirmed for **data use / training opt-out** (contractual; not a code guarantee).
+- [ ] Analytics rollout flag (`ENABLE_ANALYTICS_ENGINE`) reviewed before production enablement.
+- [ ] Rollup refresh operations (`refresh_analytics_rollups`, `refresh_analytics_risk_signals`) scheduled and monitored.
+- [ ] Access checks validated for Studio analytics exports (org-scoped only).
+- [ ] Recommendation feedback retention window defined for `analytics_feedback`.
+
+**Sovereignty / self-host**: Customers who run their own Supabase instance and Sudar apps retain infrastructure control; marketing claims should still distinguish **product capability** from **customer deployment choices**.

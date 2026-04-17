@@ -35,7 +35,7 @@ These are my responses to issues flagged in the master feedback. Incorporate the
 
 ### A) Branding: ByteOS vs. Sudar
 
-The project originally started as "ByteOS" — named after the ByteAI system I had been building for several years. I changed the product name to "Sudar" because "ByteOS" was confusing given how commonly "Byte" and "OS" are used in the tech field. The internal codebase directories still use `byteos-*` names (byteos-studio, byteos-learn, byteos-intelligence) as legacy references.
+The project originally started as "ByteOS" — named after the ByteAI system I had been building for several years. I changed the product name to "Sudar" because "ByteOS" was confusing given how commonly "Byte" and "OS" are used in the tech field. The internal codebase directories still use `byteos-*` names (sudar-studio, sudar-learn, sudar-intelligence) as legacy references.
 
 **Editorial decision**: Use "Sudar" consistently throughout the paper as the product/platform name. Add a brief footnote or one sentence in Section 4 (Implementation) explaining that internal codebase modules are namespaced as `byteos-*` for historical reasons while the product name is Sudar. Do NOT use "ByteOS" as a product name anywhere else. This resolves the "ByteOS naming not mentioned" critical issue from the feedback.
 
@@ -45,9 +45,9 @@ The paper currently says MIT throughout. The live GitHub repository has been cha
 
 **Editorial decision**: You (Claude) should make a clear recommendation and implement it consistently throughout the paper. My instinct is Apache 2.0 is the right choice for an ecosystem project with planned commercial extensions and plugins (patent grant, contributor clarity). But if you have a better recommendation — including a dual-licensing or hybrid approach — make the case in the paper and implement it. Whichever you choose, ensure it is consistent across: the abstract, Section 4, the conclusion, the references entry [10], Table 1, and the "Licensing and Availability" section. Resolve the "license mismatch" critical issue from the feedback completely.
 
-### C) Premium LMS Tier (`byteos-learning---premium-lms`)
+### C) Premium LMS tier (historical scaffold)
 
-The repository contains a folder called `byteos-learning---premium-lms`. This is an early, internal exploration of a premium/SaaS tier. It is not launched, not functional, and not part of the current open-source offering.
+An early premium/SaaS tier was explored outside the shipped apps; that scaffold is not in this repository. It was never launched, not functional, and not part of the current open-source offering.
 
 **Editorial decision**: Do NOT describe a commercial product in the paper. Instead, add one sentence in the Discussion or Future Work section acknowledging that commercial sustainability models (including managed hosting and enterprise features) are being explored to ensure long-term project viability, while the core platform remains open source. This resolves the "premium LMS tier not disclosed" critical issue from the feedback with appropriate transparency without overpromising.
 
@@ -220,9 +220,9 @@ The rewritten paper must follow this structure (adapted from the feedback's Grou
 Use this information to add technical precision where the current paper is vague. This comes from the project's ECOSYSTEM.md, RESEARCH_FOUNDATION.md, and codebase documentation.
 
 ### Architecture
-- **Studio** (byteos-studio/): Next.js 14, TypeScript strict, App Router, Tailwind CSS, Prisma → Supabase. Port 3000.
-- **Learn** (byteos-learn/): Next.js 14, TypeScript strict, App Router, Tailwind CSS, Prisma → Supabase, Framer Motion, Zustand. Port 3001.
-- **Intelligence** (byteos-intelligence/): Python 3.11+, FastAPI, async handlers, Pydantic v2, Supabase Python client. Port 8000.
+- **Studio** (sudar-studio/): Next.js 14, TypeScript strict, App Router, Tailwind CSS, Prisma → Supabase. Port 3000.
+- **Learn** (sudar-learn/): Next.js 14, TypeScript strict, App Router, Tailwind CSS, Prisma → Supabase, Framer Motion, Zustand. Port 3001.
+- **Intelligence** (sudar-intelligence/): Python 3.11+, FastAPI, async handlers, Pydantic v2, Supabase Python client. Port 8000.
 - **Shared data layer**: Single Supabase project (PostgreSQL + pgvector). Both Studio and Learn connect to the same instance.
 - **AI providers**: Together AI (primary, open-weight), OpenAI (secondary), Anthropic (tertiary). Provider-agnostic: set `AI_CHAT_PROVIDER` env var. Fallback chain: OpenRouter → Together → OpenAI → Anthropic.
 - **TTS**: Edge-TTS (default, zero cost, 40+ languages, 300+ voices). Optional Sarvam AI Indian English neural voices when `SARVAM_API_KEY` is set.

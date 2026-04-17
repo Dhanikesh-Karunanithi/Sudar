@@ -1,6 +1,6 @@
 # Sudar Learn — Performance & Improvement Audit
 
-**Scope**: byteos-learn (Sudar Learn) — learner-facing Next.js 14 app.  
+**Scope**: sudar-learn (Sudar Learn) — learner-facing Next.js 14 app.  
 **Date**: March 2026.
 
 This document summarizes opportunities to make the application **faster** and **more maintainable**, with clear priorities and implementation notes.
@@ -32,7 +32,7 @@ This document summarizes opportunities to make the application **faster** and **
 - **Reduce** `learning_events` limit from 200 to what’s needed for dashboard stats (e.g. last 30 days or last 100 events). Today the full 200 is used only for streak, activity chart, and period stats.
 - **Consider** moving leaderboard to a client fetch or a separate route so the main dashboard HTML doesn’t wait for it.
 
-**Files**: `byteos-learn/src/app/(dashboard)/page.tsx`
+**Files**: `sudar-learn/src/app/(dashboard)/page.tsx`
 
 ---
 
@@ -64,7 +64,7 @@ This document summarizes opportunities to make the application **faster** and **
 - **Improve route**: Skip loading full course list when `existing.next_best_action` is fresh (already done). Ensure “skip when fresh” is the first DB read so you don’t do unnecessary work.
 - **Optional**: Move next-action computation to a **background job** (e.g. after module_complete) and have dashboard only read `next_best_action`; then you can remove the fire-and-forget fetch from the dashboard.
 
-**Files**: `byteos-learn/src/app/(dashboard)/page.tsx` (fetch), `byteos-learn/src/app/api/intelligence/next-action/route.ts`
+**Files**: `sudar-learn/src/app/(dashboard)/page.tsx` (fetch), `sudar-learn/src/app/api/intelligence/next-action/route.ts`
 
 ---
 
@@ -82,7 +82,7 @@ This document summarizes opportunities to make the application **faster** and **
 - **Guardrail**: Consider a **short-lived cache** keyed by hashed message for identical questions to avoid repeated LLM calls (optional, watch for PII).
 - **Course context**: When `course_id` is set, you already truncate; ensure modules are ordered and truncated so the first N modules (or current ±1) get priority to keep token count predictable.
 
-**Files**: `byteos-learn/src/app/api/tutor/query/route.ts`
+**Files**: `sudar-learn/src/app/api/tutor/query/route.ts`
 
 ---
 
@@ -92,7 +92,7 @@ This document summarizes opportunities to make the application **faster** and **
 
 **Opportunity**: Select only needed fields (e.g. `id`, `title`, `description`, `courses`, `is_mandatory`, `status`, `issues_certificate`, `is_adaptive`) to reduce payload and align with principle of least data.
 
-**Files**: `byteos-learn/src/app/(dashboard)/paths/page.tsx`
+**Files**: `sudar-learn/src/app/(dashboard)/paths/page.tsx`
 
 ---
 
@@ -102,7 +102,7 @@ This document summarizes opportunities to make the application **faster** and **
 
 **Opportunity**: If insights only need recent activity, reduce limit (e.g. 100) or add a date filter (e.g. last 90 days) to avoid scanning unnecessary rows as data grows.
 
-**Files**: `byteos-learn/src/app/(dashboard)/memory/page.tsx`, `byteos-learn/src/lib/memory/insights.ts`
+**Files**: `sudar-learn/src/app/(dashboard)/memory/page.tsx`, `sudar-learn/src/lib/memory/insights.ts`
 
 ---
 
@@ -114,7 +114,7 @@ This document summarizes opportunities to make the application **faster** and **
 - **Short term**: Ensure module `content` is only selected when needed; if Supabase supports, avoid loading heavy `content` for modules that aren’t the active one (harder with current Prisma/Supabase shape).
 - **Long term**: Consider **per-module loading**: initial load only active module (and maybe prev/next); load other modules on demand when user navigates. This would require an API or server component that returns one module by ID.
 
-**Files**: `byteos-learn/src/app/(dashboard)/courses/[id]/learn/page.tsx`, `CourseViewer.tsx`
+**Files**: `sudar-learn/src/app/(dashboard)/courses/[id]/learn/page.tsx`, `CourseViewer.tsx`
 
 ---
 
@@ -129,7 +129,7 @@ This document summarizes opportunities to make the application **faster** and **
   - e.g. `const ActivityChart = dynamic(() => import('@/components/dashboard/ActivityChart').then(m => m.ActivityChart), { ssr: false })` (use `ssr: false` only if you don’t need charts in SSR).
 - If you need charts in SSR, keep the import but ensure they’re only used on the routes that need them (no recharts in layout).
 
-**Files**: `byteos-learn/src/app/(dashboard)/page.tsx`, `byteos-learn/src/app/(dashboard)/progress/page.tsx`, `byteos-learn/src/components/dashboard/ActivityChart.tsx`, `byteos-learn/src/components/progress/ProgressPieChart.tsx`
+**Files**: `sudar-learn/src/app/(dashboard)/page.tsx`, `sudar-learn/src/app/(dashboard)/progress/page.tsx`, `sudar-learn/src/components/dashboard/ActivityChart.tsx`, `sudar-learn/src/components/progress/ProgressPieChart.tsx`
 
 ---
 
@@ -154,7 +154,7 @@ This document summarizes opportunities to make the application **faster** and **
 - **Lazy load** the floating chat: e.g. `const FloatingSudarChat = dynamic(() => import('@/components/tutor/FloatingSudarChat').then(m => m.FloatingSudarChat), { ssr: false })` in the layout so the chat (and its dependencies) load after the main content.
 - Ensures users who don’t open the chat don’t pay the cost of its bundle on first load.
 
-**Files**: `byteos-learn/src/app/(dashboard)/layout.tsx`, `byteos-learn/src/components/tutor/FloatingSudarChat.tsx`
+**Files**: `sudar-learn/src/app/(dashboard)/layout.tsx`, `sudar-learn/src/components/tutor/FloatingSudarChat.tsx`
 
 ---
 
@@ -164,7 +164,7 @@ This document summarizes opportunities to make the application **faster** and **
 
 **Opportunity**: Pre-optimize the logo (e.g. WebP, correct size) and use Next.js Image **without** `unoptimized` so the image is optimized and responsive. Use `unoptimized` only if the image is external or you have a specific reason.
 
-**Files**: `byteos-learn/src/components/tutor/FloatingSudarChat.tsx`
+**Files**: `sudar-learn/src/components/tutor/FloatingSudarChat.tsx`
 
 ---
 
@@ -182,7 +182,7 @@ This document summarizes opportunities to make the application **faster** and **
   experimental: { optimizePackageImports: ['lucide-react'] }
   ```
 
-**Files**: `byteos-learn/next.config.mjs`
+**Files**: `sudar-learn/next.config.mjs`
 
 ---
 

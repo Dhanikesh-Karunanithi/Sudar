@@ -22,7 +22,7 @@ Sudar Intelligence is a **Python FastAPI** service. It cannot run on Vercel (Nod
 2. **New project**:
    - **New Project** → **Deploy from GitHub repo**.
    - Select repo: `Dhanikesh-Karunanithi/Sudar`.
-   - When asked for root directory, set **Root Directory** to `byteos-intelligence`.
+   - When asked for root directory, set **Root Directory** to `sudar-intelligence`.
 
 3. **Configure build & start**:
    - **Settings** → **Build**:
@@ -32,7 +32,7 @@ Sudar Intelligence is a **Python FastAPI** service. It cannot run on Vercel (Nod
 
 4. **Environment variables** (Railway → your service → **Variables**):
 
-   From `byteos-intelligence/.env.example`, add at least:
+   From `sudar-intelligence/.env.example`, add at least:
 
    | Variable | Description |
    |----------|-------------|
@@ -48,7 +48,7 @@ Sudar Intelligence is a **Python FastAPI** service. It cannot run on Vercel (Nod
 
    | Variable | Description |
    |----------|-------------|
-   | `BYTEOS_VIDEO_SERVICE_URL` | Video microservice URL (if deployed) |
+   | `SUDARVID_URL` | SudarVid base URL (if deployed; repo `sudar_vid`) |
    | `REMOTION_SERVER_URL` | Remotion renderer URL (if deployed) |
    | `SUDARPLAY_JWT_SECRET` | For SudarPlay modality (min 32 chars) |
    | `WA_INSTANCE_URL` | WorkAdventure instance URL |
@@ -72,7 +72,7 @@ Sudar Intelligence is a **Python FastAPI** service. It cannot run on Vercel (Nod
 2. **New Web Service**:
    - **New** → **Web Service**.
    - Connect repo: `Dhanikesh-Karunanithi/Sudar`.
-   - **Root Directory:** `byteos-intelligence`.
+   - **Root Directory:** `sudar-intelligence`.
 
 3. **Build & start**:
    - **Runtime:** Python 3.
@@ -94,12 +94,12 @@ Sudar Intelligence is a **Python FastAPI** service. It cannot run on Vercel (Nod
 
 2. In repo root:
    ```bash
-   cd byteos-intelligence
+   cd sudar-intelligence
    fly launch
    ```
    When prompted, choose app name (e.g. `sudar-intelligence`), region, and **do not** deploy a Postgres/Redis (we use Supabase).
 
-3. **Dockerfile**: Fly can use a Dockerfile. Create `byteos-intelligence/Dockerfile`:
+3. **Dockerfile**: Fly can use a Dockerfile. Create `sudar-intelligence/Dockerfile`:
    ```dockerfile
    FROM python:3.11-slim
    WORKDIR /app
@@ -141,4 +141,4 @@ Sudar Intelligence is a **Python FastAPI** service. It cannot run on Vercel (Nod
 | Health OK but AI features fail | Verify `SUPABASE_*` and at least one of `TOGETHER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` are set. |
 | Cold starts (Render free) | First request after idle can take 30–60 s. Use Railway or Render paid for always-on. |
 
-For full env reference, see **docs/ENV_REFERENCE.md** (if present) or `byteos-intelligence/.env.example`.
+For full env reference, see **docs/ENV_REFERENCE.md** (if present) or `sudar-intelligence/.env.example`.

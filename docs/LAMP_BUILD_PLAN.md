@@ -9,7 +9,7 @@
 1. **Read first**: [ECOSYSTEM.md](../ECOSYSTEM.md) (authoritative context) and [AGENTS.md](../AGENTS.md) (naming, stack, DO NOTs). Stay grounded in the three-app structure (Studio, Learn, Intelligence) and the canonical schema.
 2. **After completing any task below**: Update [docs/LAMP_BUILD_TRACKER.md](LAMP_BUILD_TRACKER.md) — set that task’s **Status** to **Done**, set **Last updated** to the current date, and add a brief **Note** if useful (e.g. file path of what you added).
 3. **When starting a task**: Optionally set that task’s Status to **In progress** in the tracker so others see work in progress.
-4. **File paths**: Use the paths in this document; they are relative to the repo root. Studio = `byteos-studio/`, Learn = `byteos-learn/`, Intelligence = `byteos-intelligence/`.
+4. **File paths**: Use the paths in this document; they are relative to the repo root. Studio = `sudar-studio/`, Learn = `sudar-learn/`, Intelligence = `sudar-intelligence/`.
 
 ---
 
@@ -29,12 +29,12 @@
 
 | ID   | Task | Where | Acceptance |
 |------|------|--------|------------|
-| **B1** | Create the ALP-facing API spec in one place. | Add **docs/ALP_API.md** (or a dedicated subsection in ECOSYSTEM.md). | Doc exists; defines event ingestion (xAPI/SCORM → `learning_events`), learner Twin read/update, tutor (`POST /api/tutor/query`), next-action. Align with `byteos-intelligence/src/api/routes/` (learner.py, tutor.py) and ECOSYSTEM.md §6 (Learn → Intelligence). |
+| **B1** | Create the ALP-facing API spec in one place. | Add **docs/ALP_API.md** (or a dedicated subsection in ECOSYSTEM.md). | Doc exists; defines event ingestion (xAPI/SCORM → `learning_events`), learner Twin read/update, tutor (`POST /api/tutor/query`), next-action. Align with `sudar-intelligence/src/api/routes/` (learner.py, tutor.py) and ECOSYSTEM.md §6 (Learn → Intelligence). |
 
 **Hints**:  
 - Event ingestion: document expected fields (actor, verb, object, result, context) and mapping to `learning_events`.  
-- Learner: `POST /api/learner/profile`, `POST /api/learner/next-action` (see [byteos-intelligence/src/api/routes/learner.py](../byteos-intelligence/src/api/routes/learner.py)).  
-- Tutor: `POST /api/tutor/query` (see [byteos-intelligence/src/api/routes/tutor.py](../byteos-intelligence/src/api/routes/tutor.py)).  
+- Learner: `POST /api/learner/profile`, `POST /api/learner/next-action` (see [sudar-intelligence/src/api/routes/learner.py](../sudar-intelligence/src/api/routes/learner.py)).  
+- Tutor: `POST /api/tutor/query` (see [sudar-intelligence/src/api/routes/tutor.py](../sudar-intelligence/src/api/routes/tutor.py)).  
 - Include 2–3 sentences on SCORM for compatibility and xAPI/LRS for fine-grained tracking; ALP as intelligence layer on LRS.
 
 **On completion**: Update [LAMP_BUILD_TRACKER.md](LAMP_BUILD_TRACKER.md) — B1 = Done.
@@ -47,7 +47,7 @@ Target: **Moodle 4.x** (largest addressable base; documented AI subsystem). Deli
 
 | ID   | Task | Where | Acceptance |
 |------|------|--------|------------|
-| **B2** | **SudarMemory** — Event ingestion from LMS into ALP. | New adapter (e.g. in repo or `byteos-intelligence`): accepts Moodle webhooks or LRS-style events; maps to schema; writes to `learning_events` and updates `learner_profiles` as per ALP_API.md. Document how Moodle (or xAPI/LRS) events are consumed. | ALP can receive and store events from Moodle (or a documented spec for the same). |
+| **B2** | **SudarMemory** — Event ingestion from LMS into ALP. | New adapter (e.g. in repo or `sudar-intelligence`): accepts Moodle webhooks or LRS-style events; maps to schema; writes to `learning_events` and updates `learner_profiles` as per ALP_API.md. Document how Moodle (or xAPI/LRS) events are consumed. | ALP can receive and store events from Moodle (or a documented spec for the same). |
 | **B3** | **SudarChat** — Tutor inside Moodle. | Moodle block or LTI that embeds the Sudar tutor UI; calls `POST /api/tutor/query` with learner ID and course context; reads Twin from ALP API (per ALP_API.md). | Learner can open Sudar chat from a Moodle course page and receive memory-aware tutor responses. |
 | **B4** | **SudarRecommend** — Next-action in Moodle. | Moodle dashboard block that calls the next-action endpoint (per ALP_API.md) and renders the recommendation card. | Moodle dashboard shows Sudar recommendation card when ALP is configured. |
 

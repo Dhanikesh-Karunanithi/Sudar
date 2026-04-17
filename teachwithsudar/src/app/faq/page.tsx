@@ -17,7 +17,7 @@ const faqs = [
   {
     id: "how-self-host",
     q: "How do I self-host?",
-    a: "Deploy Studio and Learn as two Vercel projects (roots byteos-studio and byteos-learn), deploy Intelligence to Railway (or Render/Fly.io), and set BYTEOS_INTELLIGENCE_URL in both Vercel projects. Full steps: docs/VERCEL_DEPLOYMENT.md and docs/INTELLIGENCE_DEPLOYMENT.md in the repo. See the Self-Host at $0 page for the walkthrough.",
+    a: "Deploy Studio and Learn as two Vercel projects (roots sudar-studio and sudar-learn), deploy Intelligence to Railway (or Render/Fly.io), and set BYTEOS_INTELLIGENCE_URL in both Vercel projects. Full steps: docs/VERCEL_DEPLOYMENT.md and docs/INTELLIGENCE_DEPLOYMENT.md in the repo. See the Self-Host at $0 page for the walkthrough.",
   },
   {
     id: "moodle-plugin",

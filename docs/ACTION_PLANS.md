@@ -10,10 +10,10 @@ Tasks can be executed by a single agent or split across multiple agents when wor
 
 **Objective**: Admins can assign a learning path to learners and set due dates; assignments and due dates are visible.  
 **Strategic pillar**: Outcomes and compliance + Democratize creation.  
-**Apps**: byteos-studio only (Learn consumption in Plan B/C).
+**Apps**: sudar-studio only (Learn consumption in Plan B/C).
 
 ### A1. Path assignment UI (Studio)
-- **Task**: Add an “Assign” flow on the path detail page (`byteos-studio/src/app/(dashboard)/paths/[id]/page.tsx` or a new subpage) that:
+- **Task**: Add an “Assign” flow on the path detail page (`sudar-studio/src/app/(dashboard)/paths/[id]/page.tsx` or a new subpage) that:
   - Lets the admin select one or more learners (from `profiles` in the same org, or from a simple list).
   - Creates `enrollments` rows with `path_id`, `user_id`, `enrolled_by`, optional `due_date`.
 - **Hint**: Reuse `createAdminClient()` and existing enrollments API pattern; ensure `course_id` is null and `path_id` is set. For learner list, fetch `profiles` joined with `org_members` for the current org.
@@ -37,15 +37,15 @@ Tasks can be executed by a single agent or split across multiple agents when wor
 
 **Objective**: Learners see certificates as “Print / Save as PDF” and see upcoming deadlines when they have due dates.  
 **Strategic pillar**: Outcomes and compliance + Learner-first.  
-**Apps**: byteos-learn only.
+**Apps**: sudar-learn only.
 
 ### B1. Certificate Print / Save as PDF (Learn)
-- **Task**: On the public certificate page (`byteos-learn/src/app/cert/[code]/page.tsx`), ensure “Print / Save as PDF” is obvious and reliable (e.g. dedicated button that calls `window.print()`, print-specific CSS so only the certificate card is printed).
+- **Task**: On the public certificate page (`sudar-learn/src/app/cert/[code]/page.tsx`), ensure “Print / Save as PDF” is obvious and reliable (e.g. dedicated button that calls `window.print()`, print-specific CSS so only the certificate card is printed).
 - **Hint**: Use a client component for the button if needed; add `@media print { ... }` to hide nav/actions and show only the cert card.
 - **Acceptance**: User can click one button and get a print dialog (or “Save as PDF” in that dialog) with only the certificate content.
 
 ### B2. Upcoming deadlines on dashboard (Learn)
-- **Task**: On the learner dashboard (`byteos-learn/src/app/(dashboard)/page.tsx`), fetch enrollments (course or path) that have `due_date` in the future; show an “Upcoming deadlines” or “Due soon” card with title, due date, and link to course/path.
+- **Task**: On the learner dashboard (`sudar-learn/src/app/(dashboard)/page.tsx`), fetch enrollments (course or path) that have `due_date` in the future; show an “Upcoming deadlines” or “Due soon” card with title, due date, and link to course/path.
 - **Hint**: Query `enrollments` where `user_id = currentUser` and `due_date >= today`, order by `due_date` asc; resolve course/path title from `courses` or `learning_paths`.
 - **Acceptance**: When enrollments have due dates, learner sees a clear list/card with next due items and can click through.
 
@@ -57,10 +57,10 @@ Tasks can be executed by a single agent or split across multiple agents when wor
 
 **Objective**: Studio has a simple compliance view (who is assigned, due when, at-risk/overdue); Learn surfaces “Required” or “Due soon” where relevant.  
 **Strategic pillar**: Outcomes and compliance.  
-**Apps**: byteos-studio (compliance view), byteos-learn (required/due soon badges or section).
+**Apps**: sudar-studio (compliance view), sudar-learn (required/due soon badges or section).
 
 ### C1. Compliance view (Studio)
-- **Task**: Add a “Compliance” or “Assignments” page under Studio (e.g. `byteos-studio/src/app/(dashboard)/compliance/page.tsx`) that lists path enrollments (and optionally course enrollments) with: learner name, path/course title, due date, status (on track / at risk / overdue), progress %.
+- **Task**: Add a “Compliance” or “Assignments” page under Studio (e.g. `sudar-studio/src/app/(dashboard)/compliance/page.tsx`) that lists path enrollments (and optionally course enrollments) with: learner name, path/course title, due date, status (on track / at risk / overdue), progress %.
 - **Hint**: “Overdue” = `due_date < today` and not completed; “At risk” = due within 7 days and not completed; “On track” = due later or completed. Use `createAdminClient()`, join enrollments + profiles + learning_paths.
 - **Acceptance**: Admin can open Compliance and see a table/filtered list of assignments with due dates and status.
 

@@ -26,7 +26,7 @@ One seed. Infinite ways to learn. Powered by Sudar.
 [Explore SudarVerse] [View on GitHub]
 ```
 
-- **Primary CTA:** Add or make prominent a **"View on GitHub"** button linking to `https://github.com/lorddannykay/ByteOS`
+- **Primary CTA:** Add or make prominent a **"View on GitHub"** button linking to `https://github.com/Dhanikesh-Karunanithi/Sudar`
 - **Secondary:** Keep "Join waitlist" and/or "Watch demo" as-is.
 
 **Bottom line in Hero (if present):** e.g. "Part of the SudarVerse Ecosystem • Powered by Sudar • Built for learners and L&D teams"
@@ -72,7 +72,7 @@ const items = [
 </p>
 ```
 
-**Ensure the GitHub link** in the footer points to `https://github.com/lorddannykay/ByteOS` (Sudar repo).
+**Ensure the GitHub link** in the footer points to `https://github.com/Dhanikesh-Karunanithi/Sudar` (Sudar canonical repo).
 
 ---
 
@@ -81,7 +81,7 @@ const items = [
 **Add a primary CTA above or beside the waitlist form:**
 
 - **Button/link:** "View Sudar on GitHub"
-- **URL:** `https://github.com/lorddannykay/ByteOS`
+- **URL:** `https://github.com/Dhanikesh-Karunanithi/Sudar`
 
 **Optional headline tweak:** e.g. "Join the waitlist and be among the first to experience the complete SudarVerse ecosystem — or explore the open-source Sudar platform on GitHub today."
 
@@ -98,7 +98,7 @@ Keep the existing Formspree waitlist and success/error messaging.
 ```markdown
 # SudarVerse — AI-Powered Learning Ecosystem
 
-SudarVerse is the AI learning ecosystem that **learns with you** — powered by [Sudar](https://github.com/lorddannykay/ByteOS), the open-source Learning Operating System. One seed. Infinite ways to learn.
+SudarVerse is the AI learning ecosystem that **learns with you** — powered by [Sudar](https://github.com/Dhanikesh-Karunanithi/Sudar), the open-source Learning Operating System. One seed. Infinite ways to learn.
 
 This repository is the **landing page** for [byteverse.app](https://byteverse.app). The product is built on Sudar: longitudinal learner memory, adaptive paths, AI tutor (Sudar), and multi-modality (text, flashcards, video, audio, mind maps). Created by **Dhanikesh Karunanithi** — Global Head of Learning Tech & Data Strategy; 2× Gold Stevie (2024), Brandon Hall Gold & Silver (2022).
 ```
@@ -116,4 +116,4 @@ This repository is the **landing page** for [byteverse.app](https://byteverse.ap
 - [ ] CTA: add "View Sudar on GitHub" button/link
 - [ ] README: SudarVerse = landing; Sudar = platform; creator and link to Sudar repo
 
-**Sudar repo URL:** https://github.com/lorddannykay/ByteOS
+**Sudar repo URL:** https://github.com/Dhanikesh-Karunanithi/Sudar

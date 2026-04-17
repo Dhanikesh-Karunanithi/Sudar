@@ -239,12 +239,15 @@ LEARNER-INITIATED:
     → Supabase writes: ai_interactions (type: question)
 
 BYTE-INITIATED (Proactive):
+    Trigger 0: Dashboard session / navigation (not on inline course learn page)
+        → Compact bar: short Sudar line + tap-to-reply chips (e.g. continue learning, browse, dismiss)
+        → Chip with follow_up_message → same as sending that text to Sudar (floating chat)
+        → Supabase writes: ai_interactions (proactive_nudge on show; proactive_choice on chip)
+
     Trigger 1: 90 seconds of inactivity on a module
-        → Sudar expands with soft animation
-        → Message: "Looks like you've been on this part for a bit — 
-                    want me to explain it differently?"
-        → Options: "Yes please" / "I'm good, just rereading"
-        → Supabase writes: ai_interactions (type: proactive_nudge)
+        → Banner or tutor surface: short line + **multiple-choice chips** (e.g. hint, explain differently, dismiss)
+        → Chip routes follow-up to tutor query; dismiss snoozes/closes without query
+        → Supabase writes: ai_interactions (type: proactive_nudge); chip → proactive_choice / tutor_action_taken
     
     Trigger 2: Quiz failed twice on same question
         → Sudar appears: "That one's tricky. Let me try explaining it another way."
@@ -433,6 +436,26 @@ ONGOING — The Compounding Effect
 | Modality not available | "This format isn't ready yet. Sudar is preparing it — check back in 2 minutes." |
 | AI tutor context too long | Sudar summarizes last 10 interactions automatically |
 | Free tier limit reached | Friendly upgrade prompt: "You've reached your 10-learner limit. Upgrade to add more." |
+
+---
+
+## SECTION 7: Analytics Insight Flow (Admin + Learner)
+
+```text
+[Learner studies module]
+    → Learn writes learning_events (heartbeat/session_end/drop_off/quiz/modality)
+    → Supabase rollup job derives daily analytics tables
+    → Studio Analytics reads rollups
+        ├── Org overview (focus ratio, engagement, completions)
+        ├── Learner risk list (low/medium/high + reasons)
+        └── CSV export (overview/risk/course)
+    → Learn Insights reads personal rollups
+        ├── Focused time + consistency card
+        ├── Suggested next session duration
+        └── Next Best Action reason + confidence
+    → Learner submits feedback (accepted/dismissed/later)
+    → Feedback stored for NBA tuning
+```
 
 ---
 

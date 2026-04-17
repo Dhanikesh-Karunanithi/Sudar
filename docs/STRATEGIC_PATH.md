@@ -24,7 +24,7 @@ Every new feature or fix should map to at least one of these pillars. If it does
 **Done and live**  
 - **Foundation**: Supabase schema, shared auth, Studio + Learn scaffold, env contracts.  
 - **Integration**: Course CRUD, publish → Learn, enrollments, learning_events, progress.  
-- **Learner experience**: Personalized dashboard (streak, time, engagement, Sudar recommends) with DashboardSidebar, TopNav, ActivityChart, ProgressPieChart, PathNodeGraph; CourseThemeProvider and learning personas. Course viewer with markdown, quizzes; SCORM delivery (proxy for SCORM package assets from Supabase Storage with correct MIME types for iframe playback). AI tutor Sudar: RAG in Learn (content_chunks + pgvector 1024, ingest API, embed/retrieve/cache); Floating Sudar Chat (global), startup questions, paste context; longitudinal memory (ai_interactions + ai_tutor_context); structured tutor responses (blocks/actions: enroll, continue, review); validate-memory quick preferences (response length, modality); tutor workflow API (summarize, extract_terms); outcome logging (tutor_action_taken); My Memory page and memory insights (InsightsCarousel). Onboarding assessment, text selection → Sudar. Change password flow when require_password_change is set (e.g. after admin reset).  
+- **Learner experience**: Personalized dashboard (streak, time, engagement, Sudar recommends) with DashboardSidebar, TopNav, ActivityChart, ProgressPieChart, PathNodeGraph; CourseThemeProvider and learning personas. Course viewer with markdown, quizzes; SCORM delivery (proxy for SCORM package assets from Supabase Storage with correct MIME types for iframe playback). AI tutor Sudar: RAG in Learn (content_chunks + pgvector 1024, ingest API, embed/retrieve/cache); Floating Sudar Chat (global), **startup and proactive tap-to-reply chips**, paste context; **ProactiveSudarHost** (session + route prompts) and idle nudge banner with multiple-choice follow-ups; longitudinal memory (ai_interactions + ai_tutor_context); structured tutor responses (blocks/actions: enroll, continue, review); validate-memory quick preferences (response length, modality); tutor workflow API (summarize, extract_terms); outcome logging (`tutor_action_taken`, proactive choice); My Memory page and memory insights (InsightsCarousel). Onboarding assessment, text selection → Sudar. Change password flow when require_password_change is set (e.g. after admin reset).  
 - **Intelligence**: Next best action engine, onboarding bootstrap, learner_profiles + ai_tutor_context, struggle detection from quizzes, adaptive path ordering (optional courses reordered by Sudar). Tutor outcome logging so the system learns from suggestions.  
 - **Paths & certs**: Learning paths (Studio: create/edit, mandatory/adaptive/certificate toggles; Learn: enroll, personalised sequence, progress sync), path unlock rules (complete previous first), certifications on path completion with shareable public link.  
 - **Studio analytics**: Org-level analytics (completions, quiz scores, struggle topics); **Time per section** — per-course view of learner time per module with active vs idle time, “possible skip” and “over time” flags.
@@ -55,6 +55,7 @@ Every new feature or fix should map to at least one of these pillars. If it does
 - **Modality**: Text, Flashcards, and Listen (Audio TTS) live; Video/Podcast/MindMap use pre-generated or on-demand content; SudarFeed/SudarPlay still placeholders.  
 - **Polish**: No server-generated certificate PDF.  
 - **Scale**: No white-label, SSO, or HRIS hooks yet (explicitly later phase).
+- **Analytics engine depth**: v1 hybrid analytics engine scaffolded (rollups + admin/learner insight APIs + risk signals + recommendation feedback), now needs production rollout tuning and scheduled refresh orchestration.
 
 ---
 
@@ -67,7 +68,7 @@ Every new feature or fix should map to at least one of these pillars. If it does
 4. **Production deployment documented**: Studio and Learn deploy to Vercel; Intelligence deploys to Railway, Render, or Fly.io. See docs/VERCEL_DEPLOYMENT.md and docs/INTELLIGENCE_DEPLOYMENT.md.
 
 **Pending phases (from ECOSYSTEM §8)**  
-- **Phase 3 remaining**: Video modality (wire to bytetexttovid / Remotion).  
+- **Phase 3 remaining**: Video modality (wire to SudarVid / Remotion).  
 - **Phase 5 — Engagement & Scale**: SudarPlay, SudarFeed, SudarMind modalities; white-label per org; HRIS integration hooks.  
 - **Compliance**: Email reminders shipped (cron endpoint; see SHIPPED_FEATURES.md).  
 - **Polish**: Server-generated certificate PDF.

@@ -19,12 +19,12 @@ This guide walks you through connecting the Sudar repo to Vercel and hosting **S
 2. **Import** the repo: `Dhanikesh-Karunanithi/Sudar`. Authorize Vercel to access GitHub if prompted.
 3. **Configure the project:**
    - **Project Name:** e.g. `sudar-studio`
-   - **Root Directory:** Click **Edit** and set to **`byteos-studio`** (important — this is a monorepo).
+   - **Root Directory:** Click **Edit** and set to **`sudar-studio`** (important — this is a monorepo).
    - **Framework Preset:** Next.js (auto-detected).
    - **Build Command:** `npm run build` (default).
    - **Output Directory:** leave default (`.next`).
    - **Install Command:** `npm install` (default).
-4. **Environment Variables:** Add the variables from `byteos-studio/.env.example`. At minimum for a working deploy:
+4. **Environment Variables:** Add the variables from `sudar-studio/.env.example`. At minimum for a working deploy:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
@@ -34,6 +34,7 @@ This guide walks you through connecting the Sudar repo to Vercel and hosting **S
    - `INTELLIGENCE_SERVICE_SECRET` → optional, must match Railway `INTELLIGENCE_SERVICE_SECRET` if using ALP tutor proxy (server-to-server)
    - At least one AI key: `TOGETHER_API_KEY` and/or `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`
    - `NEXT_PUBLIC_LEARN_APP_URL` → your Learn app URL (e.g. `https://sudar-learn.vercel.app`)
+   - `ENABLE_ANALYTICS_ENGINE=true` → enables analytics APIs and refresh endpoints
 5. Click **Deploy**. After the first deploy, set **NEXTAUTH_URL** to the actual Vercel URL (e.g. `https://sudar-studio-xxx.vercel.app`) and redeploy if you used a placeholder.
 
 ---
@@ -44,10 +45,10 @@ This guide walks you through connecting the Sudar repo to Vercel and hosting **S
 2. Import the **same** repo: `Dhanikesh-Karunanithi/Sudar`.
 3. **Configure the project:**
    - **Project Name:** e.g. `sudar-learn`
-   - **Root Directory:** Set to **`byteos-learn`**.
+   - **Root Directory:** Set to **`sudar-learn`**.
    - **Framework Preset:** Next.js.
    - **Build / Install:** leave defaults.
-4. **Environment Variables:** Add from `byteos-learn/.env.example`. Minimum:
+4. **Environment Variables:** Add from `sudar-learn/.env.example`. Minimum:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
@@ -56,6 +57,7 @@ This guide walks you through connecting the Sudar repo to Vercel and hosting **S
    - `BYTEOS_INTELLIGENCE_URL` → same Intelligence API URL as Studio
    - `NEXT_PUBLIC_APP_URL` → same as NEXTAUTH_URL for Learn
    - `INTELLIGENCE_SERVICE_SECRET` → optional, must match Railway `INTELLIGENCE_SERVICE_SECRET` for ALP tutor proxy
+   - `ENABLE_ANALYTICS_ENGINE=true` → enables learner insights APIs
 5. Click **Deploy**.
 
 ---
@@ -72,7 +74,7 @@ This guide walks you through connecting the Sudar repo to Vercel and hosting **S
 
 ## 5. Intelligence API (hosted separately)
 
-Vercel runs **Node.js/Next.js** only. The **Sudar Intelligence** service (Python FastAPI in `byteos-intelligence/`) must be hosted elsewhere and its URL used as `BYTEOS_INTELLIGENCE_URL` in both Studio and Learn.
+Vercel runs **Node.js/Next.js** only. The **Sudar Intelligence** service (Python FastAPI in `sudar-intelligence/`) must be hosted elsewhere and its URL used as `BYTEOS_INTELLIGENCE_URL` in both Studio and Learn.
 
 **Full step-by-step:** See **[docs/INTELLIGENCE_DEPLOYMENT.md](INTELLIGENCE_DEPLOYMENT.md)** for Railway, Render, and Fly.io.
 
@@ -80,9 +82,9 @@ Vercel runs **Node.js/Next.js** only. The **Sudar Intelligence** service (Python
 
 | Option   | Notes |
 |----------|--------|
-| **Railway** | Add `byteos-intelligence` (or repo + root dir `byteos-intelligence`), set env vars (including `CORS_ORIGINS`), deploy. Gives a URL like `https://xxx.up.railway.app`. |
-| **Render**  | New Web Service, connect repo, root `byteos-intelligence`, build `pip install -r requirements.txt`, start `uvicorn src.api.main:app --host 0.0.0.0 --port $PORT`. |
-| **Fly.io**  | Use Docker or `fly launch` in `byteos-intelligence` and expose port 8000. |
+| **Railway** | Add `sudar-intelligence` (or repo + root dir `sudar-intelligence`), set env vars (including `CORS_ORIGINS`), deploy. Gives a URL like `https://xxx.up.railway.app`. |
+| **Render**  | New Web Service, connect repo, root `sudar-intelligence`, build `pip install -r requirements.txt`, start `uvicorn src.api.main:app --host 0.0.0.0 --port $PORT`. |
+| **Fly.io**  | Use Docker or `fly launch` in `sudar-intelligence` and expose port 8000. |
 
 Then set **BYTEOS_INTELLIGENCE_URL** in both Vercel projects to that URL (e.g. `https://sudar-intelligence.up.railway.app` for the canonical Railway deployment).
 
@@ -98,9 +100,10 @@ Then set **BYTEOS_INTELLIGENCE_URL** in both Vercel projects to that URL (e.g. `
 ## 7. Summary checklist
 
 - [ ] Repo pushed to GitHub: `Dhanikesh-Karunanithi/Sudar`
-- [ ] Vercel project **Sudar Studio** with root **byteos-studio** and env vars set
-- [ ] Vercel project **Sudar Learn** with root **byteos-learn** and env vars set
+- [ ] Vercel project **Sudar Studio** with root **sudar-studio** and env vars set
+- [ ] Vercel project **Sudar Learn** with root **sudar-learn** and env vars set
 - [ ] Sudar Intelligence deployed (Railway/Render/Fly) and URL set in both Vercel projects
 - [ ] `NEXTAUTH_URL` / `NEXT_PUBLIC_LEARN_APP_URL` / `NEXT_PUBLIC_APP_URL` updated to production URLs
+- [ ] Analytics scheduler configured to call `POST /api/cron/analytics-rollups` daily with `Authorization: Bearer <CRON_SECRET>`
 
 For full env reference, see **docs/ENV_REFERENCE.md**.

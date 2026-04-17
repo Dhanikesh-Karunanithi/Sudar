@@ -10,5 +10,5 @@ Living document; extend when adding routes that accept URLs or HTML.
 | SQL injection | Parameterised Supabase/Prisma queries only |
 | SSRF | Avoid fetching arbitrary user URLs; allowlists for webhooks |
 | Auth abuse | Rate limits on tutor; `CRON_SECRET` on scheduled routes; short-lived embed tokens |
-| Scheduled job abuse | `byteos-studio` cron routes (e.g. compliance reminders): require `CRON_SECRET` in `Authorization: Bearer` or query; never expose without auth |
+| Scheduled job abuse | `sudar-studio` cron routes (e.g. compliance reminders): require `CRON_SECRET` in `Authorization: Bearer` or query; never expose without auth |
 | Supply chain | Lockfiles, monitor CVEs, upgrade cadence |

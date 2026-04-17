@@ -1,6 +1,6 @@
 # Sudar — Environment Variables Reference
 
-This is the single source of truth for all environment variables used across Sudar Studio, Sudar Learn, and Sudar Intelligence. The in-app **AI & API Keys** page (Studio → Settings → AI & API Keys) shows key status and "How to get this key" steps; the list is driven by `byteos-studio/src/lib/ai/providerConfig.ts`. **Keep in sync:** when adding a new provider or env var, update both this file and `providerConfig.ts` so the Keys page and this reference stay aligned.
+This is the single source of truth for all environment variables used across Sudar Studio, Sudar Learn, and Sudar Intelligence. The in-app **AI & API Keys** page (Studio → Settings → AI & API Keys) shows key status and "How to get this key" steps; the list is driven by `sudar-studio/src/lib/ai/providerConfig.ts`. **Keep in sync:** when adding a new provider or env var, update both this file and `providerConfig.ts` so the Keys page and this reference stay aligned.
 
 **Where to set these**: Add to `.env.local` (local) or your host's environment (Vercel, Railway, Render). See Studio → AI & API Keys → "Where to set these" for copy-paste and host-specific instructions.
 
@@ -96,8 +96,10 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 | Variable | App | Description | Get key |
 |----------|-----|-------------|---------|
 | `OPENAI_API_KEY` | Studio | OpenAI TTS (audio/speech) for Listen modality and video narration. | Same as Chat. |
-| `SARVAM_API_KEY` | Intelligence | [Sarvam AI](https://sarvam.ai/) — Indian English voices. Optional. | Sarvam AI console |
-| `BYTEOS_INTELLIGENCE_URL` | Studio | When set, Studio can proxy TTS through Intelligence (Edge-TTS or Sarvam). | — |
+| `SARVAM_API_KEY` | Intelligence, Studio, Learn | [Sarvam AI](https://sarvam.ai/) provider status indicator in voice settings. Optional in this phase (status only; no live library fetch). | Sarvam AI console |
+| `ELEVENLABS_API_KEY` | Studio, Learn | ElevenLabs provider status indicator in voice settings. Optional in this phase (status only; no live library fetch). | [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) |
+| `BYTEOS_INTELLIGENCE_URL` | Studio, Learn | When set, apps can proxy TTS through Intelligence (Edge-TTS first; optional provider fallback paths). | — |
+| `INTELLIGENCE_SERVICE_SECRET` | Studio, Learn, Intelligence | Optional shared secret for Studio/Learn/Intelligence server-to-server TTS calls (`X-Intelligence-Service-Secret`). | — |
 
 ---
 
@@ -129,19 +131,19 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 
 | Variable | App | Description |
 |----------|-----|-------------|
+| `SUDARVID_URL` | Learn, Studio (optional), Intelligence (optional) | SudarVid microservice base URL for the Watch modality (e.g. `http://localhost:8000`). Code and docs use this name only; run the service from repo folder `sudar_vid`. |
 | `REMOTION_SERVER_URL` | Studio, Intelligence | Remotion render server (e.g. `http://localhost:3040`). |
-| `BYTEOS_VIDEO_SERVICE_URL` | Studio, Intelligence | Video generation microservice (e.g. `http://localhost:5001`). |
 
 ---
 
 ## Intelligence (Python) — summary
 
-Same Supabase and AI provider keys as above. See `byteos-intelligence/.env.example`. Key vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `AI_CHAT_PROVIDER`, `TOGETHER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AI_CHAT_BASE_URL`, `AI_CHAT_API_KEY`, `AI_CHAT_DEFAULT_MODEL`, `PORT`, `ENV`.
+Same Supabase and AI provider keys as above. See `sudar-intelligence/.env.example`. Key vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `AI_CHAT_PROVIDER`, `TOGETHER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AI_CHAT_BASE_URL`, `AI_CHAT_API_KEY`, `AI_CHAT_DEFAULT_MODEL`, `PORT`, `ENV`.
 
 Security hardening vars:
 
 - `SUPABASE_JWT_SECRET` (Intelligence): validates Supabase JWTs from Learn/Studio.
-- `INTELLIGENCE_SERVICE_SECRET` (Intelligence + Learn): optional shared secret used for ALP server-to-server proxy calls via `X-Intelligence-Service-Secret`.
+- `INTELLIGENCE_SERVICE_SECRET` (Intelligence + Learn + Studio): optional shared secret used for ALP and Studio TTS server-to-server proxy calls via `X-Intelligence-Service-Secret`.
 
 ---
 
@@ -152,6 +154,7 @@ Security hardening vars:
 | `CRON_SECRET` | Studio | Secret for cron endpoints (e.g. compliance reminders). |
 | `RESEND_API_KEY` | Studio | [Resend](https://resend.com) — email for reminders. |
 | `RESEND_FROM` | Studio | From address (e.g. `Sudar <onboarding@resend.dev>`). |
+| `ENABLE_ANALYTICS_ENGINE` | Studio, Learn | Set `true` to enable analytics engine APIs; set `false` to disable analytics endpoints during staged rollout. |
 | `LANGFUSE_*` | Studio | Optional observability (Langfuse). |
 
 ---

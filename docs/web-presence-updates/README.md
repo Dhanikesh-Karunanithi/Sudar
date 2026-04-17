@@ -18,7 +18,7 @@ This folder contains the copy and instructions to update your external web prese
 
 ## Quick links
 
-- **Sudar (GitHub, repo name ByteOS):** https://github.com/lorddannykay/ByteOS  
+- **Sudar (GitHub):** https://github.com/Dhanikesh-Karunanithi/Sudar  
 - **SudarVerse (product):** https://byteverse.app  
 - **Portfolio:** https://dhanikeshkarunanithi.com  
 

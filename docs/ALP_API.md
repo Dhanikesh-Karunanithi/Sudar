@@ -6,7 +6,7 @@
 
 **Admin UI**: In **Sudar Studio**, open **Integrations** (Organization section) to see the Learn base URL for ALP, API key setup, and embed pointers.
 
-**Reference implementation**: `byteos-intelligence/` (Python FastAPI). See also [ECOSYSTEM.md](ECOSYSTEM.md) §5 (schema) and §6 (Learn → Intelligence contracts).
+**Reference implementation**: `sudar-intelligence/` (Python FastAPI). See also [ECOSYSTEM.md](ECOSYSTEM.md) §5 (schema) and §6 (Learn → Intelligence contracts).
 
 ---
 
@@ -53,13 +53,25 @@ Canonical table (see [ECOSYSTEM.md](ECOSYSTEM.md) §5):
 - `ai_tutor_open` | `ai_tutor_query`
 - `modality_switch`
 - `drop_off` | `streak_broken` | `streak_maintained`
+- `session_end` — learner closed or navigated away from the lesson surface (Sudar Learn uses `pagehide`). Payload often includes `active_secs`, `reason` (e.g. `pagehide`).
+
+### 2.1a Payload shapes (reference)
+
+| `event_type` | Suggested `modality` | `payload` |
+|--------------|----------------------|-----------|
+| `modality_switch` | Destination modality (e.g. `video`) | `{ "from_modality": "text", "to_modality": "video" }` |
+| `video_play` | `video` | `{ "scene_index": number, "scene_count": number }` |
+| `video_pause` | `video` | `{ "scene_index": number, "scene_count": number }` |
+| `video_replay` | `video` | `{ "scene_from": number, "scene_to": number }` |
+| `session_end` | Active modality | `{ "active_secs": number, "reason": "pagehide" }` |
+| `drop_off` | Active modality | `{ "active_secs": number, "completed": false }` — emit when the learner spent material time on a module but left without completing (product-defined threshold). |
 
 ### 2.2 Mapping from xAPI / SCORM
 
 - **xAPI**: Map `actor.account.name` or similar to Sudar `user_id`; map `verb.id` to one of the `event_type` values above; put `result`, `object`, and extra data in `payload`; derive `duration_secs` from `result.duration` or timestamps.
 - **SCORM**: Map `cmi.core.lesson_status` / `cmi.completion_status` to `module_complete`; put raw score and completion in `payload`; map SCO/course identifiers to `module_id`/`course_id` if they exist in Sudar.
 
-**Ingestion endpoint (implemented)**: `POST /api/alp/events` on the **Learn** app (e.g. `https://learn.example.com/api/alp/events`). Accepts a batch of events; performs mapping and insert into `learning_events`; runs the same side-effects as the internal events API (enrollment progress, quiz struggles). Implementation: [byteos-learn/src/app/api/alp/events/route.ts](../byteos-learn/src/app/api/alp/events/route.ts).
+**Ingestion endpoint (implemented)**: `POST /api/alp/events` on the **Learn** app (e.g. `https://learn.example.com/api/alp/events`). Accepts a batch of events; performs mapping and insert into `learning_events`; runs the same side-effects as the internal events API (enrollment progress, quiz struggles). Implementation: [sudar-learn/src/app/api/alp/events/route.ts](../sudar-learn/src/app/api/alp/events/route.ts).
 
 **Auth**: Header `x-alp-api-key: <ALP_API_KEY>` or `Authorization: Bearer <ALP_API_KEY>`. Set `ALP_API_KEY` in the Learn app environment; the LMS connector must send this key.
 
@@ -92,7 +104,7 @@ This doc assumes ALP connectors that call Intelligence use a **REST API** for th
 ### 3.2 Update Twin from session events
 
 **Endpoint**: `POST /api/learner/profile`  
-**Implementation**: [byteos-intelligence/src/api/routes/learner.py](../byteos-intelligence/src/api/routes/learner.py)
+**Implementation**: [sudar-intelligence/src/api/routes/learner.py](../sudar-intelligence/src/api/routes/learner.py)
 
 **Request body** (ProfileUpdateRequest):
 
@@ -112,7 +124,7 @@ This doc assumes ALP connectors that call Intelligence use a **REST API** for th
 ## 4. Next-best action (SudarRecommend)
 
 **Endpoint**: `POST /api/learner/next-action`  
-**Implementation**: [byteos-intelligence/src/api/routes/learner.py](../byteos-intelligence/src/api/routes/learner.py)
+**Implementation**: [sudar-intelligence/src/api/routes/learner.py](../sudar-intelligence/src/api/routes/learner.py)
 
 **Request body** (NextActionRequest):
 
@@ -136,7 +148,7 @@ This doc assumes ALP connectors that call Intelligence use a **REST API** for th
 
 **Usage**: SudarRecommend dashboard block calls this with the learner’s `user_id` and current enrollments; renders the returned recommendation card.
 
-**ALP proxy (implemented)**: For external LMSs, use `POST /api/alp/next-action` on the **Learn** app. Same request body; auth: `x-alp-api-key` or `Authorization: Bearer <ALP_API_KEY>`. Implementation: [byteos-learn/src/app/api/alp/next-action/route.ts](../byteos-learn/src/app/api/alp/next-action/route.ts).
+**ALP proxy (implemented)**: For external LMSs, use `POST /api/alp/next-action` on the **Learn** app. Same request body; auth: `x-alp-api-key` or `Authorization: Bearer <ALP_API_KEY>`. Implementation: [sudar-learn/src/app/api/alp/next-action/route.ts](../sudar-learn/src/app/api/alp/next-action/route.ts).
 
 ---
 
@@ -145,7 +157,7 @@ This doc assumes ALP connectors that call Intelligence use a **REST API** for th
 ### 5.1 Tutor Q&A
 
 **Endpoint**: `POST /api/tutor/query`  
-**Implementation**: [byteos-intelligence/src/api/routes/tutor.py](../byteos-intelligence/src/api/routes/tutor.py)
+**Implementation**: [sudar-intelligence/src/api/routes/tutor.py](../sudar-intelligence/src/api/routes/tutor.py)
 
 **Request body** (TutorQueryRequest):
 
@@ -164,12 +176,12 @@ This doc assumes ALP connectors that call Intelligence use a **REST API** for th
 
 **Usage**: SudarChat in the LMS sends the learner’s message and the current module/course context; Intelligence uses RAG and longitudinal memory (from `ai_tutor_context` / `ai_interactions`) to produce a reply. The LMS is responsible for passing `context_text` (e.g. from the current page or from a pre-indexed course chunk).
 
-**ALP proxy (implemented)**: For external LMSs, use `POST /api/alp/tutor/query` on the **Learn** app. Body: `{ user_id, message, context_text?, course_id?, module_id? }`. Auth: `x-alp-api-key` or `Authorization: Bearer <ALP_API_KEY>`. Learn forwards to Intelligence and logs to `ai_interactions`. Implementation: [byteos-learn/src/app/api/alp/tutor/query/route.ts](../byteos-learn/src/app/api/alp/tutor/query/route.ts).
+**ALP proxy (implemented)**: For external LMSs, use `POST /api/alp/tutor/query` on the **Learn** app. Body: `{ user_id, message, context_text?, course_id?, module_id? }`. Auth: `x-alp-api-key` or `Authorization: Bearer <ALP_API_KEY>`. Learn forwards to Intelligence and logs to `ai_interactions`. Implementation: [sudar-learn/src/app/api/alp/tutor/query/route.ts](../sudar-learn/src/app/api/alp/tutor/query/route.ts).
 
 ### 5.2 Proactive nudge
 
 **Endpoint**: `POST /api/tutor/nudge`  
-**Implementation**: [byteos-intelligence/src/api/routes/tutor.py](../byteos-intelligence/src/api/routes/tutor.py)
+**Implementation**: [sudar-intelligence/src/api/routes/tutor.py](../sudar-intelligence/src/api/routes/tutor.py)
 
 **Request body** (NudgeRequest):
 
@@ -184,14 +196,37 @@ This doc assumes ALP connectors that call Intelligence use a **REST API** for th
 }
 ```
 
-**Response** (NudgeResponse): `message`, `action_type`, `suggested_modality` (optional).
+**Response** (NudgeResponse):
+
+| Field | Type | Description |
+|--------|------|-------------|
+| `message` | string | Short proactive line Sudar shows to the learner (e.g. offer help). |
+| `action_type` | string | Hint for the client, e.g. `explain_differently`, `suggest_modality`, `encourage`. |
+| `suggested_modality` | string (optional) | When relevant, a modality the learner might switch to. |
+| `choices` | array (optional) | **Tap-to-reply** options so the LMS can render buttons instead of free text. |
+
+When `choices` is present, each item uses this shape (`NudgeChoice`):
+
+```json
+{
+  "id": "hint",
+  "label": "Give me a hint",
+  "follow_up_message": "Give me a short hint on this section."
+}
+```
+
+- **`id`**: Stable id for analytics (e.g. log with `tutor_action_taken` or your LMS equivalent).
+- **`label`**: Short button text.
+- **`follow_up_message`**: Optional. When non-empty, the client should send this string as the learner’s next message to **`POST /api/tutor/query`** (same as typing the question). When empty or omitted, the chip is a dismiss/low-friction action only.
+
+**Usage**: External LMSs can show `message` plus `choices` as a compact banner or sheet; on chip tap, either forward `follow_up_message` to tutor query or record a dismiss. Sudar Learn implements the same pattern (idle nudge on the course, session/navigation prompts on the dashboard) via its own routes that log to `ai_interactions` / `learning_events`; ALP connectors calling Intelligence directly should use **`POST /api/tutor/nudge`** and **`POST /api/tutor/query`** as above for parity.
 
 ---
 
 ## 6. Modality recommendation (optional)
 
 **Endpoint**: `POST /api/modality/recommend`  
-**Implementation**: [byteos-intelligence/src/api/routes/modality.py](../byteos-intelligence/src/api/routes/modality.py)
+**Implementation**: [sudar-intelligence/src/api/routes/modality.py](../sudar-intelligence/src/api/routes/modality.py)
 
 **Request**: `user_id`, `module_id`, `current_modality`.  
 **Response**: `recommended_modality`, `confidence`, `reason`.
@@ -224,3 +259,26 @@ Base URL for Intelligence: e.g. `http://localhost:8000` (development) or the dep
 - **SCORM**: Remains the dominant standard for completion and score reporting. ALP accepts SCORM-style outcomes (completion, score, time) and maps them to `learning_events` so the Twin still benefits from basic LMS activity.
 - **xAPI / LRS**: Richer, more granular statements (e.g. “answered question X”, “paused at 02:30”) support finer adaptivity and better next-best-action. ALP is designed to consume xAPI or LRS-style streams where available; when the host LMS only provides SCORM, ALP still works with the coarser event set.
 - **ALP as intelligence layer**: ALP does not replace the LMS or the LRS; it consumes their events and exposes the Digital Learner Twin and tutor/next-action APIs so that any LMS can become “adaptive and memory-aware” without replacing its existing content or gradebook.
+
+---
+
+## 9. Analytics engine endpoints (v1)
+
+Hybrid analytics delivery for Sudar:
+- **Rollups in Supabase** (derived from `learning_events`)
+- **Recommendations in Sudar Intelligence**
+- **Presentation via Studio/Learn API routes**
+
+### Studio API (admin reporting)
+- `GET /api/analytics/overview` — org metrics snapshot (active vs idle time, focus ratio, engagement, completions, drop-offs)
+- `GET /api/analytics/courses/:id` — course-level daily and module rollups
+- `GET /api/analytics/learner-risk` — at-risk learners with score, reasons, and recency
+- `GET /api/analytics/export?scope=overview|risk|course&course_id=<uuid>` — CSV export
+
+### Learn API (learner insights)
+- `GET /api/insights/me` — personal engagement, focus ratio, completion velocity, current NBA
+- `GET /api/insights/time` — time timeline and next session duration recommendation
+- `POST /api/insights/feedback` — learner feedback on suggested actions (`accepted|dismissed|later`)
+
+### Intelligence API (recommendation helper)
+- `POST /api/learner/next-action-analytics` — rule+score recommendation from aggregated features (`focus_ratio`, drop-off and completion signals)

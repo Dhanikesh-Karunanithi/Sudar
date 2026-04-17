@@ -5,7 +5,7 @@ This folder contains the scientific paper draft and submission materials for the
 ## Paper
 
 - **Title:** From Course Hosting to Adaptive Learning: An AI-Native Platform and Plugin Architecture for Learner Memory and Multimodal Delivery  
-- **Technology name in paper:** Adaptive Learning Layer (ALP) for the plugin architecture; reference implementation: Sudar (repository: ByteOS; see footnote/acknowledgments).  
+- **Technology name in paper:** Adaptive Learning Layer (ALP) for the plugin architecture; reference implementation: Sudar (canonical repository: https://github.com/Dhanikesh-Karunanithi/Sudar).  
 - **File:** [paper.tex](paper.tex) — LaTeX source (two-column, ~8–10 pages).  
 - **Published PDF (v4):** [Sudar_LAMP_Paper_v4.pdf](Sudar_LAMP_Paper_v4.pdf) — author-compiled snapshot aligned with the Sudar / LAMP workstream.  
 - **References:** [references.bib](references.bib) — BibTeX.
@@ -41,4 +41,4 @@ Figures are drawn in TikZ inside `paper.tex`. For higher-quality or custom figur
 
 ## Call for collaboration
 
-The paper includes a call for institutions and organizations to collaborate on pilots and plugin integrations. Contact and repo: [github.com/lorddannykay/ByteOS](https://github.com/lorddannykay/ByteOS).
+The paper includes a call for institutions and organizations to collaborate on pilots and plugin integrations. Contact and repo: [github.com/Dhanikesh-Karunanithi/Sudar](https://github.com/Dhanikesh-Karunanithi/Sudar).

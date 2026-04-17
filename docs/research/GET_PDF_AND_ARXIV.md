@@ -114,7 +114,7 @@ Do this **after** you have confirmed the PDF compiles (e.g. in Overleaf or local
    - Copy the full abstract from `paper.tex` (the `\begin{abstract}...\end{abstract}` block, without the LaTeX commands).
 
 4. **Comments** (optional)
-   - You can add: “Reference implementation: https://github.com/lorddannykay/ByteOS”
+   - You can add: “Reference implementation: https://github.com/Dhanikesh-Karunanithi/Sudar”
 
 5. **Continue**.
 

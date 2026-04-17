@@ -28,7 +28,7 @@ Sudar uses this to personalise every answer: reference prior struggles, match ex
 ### Code
 
 - **Learn API — Tutor query and memory update**  
-  [byteos-learn/src/app/api/tutor/query/route.ts](../byteos-learn/src/app/api/tutor/query/route.ts)  
+  [sudar-learn/src/app/api/tutor/query/route.ts](../sudar-learn/src/app/api/tutor/query/route.ts)  
   - Loads `learner_profiles.ai_tutor_context` and prior enrollments.  
   - Builds a system prompt that includes "Learner Memory" (known concepts, struggles, style, prior courses).  
   - Sends the user message plus recent conversation history to the AI.  
@@ -36,7 +36,7 @@ Sudar uses this to personalise every answer: reference prior struggles, match ex
   - Calls `updateLearnerMemory()` to asynchronously update `ai_tutor_context` from the interaction (e.g. new concept understood, struggle identified, style note).
 
 - **Learn — My Memory page**  
-  Learners can view and edit what Sudar knows about them: [byteos-learn/src/app/(dashboard)/memory/](../byteos-learn/src/app/(dashboard)/memory/).
+  Learners can view and edit what Sudar knows about them: [sudar-learn/src/app/(dashboard)/memory/](../sudar-learn/src/app/(dashboard)/memory/).
 
 ---
 

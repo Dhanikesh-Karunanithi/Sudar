@@ -1,7 +1,7 @@
 -- ============================================================
 -- SudarPlay schema additions
 -- NOTE: Spec uses "course_modules"; this codebase uses table "modules".
--- All references use "modules" to match byteos-studio Prisma schema.
+-- All references use "modules" to match sudar-studio Prisma schema.
 -- Run: supabase db push (or apply via Supabase dashboard SQL)
 -- ============================================================
 

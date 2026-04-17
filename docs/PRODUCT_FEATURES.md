@@ -201,7 +201,7 @@
 #### 9.2 Video Modality
 | Feature | Description | Phase |
 |---|---|---|
-| AI-generated video | Auto-generated from course content via byteos-video pipeline | 2 |
+| AI-generated video | Auto-generated from course content via SudarVid (`sudar_vid`, `SUDARVID_URL`) | 2 |
 | Kinetic typography | Text animations synchronized with narration | 2 |
 | 5 scene types | Title, Headline, Bullets, Key Takeaway, Quote | 2 |
 | Edge-TTS narration | Natural voice narration (multiple voices, languages) | 2 |
@@ -261,11 +261,12 @@
 | Feature | Description | Phase |
 |---|---|---|
 | Persistent sidebar | Sudar available on every module page, collapsible | 2 |
-| Floating global chat | Sudar Chat widget available globally (e.g. dashboard); startup questions, paste context | 3 |
+| Floating global chat | Sudar Chat widget available globally (e.g. dashboard); startup **tap-to-reply chips**, paste context | 3 |
 | RAG-powered Q&A | Sudar answers questions using course content as context (content_chunks + pgvector, ingest API in Learn) | 2 |
 | Structured response blocks | Tutor returns actions (enroll, continue, review) and rich blocks; rendered via GenerativeBlockRenderer | 3 |
 | Quick memory preferences | One-tap preferences: response length (one_line, detailed, concise), modality (reading, listening, video, no_video) | 3 |
-| Proactive inactivity nudge | After 90 seconds of no scroll/interaction, Sudar offers help | 3 |
+| Proactive session & navigation | On dashboard load (home) and when switching major routes (e.g. catalog, progress, paths), Sudar can surface a compact prompt with **multiple-choice chips**; snooze and cooldowns reduce noise | 3 |
+| Proactive inactivity nudge | After ~90 seconds idle on a module, Sudar offers help with **tap-to-reply chips** (LLM-generated or fallback); opens inline tutor with the chosen follow-up | 3 |
 | Proactive quiz failure nudge | After 2 failed quiz attempts, Sudar offers alternative explanation | 3 |
 | Longitudinal memory | Sudar reads last 10 `ai_interactions` to maintain conversation continuity | 3 |
 | Helpful / not helpful rating | Thumbs up/down on each response | 2 |
@@ -307,7 +308,7 @@
 | Next Best Action computation | Computes what the learner should do next | 3 |
 | Skill gap identification | Maps completed quizzes/assessments to skill gaps | 3 |
 | Learning pace detection | Infers learner pace from session duration data | 4 |
-| Proactive nudge triggers | Generates conditions that trigger Sudar's proactive messages | 3 |
+| Proactive nudge API | Intelligence `POST /api/tutor/nudge` returns `message`, `action_type`, optional modality, and optional **`choices`** (id, label, `follow_up_message`) for tap-to-reply UX in any ALP client | 3 |
 
 ### Feature Group 13: Content Generation
 
@@ -334,6 +335,15 @@
 | Server-side AI keys | API keys never exposed to browser | 1 |
 | Content moderation | All AI output screened before storage | 1 |
 | GDPR-ready data model | Learner data deletion on request | 3 |
+
+### Analytics Engine (Hybrid)
+| Feature | Description | Phase |
+|---|---|---|
+| Daily analytics rollups | Supabase-derived user/course/module/org aggregates from `learning_events` | 4 |
+| Admin risk intelligence | At-risk learner scoring with reason codes and drop-off indicators | 4 |
+| Learner insight cards | Focus ratio, engagement momentum, suggested next session duration | 4 |
+| Next best action feedback loop | Learner acceptance/dismissal feedback for recommendation tuning | 4 |
+| CSV report export | Admin export of overview, risk, and course analytics data | 4 |
 
 ### Accessibility
 | Feature | Description | Phase |

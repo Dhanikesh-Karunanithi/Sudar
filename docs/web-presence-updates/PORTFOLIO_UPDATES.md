@@ -117,7 +117,7 @@ Sudar is the open-source Learning Operating System; SudarVerse is the product at
 
 **CTA buttons (replace or add):**
 
-1. **View Sudar on GitHub** → `https://github.com/lorddannykay/ByteOS`
+1. **View Sudar on GitHub** → `https://github.com/Dhanikesh-Karunanithi/Sudar`
 2. **Visit SudarVerse** → `https://byteverse.app`
 
 **Footer line (if present):**  
@@ -155,7 +155,7 @@ Sudar is the open-source Learning Operating System; SudarVerse is the product at
 - If there is a **projects** or **case studies** section, add an entry:
   - **Project:** Sudar & SudarVerse
   - **Role:** Creator / Founder
-  - **Description:** Open-source AI Learning OS (Sudar) and product (SudarVerse). Longitudinal learner memory, adaptive paths, AI tutor, compliance and certifications. [View on GitHub](https://github.com/lorddannykay/ByteOS) · [Visit SudarVerse](https://byteverse.app)
+  - **Description:** Open-source AI Learning OS (Sudar) and product (SudarVerse). Longitudinal learner memory, adaptive paths, AI tutor, compliance and certifications. [View on GitHub](https://github.com/Dhanikesh-Karunanithi/Sudar) · [Visit SudarVerse](https://byteverse.app)
 - **Year:** Change any `© 2024` to `© 2026`.
 
 ---
@@ -164,7 +164,7 @@ Sudar is the open-source Learning Operating System; SudarVerse is the product at
 
 - **Year:** Use **2026** everywhere you show "current" or copyright (©).
 - **Links:** Use the same URLs everywhere:
-- Sudar (GitHub): `https://github.com/lorddannykay/ByteOS`
+- Sudar (GitHub): `https://github.com/Dhanikesh-Karunanithi/Sudar`
 - SudarVerse: `https://byteverse.app`
 - **Menu:** The menu item can stay "BYTE AI" or be updated to "Sudar" / "SudarVerse" if you prefer; the linked page (byteai.html) should present Sudar & SudarVerse as above.
 

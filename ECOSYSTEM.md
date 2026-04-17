@@ -64,7 +64,7 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
 ╚══════════════════════════════════════════════════════════════════════╝
 ```
 
-### 3.1 Sudar Studio (`/byteos-studio`)
+### 3.1 Sudar Studio (`/sudar-studio`)
 - **Base**: SudarLab (Next.js 14, TypeScript, Tailwind CSS, Prisma → Supabase)
 - **Purpose**: The admin/creator surface where L&D teams build courses
 - **Key capabilities**:
@@ -83,13 +83,13 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
   - Role-based access (Admin, Manager, Creator, Learner)
   - Compliance tracking (mandatory training, certifications, due dates)
 
-### 3.2 Sudar Learn (`/byteos-learn`)
+### 3.2 Sudar Learn (`/sudar-learn`)
 - **Base**: SudarVerse-LMS (Next.js 14, TypeScript, Tailwind CSS, Prisma → Supabase)
 - **Purpose**: The learner-facing delivery platform
 - **Key capabilities**:
   - Personalized learner dashboard (based on Supabase learner profile)
   - Modality switching: Text / Video / Audio / MindMap / Flashcards / SudarFeed / SudarPlay
-  - AI Tutor: RAG over course content (content_chunks + pgvector, ingest API in Learn); Floating Sudar Chat (global); reactive Q&A + proactive nudges + longitudinal memory; structured response blocks (enroll, continue, review); quick memory preferences; outcome logging (tutor_action_taken). My Memory page with insights carousel.
+  - AI Tutor: RAG over course content (content_chunks + pgvector, ingest API in Learn); Floating Sudar Chat (global); reactive Q&A + **proactive nudges with tap-to-reply chips** (idle on module, session welcome on home, contextual prompts on navigation) + longitudinal memory; structured response blocks (enroll, continue, review); quick memory preferences; outcome logging (`tutor_action_taken`, `proactive_choice`). My Memory page with insights carousel.
   - Skills graph and knowledge gap visualization
   - Next Best Action recommendations
   - Learning path enrollment and progress tracking
@@ -98,13 +98,13 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
   - SCORM delivery: proxy for SCORM package assets from Supabase Storage (course-media) with correct MIME types for iframe playback.
   - Change password flow when require_password_change is set (e.g. after admin reset).
 
-### 3.3 Sudar Intelligence (`/byteos-intelligence`)
+### 3.3 Sudar Intelligence (`/sudar-intelligence`)
 - **Base**: bytengine (Python FastAPI)
 - **Purpose**: The AI brain — all heavy computation, adaptation, and generation
 - **Key capabilities**:
   - Adaptive difficulty engine (adjusts content complexity per learner)
   - Modality dispatcher (decides which modality to recommend next)
-  - AI Tutor engine (RAG-powered, longitudinal memory via Supabase)
+  - AI Tutor engine (RAG-powered, longitudinal memory via Supabase; proactive **`/api/tutor/nudge`** may return structured **choices** for ALP / embed clients)
   - Next Best Action algorithm
   - Fine-tuning pipeline (Together AI fine-tune on educational data)
   - Content generation engine (multi-format, multi-provider)
@@ -112,7 +112,7 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
   - Event processing (ingests learner events and updates profiles)
 
 ### 3.4 Microservices (standalone, called by Intelligence layer)
-- **sudar-vid** (`/sudar_vid`) — SudarVid: Python FastAPI, Together AI (slide planning + image generation), Edge-TTS, FFmpeg, Playwright. Canonical video generation microservice for the Watch modality. Replaces the earlier `byteos-video` / `byteos-renderer` placeholders. Runs on port 8000 (separate from Intelligence); Learn proxies to it via `SUDARVID_URL`. Standalone creator UI is preserved at `/` for direct use outside Sudar.
+- **sudar-vid** (`/sudar_vid`) — SudarVid: Python FastAPI, Together AI (slide planning + image generation), Edge-TTS, FFmpeg, Playwright. Canonical video generation microservice for the Watch modality. Runs on port 8000 (separate from Intelligence); Learn proxies to it via `SUDARVID_URL`. Standalone creator UI is preserved at `/` for direct use outside Sudar.
 - **byteos-feed** — shayshay (TikTok-style feed): absorbed into Sudar Learn as a modality
 - **byteos-play** — SudarPlay (game generator): Phaser.js, called as modality from Learn
 - **byteos-mind** — SudarMind (mindmap): embedded as modality component in Learn
@@ -405,8 +405,13 @@ learning_events (
                             -- 'video_play' | 'video_pause' | 'video_replay' |
                             -- 'section_heartbeat' (periodic time on section; payload: active_secs, total_secs) |
                             -- 'ai_tutor_open' | 'ai_tutor_query' | 'modality_switch' |
-                            -- 'drop_off' | 'streak_broken' | 'streak_maintained'
-  payload jsonb,            -- event-specific data (e.g. module_complete: active_secs, idle_secs)
+                            -- 'session_end' (payload: active_secs, reason e.g. pagehide) |
+                            -- 'drop_off' (incomplete module leave; payload: active_secs, completed: false) |
+                            -- 'streak_broken' | 'streak_maintained'
+  payload jsonb,            -- event-specific data (e.g. module_complete: active_secs, idle_secs;
+ -- modality_switch: from_modality, to_modality;
+                            -- video_play|video_pause: scene_index, scene_count;
+                            -- video_replay: scene_from, scene_to)
   modality text,            -- which modality was active when event fired
   duration_secs integer,    -- time spent if applicable
   created_at timestamptz DEFAULT now()
@@ -417,7 +422,7 @@ ai_interactions (
   user_id uuid references profiles NOT NULL,
   course_id uuid references courses,
   module_id uuid references modules,
-  interaction_type text,   -- 'question' | 'hint_request' | 'explanation' | 'proactive_nudge'
+  interaction_type text,   -- 'question' | 'hint_request' | 'explanation' | 'proactive_nudge' | 'proactive_choice'
   user_message text,
   ai_response text,
   context_used jsonb,      -- which module content was retrieved for context
@@ -472,12 +477,12 @@ compliance_records (
 ### Learn → Intelligence (`http://localhost:8000`)
 ```
 POST /api/tutor/query         — AI tutor Q&A
-POST /api/tutor/nudge         — proactive nudge generation
+POST /api/tutor/nudge         — proactive nudge generation (optional `choices` for MCQ-style follow-ups)
 POST /api/learner/profile     — update learner profile from events
 POST /api/learner/next-action — compute next best action
 POST /api/modality/recommend  — recommend modality switch
 POST /api/content/generate    — generate content from topic/document
-POST /api/video/generate      — trigger bytetexttovid pipeline
+POST /api/video/generate      — video job stub (orchestration lives in Learn → SudarVid)
 POST /api/mindmap/generate    — generate mindmap from content
 POST /api/game/generate       — trigger SudarPlay game generation
 ```
@@ -486,7 +491,7 @@ POST /api/game/generate       — trigger SudarPlay game generation
 - Together AI API (primary LLM + embeddings + fine-tuning)
 - OpenAI API (fallback)
 - Anthropic API (fallback)
-- bytetexttovid (subprocess or HTTP call)
+- SudarVid (`SUDARVID_URL` → `sudar_vid` service)
 - Remotion render server (`POST http://localhost:3040/render`)
 
 ---
@@ -505,19 +510,19 @@ ByteOS/
 │   ├── PRODUCT_FEATURES.md
 │   ├── USER_PERSONAS.md
 │   └── USER_FLOWS.md
-├── byteos-studio/            ← Next.js 14 (SudarLab base)
+├── sudar-studio/            ← Next.js 14 (SudarLab base)
 │   ├── app/
 │   ├── components/
 │   ├── lib/
 │   ├── prisma/
 │   └── package.json
-├── byteos-learn/             ← Next.js 14 (SudarVerse-LMS base)
+├── sudar-learn/             ← Next.js 14 (SudarVerse-LMS base)
 │   ├── app/
 │   ├── components/
 │   ├── lib/
 │   ├── prisma/
 │   └── package.json
-├── byteos-intelligence/      ← Python FastAPI (bytengine base)
+├── sudar-intelligence/      ← Python FastAPI (bytengine base)
 │   ├── src/
 │   │   ├── api/
 │   │   ├── adaptive/
@@ -525,8 +530,7 @@ ByteOS/
 │   │   ├── generation/
 │   │   └── models/
 │   └── requirements.txt
-├── byteos-video/             ← Python (bytetexttovid)
-├── byteos-renderer/          ← TypeScript/Remotion
+├── sudar_vid/                ← SudarVid (Watch modality; Python FastAPI)
 └── archive/                  ← All deprecated/backup projects
 ```
 
@@ -556,10 +560,10 @@ ByteOS/
 **Goal**: Personalized dashboard, modality switching, AI tutor
 - [x] Learner home with personalized path (reads `learner_profiles`)
 - [x] Modality switcher on course view
-- [ ] Video modality (wire to bytetexttovid / Remotion)
+- [ ] Video modality (wire to SudarVid / Remotion)
 - [x] AI Tutor sidebar (reactive Q&A, RAG against course content)
 - [x] RAG in Learn (content_chunks + pgvector, ingest API, tutor course search)
-- [x] Floating Sudar Chat (global), structured responses, outcome logging, validate-memory quick preferences, memory insights
+- [x] Floating Sudar Chat (global), proactive prompts with **multiple-choice chips** (dashboard + idle nudge), structured responses, outcome logging, validate-memory quick preferences, memory insights
 - [x] SCORM delivery proxy (serve SCORM assets from Supabase Storage with correct MIME for iframe)
 - [x] Change password flow (require_password_change after admin reset)
 - [x] Proactive nudges from Intelligence layer
@@ -598,10 +602,10 @@ ByteOS/
 ## 10. Naming Conventions
 
 - **Product**: Sudar (repo/folders remain ByteOS / byteos-* for compatibility)
-- **Admin surface**: Sudar Studio (runs in `byteos-studio/`)
-- **Learner surface**: Sudar Learn (runs in `byteos-learn/`)
-- **AI engine**: Sudar Intelligence (runs in `byteos-intelligence/`)
-- **Video modality**: Sudar Video (powered by Remotion + bytetexttovid)
+- **Admin surface**: Sudar Studio (runs in `sudar-studio/`)
+- **Learner surface**: Sudar Learn (runs in `sudar-learn/`)
+- **AI engine**: Sudar Intelligence (runs in `sudar-intelligence/`)
+- **Video modality**: Sudar Video (powered by Remotion + SudarVid)
 - **Game modality**: SudarPlay (branded feature within Sudar Learn)
 - **Feed modality**: SudarFeed (branded feature within Sudar Learn)
 - **Mindmap modality**: SudarMind (branded feature within Sudar Learn)
@@ -619,8 +623,8 @@ ByteOS/
 | ByteVerse-LMS | Sudar Learn (core) | Extend + rename |
 | bytengine | Sudar Intelligence | Canonical backend |
 | byteaugnew | Reference only | Archive after migration |
-| bytetexttovid | byteos-video microservice | Keep as microservice |
-| Remotion | byteos-renderer microservice | Keep as microservice |
+| bytetexttovid (historical) | SudarVid (`sudar_vid`) | Canonical Watch pipeline |
+| Remotion | Remotion render server | Optional MP4 pipeline (`REMOTION_SERVER_URL`) |
 | shayshay | SudarFeed modality in Learn | Absorb as feature |
 | BytePlay | SudarPlay modality in Learn | Absorb as feature |
 | ByteMind | SudarMind modality in Learn | Absorb as feature |
@@ -665,11 +669,11 @@ REMOTION_SERVER_URL=http://localhost:3040
 ```
 
 ### Intelligence (Python)
-Uses same `AI_CHAT_PROVIDER` and keys; see ENV_REFERENCE.md and `byteos-intelligence/src/core/ai_client.py`.
+Uses same `AI_CHAT_PROVIDER` and keys; see ENV_REFERENCE.md and `sudar-intelligence/src/core/ai_client.py`.
 ```env
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
-BYTEOS_VIDEO_SERVICE_URL=http://localhost:5001
+SUDARVID_URL=http://localhost:8000
 REMOTION_SERVER_URL=http://localhost:3040
 ```
 

@@ -85,7 +85,7 @@ A supportive, non-judgmental tutor that remembers prior struggles and preference
 - MVP cast: `Focus`, `Memory`, `Confidence`.
 - Learner control: full cast, selected companions, or hero-only mode.
 - Distinct visual identity: each companion has a dedicated accessible color + icon pairing.
-- Illustration pipeline: see `docs/brand/mascot-illustration-spec.md`; ship assets to `byteos-learn/public/mascots/`.
+- Illustration pipeline: see `docs/brand/mascot-illustration-spec.md`; ship assets to `sudar-learn/public/mascots/`.
 - Interaction principles:
   - concise and supportive language
   - no guilt-based nudging

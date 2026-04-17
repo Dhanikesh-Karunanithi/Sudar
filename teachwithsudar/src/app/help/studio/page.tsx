@@ -14,7 +14,7 @@ export default function StudioHelpPage() {
       </p>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Getting started</h2>
       <p className="mt-2 text-foreground">
-        From the <code>byteos-studio</code> folder: <code>npm install</code> then <code>npm run dev</code>. Open
+        From the <code>sudar-studio</code> folder: <code>npm install</code> then <code>npm run dev</code>. Open
         http://localhost:3000 and sign in. Set environment variables from <code>.env.example</code> (Supabase,
         <code>NEXT_PUBLIC_LEARN_APP_URL</code> for Integrations).
       </p>

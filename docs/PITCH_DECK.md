@@ -233,7 +233,7 @@ becomes — creating compounding switching costs.
 - SudarVerse-LMS: Learner delivery platform with Digital Learner Twin concept
 - SudarPlay: AI game generator from learning objectives (genuinely novel)
 - bytengine: AI content engine with adaptive difficulty and fine-tuning pipeline
-- bytetexttovid: Text-to-video generation with TTS narration
+- SudarVid: Text-to-video generation with TTS narration (`sudar_vid`, `SUDARVID_URL`)
 - Remotion: Programmatic MP4 video renderer with HTTP API
 - SudarMind: AI mindmap generator (publishable npm package)
 - Synchronicity: Live deployed application (givemeasignnow.app)

@@ -42,7 +42,7 @@ Sudar IS:
 - **Product name is Sudar.** The project started as ByteOS but has been **rebranded to Sudar**. All focus, docs, and communication use **Sudar** — not ByteOS.
 - **Canonical repo**: **https://github.com/Dhanikesh-Karunanithi/Sudar** (official account). This is the main, public repo. Push default is to this repo.
 - **ByteOS repo** (lorddannykay/ByteOS) is **legacy** and will be made private; it has no major purpose going forward. Do not treat it as the primary target or confuse it with Sudar.
-- Folder names in this codebase (`byteos-studio`, `byteos-learn`, etc.) are **legacy directory names**; the product and all user-facing references are **Sudar** (Sudar Studio, Sudar Learn, Sudar Intelligence).
+- Folder names in this codebase (`sudar-studio`, `sudar-learn`, etc.) are **legacy directory names**; the product and all user-facing references are **Sudar** (Sudar Studio, Sudar Learn, Sudar Intelligence).
 
 ---
 
@@ -54,18 +54,17 @@ Sudar/  (repo: Dhanikesh-Karunanithi/Sudar — legacy dir names byteos-* kept fo
 ├── AGENTS.md                 ← This file
 ├── .cursorrules              ← Coding rules
 ├── docs/                     ← All planning documents
-├── byteos-studio/            ← Sudar Studio (Admin/creator app, Next.js 14)
-├── byteos-learn/             ← Sudar Learn (Learner app, Next.js 14)
-├── byteos-intelligence/      ← Sudar Intelligence (AI engine, Python FastAPI)
-├── byteos-video/             ← Video generation microservice
-└── byteos-renderer/          ← Remotion MP4 renderer
+├── sudar-studio/            ← Sudar Studio (Admin/creator app, Next.js 14)
+├── sudar-learn/             ← Sudar Learn (Learner app, Next.js 14)
+├── sudar-intelligence/      ← Sudar Intelligence (AI engine, Python FastAPI)
+└── sudar_vid/               ← SudarVid (Watch modality video; Python FastAPI, separate port)
 ```
 
 ---
 
 ## The Three Apps — Know Which One You're In
 
-### 1. Sudar Studio (`/byteos-studio`)
+### 1. Sudar Studio (`/sudar-studio`)
 **Who uses it**: Admins, L&D managers, content creators
 **What it does**: Course creation, learning path management, analytics, org settings
 **Stack**: Next.js 14, TypeScript, Tailwind CSS, Prisma, Supabase
@@ -77,7 +76,7 @@ Sudar/  (repo: Dhanikesh-Karunanithi/Sudar — legacy dir names byteos-* kept fo
 - `lib/templates/` — 14 course visual templates
 - `prisma/schema.prisma` — Database schema (mirrors Supabase)
 
-### 2. Sudar Learn (`/byteos-learn`)
+### 2. Sudar Learn (`/sudar-learn`)
 **Who uses it**: Learners
 **What it does**: Take courses, interact with AI tutor "Sudar", track progress, switch modalities
 **Stack**: Next.js 14, TypeScript, Tailwind CSS, Prisma, Supabase, Framer Motion, Zustand
@@ -86,10 +85,10 @@ Sudar/  (repo: Dhanikesh-Karunanithi/Sudar — legacy dir names byteos-* kept fo
 - `app/` — Next.js App Router pages
 - `components/modalities/` — Text, Video, Audio, MindMap, Flashcards, SudarFeed, SudarPlay
 - `components/tutor/` — AI Tutor "Sudar" sidebar
-- `lib/intelligence/` — API client for byteos-intelligence
+- `lib/intelligence/` — API client for sudar-intelligence
 
-### 3. Sudar Intelligence (`/byteos-intelligence`)
-**Who uses it**: Called by byteos-learn and byteos-studio via HTTP
+### 3. Sudar Intelligence (`/sudar-intelligence`)
+**Who uses it**: Called by sudar-learn and sudar-studio via HTTP
 **What it does**: All heavy AI computation — adaptive engine, AI tutor, content generation
 **Stack**: Python 3.11+, FastAPI, Together AI, Supabase Python client
 **Port**: 8000
@@ -103,7 +102,7 @@ Sudar/  (repo: Dhanikesh-Karunanithi/Sudar — legacy dir names byteos-* kept fo
 
 ## Shared Supabase Database
 
-**CRITICAL**: Both `byteos-studio` and `byteos-learn` connect to the **SAME Supabase project**.
+**CRITICAL**: Both `sudar-studio` and `sudar-learn` connect to the **SAME Supabase project**.
 This is what enables content to flow from Studio to Learn and events to flow back.
 
 The schema is defined in `ECOSYSTEM.md` Section 5. The most important tables:

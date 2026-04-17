@@ -10,9 +10,9 @@ Before adding features, check **docs/STRATEGIC_PATH.md** for current state and p
 
 ## Project Identity
 - Product name: ByteOS
-- Admin surface: ByteOS Studio (in /byteos-studio)
-- Learner surface: ByteOS Learn (in /byteos-learn)
-- AI engine: ByteOS Intelligence (in /byteos-intelligence)
+- Admin surface: ByteOS Studio (in /sudar-studio)
+- Learner surface: ByteOS Learn (in /sudar-learn)
+- AI engine: ByteOS Intelligence (in /sudar-intelligence)
 - AI Tutor name: "Byte" (never change this name)
 - Mission: "Learns with you, for you."
 
@@ -110,7 +110,7 @@ Before adding features, check **docs/STRATEGIC_PATH.md** for current state and p
 
 ---
 
-## File Organization (byteos-studio and byteos-learn)
+## File Organization (sudar-studio and sudar-learn)
 ```
 app/
   (auth)/          — auth pages (login, register, onboarding)

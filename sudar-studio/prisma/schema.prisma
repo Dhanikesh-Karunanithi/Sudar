@@ -1,0 +1,545 @@
+// ByteOS — Canonical Prisma Schema
+// This schema mirrors the Supabase PostgreSQL database exactly.
+// Both sudar-studio and sudar-learn connect to the SAME database.
+// Run: npx prisma db push to apply to Supabase
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// AUTH & IDENTITY
+// ============================================
+
+model Profile {
+  id                    String   @id @db.Uuid
+  fullName              String?  @map("full_name")
+  avatarUrl             String?  @map("avatar_url")
+  role                  Role     @default(LEARNER)
+  orgId                 String?  @map("org_id") @db.Uuid
+  onboardingComplete    Boolean  @default(false) @map("onboarding_complete")
+  requirePasswordChange Boolean  @default(false) @map("require_password_change")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at")
+
+  org                Organisation?            @relation(fields: [orgId], references: [id])
+  orgMemberships     OrgMember[]
+  learnerProfile      LearnerProfile?
+  performanceRecords  LearnerPerformanceRecord[]
+  coursesCreated      Course[]                @relation("CourseCreator")
+  pathsCreated        LearningPath[]          @relation("PathCreator")
+  enrollments         Enrollment[]
+  certifications      Certification[]
+  aiInteractions      AiInteraction[]
+  learningEvents           LearningEvent[]
+  learnerGroupsCreated     LearnerGroup[]       @relation("LearnerGroupCreator")
+  learnerGroupMemberships  LearnerGroupMember[]
+  userNotifications        UserNotification[]
+
+  @@map("profiles")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ORG_ADMIN
+  MANAGER
+  CREATOR
+  LEARNER
+
+  @@map("role")
+}
+
+// ============================================
+// ORGANISATIONS
+// ============================================
+
+model Organisation {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  slug      String   @unique
+  branding  Json?
+  settings  Json?
+  plan      String   @default("free")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  profiles             Profile[]
+  members              OrgMember[]
+  courses              Course[]
+  skills               Skill[]
+  learningPaths        LearningPath[]
+  branding_config      OrgBranding?
+  performanceRecords   LearnerPerformanceRecord[]
+  orgInvites           OrgInvite[]
+  integrationApiKeys   IntegrationApiKey[]
+  learnerGroups        LearnerGroup[]
+  tagGroups            TagGroup[]
+  orgTags              OrgTag[]
+
+  @@map("organisations")
+}
+
+model IntegrationApiKey {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId       String    @map("org_id") @db.Uuid
+  name        String
+  keyHash     String    @map("key_hash")
+  keyPrefix   String    @map("key_prefix")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  lastUsedAt  DateTime? @map("last_used_at")
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@map("integration_api_keys")
+}
+
+model OrgMember {
+  id       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId    String   @map("org_id") @db.Uuid
+  userId   String   @map("user_id") @db.Uuid
+  role     OrgRole  @default(LEARNER)
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  org     Organisation @relation(fields: [orgId], references: [id])
+  profile Profile      @relation(fields: [userId], references: [id])
+
+  @@unique([orgId, userId])
+  @@map("org_members")
+}
+
+enum OrgRole {
+  ADMIN
+  MANAGER
+  CREATOR
+  LEARNER
+
+  @@map("org_role")
+}
+
+model OrgBranding {
+  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId           String  @unique @map("org_id") @db.Uuid
+  logoUrl         String? @map("logo_url")
+  primaryColor    String? @map("primary_color")
+  secondaryColor  String? @map("secondary_color")
+  fontFamily      String? @map("font_family")
+  customDomain    String? @map("custom_domain")
+  hideBranding    Boolean @default(false) @map("hide_branding")
+
+  org Organisation @relation(fields: [orgId], references: [id])
+
+  @@map("org_branding")
+}
+
+model OrgInvite {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId     String   @map("org_id") @db.Uuid
+  email     String
+  role      OrgRole  @default(LEARNER)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, email])
+  @@map("org_invites")
+}
+
+// ============================================
+// LEARNER GROUPS (cohorts — personalization audience targeting)
+// ============================================
+
+model LearnerGroup {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId       String   @map("org_id") @db.Uuid
+  name        String
+  description String?
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  org     Organisation         @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  creator Profile              @relation("LearnerGroupCreator", fields: [createdBy], references: [id])
+  members LearnerGroupMember[]
+
+  @@map("learner_groups")
+}
+
+model LearnerGroupMember {
+  groupId String @map("group_id") @db.Uuid
+  userId  String @map("user_id") @db.Uuid
+
+  group   LearnerGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  profile Profile      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+  @@map("learner_group_members")
+}
+
+// ============================================
+// DIGITAL LEARNER TWIN
+// ============================================
+
+model LearnerProfile {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String   @unique @map("user_id") @db.Uuid
+  modalityScores        Json     @default("{\"text\": 0.5, \"video\": 0.5, \"audio\": 0.5, \"mindmap\": 0.5, \"flashcards\": 0.5, \"game\": 0.5, \"feed\": 0.5}") @map("modality_scores")
+  learningPace          String   @default("medium") @map("learning_pace")
+  difficultyComfort     String   @default("intermediate") @map("difficulty_comfort")
+  cognitiveStyle        String   @default("mixed") @map("cognitive_style")
+  preferredLanguage     String   @default("en") @map("preferred_language")
+  avgSessionDurationMins Float   @default(0) @map("avg_session_duration_mins")
+  avgCompletionRate     Float    @default(0) @map("avg_completion_rate")
+  totalLearningMinutes  Float    @default(0) @map("total_learning_minutes")
+  streakDays            Int      @default(0) @map("streak_days")
+  lastActiveAt          DateTime? @map("last_active_at")
+  overallEngagementScore Float   @default(0.5) @map("overall_engagement_score")
+  nextBestAction        Json?    @map("next_best_action")
+  aiTutorContext           Json?     @map("ai_tutor_context")
+  generativeAiConsentAt    DateTime? @map("generative_ai_consent_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  profile Profile @relation(fields: [userId], references: [id])
+
+  @@map("learner_profiles")
+}
+
+// ============================================
+// LEARNER PERFORMANCE DATA (institution-aware)
+// ============================================
+
+model LearnerPerformanceRecord {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId        String    @map("org_id") @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  sourceType   String    @map("source_type")   // 'kpi' | 'grade' | 'custom'
+  key          String    @map("key")          // KPI id or exam/term id from org performance_config
+  value        Decimal   @db.Decimal(12, 4)
+  valueDisplay String?   @map("value_display") // optional letter grade / label
+  periodStart  DateTime? @map("period_start") @db.Date
+  periodEnd    DateTime? @map("period_end")   @db.Date
+  recordedAt   DateTime  @default(now()) @map("recorded_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  org    Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  profile Profile     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId, sourceType, key, periodStart])
+  @@map("learner_performance_records")
+}
+
+// ============================================
+// SKILLS & KNOWLEDGE GRAPH
+// ============================================
+
+model Skill {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  slug          String  @unique
+  category      String?
+  parentSkillId String? @map("parent_skill_id") @db.Uuid
+  description   String?
+  orgId         String? @map("org_id") @db.Uuid
+
+  org           Organisation? @relation(fields: [orgId], references: [id])
+  parent        Skill?        @relation("SkillHierarchy", fields: [parentSkillId], references: [id])
+  children      Skill[]       @relation("SkillHierarchy")
+  learnerSkills LearnerSkill[]
+  skillGaps     SkillGap[]
+
+  @@map("skills")
+}
+
+model LearnerSkill {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  skillId         String    @map("skill_id") @db.Uuid
+  proficiencyLevel Float    @default(0) @map("proficiency_level")
+  evidenceCount   Int       @default(0) @map("evidence_count")
+  lastAssessedAt  DateTime? @map("last_assessed_at")
+
+  skill Skill @relation(fields: [skillId], references: [id])
+
+  @@unique([userId, skillId])
+  @@map("learner_skills")
+}
+
+model SkillGap {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  skillId      String    @map("skill_id") @db.Uuid
+  gapScore     Float?    @map("gap_score")
+  identifiedAt DateTime  @default(now()) @map("identified_at")
+  resolvedAt   DateTime? @map("resolved_at")
+
+  skill Skill @relation(fields: [skillId], references: [id])
+
+  @@map("skill_gaps")
+}
+
+// ============================================
+// ORG MASTER TAGS (course categorization)
+// ============================================
+
+model TagGroup {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId     String   @map("org_id") @db.Uuid
+  name      String
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org  Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  tags OrgTag[]
+
+  @@index([orgId])
+  @@map("tag_groups")
+}
+
+model OrgTag {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId     String   @map("org_id") @db.Uuid
+  groupId   String?  @map("group_id") @db.Uuid
+  slug      String
+  label     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org           Organisation   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  group         TagGroup?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  courseOrgTags CourseOrgTag[]
+
+  @@unique([orgId, slug])
+  @@index([orgId])
+  @@index([groupId])
+  @@map("org_tags")
+}
+
+model CourseOrgTag {
+  courseId  String   @map("course_id") @db.Uuid
+  orgTagId  String   @map("org_tag_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  orgTag OrgTag @relation(fields: [orgTagId], references: [id], onDelete: Cascade)
+
+  @@id([courseId, orgTagId])
+  @@index([orgTagId])
+  @@map("course_org_tags")
+}
+
+// ============================================
+// CONTENT
+// ============================================
+
+model Course {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId                 String    @map("org_id") @db.Uuid
+  createdBy             String    @map("created_by") @db.Uuid
+  title                 String
+  description           String?
+  thumbnailUrl          String?   @map("thumbnail_url")
+  bannerUrl             String?   @map("banner_url")
+  status                String    @default("draft")
+  template              String?
+  difficulty            String?
+  estimatedDurationMins Int?      @map("estimated_duration_mins")
+  targetSkills          Json?     @map("target_skills")
+  tags                  String[]
+  scormUrl              String?   @map("scorm_url")
+  settings              Json?
+  isAdaptive            Boolean   @default(false) @map("is_adaptive")
+  publishedAt           DateTime? @map("published_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  org             Organisation    @relation(fields: [orgId], references: [id])
+  creator         Profile         @relation("CourseCreator", fields: [createdBy], references: [id])
+  modules         Module[]
+  enrollments     Enrollment[]
+  events          LearningEvent[]
+  courseOrgTags   CourseOrgTag[]
+
+  @@map("courses")
+}
+
+model Module {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId         String   @map("course_id") @db.Uuid
+  title            String
+  content          Json
+  modalityVariants Json?    @map("modality_variants")
+  orderIndex       Int      @map("order_index")
+  quiz             Json?
+  sudarplayMapUrl  String?  @map("sudarplay_map_url")
+  sudarplayMapId   String?  @map("sudarplay_map_id") @db.Uuid
+  sudarplayConfig  Json?    @map("sudarplay_config")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  course         Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  events         LearningEvent[]
+  aiInteractions AiInteraction[]
+
+  @@map("modules")
+}
+
+model ContentAsset {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId       String?  @map("org_id") @db.Uuid
+  uploaderId  String?  @map("uploader_id") @db.Uuid
+  type        String
+  url         String
+  storagePath String?  @map("storage_path")
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("content_assets")
+}
+
+// ============================================
+// LEARNING PATHS
+// ============================================
+
+model LearningPath {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId               String   @map("org_id") @db.Uuid
+  createdBy           String   @map("created_by") @db.Uuid
+  title               String
+  description         String?
+  thumbnailUrl        String?  @map("thumbnail_url")
+  status              String   @default("draft")
+  courses             Json     @default("[]")
+  isAdaptive          Boolean  @default(false) @map("is_adaptive")
+  isMandatory         Boolean  @default(false) @map("is_mandatory")
+  targetSkills        Json?    @map("target_skills")
+  certificationConfig Json?    @map("certification_config")
+  issuesCertificate   Boolean  @default(false) @map("issues_certificate")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  org           Organisation    @relation(fields: [orgId], references: [id])
+  creator       Profile         @relation("PathCreator", fields: [createdBy], references: [id])
+  enrollments   Enrollment[]
+  certifications Certification[]
+
+  @@map("learning_paths")
+}
+
+model Enrollment {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId              String    @map("user_id") @db.Uuid
+  pathId              String?   @map("path_id") @db.Uuid
+  courseId            String?   @map("course_id") @db.Uuid
+  enrolledBy          String?   @map("enrolled_by") @db.Uuid
+  status              String    @default("not_started")
+  progressPct         Float     @default(0) @map("progress_pct")
+  dueDate             DateTime? @map("due_date")
+  startedAt           DateTime? @map("started_at")
+  completedAt         DateTime? @map("completed_at")
+  personalizedWelcome    Json?     @map("personalized_welcome")
+  personalizedSequence   Json?     @map("personalized_sequence")
+  personalizationOverlays Json?    @map("personalization_overlays")
+  createdAt              DateTime  @default(now()) @map("created_at")
+
+  profile Profile       @relation(fields: [userId], references: [id])
+  path    LearningPath? @relation(fields: [pathId], references: [id])
+  course  Course?       @relation(fields: [courseId], references: [id])
+
+  @@map("enrollments")
+}
+
+// ============================================
+// EVENTS & AI INTERACTIONS
+// ============================================
+
+model LearningEvent {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  courseId     String?  @map("course_id") @db.Uuid
+  moduleId     String?  @map("module_id") @db.Uuid
+  eventType    String   @map("event_type")
+  payload      Json?
+  modality     String?
+  durationSecs Int?     @map("duration_secs")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  profile Profile  @relation(fields: [userId], references: [id])
+  course  Course?  @relation(fields: [courseId], references: [id])
+  module  Module?  @relation(fields: [moduleId], references: [id])
+
+  @@map("learning_events")
+}
+
+model AiInteraction {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  courseId        String?  @map("course_id") @db.Uuid
+  moduleId        String?  @map("module_id") @db.Uuid
+  interactionType String   @map("interaction_type")
+  userMessage     String?  @map("user_message")
+  aiResponse      String?  @map("ai_response")
+  contextUsed     Json?    @map("context_used")
+  helpful         Boolean?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  profile Profile  @relation(fields: [userId], references: [id])
+  module  Module?  @relation(fields: [moduleId], references: [id])
+
+  @@map("ai_interactions")
+}
+
+// ============================================
+// CERTIFICATIONS & COMPLIANCE
+// ============================================
+
+model Certification {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  pathId           String    @map("path_id") @db.Uuid
+  issuedAt         DateTime  @default(now()) @map("issued_at")
+  expiresAt        DateTime? @map("expires_at")
+  certificateUrl   String?   @map("certificate_url")
+  verificationCode String?   @unique @map("verification_code")
+  recipientName    String?   @map("recipient_name")
+  pathTitle        String?   @map("path_title")
+  orgName          String?   @map("org_name")
+
+  profile Profile      @relation(fields: [userId], references: [id])
+  path    LearningPath @relation(fields: [pathId], references: [id])
+
+  @@map("certifications")
+}
+
+model ComplianceRecord {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId        String    @map("org_id") @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  courseId     String    @map("course_id") @db.Uuid
+  requiredBy   DateTime? @map("required_by")
+  completedAt  DateTime? @map("completed_at")
+  status       String    @default("pending")
+  reminderSentAt DateTime? @map("reminder_sent_at")
+
+  @@map("compliance_records")
+}
+
+// ============================================
+// IN-APP NOTIFICATIONS (Sudar Learn center)
+// ============================================
+
+model UserNotification {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  category  String
+  title     String
+  body      String?
+  linkUrl   String?   @map("link_url")
+  metadata  Json      @default("{}")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  profile Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("user_notifications")
+}

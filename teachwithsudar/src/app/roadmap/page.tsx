@@ -19,7 +19,7 @@ export default function RoadmapPage() {
       </ul>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Modalities</h2>
       <ul className="mt-4 list-disc space-y-2 pl-6 text-foreground">
-        <li>Video modality: wire to bytetexttovid / Remotion.</li>
+        <li>Video modality: wire to SudarVid / Remotion.</li>
         <li>SudarPlay (game modality), SudarFeed (social feed), SudarMind (mindmap) — complete or wire into Learn.</li>
       </ul>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Scale & enterprise</h2>

@@ -1,6 +1,6 @@
 # SudarVerse — AI-Powered Learning Ecosystem
 
-SudarVerse is the AI learning ecosystem that **learns with you** — powered by [Sudar](https://github.com/lorddannykay/ByteOS), the open-source Learning Operating System. One seed. Infinite ways to learn.
+SudarVerse is the AI learning ecosystem that **learns with you** — powered by [Sudar](https://github.com/Dhanikesh-Karunanithi/Sudar), the open-source Learning Operating System. One seed. Infinite ways to learn.
 
 This repository is the **landing page** for [byteverse.app](https://byteverse.app). The product is built on Sudar: longitudinal learner memory, adaptive paths, AI tutor (Sudar), and multi-modality (text, flashcards, video, audio, mind maps). Created by **Dhanikesh Karunanithi** — Global Head of Learning Tech & Data Strategy; 2× Gold Stevie (2024), Brandon Hall Gold & Silver (2022).
 
@@ -49,7 +49,7 @@ For a custom domain (e.g. byteverse.app), set DNS to GitHub Pages and leave `VIT
 ## Links
 
 - **Product:** [byteverse.app](https://byteverse.app)
-- **Platform (open source):** [Sudar on GitHub](https://github.com/lorddannykay/ByteOS)
+- **Platform (open source):** [Sudar on GitHub](https://github.com/Dhanikesh-Karunanithi/Sudar)
 - **Creator:** [Dhanikesh Karunanithi](https://dhanikeshkarunanithi.com)
 
 ---
