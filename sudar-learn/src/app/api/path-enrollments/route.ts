@@ -8,7 +8,7 @@
  */
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { createUserNotification } from '@/lib/notifications/create-notification'
+import { dispatchUserNotification } from '@/lib/notifications/dispatch'
 import { NextRequest, NextResponse } from 'next/server'
 
 interface PathCourse {
@@ -225,9 +225,9 @@ export async function POST(request: NextRequest) {
     payload: { path_id, path_title: path.title, course_count: personalizedSequence.length },
   })
 
-  await createUserNotification(admin, {
+  await dispatchUserNotification({
     userId: user.id,
-    category: 'path',
+    category: 'path_assigned',
     title: `Enrolled in path: ${path.title}`,
     body:
       personalizedSequence.length > 0

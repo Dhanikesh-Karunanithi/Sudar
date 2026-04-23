@@ -6,6 +6,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { Bell, CheckCheck, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { UserNotificationRow } from '@/types/notifications'
+import { createClient } from '@/lib/supabase/client'
+import { EnablePrimer } from '@/components/features/notifications/EnablePrimer'
 
 interface ApiNotificationsPayload {
   items: UserNotificationRow[]
@@ -29,6 +31,28 @@ function categoryBadge(category: string): string {
   switch (category) {
     case 'achievement':
       return 'Achievement'
+    case 'course_assigned':
+      return 'Course'
+    case 'path_assigned':
+      return 'Path'
+    case 'mission_daily':
+      return 'Mission'
+    case 'mission_streak_risk':
+      return 'Streak'
+    case 'coin_drop':
+      return 'Coins'
+    case 'level_up':
+      return 'Level'
+    case 'checkin_today':
+      return 'Check-in'
+    case 'tutor_proactive':
+      return 'Sudar'
+    case 'compliance_overdue':
+      return 'Compliance'
+    case 'org_announcement':
+      return 'Org'
+    case 'creator_campaign':
+      return 'Campaign'
     case 'quest':
       return 'Quest'
     case 'level':
@@ -56,6 +80,7 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
   const [loading, setLoading] = useState(false)
   const [items, setItems] = useState<UserNotificationRow[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [gPressedAt, setGPressedAt] = useState<number | null>(null)
 
   const refresh = useCallback(async (soft?: boolean) => {
     if (!soft) setLoading(true)
@@ -83,12 +108,62 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
   }, [refresh])
 
   useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel('notification-center')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_notifications' }, () => {
+        void refresh(true)
+      })
+      .subscribe()
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [refresh])
+
+  useEffect(() => {
     const onVis = () => {
       if (document.visibilityState === 'visible') void refresh(true)
     }
     document.addEventListener('visibilitychange', onVis)
     return () => document.removeEventListener('visibilitychange', onVis)
   }, [refresh])
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return
+      }
+
+      const key = event.key.toLowerCase()
+      const now = Date.now()
+
+      if (key === 'g' && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        setGPressedAt(now)
+        return
+      }
+
+      if (
+        key === 'n' &&
+        gPressedAt &&
+        now - gPressedAt < 1000 &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey
+      ) {
+        setOpen((v) => !v)
+        setGPressedAt(null)
+        event.preventDefault()
+        return
+      }
+
+      if (gPressedAt && now - gPressedAt >= 1000) {
+        setGPressedAt(null)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [gPressedAt])
 
   async function markRead(ids: string[]) {
     if (ids.length === 0) return
@@ -170,6 +245,9 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
                   Mark all read
                 </button>
               )}
+            </div>
+            <div className="px-3 py-3 border-b border-border">
+              <EnablePrimer />
             </div>
 
             <div className="overflow-y-auto flex-1">

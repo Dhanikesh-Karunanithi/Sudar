@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, Json } from '@/types/database'
 import { logWarn } from '@/lib/logger'
 import type { NotificationCategory } from '@/types/notifications'
+import { dispatchUserNotification } from '@/lib/notifications/dispatch'
 
 type AdminClient = SupabaseClient<Database>
 
@@ -9,7 +10,7 @@ type AdminClient = SupabaseClient<Database>
  * Persists an in-app notification (service role). Safe to call from API routes and server logic.
  */
 export async function createUserNotification(
-  admin: AdminClient,
+  _admin: AdminClient,
   input: {
     userId: string
     category: NotificationCategory
@@ -19,18 +20,21 @@ export async function createUserNotification(
     metadata?: Record<string, unknown>
   }
 ): Promise<void> {
-  const { error } = await admin.from('user_notifications').insert({
-    user_id: input.userId,
-    category: input.category,
+  void _admin
+  await dispatchUserNotification({
+    userId: input.userId,
+    category:
+      input.category === 'course' ? 'course_assigned' :
+      input.category === 'path' ? 'path_assigned' :
+      input.category === 'checkin' ? 'checkin_today' :
+      input.category === 'level' ? 'level_up' :
+      input.category,
     title: input.title,
     body: input.body ?? null,
-    link_url: input.linkUrl ?? null,
+    linkUrl: input.linkUrl ?? null,
     metadata: (input.metadata ?? {}) as Json,
+  }).catch((error: unknown) => {
+    const e = error as { code?: string; message?: string }
+    logWarn('user_notification_insert_failed', { code: e?.code, message: e?.message ?? 'dispatch_failed' })
   })
-  if (error) {
-    logWarn('user_notification_insert_failed', {
-      code: error.code,
-      message: error.message,
-    })
-  }
 }

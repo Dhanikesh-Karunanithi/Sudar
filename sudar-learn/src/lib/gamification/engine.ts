@@ -6,7 +6,7 @@
  */
 
 import { createAdminClient } from '@/lib/supabase/server'
-import { createUserNotification } from '@/lib/notifications/create-notification'
+import { dispatchUserNotification } from '@/lib/notifications/dispatch'
 import { COIN_EARN_RULES, STREAK_MILESTONE_COINS } from './rules'
 import { getLevelForXp, SCHOLAR_RANKS } from './types'
 import type { GamificationResult } from './types'
@@ -141,9 +141,9 @@ export async function evaluateGamification(input: EngineInput): Promise<Gamifica
       event_type: 'level_up',
       payload: { from_level: levelUp.from, to_level: levelUp.to, title: levelUp.newTitle },
     })
-    await createUserNotification(admin, {
+    await dispatchUserNotification({
       userId,
-      category: 'level',
+      category: 'level_up',
       title: `You reached Scholar level ${levelUp.to}`,
       body: `New title: ${levelUp.newTitle}`,
       linkUrl: '/coins',
@@ -229,7 +229,7 @@ export async function evaluateGamification(input: EngineInput): Promise<Gamifica
       xpReward: ach.xp_reward,
     })
 
-    await createUserNotification(admin, {
+    await dispatchUserNotification({
       userId,
       category: 'achievement',
       title: `Achievement unlocked: ${ach.title}`,
@@ -542,9 +542,9 @@ async function updateQuestProgress(input: QuestProgressInput) {
       })
 
       const questTitle = quest.title?.trim() || 'Quest'
-      await createUserNotification(admin, {
+      await dispatchUserNotification({
         userId,
-        category: 'quest',
+        category: 'creator_campaign',
         title: `Quest complete: ${questTitle}`,
         body:
           quest.coin_reward > 0 || quest.xp_reward > 0

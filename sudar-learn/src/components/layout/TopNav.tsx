@@ -16,6 +16,7 @@ import {
   Settings,
   Brain,
   ArrowLeft,
+  Bell,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -25,6 +26,7 @@ import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { CoinWidget } from '@/components/features/gamification/CoinWidget'
 import { RewardCatalogModal } from '@/components/features/gamification/RewardCatalogModal'
 import { NotificationCenter } from '@/components/features/notifications/NotificationCenter'
+import { NotificationToasts } from '@/components/features/notifications/NotificationToasts'
 import { UserAvatar } from '@/components/ui/UserAvatar'
 
 interface TopNavProps {
@@ -104,6 +106,7 @@ export function TopNav({ user, showOnboardingNudge, coinBalance = 0 }: TopNavPro
 
   if (isLearningFocusRoute) {
     return (
+      <>
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-card px-4 md:px-6">
         <Link href="/courses" className="flex items-center gap-2 shrink-0">
           <span className="sr-only">Sudar</span>
@@ -170,6 +173,14 @@ export function TopNav({ user, showOnboardingNudge, coinBalance = 0 }: TopNavPro
                 )}
                 <div className="p-1.5">
                   <Link
+                    href="/settings/notifications"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex w-full items-center gap-2.5 rounded-button px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                  >
+                    <Bell className="h-4 w-4" />
+                    Notification controls
+                  </Link>
+                  <Link
                     href="/settings"
                     onClick={() => setUserMenuOpen(false)}
                     className="flex w-full items-center gap-2.5 rounded-button px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
@@ -190,10 +201,13 @@ export function TopNav({ user, showOnboardingNudge, coinBalance = 0 }: TopNavPro
           )}
         </div>
       </header>
+      <NotificationToasts />
+      </>
     )
   }
 
   return (
+    <>
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-6 pl-6 pr-4 md:px-6 py-3 border-b border-border bg-card">
       {/* Logo — adequate left padding so logo isn't clipped */}
       <Link href="/" className="flex items-center gap-3 shrink-0 min-w-0">
@@ -427,6 +441,14 @@ export function TopNav({ user, showOnboardingNudge, coinBalance = 0 }: TopNavPro
                     </div>
                   </div>
                   <Link
+                    href="/settings/notifications"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex w-full items-center gap-2.5 rounded-button px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                  >
+                    <Bell className="h-4 w-4" />
+                    Notification controls
+                  </Link>
+                  <Link
                     href="/settings"
                     onClick={() => setUserMenuOpen(false)}
                     className="flex w-full items-center gap-2.5 rounded-button px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
@@ -455,5 +477,7 @@ export function TopNav({ user, showOnboardingNudge, coinBalance = 0 }: TopNavPro
         </div>
       </div>
     </header>
+    <NotificationToasts />
+    </>
   )
 }

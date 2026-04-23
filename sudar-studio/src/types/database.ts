@@ -722,6 +722,85 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_templates: {
+        Row: {
+          id: string
+          org_id: string | null
+          slug: string
+          category_slug: string
+          title_mustache: string
+          body_mustache: string | null
+          cta_label: string | null
+          cta_url_mustache: string | null
+          branding: Json
+          channels: string[]
+          locale: string
+          is_active: boolean
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id?: string | null
+          slug: string
+          category_slug: string
+          title_mustache: string
+          body_mustache?: string | null
+          cta_label?: string | null
+          cta_url_mustache?: string | null
+          branding?: Json
+          channels?: string[]
+          locale?: string
+          is_active?: boolean
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          title_mustache?: string
+          body_mustache?: string | null
+          cta_label?: string | null
+          cta_url_mustache?: string | null
+          branding?: Json
+          channels?: string[]
+          locale?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notification_campaigns: {
+        Row: {
+          id: string
+          org_id: string
+          template_id: string
+          audience_filter: Json
+          schedule_rule: Json
+          status: string
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          template_id: string
+          audience_filter?: Json
+          schedule_rule?: Json
+          status?: string
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          audience_filter?: Json
+          schedule_rule?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

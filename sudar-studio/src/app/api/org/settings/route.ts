@@ -42,6 +42,8 @@ export async function GET() {
   const normalizedOrgTts = normalizeTtsVoiceId(ai_models.tts_voice)
   const sso_config = (settings.sso_config as Record<string, unknown> | undefined) ?? null
   const ai_compliance = (settings.ai_compliance as Record<string, unknown> | undefined) ?? {}
+  const notification_policy = (settings.notification_policy as Record<string, unknown> | undefined) ?? {}
+  const notification_branding = (settings.notification_branding as Record<string, unknown> | undefined) ?? {}
   const ai_inference = parseOrgAiInference(settings)
 
   return NextResponse.json({
@@ -74,6 +76,35 @@ export async function GET() {
       block_high_risk_pii_in_tutor: ai_compliance.block_high_risk_pii_in_tutor !== false,
       tutor_redact_echoed_secrets: ai_compliance.tutor_redact_echoed_secrets !== false,
       tutor_output_moderation_strict: ai_compliance.tutor_output_moderation_strict === true,
+    },
+    notification_policy: {
+      mandatory_categories: Array.isArray(notification_policy.mandatory_categories) ? notification_policy.mandatory_categories : [],
+      global_daily_cap:
+        typeof notification_policy.global_daily_cap === 'number'
+          ? notification_policy.global_daily_cap
+          : 8,
+      global_weekly_cap:
+        typeof notification_policy.global_weekly_cap === 'number'
+          ? notification_policy.global_weekly_cap
+          : 35,
+      vertical_preset:
+        typeof notification_policy.vertical_preset === 'string'
+          ? notification_policy.vertical_preset
+          : 'corporate_ld',
+    },
+    notification_branding: {
+      accent_color:
+        typeof notification_branding.accent_color === 'string'
+          ? notification_branding.accent_color
+          : '#6d28d9',
+      logo_url:
+        typeof notification_branding.logo_url === 'string'
+          ? notification_branding.logo_url
+          : null,
+      from_name:
+        typeof notification_branding.from_name === 'string'
+          ? notification_branding.from_name
+          : 'Sudar',
     },
     ai_inference: {
       ...ai_inference,
@@ -161,6 +192,39 @@ export async function PATCH(request: Request) {
       if (value !== undefined) merged[key] = value
     }
     updatedSettings.ai_compliance = merged
+  }
+
+  if (body.notification_policy !== undefined) {
+    if (typeof body.notification_policy !== 'object' || body.notification_policy === null || Array.isArray(body.notification_policy)) {
+      return NextResponse.json({ error: 'Invalid notification_policy' }, { status: 400 })
+    }
+    const incoming = body.notification_policy as Record<string, unknown>
+    const prev = (typeof currentSettings.notification_policy === 'object' && currentSettings.notification_policy !== null
+      ? (currentSettings.notification_policy as Record<string, unknown>)
+      : {})
+    updatedSettings.notification_policy = {
+      ...prev,
+      ...(Array.isArray(incoming.mandatory_categories) ? { mandatory_categories: incoming.mandatory_categories } : {}),
+      ...(typeof incoming.global_daily_cap === 'number' ? { global_daily_cap: incoming.global_daily_cap } : {}),
+      ...(typeof incoming.global_weekly_cap === 'number' ? { global_weekly_cap: incoming.global_weekly_cap } : {}),
+      ...(typeof incoming.vertical_preset === 'string' ? { vertical_preset: incoming.vertical_preset } : {}),
+    }
+  }
+
+  if (body.notification_branding !== undefined) {
+    if (typeof body.notification_branding !== 'object' || body.notification_branding === null || Array.isArray(body.notification_branding)) {
+      return NextResponse.json({ error: 'Invalid notification_branding' }, { status: 400 })
+    }
+    const incoming = body.notification_branding as Record<string, unknown>
+    const prev = (typeof currentSettings.notification_branding === 'object' && currentSettings.notification_branding !== null
+      ? (currentSettings.notification_branding as Record<string, unknown>)
+      : {})
+    updatedSettings.notification_branding = {
+      ...prev,
+      ...(typeof incoming.accent_color === 'string' ? { accent_color: incoming.accent_color } : {}),
+      ...(typeof incoming.logo_url === 'string' || incoming.logo_url === null ? { logo_url: incoming.logo_url } : {}),
+      ...(typeof incoming.from_name === 'string' ? { from_name: incoming.from_name } : {}),
+    }
   }
 
   if (body.ai_inference !== undefined) {

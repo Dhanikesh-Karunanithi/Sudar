@@ -1,5 +1,5 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { createUserNotification } from '@/lib/notifications/create-notification'
+import { dispatchUserNotification } from '@/lib/notifications/dispatch'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
@@ -52,9 +52,9 @@ export async function POST(request: NextRequest) {
     payload: { course_title: course.title },
   })
 
-  await createUserNotification(admin, {
+  await dispatchUserNotification({
     userId: user.id,
-    category: 'course',
+    category: 'course_assigned',
     title: `Enrolled: ${course.title}`,
     body: 'Open the course to start learning.',
     linkUrl: `/courses/${course_id}/learn`,

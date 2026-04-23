@@ -777,6 +777,266 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_categories: {
+        Row: {
+          slug: string
+          title: string
+          description: string
+          default_channels: string[]
+          is_mandatory_for_orgs: boolean
+          rate_cap_per_day: number
+          allow_quiet_hours: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          slug: string
+          title: string
+          description: string
+          default_channels?: string[]
+          is_mandatory_for_orgs?: boolean
+          rate_cap_per_day?: number
+          allow_quiet_hours?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          title?: string
+          description?: string
+          default_channels?: string[]
+          is_mandatory_for_orgs?: boolean
+          rate_cap_per_day?: number
+          allow_quiet_hours?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          id: string
+          user_id: string
+          category_slug: string
+          channel: string
+          enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          category_slug: string
+          channel: string
+          enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_notification_settings: {
+        Row: {
+          user_id: string
+          quiet_hours_start: string | null
+          quiet_hours_end: string | null
+          timezone: string
+          locale: string
+          daily_digest_email: boolean
+          frequency_mode: string
+          coin_opt_in_awarded_at: string | null
+          last_monthly_bonus_at: string | null
+          last_revoke_at: string | null
+          never_prompt_push: boolean
+          push_prompt_snooze_until: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          quiet_hours_start?: string | null
+          quiet_hours_end?: string | null
+          timezone?: string
+          locale?: string
+          daily_digest_email?: boolean
+          frequency_mode?: string
+          coin_opt_in_awarded_at?: string | null
+          last_monthly_bonus_at?: string | null
+          last_revoke_at?: string | null
+          never_prompt_push?: boolean
+          push_prompt_snooze_until?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          quiet_hours_start?: string | null
+          quiet_hours_end?: string | null
+          timezone?: string
+          locale?: string
+          daily_digest_email?: boolean
+          frequency_mode?: string
+          coin_opt_in_awarded_at?: string | null
+          last_monthly_bonus_at?: string | null
+          last_revoke_at?: string | null
+          never_prompt_push?: boolean
+          push_prompt_snooze_until?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notification_channels: {
+        Row: {
+          id: string
+          user_id: string
+          channel: string
+          endpoint_hash: string
+          endpoint_payload: Json
+          user_agent: string | null
+          created_at: string
+          last_seen_at: string | null
+          revoked_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          channel: string
+          endpoint_hash: string
+          endpoint_payload?: Json
+          user_agent?: string | null
+          created_at?: string
+          last_seen_at?: string | null
+          revoked_at?: string | null
+        }
+        Update: {
+          endpoint_payload?: Json
+          user_agent?: string | null
+          last_seen_at?: string | null
+          revoked_at?: string | null
+        }
+        Relationships: []
+      }
+      notification_templates: {
+        Row: {
+          id: string
+          org_id: string | null
+          slug: string
+          category_slug: string
+          title_mustache: string
+          body_mustache: string | null
+          cta_label: string | null
+          cta_url_mustache: string | null
+          branding: Json
+          channels: string[]
+          locale: string
+          is_active: boolean
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id?: string | null
+          slug: string
+          category_slug: string
+          title_mustache: string
+          body_mustache?: string | null
+          cta_label?: string | null
+          cta_url_mustache?: string | null
+          branding?: Json
+          channels?: string[]
+          locale?: string
+          is_active?: boolean
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          title_mustache?: string
+          body_mustache?: string | null
+          cta_label?: string | null
+          cta_url_mustache?: string | null
+          branding?: Json
+          channels?: string[]
+          locale?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notification_campaigns: {
+        Row: {
+          id: string
+          org_id: string
+          template_id: string
+          audience_filter: Json
+          schedule_rule: Json
+          status: string
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          template_id: string
+          audience_filter?: Json
+          schedule_rule?: Json
+          status?: string
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          audience_filter?: Json
+          schedule_rule?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notification_delivery_log: {
+        Row: {
+          id: string
+          user_id: string
+          notification_id: string | null
+          template_id: string | null
+          category_slug: string
+          channel: string
+          status: string
+          suppression_reason: string | null
+          scheduled_send_at: string | null
+          sent_at: string | null
+          opened_at: string | null
+          clicked_at: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          notification_id?: string | null
+          template_id?: string | null
+          category_slug: string
+          channel: string
+          status?: string
+          suppression_reason?: string | null
+          scheduled_send_at?: string | null
+          sent_at?: string | null
+          opened_at?: string | null
+          clicked_at?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          status?: string
+          suppression_reason?: string | null
+          scheduled_send_at?: string | null
+          sent_at?: string | null
+          opened_at?: string | null
+          clicked_at?: string | null
+          metadata?: Json
+        }
+        Relationships: []
+      }
       content_chunks: {
         Row: {
           id: string

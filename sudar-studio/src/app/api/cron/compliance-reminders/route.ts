@@ -5,8 +5,7 @@
  */
 import { createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-
-const RESEND_API = 'https://api.resend.com/emails'
+import { sendEmailNotification } from '../../../../../../../shared/notifications/channels/email'
 
 function statusFromDue(dueDate: string | null, completed: boolean): 'overdue' | 'at_risk' | null {
   if (completed) return null
@@ -25,8 +24,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
+  if (!process.env.RESEND_API_KEY) {
     return NextResponse.json(
       { error: 'RESEND_API_KEY not set. Configure Resend and set RESEND_FROM to a verified domain (or use onboarding@resend.dev for testing).' },
       { status: 501 }
@@ -68,8 +66,6 @@ export async function POST(request: NextRequest) {
   }
 
   let sent = 0
-  const from = process.env.RESEND_FROM ?? 'Sudar <onboarding@resend.dev>'
-
   for (const [userId, items] of byUser) {
     if (items.overdue.length === 0 && items.at_risk.length === 0) continue
     const { data: authUser } = await admin.auth.admin.getUserById(userId)
@@ -95,15 +91,8 @@ export async function POST(request: NextRequest) {
       <p><em>Sudar — Learns with you, for you.</em></p>
     `.trim()
 
-    const res = await fetch(RESEND_API, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ from, to: email, subject, html }),
-    })
-    if (res.ok) sent += 1
+    const ok = await sendEmailNotification({ to: email, subject, html })
+    if (ok) sent += 1
   }
 
   return NextResponse.json({ sent, total_recipients: byUser.size })
