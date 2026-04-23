@@ -1,5 +1,5 @@
 """
-ByteOS Intelligence — Audio (TTS) Routes
+Sudar Intelligence — Audio (TTS) Routes
 Uses Edge-TTS (default) or optional Sarvam AI for speech from module text (Listen modality).
 Supports configurable voice, rate, and chunking for long text.
 Requires Supabase JWT or X-Intelligence-Service-Secret.

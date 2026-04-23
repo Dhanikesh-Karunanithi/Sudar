@@ -13,7 +13,7 @@ import { scanSensitiveUserText } from '@/lib/security/sensitiveInputGuard'
 import { z } from 'zod'
 import { validateTutorQueryResponsePayload } from '@/lib/tutor/responseContract'
 
-const INTELLIGENCE_URL = process.env.BYTEOS_INTELLIGENCE_URL?.replace(/\/$/, '')
+const INTELLIGENCE_URL = (process.env.SUDAR_INTELLIGENCE_URL ?? process.env.BYTEOS_INTELLIGENCE_URL)?.replace(/\/$/, '')
 const alpBodySchema = z.object({
   user_id: z.string().uuid().optional(),
   message: z.string().trim().min(1).max(2000),

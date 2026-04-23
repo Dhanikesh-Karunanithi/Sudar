@@ -1,6 +1,6 @@
 """
-ByteOS Intelligence — Content Generation Routes
-Handles course content generation requests from ByteOS Studio.
+Sudar Intelligence — Content Generation Routes
+Handles course content generation requests from Sudar Studio.
 Uses provider-agnostic AI client (OpenRouter, Together, OpenAI, Anthropic, custom).
 """
 from fastapi import APIRouter
@@ -34,7 +34,7 @@ class ContentGenerateResponse(BaseModel):
 async def generate_content(request: ContentGenerateRequest):
     """
     Generates a complete course structure from source material.
-    Called by ByteOS Studio's course builder.
+    Called by Sudar Studio's course builder.
     Provider fallback: Together AI → OpenAI → Anthropic.
     """
     # TODO: Implement full generation pipeline; use ai_client.chat_completion() when ready

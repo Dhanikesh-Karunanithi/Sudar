@@ -14,6 +14,6 @@ class HealthResponse(BaseModel):
 async def health_check():
     return HealthResponse(
         status="healthy",
-        service="ByteOS Intelligence",
+        service="Sudar Intelligence",
         version="1.0.0",
     )

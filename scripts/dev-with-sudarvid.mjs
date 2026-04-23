@@ -16,7 +16,7 @@ if (!appTarget || (appTarget !== 'learn' && appTarget !== 'studio')) {
 
 const extraArgs = process.argv.slice(3)
 const sudarVidUrl = (process.env.SUDARVID_URL || 'http://localhost:8000').replace(/\/$/, '')
-const intelligenceUrl = (process.env.BYTEOS_INTELLIGENCE_URL || 'http://localhost:8001').replace(/\/$/, '')
+const intelligenceUrl = (process.env.SUDAR_INTELLIGENCE_URL ?? process.env.BYTEOS_INTELLIGENCE_URL ?? 'http://localhost:8001').replace(/\/$/, '')
 const intelligenceServiceSecret = process.env.INTELLIGENCE_SERVICE_SECRET || 'sudar-local-dev-secret'
 
 function startProcess(command, args, cwd, label, envOverrides = {}) {
@@ -143,6 +143,7 @@ async function main() {
     appConfig.cwd,
     appConfig.label,
     {
+      SUDAR_INTELLIGENCE_URL: intelligenceUrl,
       BYTEOS_INTELLIGENCE_URL: intelligenceUrl,
       INTELLIGENCE_SERVICE_SECRET: intelligenceServiceSecret,
     }

@@ -1,5 +1,5 @@
 """
-ByteOS Intelligence — AI Tutor Routes
+Sudar Intelligence — AI Tutor Routes
 Handles reactive Q&A and proactive nudge generation for "Sudar", the AI tutor.
 Uses provider-agnostic AI client (see src.core.ai_client).
 All endpoints require Supabase JWT or X-Intelligence-Service-Secret; body.user_id must match JWT sub when JWT is used.

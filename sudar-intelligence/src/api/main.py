@@ -1,6 +1,6 @@
 """
-ByteOS Intelligence — FastAPI Entry Point
-The AI brain of ByteOS: adaptive engine, AI tutor, content generation, modality dispatch.
+Sudar Intelligence — FastAPI Entry Point
+The AI brain of Sudar: adaptive engine, AI tutor, content generation, modality dispatch.
 """
 import os
 from fastapi import FastAPI
@@ -26,14 +26,14 @@ _redoc_url = None if _is_production else "/redoc"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("ByteOS Intelligence starting up...")
+    print("Sudar Intelligence starting up...")
     yield
-    print("ByteOS Intelligence shutting down...")
+    print("Sudar Intelligence shutting down...")
 
 
 app = FastAPI(
-    title="ByteOS Intelligence",
-    description="The adaptive AI engine for the ByteOS learning platform.",
+    title="Sudar Intelligence",
+    description="The adaptive AI engine for the Sudar learning platform.",
     version="1.0.0",
     lifespan=lifespan,
     docs_url=_docs_url,
@@ -58,7 +58,7 @@ app.add_middleware(
 @app.get("/")
 def root():
     return {
-        "service": "ByteOS Intelligence",
+        "service": "Sudar Intelligence",
         "status": "running",
         "docs": _docs_url,
         "health": "/api/health",

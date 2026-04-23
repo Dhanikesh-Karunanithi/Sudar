@@ -1,5 +1,5 @@
 """
-ByteOS Intelligence — Learner Profile Routes
+Sudar Intelligence — Learner Profile Routes
 Handles Digital Learner Twin updates and Next Best Action computation.
 All endpoints require Supabase JWT or X-Intelligence-Service-Secret; body.user_id must match JWT sub when JWT is used.
 

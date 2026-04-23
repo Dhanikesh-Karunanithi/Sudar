@@ -16,11 +16,11 @@ export default async function SudarPlayLaunchPage({ searchParams }: Props) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const intelligenceUrl = process.env.BYTEOS_INTELLIGENCE_URL?.replace(/\/$/, '')
+  const intelligenceUrl = (process.env.SUDAR_INTELLIGENCE_URL ?? process.env.BYTEOS_INTELLIGENCE_URL)?.replace(/\/$/, '')
   if (!intelligenceUrl) {
     return (
       <div className="p-6 text-center space-y-2">
-        <p className="text-red-600">SudarPlay is not configured (BYTEOS_INTELLIGENCE_URL missing).</p>
+        <p className="text-red-600">SudarPlay is not configured (SUDAR_INTELLIGENCE_URL missing).</p>
         <Link href="/courses" className="text-sm font-medium text-primary hover:underline">
           Return to courses
         </Link>

@@ -1,19 +1,19 @@
-# ByteOS — Cursor Rules
-# The Operating System for Learning | "Learns with you, for you."
+# Sudar — Cursor Rules
+# Learning Operating System | "Learns with you, for you."
 
 ## ALWAYS READ ECOSYSTEM.md FIRST
-Before making any changes, read ECOSYSTEM.md and AGENTS.md in the ByteOS root directory.
+Before making any changes, read ECOSYSTEM.md and AGENTS.md in the Sudar root directory.
 These files contain the authoritative architecture, naming conventions, and build decisions.
 Before adding features, check **docs/STRATEGIC_PATH.md** for current state and prioritized next steps. For the current "Next 3" outcomes, read **PROGRESS.md**.
 
 ---
 
 ## Project Identity
-- Product name: ByteOS
-- Admin surface: ByteOS Studio (in /sudar-studio)
-- Learner surface: ByteOS Learn (in /sudar-learn)
-- AI engine: ByteOS Intelligence (in /sudar-intelligence)
-- AI Tutor name: "Byte" (never change this name)
+- Product name: Sudar
+- Admin surface: Sudar Studio (in /sudar-studio)
+- Learner surface: Sudar Learn (in /sudar-learn)
+- AI engine: Sudar Intelligence (in /sudar-intelligence)
+- AI Tutor name: "Sudar" (never change this name)
 - Mission: "Learns with you, for you."
 
 ---
@@ -44,7 +44,7 @@ Before adding features, check **docs/STRATEGIC_PATH.md** for current state and p
 - Follow mobile-first responsive design on all learner-facing components
 - Dark mode support must be included for all new components
 - Use CSS variables for brand colors (defined in tailwind.config.ts)
-- ByteOS design tokens: primary brand is deep blue-purple, accent is electric cyan
+- Sudar design tokens: primary brand is deep blue-purple, accent is electric cyan
 
 ---
 
@@ -141,4 +141,4 @@ constants/         — app constants and copy strings
 
 ---
 
-*ByteOS | v1.0 | February 2026*
+*Sudar | v1.0 | April 2026*

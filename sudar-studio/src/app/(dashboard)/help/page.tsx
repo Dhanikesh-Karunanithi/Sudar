@@ -95,7 +95,7 @@ export default function HelpPage() {
           <li><strong className="text-slate-300">Corporate:</strong> Azure AD / Okta SSO; Workday/BambooHR/Rippling sync; ALP for intranet; xAPI for data lake. AI: OpenAI/Claude for compliance or OpenRouter.</li>
         </ul>
         <p className="text-sm text-slate-500 mt-3">
-          Scaling: use a dedicated Supabase project; scale BYTEOS_INTELLIGENCE_URL; document rate limits for ALP keys.
+          Scaling: use a dedicated Supabase project; scale SUDAR_INTELLIGENCE_URL; document rate limits for ALP keys.
         </p>
       </section>
 

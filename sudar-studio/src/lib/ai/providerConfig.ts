@@ -192,10 +192,10 @@ export const PROVIDER_KEYS: ProviderKeyDef[] = [
   {
     id: 'intelligence_url',
     name: 'Sudar Intelligence URL',
-    envVar: 'BYTEOS_INTELLIGENCE_URL',
+    envVar: 'SUDAR_INTELLIGENCE_URL',
     category: 'required',
     signupUrl: '',
-    steps: ['Set BYTEOS_INTELLIGENCE_URL to your Intelligence service base URL (e.g. http://localhost:8000).'],
+    steps: ['Set SUDAR_INTELLIGENCE_URL to your Intelligence service base URL (e.g. http://localhost:8000).'],
   },
 ]
 

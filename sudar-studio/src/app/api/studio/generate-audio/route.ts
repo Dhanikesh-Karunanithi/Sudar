@@ -14,7 +14,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 const OPENAI_TTS_URL = 'https://api.openai.com/v1/audio/speech'
 const TTS_MODEL = 'tts-1'
 
-const INTELLIGENCE_URL = process.env.BYTEOS_INTELLIGENCE_URL?.replace(/\/$/, '')
+const INTELLIGENCE_URL = (process.env.SUDAR_INTELLIGENCE_URL ?? process.env.BYTEOS_INTELLIGENCE_URL)?.replace(/\/$/, '')
 const INTELLIGENCE_SERVICE_SECRET = process.env.INTELLIGENCE_SERVICE_SECRET?.trim()
 
 // OpenAI voice names
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
   const hasIntelligence = !!INTELLIGENCE_URL
   if (!hasOpenAI && !hasIntelligence) {
     return NextResponse.json(
-      { error: 'No TTS provider configured. Set OPENAI_API_KEY in sudar-studio/.env.local, or start the Intelligence service and set BYTEOS_INTELLIGENCE_URL.' },
+      { error: 'No TTS provider configured. Set OPENAI_API_KEY in sudar-studio/.env.local, or start the Intelligence service and set SUDAR_INTELLIGENCE_URL.' },
       { status: 503 }
     )
   }
