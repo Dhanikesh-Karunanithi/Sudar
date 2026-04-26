@@ -118,6 +118,14 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## Learner gamification and engagement (Learn)
+
+- **Where**: Dashboard and related APIs (quests, check-ins, coins, achievements, notifications) — see `sudar-learn/src/lib/gamification/`, `sudar-learn/src/app/api/quests/`, `sudar-learn/src/app/api/checkin/`, and dashboard layout toasts.  
+- **What**: Optional engagement loop: quests with progress, daily check-ins, virtual coins and levels, achievement unlocks, in-app notifications, with structured `learning_events` for milestones. Wired for operator rollout per product configuration.  
+- **Doc trail**: Dated build notes in [UPDATES.md](../UPDATES.md) (e.g. 2026-04-15, 2026-04-17).
+
+---
+
 ## Global search (Learn)
 
 - **Where**: Learner dashboard app — `/search`.  
@@ -132,4 +140,4 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
-*Last updated: April 2026 (proactive Sudar + tap-to-reply chips). For roadmap and next priorities, see [STRATEGIC_PATH.md](STRATEGIC_PATH.md) and [ACTION_PLANS.md](ACTION_PLANS.md).*
+*Last updated: April 2026 (gamification pass + paper/doc sync). For roadmap and next priorities, see [STRATEGIC_PATH.md](STRATEGIC_PATH.md) and [ACTION_PLANS.md](ACTION_PLANS.md).*

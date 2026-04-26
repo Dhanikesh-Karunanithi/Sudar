@@ -16,7 +16,7 @@
 
 | Source of truth (ship / roadmap) | Paper artifacts to touch |
 |----------------------------------|---------------------------|
-| [docs/SHIPPED_FEATURES.md](../SHIPPED_FEATURES.md) | [docs/research/paper.tex](paper.tex) (LaTeX), [docs/LAMP-Updated-Draft.md](../LAMP-Updated-Draft.md) (Markdown) |
+| [docs/SHIPPED_FEATURES.md](../SHIPPED_FEATURES.md) | [docs/research/paper.tex](paper.tex) (LaTeX), [docs/LAMP-Updated-Draft.md](../LAMP-Updated-Draft.md) (Markdown) — keep **Modality** and **Implementation** subsections aligned with *course-dependent* modality availability (read/listen always; watch/podcast when configured; ALP = HTTP API + Learn proxies) |
 | [docs/STRATEGIC_PATH.md](../STRATEGIC_PATH.md) §2 (Current state) | Same: paper.tex §Implementation / §Evidence; LAMP-Updated-Draft §4 “Currently implemented” and “Remaining planned” |
 | [docs/ACTION_PLANS.md](../ACTION_PLANS.md) (Plan D, pilot) | paper.tex “Pilot planned / in progress”; LAMP-Updated-Draft pilot and OSS wording |
 
@@ -89,4 +89,4 @@ Use this as a quick re-entry checklist:
 
 ---
 
-*Last updated: March 2026. Keep this file in the repo so agents and contributors know how to keep the paper aligned with the build.*
+*Last updated: April 2026 (paper v3: maturity-aware modalities, ALP reference API status, engagement/trust). Keep this file in the repo so agents and contributors know how to keep the paper aligned with the build.*

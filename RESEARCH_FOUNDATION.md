@@ -32,7 +32,7 @@ Sudar is designed as an **evidence-informed learning platform** that applies est
 
 ### 1.5 Intelligent Tutoring & Dialogue
 
-- **Intelligent tutoring systems** (ITS) that provide step-by-step support and dialogue have a long history of improving learning gains (e.g. VanLehn, 2011). ByteOS’s **AI tutor “Sudar”** provides: **reactive Q&A** (RAG over course content), **longitudinal memory** (conversation and learner context over time), **contextual help** (e.g. “Explain this” from selected text), and **proactive nudges** aligned with the learner’s current state.
+- **Intelligent tutoring systems** (ITS) that provide step-by-step support and dialogue have a long history of improving learning gains (e.g. VanLehn, 2011). Sudar’s **AI tutor “Sudar”** provides: **reactive Q&A** (RAG over course content), **longitudinal memory** (conversation and learner context over time), **contextual help** (e.g. “Explain this” from selected text), and **proactive nudges** (including optional tap-to-reply choices) aligned with the learner’s current state.
 
 ### 1.6 Longitudinal Learner Model (Digital Learner Twin)
 
@@ -77,7 +77,7 @@ If you use Sudar in academic or research work, you may cite:
   author       = {Karunanithi, Dhanikesh and Sudar Contributors},
   title        = {Sudar: An AI-Native Learning Operating System},
   year         = {2026},
-  url          = {https://github.com/lorddannykay/ByteOS},
+  url          = {https://github.com/Dhanikesh-Karunanithi/Sudar},
   note         = {Evidence-informed adaptive learning platform with learner memory and adaptive enhancement. Creator: Dhanikesh `Dhani' Karunanithi. Research foundation: RESEARCH_FOUNDATION.md}
 }
 ```

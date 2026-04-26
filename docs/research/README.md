@@ -4,10 +4,10 @@ This folder contains the scientific paper draft and submission materials for the
 
 ## Paper
 
-- **Title:** From Course Hosting to Adaptive Learning: An AI-Native Platform and Plugin Architecture for Learner Memory and Multimodal Delivery  
+- **Title (in `paper.tex`):** *Learning That Remembers You: An AI-Native Ecosystem for Adaptive, Memory-Aware, and Multimodal Education at Scale*  
 - **Technology name in paper:** Adaptive Learning Layer (ALP) for the plugin architecture; reference implementation: Sudar (canonical repository: https://github.com/Dhanikesh-Karunanithi/Sudar).  
-- **File:** [paper.tex](paper.tex) — LaTeX source (two-column, ~8–10 pages).  
-- **Published PDF (v4):** [Sudar_LAMP_Paper_v4.pdf](Sudar_LAMP_Paper_v4.pdf) — author-compiled snapshot aligned with the Sudar / LAMP workstream.  
+- **File:** [paper.tex](paper.tex) — LaTeX source (two-column, ~8–10 pages). **Source revision v3 (April 2026):** maturity-aware modalities, ALP reference API status, engagement/trust layers.  
+- **Snapshot PDF (v4):** [Sudar_LAMP_Paper_v4.pdf](Sudar_LAMP_Paper_v4.pdf) — refreshed from current `paper.tex` build (April 2026).  
 - **References:** [references.bib](references.bib) — BibTeX.
 
 ## Build

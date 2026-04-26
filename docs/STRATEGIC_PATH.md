@@ -53,7 +53,7 @@ Every new feature or fix should map to at least one of these pillars. If it does
 
 **Remaining gaps vs. ultimate goal**  
 - **Modality**: Text, Flashcards, and Listen (Audio TTS) live; Video/Podcast/MindMap use pre-generated or on-demand content; SudarFeed/SudarPlay still placeholders.  
-- **Polish**: No server-generated certificate PDF.  
+- **Polish**: Server-generated certificate PDF is implemented (`GET /api/certificates/[code]/pdf`); further polish (branding, locale) as needed.  
 - **Scale**: No white-label, SSO, or HRIS hooks yet (explicitly later phase).
 - **Analytics engine depth**: v1 hybrid analytics engine scaffolded (rollups + admin/learner insight APIs + risk signals + recommendation feedback), now needs production rollout tuning and scheduled refresh orchestration.
 
@@ -71,7 +71,7 @@ Every new feature or fix should map to at least one of these pillars. If it does
 - **Phase 3 remaining**: Video modality (wire to SudarVid / Remotion).  
 - **Phase 5 — Engagement & Scale**: SudarPlay, SudarFeed, SudarMind modalities; white-label per org; HRIS integration hooks.  
 - **Compliance**: Email reminders shipped (cron endpoint; see SHIPPED_FEATURES.md).  
-- **Polish**: Server-generated certificate PDF.
+- **Polish**: Certificate PDF server route exists; optional enhancements (branding, locale, asset embedding).
 
 ---
 

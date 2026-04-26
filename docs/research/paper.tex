@@ -1,5 +1,5 @@
-% Learning That Remembers You — Sudar / ALP Paper v2
-% Updated to match enhanced markdown draft (March 2026)
+% Learning That Remembers You — Sudar / ALP Paper
+% v3 (April 2026): maturity-aware modalities, ALP API status, engagement/trust
 \documentclass[10pt,twocolumn]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -38,14 +38,18 @@ disconnected from the course-hosting infrastructure most organisations
 already use. We present \textbf{Sudar}, an AI-native learning system
 with three main contributions: (1)~a full open-source reference
 platform that unifies authoring, delivery, and intelligence around a
-persistent \textbf{Digital Learner Twin}, adaptive sequencing, a
-complete multimodal delivery stack (text with read-along TTS, video,
-audio podcast, mindmap, flashcards, and SCORM), and an AI tutor with
-longitudinal cross-session memory; (2)~the \textbf{Adaptive Learning
-Layer (ALP)}, an architecture by which these capabilities can be
-deployed as standalone plugins on top of existing LMSs---turning them
-into adaptive, memory-aware learning experience platforms without full
-platform replacement; and (3)~a demonstrated \textbf{radical cost
+persistent \textbf{Digital Learner Twin}, adaptive sequencing,
+a \emph{modality-agnostic} delivery architecture (read/listen, AI-generated
+maps and cards, optional watch/podcast/play, and SCORM) with
+course-dependent availability, plus recent product layers for
+consent-gated generative personalization, learner engagement
+(gamification telemetry), and procurement-oriented trust documentation;
+and an AI tutor with longitudinal cross-session memory and proactive
+\emph{tap-to-reply} nudges; (2)~the \textbf{Adaptive Learning
+Layer (ALP)}, an architecture and reference HTTP API by which host LMSs
+can forward events and call tutor and next-action services---reducing
+full platform replacement while making learner memory and adaptation
+portable; and (3)~a demonstrated \textbf{radical cost
 efficiency} enabled by open-weight inference models and zero-cost TTS,
 making world-class AI-native learning economically viable at a
 per-learner infrastructure cost of less than \$0.02 per month---a
@@ -76,7 +80,9 @@ and certifications.
 
 We address this gap with Sudar, an AI-native learning system that
 (1)~implements a complete reference platform with learner memory,
-adaptive paths, and a fully realised multimodal delivery stack;
+adaptive paths, and multimodal delivery with explicit maturity tiers
+(core text and audio generation; optional studio-authored video and
+podcast; SCORM import and delivery);
 (2)~is designed so its core components can be deployed as a layer on
 top of existing LMSs---the \textbf{Adaptive Learning Layer
 (ALP)}---enabling incumbent systems to gain longitudinal learner
@@ -126,10 +132,11 @@ and adaptive path ordering.
 \paragraph{Multimodal learning and dual coding.}
 Dual coding and multimodal presentation support different learners and
 deepen encoding \cite{mayer2009,clark2016}. Content is authored once
-and delivered in multiple formats (text with read-along narration,
-animated video, audio podcast, interactive mindmap, flashcards, and
-SCORM), with a modality dispatcher that recommends formats per learner
-profile.
+and can be delivered in multiple formats depending on course
+configuration (text with read-along narration, optional animated video
+and dialogue podcast, interactive mindmap, flashcards, optional
+game-style activities, and SCORM packages), with a modality dispatcher
+that recommends formats per learner profile.
 
 \paragraph{Self-regulated learning and metacognition.}
 Self-regulated learning and metacognitive scaffolding improve
@@ -138,7 +145,9 @@ through progress visibility (streaks, completion rates), next-best-action
 surfacing, deadline awareness, and the tutor's ``Your context'' panel---a
 live view of what Sudar knows about the learner's goals and
 preferences---enabling learners to reflect on and correct their own
-model.
+model. Where organisations enable adaptive courses, optional
+per-enrollment generative overlays (e.g.\ role explanation) are
+consent-gated and stored separately from canonical module content.
 
 \paragraph{Structured curricula and prerequisite ordering.}
 Structured curricula and prerequisite sequencing help learners build
@@ -204,7 +213,7 @@ typical LMS with AI add-on.}
 Scope          & Full platform + plugin layer        & Single-product reader    & Course host + chatbot \\
 Learner model  & Longitudinal (Digital Twin)         & Per-session / material   & None or stateless \\
 Tutor memory   & Cross-session, cross-course         & Not claimed              & Stateless \\
-Modalities     & Text+TTS, video, podcast, mindmap, flashcards, SCORM & Text, slides, audio, mind map & Usually text/video only \\
+Modalities     & Read/Listen, optional video/podcast, map/cards, SCORM & Text, slides, audio, mind map & Usually text/video only \\
 Authoring      & Integrated (Studio)                 & N/A (ingests material)   & Separate tools \\
 Augment LMS    & Yes (ALP plugins)                   & No                       & N/A \\
 Open source    & Yes (Apache-2.0)                   & No                       & Rarely \\
@@ -311,7 +320,9 @@ popup} that lets learners highlight any passage and invoke one of six
 pre-built actions (``Explain this'', ``Give me an example'', ``Why
 does this matter?'', ``Simplify this'', ``Summarise'', ``How does this
 connect\ldots'') or a custom question; a \textbf{resizable overlay
-panel}; and a \textbf{generative block renderer} that allows the tutor
+panel}; \textbf{proactive nudges} on the dashboard and in the course
+viewer with optional \emph{tap-to-reply} chips that forward to the same
+tutor query pipeline; and a \textbf{generative block renderer} that allows the tutor
 to respond with structured artefacts---quiz questions, course
 recommendation cards, multi-step workflow trackers, and action
 groups---enriching interaction beyond simple Q\&A.
@@ -319,56 +330,51 @@ groups---enriching interaction beyond simple Q\&A.
 \subsection{Modality-Agnostic Delivery}
 \label{sec:modality}
 
-Content is authored once. The delivery layer presents the same
-material in six fully implemented modalities, selectable per learner
-in real time:
+Content is authored once. The delivery layer exposes a unified course
+viewer with a modality switcher; \emph{which tabs are active depends
+on course configuration} (e.g.\ video scenes and podcast dialogue are
+optional fields in course settings). Learners always have Read, Listen,
+Watch, Map, and Cards; Podcast appears when configured; Watch is only
+fully active when the course includes generated or imported video
+scenes; an optional \textbf{Play} link appears when a module provides a
+SudarPlay asset. SCORM modules bypass the tab switcher and launch a
+full-viewport package player.
 
-\textbf{Text with Read-Along.} A server-side TTS read-along system
-calls \texttt{/api/ai/generate-audio} per sentence, receiving
-high-quality neural voice audio from Edge-TTS (40+ languages, 300+
-voices, zero cost). Each sentence is highlighted in-place as it plays,
-via \texttt{ReadingBodyWithSentences}. A collapsible transcript strip
-and sentence counter support both visual and auditory learners
-simultaneously.
+\textbf{Text with Read-Along.} A server-side TTS read-along path
+calls \texttt{/api/ai/generate-audio} per sentence, receiving neural
+voice audio (Edge-TTS by default). Each sentence is highlighted in-place
+as it plays, via \texttt{ReadingBodyWithSentences}. Telemetry includes
+\texttt{read\_along\_start} / \texttt{read\_along\_complete} events.
 
-\textbf{Listen (standalone audio TTS).} A dedicated Listen modality tab
-(\texttt{AudioCard}) offers on-demand full-module TTS: the learner
-selects the Listen tab and receives generated audio for the current
-module, with optional regeneration. This complements the sentence-level
-read-along in the Text modality.
+\textbf{Listen (standalone audio TTS).} A dedicated Listen tab
+(\texttt{AudioCard}) offers on-demand full-module TTS with optional
+regeneration and learner voice preferences.
 
-\textbf{Animated Video.} Renders course content as scene-by-scene
-animation entirely in-browser (no video generation API). Four
-animation styles---kinetic, word-reveal, fade, and list---are applied
-per scene. If scenes carry a \texttt{audioDataURL} field, playback is
-audio-driven; otherwise a configurable scene timer advances
-automatically.
+\textbf{Animated Video (Watch).} When \texttt{video\_scenes} are present,
+the viewer renders scene-by-scene in-browser animation (kinetic,
+word-reveal, fade, list). Richer video can be produced via the separate
+SudarVid microservice and proxied by configuration. If no video is
+available, the Watch tab remains disabled.
 
-\textbf{Audio Podcast.} Presents content as a two-voice dialogue
-(host and domain expert) through \texttt{DialogueSegment[]} objects.
-A live transcript highlights the active segment; learners can click
-any segment to jump playback.
+\textbf{Audio Podcast.} When \texttt{podcast\_dialogue} is configured,
+the viewer presents a two-voice dialogue through \texttt{DialogueSegment[]}
+with transcript and seek-by-segment playback.
 
 \textbf{MindMap (SudarMind).} Generates an interactive concept map
-via \texttt{POST /api/ai/generate-mindmap} using a custom SVG layout
-engine. Eight colour families distinguish top-level branches; node
-styles vary by depth; smooth B\'{e}zier curves connect parent--child
-pairs. A scope switcher shows either the current module or the full
-course.
+on demand via \texttt{POST /api/ai/generate-mindmap} using a custom SVG
+layout engine (B\'{e}zier edges, scope: module or course).
 
-\textbf{Flashcards.} Generates a set of review cards on demand via
-\texttt{POST /api/ai/generate-flashcards}, supporting spaced
-repetition workflows and retrieval practice \cite{roediger2006,black1998}.
+\textbf{Flashcards.} On-demand cards via \texttt{POST /api/ai/generate-flashcards},
+supporting retrieval practice \cite{roediger2006,black1998}.
 
-\textbf{SCORM.} Existing SCORM packages render in a sandboxed iframe
-with a \texttt{postMessage} API shim; session time, suspend data, and
-scores write to \texttt{learning\_events}. The
-\texttt{scorm\_text\_content} field feeds Sudar's RAG knowledge base
-so the AI tutor can answer questions about SCORM content.
+\textbf{SCORM.} Packages render in a sandboxed iframe with a
+\texttt{postMessage} shim; scores and time write to
+\texttt{learning\_events}. Extracted text can feed RAG for tutor
+grounding.
 
 A modality dispatcher in the Intelligence layer recommends the next
-modality from the learner's affinity scores and recent behaviour,
-supporting dual-coding principles \cite{mayer2009,clark2016}.
+modality from affinity scores and recent behaviour, supporting
+dual-coding principles \cite{mayer2009,clark2016}.
 
 \subsection{Adaptive Sequencing and Next-Best Action}
 \label{sec:adaptive}
@@ -418,9 +424,10 @@ separation between Provider plugins and Placement plugins
     sets, audio narration, or animated video storyboards from any
     module text and embed output as native LMS resources.
   \item \textbf{SudarRecommend.} A next-best-action widget for the LMS
-    dashboard. Queries \texttt{/api/intelligence/next-action} and
-    returns a personalised recommendation card with no schema changes
-    to the host database.
+    dashboard. The reference Learn app exposes \texttt{/api/alp/next-action}
+    (authenticated) which forwards to Intelligence; internal calls use
+    \texttt{/api/intelligence/next-action}. No schema changes are required
+    on the host database.
   \item \textbf{SudarAdapt.} The most advanced plugin. Integrates with
     the LMS's conditional activity system to dynamically unlock or
     reorder optional content based on ALP's adaptive sequencing
@@ -432,6 +439,17 @@ Figure~\ref{fig:alp} illustrates the integration. The host LMS
 continues to own content, enrolments, and grading. ALP sits alongside
 it, enriching the experience without replacing infrastructure. No data
 migration is required.
+
+\paragraph{Reference implementation status.}
+The repository provides authenticated HTTP endpoints on the Learn
+application (e.g.\ \texttt{/api/alp/events}, \texttt{/api/alp/tutor/query},
+\texttt{/api/alp/next-action}, embed-token helpers) with behaviour and
+field mappings documented in \texttt{docs/ALP\_API.md}. Host LMSs can
+call these without hosting Sudar's UI. Packaging the same contract as
+distributable installable modules per vendor (Moodle, Canvas, etc.),
+hardening for multi-tenant production, and mapping institutional user
+identities, remain deployment engineering tasks rather than missing
+core APIs.
 
 \paragraph{Addressable scale.}
 Moodle alone has over 500 million registered users across 233 countries
@@ -529,7 +547,8 @@ bootcamps, and regulated-industry compliance.
 \label{sec:intelligence}
 
 The Intelligence layer described above reflects the current
-implementation: reactive Q\&A via RAG, rule-based proactive nudges,
+implementation: reactive Q\&A via RAG, rule-based proactive nudges (with
+structured follow-up \emph{choices} for client surfaces),
 and a longitudinal memory updated from quiz outcomes and tutor
 exchanges. This is a substantial advance over stateless LMS AI; it is
 also, architecturally, only the beginning.
@@ -568,24 +587,28 @@ event model are fully documented in the repository
 (\texttt{ECOSYSTEM.md}, \texttt{RESEARCH\_FOUNDATION.md}).
 
 Currently implemented: shared authentication and schema; course and
-learning path CRUD and publish; document-to-course AI generation;
-learner dashboard with streak, time-on-task, Sudar recommendations,
-and upcoming deadlines; six modalities (text with sentence-level
-read-along TTS, standalone Listen (audio TTS) tab, animated video,
-audio podcast, interactive mindmap, flashcards, SCORM delivery); AI
+learning path CRUD and publish; document-to-course and SCORM~1.2
+import; learner dashboard with streak, time-on-task, Sudar
+recommendations, optional engagement surfaces (e.g.\ quests, coins,
+achievements) where enabled, and upcoming deadlines; multimodal
+course viewer as in Section~\ref{sec:modality} (read-along, Listen,
+optional Watch and Podcast, Map, Cards, optional Play, SCORM); AI
 tutor with longitudinal memory, RAG, text-selection popup, resizable
-overlay, ``Your context'' live memory panel, and generative block
-rendering; five quiz mode archetypes and five lesson archetypes;
-next-best-action and adaptive path ordering; learning paths with
-unlock rules and shareable certification links with PDF generation;
-compliance view (overdue / at-risk / on-track), compliance email
-reminders (cron for at-risk/overdue path assignments); analytics
-(completions, quiz scores, struggle topics, time per section); and
-learner preferences page. Production deployment is documented:
-Studio and Learn host on Vercel; Intelligence hosts on Railway,
-Render, or Fly.io, with the Intelligence URL configured in both
-front-end projects. The project is open source under the Apache-2.0
-licence \cite{sudar2026}.
+overlay, tap-to-reply proactive nudges, ``Your context'' live memory
+panel, and generative block rendering; five quiz mode archetypes and
+five lesson archetypes; next-best-action and adaptive path ordering;
+learning paths with unlock rules, shareable public certificate pages,
+browser print/save, and a server-generated PDF download route; optional
+per-enrollment generative overlays with org policy and consent; Studio
+governance and a technical trust pack for security reviews; compliance
+view (overdue / at-risk / on-track) and email reminders
+(cron); analytics rollups and risk signals (feature-flagged in
+production); time per section in analytics; global search; server-side
+sensitive-input guardrails on AI routes; and learner preferences. ALP
+Learn proxies are implemented (Section~\ref{sec:alp}). Production
+deployment is documented: Studio and Learn on Vercel; Intelligence on
+Railway, Render, or Fly.io, with the Intelligence URL set in the apps.
+The project is open source under the Apache-2.0 licence \cite{sudar2026}.
 
 % ---------------------------------------------------------------
 \section{Economic Accessibility: The Radical Cost Case}
@@ -666,10 +689,13 @@ modelling \cite{bull2016,self1988}.
 
 \paragraph{Scope of current claims.}
 This is a system and architecture paper. Current claims are:
-(a)~the platform implements all described components to the level of a
-working proof of concept; (b)~each component is grounded in
-established learning-science evidence; (c)~the ALP architecture
-addresses a gap that no widely adopted technology currently fills; and
+(a)~the platform implements a working reference deployment and the
+subsystems we describe, with \emph{explicit} caveats for
+course-dependent modalities, optional product layers, and ongoing LMS
+packaging; (b)~each design choice is grounded in established
+learning-science evidence; (c)~the ALP architecture addresses a gap in
+LMS-agnostic, memory-aware services that commercial stacks rarely ship
+as open, portable APIs; and
 (d)~the economic cost structure has been empirically observed in
 practice and validated against current provider pricing.
 
@@ -692,30 +718,29 @@ versus incumbent platforms.
 % ---------------------------------------------------------------
 
 \paragraph{Limitations.}
-Production ALP plugin connectors for Moodle, Canvas, and Blackboard
-are not yet built; the API surface is defined but LMS-specific adapter
-layers require additional engineering. Controlled efficacy data are not
-yet available; claims about learning gains remain grounded in the
-underlying learning-science evidence rather than Sudar-specific trials.
-The Digital Learner Twin relies on inferred signals that may not fully
-capture a learner's actual knowledge state \cite{self1988,bull2016}.
-Edge-TTS accesses Microsoft's Azure Neural Voice infrastructure without
-a formal commercial licence; production deployments with paying
-customers should provision Azure AI Speech or an equivalent licensed
-TTS service. The predictive intelligence capabilities described in
-Section~\ref{sec:intelligence} require longitudinal event data to train
-effectively; early deployments will rely on rule-based proactive nudges
-until sufficient behavioural data accumulates.
+Reference ALP HTTP endpoints and Learn-side proxies are implemented,
+but \emph{packaging} and operating them as one-click add-ons in each
+major LMS marketplace (and validating identity mapping in diverse SSO
+environments) still requires per-institution work. Controlled efficacy
+data are not yet available; claims about learning gains remain grounded
+in the underlying learning-science evidence rather than
+Sudar-specific trials. The Digital Learner Twin relies on inferred
+signals that may not fully capture a learner's actual knowledge
+state \cite{self1988,bull2016}. Edge-TTS uses Microsoft's voice
+infrastructure under its terms; production deployments with paying
+customers should plan licensed TTS. The predictive capabilities in
+Section~\ref{sec:intelligence} require longitudinal data to learn
+reliably; live systems today combine rules with heuristics.
 
 \paragraph{Future work.}
-Planned work includes: LMS-specific connectors for ALP (Moodle, Canvas,
-Blackboard); completing SudarPlay (gamified modality) and SudarFeed
-(social feed modality); developing the predictive intervention layer
-with RL-based policy learning; running controlled efficacy studies;
-releasing SudarCoach, SudarAssess, and SudarCompliance as first-party
-Intelligence plugins; building the community plugin ecosystem; and
-supporting enterprise features (SSO, HRIS integration) and an
-offline-first variant for connectivity-constrained environments.
+Planned work includes: first-party or community LMS distributables
+that wrap the same ALP contract; maturing analytics rollups and
+scheduled jobs at scale; SudarFeed (short-form social feed) and deeper
+SudarPlay integration; RL-style intervention policies; controlled
+efficacy and cost-per-gain studies per \texttt{docs/PILOT\_PLAN.md};
+SudarCoach, SudarAssess, and SudarCompliance-style intelligence
+plugins; enterprise features (SSO, HRIS); and an offline-first
+deployment path for low-connectivity settings.
 
 % ---------------------------------------------------------------
 \section{Conclusion}
@@ -724,11 +749,13 @@ offline-first variant for connectivity-constrained environments.
 
 We presented Sudar, an AI-native learning platform with three
 contributions: (1)~a reference platform combining authoring, delivery,
-and intelligence around a Digital Learner Twin, adaptive sequencing, a
-complete multimodal delivery stack, and an AI tutor with longitudinal
-cross-session memory; (2)~the Adaptive Learning Layer (ALP), an
-architecture for deploying these capabilities as a plugin layer on top
-of existing LMSs---with the potential to reach the hundreds of millions
+and intelligence around a Digital Learner Twin, adaptive sequencing,
+modality-agnostic delivery with course-dependent options, product
+layers for policy/consent, engagement telemetry, and trust documentation,
+and an AI tutor with longitudinal memory and proactive tap-to-reply
+nudges; (2)~the Adaptive Learning Layer (ALP), an architecture and
+reference API for deploying these capabilities alongside existing
+LMSs---with the potential to reach the hundreds of millions
 of Moodle, Canvas, Blackboard, and Sakai users \cite{moodle2025stats}
 without requiring LMS replacement; and (3)~a demonstrated economic
 model that reduces the infrastructure cost of AI-native personalised
@@ -786,7 +813,8 @@ affinity scores, behavioural signals, \texttt{preferences} JSONB);
 duration);
 \texttt{ai\_interactions} (\texttt{user\_message},
 \texttt{ai\_response}, \texttt{context\_used});
-\texttt{enrollments} (path/course, progress, \texttt{due\_date});
+\texttt{enrollments} (path/course, progress, \texttt{due\_date},
+optional \texttt{personalization\_overlays} JSONB);
 \texttt{certifications}.
 Full schema: \texttt{ECOSYSTEM.md} in the repository.
 
