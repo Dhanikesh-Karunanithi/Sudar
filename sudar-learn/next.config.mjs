@@ -6,6 +6,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   outputFileTracingRoot: path.join(__dirname),
+  webpack: (config) => {
+    config.resolve.modules = [
+      path.join(__dirname, 'node_modules'),
+      'node_modules',
+    ]
+    return config
+  },
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
