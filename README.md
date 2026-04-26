@@ -6,51 +6,48 @@
 
 *Learns with you, for you.*
 
-An open-source, **AI-native learning operating system** for teams who need authoring, delivery, and adaptive intelligence in one place — plus **ALP** (Adaptive Learning Protocol) to attach memory-aware tutoring and learner modelling to the LMS you already run.
+An open-source, **AI-native learning operating system** for teams that need **authoring, delivery, and adaptive intelligence** in one place — with **ALP** (Adaptive Learning Protocol) to bring memory-aware tutoring and learner modelling to the LMSs you already use.
 
-[**Website & story →**](https://teachwithsudar.com) · [**Research foundation →**](./RESEARCH_FOUNDATION.md) · [**Architecture (start here for code) →**](./ECOSYSTEM.md)
+[**Website & story →**](https://teachwithsudar.com) · [**Research foundation →**](./RESEARCH_FOUNDATION.md) · [**Full architecture & schema →**](./ECOSYSTEM.md)
 
 </div>
 
 ---
 
-## Why Sudar exists
+## What Sudar does
 
-Most corporate LMSs were built to **deliver content**, not to **learn how each person learns**. The same module goes to everyone; completion is tracked; there is no durable model of the learner, no cross-session tutor memory, and no principled link to decades of cognitive science.
-
-Sudar inverts that: a **Digital Learner Twin** (longitudinal profile), an AI tutor **Sudar** with memory, **seven modalities** from one authored course, and an engine that turns telemetry into next-best actions — while staying **inspectable and forkable** under Apache 2.0.
-
-If you care about *evidence-informed* personalisation, not bolt-on chatbots, you are in the right repo. The capability map is grounded in [RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md).
-
----
-
-## What you get in this repository
+Most corporate systems **deliver content**. Sudar is built to **learn how each person learns** — a persistent **Digital Learner Twin** (longitudinal profile), a memory-aware AI tutor **Sudar**, and an engine that turns real behaviour into **next-best actions** — with an open, **Apache-2.0** codebase you can audit and extend.
 
 | | Sudar | Typical LMS + “AI features” |
 |--|--------|-----------------------------|
-| **Learner model** | Persistent Digital Learner Twin | None or shallow |
-| **Tutor** | Sudar — reactive & proactive (**tap-to-reply** nudges + cross-session memory) | Often stateless |
-| **Delivery** | Text, video, audio, mind map, flashcards, feed, game, SCORM | Often text/video only |
-| **Your existing stack** | ALP: APIs & embed paths toward Moodle, Canvas, etc. | N/A |
+| **Learner model** | Durable Digital Learner Twin + telemetry | Shallow or none |
+| **Tutor** | Sudar — reactive & proactive (tap-to-reply nudges, cross-session memory) | Often stateless chat |
+| **Delivery** | Author once: text, video, audio, mind map, flashcards, feed, game, SCORM, and more | Often text/video only |
+| **Your existing stack** | **ALP**: APIs and embed paths toward Moodle, Canvas, and similar | Hard to extend |
 | **Source** | Open (Apache 2.0) | Usually closed |
 
-**Highlights**
-
-- **Studio** — Author courses with AI assistance, templates, governance, analytics.  
-- **Learn** — Learner dashboard, modalities, Sudar tutor, paths, certificates.  
-- **Intelligence** — FastAPI service: adaptive sequencing, tutor, next-best-action (optional but recommended).  
-- **One Supabase project** — Shared schema so content, events, and twin state stay coherent ([ECOSYSTEM.md](./ECOSYSTEM.md)).
+The science and design trade-offs behind Sudar are documented in [RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md). A feature-level checklist lives in [docs/PRODUCT_FEATURES.md](./docs/PRODUCT_FEATURES.md) and [docs/SHIPPED_FEATURES.md](./docs/SHIPPED_FEATURES.md).
 
 ---
 
-## Architecture (three surfaces, one data layer)
+## Three surfaces, one data layer
+
+Sudar is three applications plus a shared data plane:
+
+| Surface | Who it is for | What it does | Default port |
+|---------|----------------|--------------|----------------|
+| **Sudar Studio** | L&D, admins, creators | Courses, learning paths, assignments, analytics, org settings, governance | 3000 |
+| **Sudar Learn** | Learners | Dashboard, course experience, Sudar tutor, paths, progress, certificates | 3001 |
+| **Sudar Intelligence** | Your backend | Adaptive engine, tutor, recommendations, content generation, modality intelligence | 8000 |
+
+**Supabase (PostgreSQL)** is the single source of truth: auth, content, `learner_profiles`, `learning_events`, `ai_interactions`, and more — so Studio, Learn, and Intelligence stay aligned. See [ECOSYSTEM.md](./ECOSYSTEM.md) for the canonical schema and roadmap.
 
 ```mermaid
 flowchart TB
   subgraph surfaces [Surfaces]
-    Studio[Studio — authoring & ops]
-    Learn[Learn — learner experience]
-    Intel[Intelligence — adaptive engine & Sudar tutor]
+    Studio[Studio]
+    Learn[Learn]
+    Intel[Intelligence]
   end
   subgraph data [Data]
     Supabase[(Supabase / PostgreSQL)]
@@ -58,42 +55,46 @@ flowchart TB
   Studio --> Supabase
   Learn --> Supabase
   Intel --> Supabase
-  Intel -.->|profile & signals| Supabase
+  Intel -.->|signals and profile| Supabase
 ```
 
-| Surface | Role | Default port |
-|---------|------|----------------|
-| **Sudar Studio** | Courses, paths, assignments, analytics, org settings | 3000 |
-| **Sudar Learn** | Enrolment, learning, tutor, progress, certificates | 3001 |
-| **Sudar Intelligence** | Adaptive engine, tutor, recommendations | 8000 |
-
-`learning_events` and `ai_interactions` feed the twin and Sudar; Intelligence reads and writes through the same schema as the apps.
+`learning_events` and `ai_interactions` power the twin and Sudar; Intelligence reads and writes the same model as the apps.
 
 ---
 
-## Repository layout
+## Sudar Studio — create and operate
 
-Product name is **Sudar**. App folders are now renamed to `sudar-*` for consistency.
+- **AI-assisted authoring** — Build courses from documents, URLs, and prompts; RAG for context-aware generation; templates, slide mode, and media search (e.g. stock and web sources).  
+- **Import & export** — Document-to-course flows, **SCORM 1.2** import and export, and paths to get existing content in and out.  
+- **Learning paths** — Sequences, assignments, due dates, compliance-oriented views, and email reminder hooks where configured.  
+- **Analytics** — Completion, time-on-section, risk signals, and org-level reporting (with feature flags and docs for rollout).  
+- **Trust & governance** — Org policy, compliance surfaces, and links to a technical **trust pack** under [docs/trust/](./docs/trust/) for security and procurement reviews.
 
-**Compatibility window (temporary):**
-- `byteos-studio` -> `sudar-studio`
-- `byteos-learn` -> `sudar-learn`
-- `byteos-intelligence` -> `sudar-intelligence`
-- Legacy `byteos-*` path mentions in historical notes/docs may still exist briefly and will be removed after stabilization.
+---
 
-```
-Sudar/
-├── README.md                 ← You are here (GitHub homepage)
-├── ECOSYSTEM.md              ← Schema, roadmap, architecture — read before deep contributions
-├── RESEARCH_FOUNDATION.md    ← Evidence base & citations
-├── AGENTS.md                 ← Conventions for humans & coding agents
-├── docs/                     ← Product, ALP, trust, screenshots, brand (for implementers)
-├── sudar-studio/            ← Sudar Studio (Next.js)
-├── sudar-learn/             ← Sudar Learn (Next.js)
-├── sudar-intelligence/      ← Sudar Intelligence (FastAPI)
-├── sudar_vid/                ← SudarVid (Watch modality; Python FastAPI)
-└── teachwithsudar/           ← Marketing & documentation site (Next.js)
-```
+## Sudar Learn — the learner experience
+
+- **Personalised workspace** — Dashboard, progress, paths, **next best action**, achievements, check-ins, notifications, and engagement loops where enabled.  
+- **Sudar, the tutor** — RAG over course content, **floating** and contextual chat, **proactive** nudges with **tap-to-reply** choices, and longitudinal memory (see [docs/sudar-memory.md](./docs/sudar-memory.md)).  
+- **Modality-agnostic learning** — Switch between modalities (e.g. read, listen, watch, map, cards) from a unified course view; SudarVid powers rich **Watch** generation when connected.  
+- **Paths & certificates** — Enrolments, unlock rules, certifications, and learner-facing **trust**-aligned behaviour (consent, personalization overlays) where the product and schema support them.
+
+---
+
+## Sudar Intelligence — the AI engine
+
+- **Adaptation** — Difficulty, modality recommendations, and path logic informed by events and profile state.  
+- **Tutor & generation** — Server-side AI with provider fallbacks, guardrails, and integration with Learn’s RAG and APIs.  
+- **Operational fit** — Designed to run beside Studio and Learn (e.g. Railway, Render, Fly.io); env and deployment notes are in [docs/INTELLIGENCE_DEPLOYMENT.md](./docs/INTELLIGENCE_DEPLOYMENT.md) and [docs/VERCEL_DEPLOYMENT.md](./docs/VERCEL_DEPLOYMENT.md).
+
+---
+
+## More in this repository
+
+- **`sudar_vid/`** — SudarVid: Watch-modality video pipeline (FastAPI, TTS, rendering).  
+- **`teachwithsudar/`** — Public-facing marketing / documentation site.  
+- **`docs/`** — ALP, trust, brand, environment reference, and strategic path.  
+- **Root** — [ECOSYSTEM.md](./ECOSYSTEM.md), [AGENTS.md](./AGENTS.md), [RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md), and [UPDATES.md](./UPDATES.md) (development and release log).
 
 ---
 
@@ -109,29 +110,32 @@ cd Sudar
 1. **Supabase** — Create a project; align schema with [ECOSYSTEM.md](./ECOSYSTEM.md) (and Prisma in each app where used).  
 2. **Studio** — `cd sudar-studio`, copy `.env.example` → `.env.local`, set Supabase + AI keys, `npm install`, `npx prisma db push`, `npm run dev` → http://localhost:3000  
 3. **Learn** — `cd sudar-learn`, same pattern → http://localhost:3001  
-4. **Intelligence** (optional) — `cd sudar-intelligence`, `pip install -r requirements.txt`, `.env`, `uvicorn src.api.main:app --reload --port 8000`
+4. **Intelligence** (recommended for full AI features) — `cd sudar-intelligence`, `pip install -r requirements.txt`, configure `.env`, `uvicorn src.api.main:app --reload --port 8000`
 
-Marketing site (optional): `cd teachwithsudar`, `npm install`, `npm run dev` (see that package’s README for port).
+**Marketing site (optional):** `cd teachwithsudar`, `npm install`, `npm run dev` (see that package’s README for the port).
 
 ---
 
 ## Documentation map
 
-| Doc | Use when you… |
-|-----|------------------|
-| [ECOSYSTEM.md](./ECOSYSTEM.md) | Need tables, ports, phases, or “where does this feature live?” |
-| [RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md) | Want the science behind design choices |
-| [docs/sudar-memory.md](./docs/sudar-memory.md) | Need tutor / longitudinal memory behaviour |
-| [docs/PRODUCT_FEATURES.md](./docs/PRODUCT_FEATURES.md) | Want a feature checklist |
-| [AGENTS.md](./AGENTS.md) | Contribute with AI assistants or follow repo contracts |
+| Doc | Use when you need… |
+|-----|---------------------|
+| [ECOSYSTEM.md](./ECOSYSTEM.md) | Schema, ports, phases, and “where does this live?” |
+| [RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md) | Evidence and citations behind design decisions |
+| [docs/PRODUCT_FEATURES.md](./docs/PRODUCT_FEATURES.md) | Full feature specification |
+| [docs/SHIPPED_FEATURES.md](./docs/SHIPPED_FEATURES.md) | What is shipped and how to use it |
+| [docs/STRATEGIC_PATH.md](./docs/STRATEGIC_PATH.md) | Current state and priorities |
+| [docs/sudar-memory.md](./docs/sudar-memory.md) | Tutor and longitudinal memory behaviour |
+| [AGENTS.md](./AGENTS.md) | Conventions for humans and AI coding agents |
+| [UPDATES.md](./UPDATES.md) | Dated product and project updates |
 
-For **brand implementation** (logo geometry, colours, type), see `docs/brand/` — intended for contributors shipping UI, not the headline story of the project.
+For **brand implementation** (logo, colour, type), see [docs/brand/](./docs/brand/).
 
 ---
 
 ## Contributing
 
-Issues and PRs aligned with adaptive, memory-aware learning are welcome. Read [ECOSYSTEM.md](./ECOSYSTEM.md) and [AGENTS.md](./AGENTS.md) before large refactors. Fork → branch → PR with a clear description of behaviour and data impact.
+Issues and PRs that strengthen adaptive, memory-aware learning are welcome. Read [ECOSYSTEM.md](./ECOSYSTEM.md) and [AGENTS.md](./AGENTS.md) before large changes. Use forks, focused branches, and PR descriptions that cover behaviour, data, and any migration steps.
 
 ---
 
@@ -155,7 +159,7 @@ Issues and PRs aligned with adaptive, memory-aware learning are welcome. Read [E
 
 ## Creator
 
-**Sudar** is created by **Dhanikesh “Dhani” Karunanithi** — an integrated answer to fragmented authoring tools, static LMSs, and stateless “AI tutors,” with a serious research spine and an open codebase.
+**Sudar** is created by **Dhanikesh “Dhani” Karunanithi** — an integrated response to fragmented authoring tools, static LMSs, and stateless “AI tutors,” with a serious research foundation and an open codebase.
 
 <p align="center">
   <strong>Sudar</strong> — Learns with you, for you.

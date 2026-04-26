@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-04-26 — GitHub homepage: professional README and documentation pointers
+
+- **Web presence (repo)**: Reworked the root **README** into a product-focused GitHub landing page: clear value proposition, comparison vs typical LMSs, capability sections for **Sudar Studio**, **Sudar Learn**, and **Sudar Intelligence**, architecture diagram, trust/governance and ALP callouts, and links to **Supabase** single data layer, deployment docs, and deeper specs — without foregrounding internal folder renames.
+- **Documentation map**: README now points contributors to [ECOSYSTEM.md](ECOSYSTEM.md), [RESEARCH_FOUNDATION.md](RESEARCH_FOUNDATION.md), [docs/PRODUCT_FEATURES.md](docs/PRODUCT_FEATURES.md), [docs/SHIPPED_FEATURES.md](docs/SHIPPED_FEATURES.md), [docs/STRATEGIC_PATH.md](docs/STRATEGIC_PATH.md), and this file for ongoing update tracking.
+- **Repo hygiene**: Source-of-truth for dated milestones remains **UPDATES.md**; use it for user-facing and meaningful technical milestones, not build-cache or local-only noise.
+
 ### 2026-04-17 — Sudar consolidation + engagement and proactive learning pass
 
 - **Repo and naming consolidation**:
