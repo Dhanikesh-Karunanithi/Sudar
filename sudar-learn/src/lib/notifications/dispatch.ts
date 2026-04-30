@@ -5,6 +5,21 @@ import { sendEmailNotification, buildUnsubscribeUrl } from '../../../../shared/n
 import { emitInAppRealtime } from '../../../../shared/notifications/channels/in_app'
 import { createUnsubscribeToken } from '../../../../shared/notifications/unsubscribeToken'
 
+function safeRelativeLink(url: string | null | undefined): string {
+  if (!url?.trim()) return '/notifications'
+  if (!url.startsWith('/') || url.startsWith('//')) return '/notifications'
+  return url
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 export async function dispatchUserNotification(input: DispatchNotificationInput) {
   const admin = createAdminClient()
 
@@ -29,7 +44,7 @@ export async function dispatchUserNotification(input: DispatchNotificationInput)
       await sendEmailNotification({
         to: email,
         subject: payload.title,
-        html: `<p>${payload.body ?? ''}</p><p><a href="${payload.linkUrl ?? '/notifications'}">Open in Sudar</a></p><p style="font-size:12px;color:#667085">Manage notifications: <a href="${unsub}">unsubscribe</a></p>`,
+        html: `<p>${escapeHtml(payload.body ?? '')}</p><p><a href="${safeRelativeLink(payload.linkUrl)}">Open in Sudar</a></p><p style="font-size:12px;color:#667085">Manage notifications: <a href="${unsub}">unsubscribe</a></p>`,
       })
     },
   })

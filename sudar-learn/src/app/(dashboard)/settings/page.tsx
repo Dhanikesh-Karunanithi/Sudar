@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Settings, Save } from 'lucide-react'
+import { Settings, Save, Zap } from 'lucide-react'
 import { SudarInlineLoader, SudarLoadingFrost } from '@/components/branding/SudarBrandLoader'
 import { VoiceCharacterStage } from '@/components/features/audio/VoiceCharacterStage'
 import { trackMascotEvent } from '@/lib/mascot/tracking'
@@ -20,6 +20,13 @@ export default function SettingsPage() {
   const [mascotIntensity, setMascotIntensity] = useState<MascotIntensity>('high')
   const [mascotCompanions, setMascotCompanions] = useState<MascotId[]>(['focus', 'memory', 'confidence'])
   const [voiceProviderStatuses, setVoiceProviderStatuses] = useState<VoiceLibraryProviderStatus[]>([])
+  const [orgSudarAgents, setOrgSudarAgents] = useState<{
+    enabled: boolean
+    learner_week_plan: boolean
+    spacing_nudges_org: boolean
+  } | null>(null)
+  const [weekPlanSurfaces, setWeekPlanSurfaces] = useState(true)
+  const [spacingNudgesPref, setSpacingNudgesPref] = useState(true)
 
   const fetchPreferences = useCallback(async () => {
     const res = await fetch('/api/learner/preferences')
@@ -33,6 +40,19 @@ export default function SettingsPage() {
     setMascotStyle(data.mascot_style ?? 'balanced')
     setMascotIntensity(data.mascot_intensity ?? 'high')
     setMascotCompanions(Array.isArray(data.mascot_companions) ? data.mascot_companions : ['focus', 'memory', 'confidence'])
+    if (data.org_sudar_agents && typeof data.org_sudar_agents === 'object') {
+      const g = data.org_sudar_agents as Record<string, unknown>
+      setOrgSudarAgents({
+        enabled: g.enabled === true,
+        learner_week_plan: g.learner_week_plan === true,
+        spacing_nudges_org: g.spacing_nudges_org === true,
+      })
+    } else setOrgSudarAgents(null)
+    const sa = data.sudar_agents as Record<string, unknown> | undefined
+    if (sa && typeof sa === 'object') {
+      if (typeof sa.week_plan_surfaces === 'boolean') setWeekPlanSurfaces(sa.week_plan_surfaces)
+      if (typeof sa.spacing_nudges === 'boolean') setSpacingNudgesPref(sa.spacing_nudges)
+    }
     const providerRes = await fetch('/api/ai/voice-provider-status')
     if (providerRes.ok) {
       const providerData = await providerRes.json()
@@ -57,6 +77,10 @@ export default function SettingsPage() {
         mascot_style: mascotStyle,
         mascot_intensity: mascotIntensity,
         mascot_companions: mascotCompanions,
+        sudar_agents: {
+          week_plan_surfaces: weekPlanSurfaces,
+          spacing_nudges: spacingNudgesPref,
+        },
       }),
     })
     setSaving(false)
@@ -132,6 +156,44 @@ export default function SettingsPage() {
           providerStatuses={voiceProviderStatuses}
         />
       </div>
+
+      {orgSudarAgents?.enabled &&
+        (orgSudarAgents.learner_week_plan || orgSudarAgents.spacing_nudges_org) && (
+        <details className="rounded-2xl border border-border bg-card p-6 space-y-4 group">
+          <summary className="cursor-pointer list-none flex items-center gap-3 font-semibold text-card-foreground">
+            <span className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/15 flex items-center justify-center shrink-0">
+              <Zap className="w-5 h-5 text-primary" aria-hidden />
+            </span>
+            <span>Sudar automation</span>
+            <span className="ml-auto text-xs font-normal text-muted-foreground group-open:hidden">Tap to expand</span>
+          </summary>
+          <p className="text-muted-foreground text-sm pt-2">
+            Your organisation can surface short Sudar‑generated summaries (dashboard focus strip) or optional spacing‑style reminders. Turn off pieces here anytime; admins can disable these org‑wide too.
+          </p>
+          {orgSudarAgents.learner_week_plan && (
+            <label className="flex items-center gap-2 text-sm text-card-foreground cursor-pointer">
+              <input
+                type="checkbox"
+                checked={weekPlanSurfaces}
+                onChange={(e) => setWeekPlanSurfaces(e.target.checked)}
+                className="rounded border-border"
+              />
+              Show “suggested focus” on my dashboard when available
+            </label>
+          )}
+          {orgSudarAgents.spacing_nudges_org && (
+            <label className="flex items-center gap-2 text-sm text-card-foreground cursor-pointer">
+              <input
+                type="checkbox"
+                checked={spacingNudgesPref}
+                onChange={(e) => setSpacingNudgesPref(e.target.checked)}
+                className="rounded border-border"
+              />
+              Receive gentle retrieval‑style reminders (when your org schedules them)
+            </label>
+          )}
+        </details>
+      )}
 
       <div className="rounded-2xl border border-border bg-card p-6 space-y-6">
         <h2 className="font-semibold text-card-foreground">Sudar companions</h2>

@@ -149,6 +149,68 @@ export type Database = {
         }
         Relationships: []
       }
+      lms_identity_links: {
+        Row: {
+          id: string
+          org_id: string
+          provider: string
+          external_user_id: string
+          external_email: string | null
+          sudar_user_id: string
+          created_at: string
+          revoked_at: string | null
+          metadata: Json
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          provider?: string
+          external_user_id: string
+          external_email?: string | null
+          sudar_user_id: string
+          created_at?: string
+          revoked_at?: string | null
+          metadata?: Json
+        }
+        Update: {
+          org_id?: string
+          provider?: string
+          external_user_id?: string
+          external_email?: string | null
+          sudar_user_id?: string
+          revoked_at?: string | null
+          metadata?: Json
+        }
+        Relationships: []
+      }
+      lti_platform_deployments: {
+        Row: {
+          id: string
+          org_id: string
+          issuer: string
+          client_id: string
+          deployment_id: string
+          platform_jwks_uri: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          issuer: string
+          client_id: string
+          deployment_id: string
+          platform_jwks_uri: string
+          created_at?: string
+        }
+        Update: {
+          org_id?: string
+          issuer?: string
+          client_id?: string
+          deployment_id?: string
+          platform_jwks_uri?: string
+        }
+        Relationships: []
+      }
       learner_profiles: {
         Row: {
           id: string
@@ -463,7 +525,15 @@ export type Database = {
           published_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'modules_course_id_fkey'
+            columns: ['id']
+            isOneToOne: false
+            referencedRelation: 'modules'
+            referencedColumns: ['course_id']
+          },
+        ]
       }
       modules: {
         Row: {
@@ -493,7 +563,15 @@ export type Database = {
           order_index?: number
           quiz?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'modules_course_id_fkey'
+            columns: ['course_id']
+            isOneToOne: false
+            referencedRelation: 'courses'
+            referencedColumns: ['id']
+          },
+        ]
       }
       enrollments: {
         Row: {
@@ -600,6 +678,89 @@ export type Database = {
         Update: Record<string, never>
         Relationships: []
       }
+      analytics_org_rollup: {
+        Row: {
+          id: string
+          org_id: string
+          event_date: string
+          active_learners: number
+          active_learning_secs: number
+          idle_secs: number
+          total_secs: number
+          completion_count: number
+          drop_off_count: number
+          avg_engagement_score: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          event_date: string
+          active_learners?: number
+          active_learning_secs?: number
+          idle_secs?: number
+          total_secs?: number
+          completion_count?: number
+          drop_off_count?: number
+          avg_engagement_score?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          active_learners?: number
+          active_learning_secs?: number
+          idle_secs?: number
+          total_secs?: number
+          completion_count?: number
+          drop_off_count?: number
+          avg_engagement_score?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      analytics_risk_signals: {
+        Row: {
+          id: string
+          org_id: string
+          user_id: string
+          computed_at: string
+          as_of_date: string
+          risk_score: number
+          risk_level: string
+          reasons: Json
+          focus_ratio_7d: number | null
+          completion_velocity_7d: number | null
+          drop_off_count_7d: number
+          last_active_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          user_id: string
+          computed_at?: string
+          as_of_date?: string
+          risk_score?: number
+          risk_level?: string
+          reasons?: Json
+          focus_ratio_7d?: number | null
+          completion_velocity_7d?: number | null
+          drop_off_count_7d?: number
+          last_active_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          risk_score?: number
+          risk_level?: string
+          reasons?: Json
+          focus_ratio_7d?: number | null
+          completion_velocity_7d?: number | null
+          drop_off_count_7d?: number
+          last_active_at?: string | null
+        }
+        Relationships: []
+      }
       ai_interactions: {
         Row: {
           id: string
@@ -627,6 +788,51 @@ export type Database = {
         }
         Update: {
           helpful?: boolean | null
+        }
+        Relationships: []
+      }
+      agent_runs: {
+        Row: {
+          id: string
+          org_id: string
+          actor_user_id: string
+          subject_user_id: string | null
+          team: string
+          goal: string
+          goal_kind: string
+          status: string
+          plan: Json
+          tool_calls: Json
+          artifact: Json | null
+          policy_pack_id: string
+          error: string | null
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          actor_user_id: string
+          subject_user_id?: string | null
+          team: string
+          goal?: string
+          goal_kind?: string
+          status?: string
+          plan?: Json
+          tool_calls?: Json
+          artifact?: Json | null
+          policy_pack_id?: string
+          error?: string | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          status?: string
+          plan?: Json
+          tool_calls?: Json
+          artifact?: Json | null
+          error?: string | null
+          completed_at?: string | null
         }
         Relationships: []
       }
@@ -801,9 +1007,90 @@ export type Database = {
         }
         Relationships: []
       }
+      user_notifications: {
+        Row: {
+          id: string
+          user_id: string
+          category: string
+          title: string
+          body: string | null
+          link_url: string | null
+          metadata: Json
+          read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          category: string
+          title: string
+          body?: string | null
+          link_url?: string | null
+          metadata?: Json
+          read_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          read_at?: string | null
+        }
+        Relationships: []
+      }
+      notification_delivery_log: {
+        Row: {
+          id: string
+          user_id: string
+          notification_id: string | null
+          template_id: string | null
+          category_slug: string
+          channel: string
+          status: string
+          suppression_reason: string | null
+          scheduled_send_at: string | null
+          sent_at: string | null
+          opened_at: string | null
+          clicked_at: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          notification_id?: string | null
+          template_id?: string | null
+          category_slug: string
+          channel: string
+          status?: string
+          suppression_reason?: string | null
+          scheduled_send_at?: string | null
+          sent_at?: string | null
+          opened_at?: string | null
+          clicked_at?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          status?: string
+          suppression_reason?: string | null
+          scheduled_send_at?: string | null
+          sent_at?: string | null
+          opened_at?: string | null
+          clicked_at?: string | null
+          metadata?: Json
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      refresh_analytics_rollups: {
+        Args: { p_date?: string }
+        Returns: null
+      }
+      refresh_analytics_risk_signals: {
+        Args: { p_date?: string }
+        Returns: null
+      }
+    }
     Enums: {
       role: 'SUPER_ADMIN' | 'ORG_ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER'
       org_role: 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER'

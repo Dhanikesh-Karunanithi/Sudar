@@ -9,6 +9,7 @@ import { SudarInlineLoader, SudarBrandLoader } from '@/components/branding/Sudar
 import { cn } from '@/lib/utils'
 import { useBrowserCompletionNotification } from '@/hooks/useBrowserCompletionNotification'
 import type { CourseBlueprintQuestion } from '@/lib/ai/courseGeneration/types'
+import { COURSE_TEMPLATES } from '@/lib/courseTemplates'
 
 const COURSE_BUILD_EXIT_MS = 320
 
@@ -70,6 +71,7 @@ export default function NewCoursePage() {
   const [noExternalVideo, setNoExternalVideo] = useState(false)
   const [manualThumbnailFile, setManualThumbnailFile] = useState<File | null>(null)
   const [manualBannerFile, setManualBannerFile] = useState<File | null>(null)
+  const [manualTemplateId, setManualTemplateId] = useState('structured_lesson')
 
   const [aiWizardStep, setAiWizardStep] = useState<AiWizardStep>('details')
   const [blueprintQuestions, setBlueprintQuestions] = useState<CourseBlueprintQuestion[]>([])
@@ -321,6 +323,7 @@ export default function NewCoursePage() {
           difficulty,
           ...(thumbnail_url && { thumbnail_url }),
           ...(banner_url && { banner_url }),
+          manual_template_id: manualTemplateId,
         }),
       })
 
@@ -530,11 +533,11 @@ export default function NewCoursePage() {
               <div>
                 <h3 className="text-white font-semibold text-sm">Build manually</h3>
                 <p className="text-slate-500 text-xs mt-1 leading-relaxed">
-                  Start with an empty course and write your own modules. You can still use AI on individual modules.
+                  Start with a starter template and write your own modules. You can still use AI on individual modules.
                 </p>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {['Full control', 'AI on demand'].map((t) => (
+                {['Template first', 'AI on demand'].map((t) => (
                   <span key={t} className="text-[10px] px-2 py-0.5 bg-slate-800 text-slate-400 rounded-full border border-slate-700">{t}</span>
                 ))}
               </div>
@@ -823,6 +826,35 @@ export default function NewCoursePage() {
                 ))}
               </div>
             </div>
+
+            {mode === 'manual' && (
+              <div className="space-y-3 rounded-xl border border-slate-700/80 bg-slate-800/30 p-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-300">Starter template</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Choose how Module 1 should be structured. You can regenerate and edit everything later with Sudar.
+                  </p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {COURSE_TEMPLATES.map((template) => (
+                    <button
+                      key={template.id}
+                      type="button"
+                      onClick={() => setManualTemplateId(template.id)}
+                      className={cn(
+                        'rounded-lg border px-3 py-2 text-left transition-colors',
+                        manualTemplateId === template.id
+                          ? 'border-indigo-500 bg-indigo-500/10 text-indigo-100'
+                          : 'border-slate-700 bg-slate-900/50 text-slate-300 hover:border-slate-500'
+                      )}
+                    >
+                      <p className="text-xs font-semibold">{template.label}</p>
+                      <p className="mt-1 text-[11px] text-slate-500">{template.description}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {mode === 'manual' && (
               <div className="space-y-3 rounded-xl border border-slate-700/80 bg-slate-800/30 p-4">

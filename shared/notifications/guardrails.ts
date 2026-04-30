@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { asNotificationDb } from './dbTypes'
 
 interface AwardOptInBonusInput {
   userId: string
@@ -10,7 +11,8 @@ export async function awardNotificationOptInBonus(
   admin: SupabaseClient<unknown>,
   input: AwardOptInBonusInput
 ): Promise<{ awarded: boolean; reason?: string }> {
-  const { data: settings } = await admin
+  const db = asNotificationDb(admin)
+  const { data: settings } = await db
     .from('user_notification_settings')
     .select('coin_opt_in_awarded_at, last_revoke_at')
     .eq('user_id', input.userId)
@@ -23,7 +25,7 @@ export async function awardNotificationOptInBonus(
     if (elapsed < 30 * 24 * 60 * 60 * 1000) return { awarded: false, reason: 'cooldown_30d' }
   }
 
-  const { count: endpointCount } = await admin
+  const { count: endpointCount } = await db
     .from('notification_channels')
     .select('id', { count: 'exact', head: true })
     .eq('endpoint_hash', input.endpointHash)
@@ -31,7 +33,7 @@ export async function awardNotificationOptInBonus(
 
   if ((endpointCount ?? 0) > 0) return { awarded: false, reason: 'endpoint_reused' }
 
-  const { data: profile } = await admin
+  const { data: profile } = await db
     .from('learner_profiles')
     .select('coin_balance')
     .eq('user_id', input.userId)
@@ -40,7 +42,7 @@ export async function awardNotificationOptInBonus(
   const coinAmount = input.coinAmount ?? 10
   const nextBalance = (profile?.coin_balance ?? 0) + coinAmount
 
-  const { error: ledgerError } = await admin.from('coin_ledger').insert({
+  const { error: ledgerError } = await db.from('coin_ledger').insert({
     user_id: input.userId,
     amount: coinAmount,
     event_type: 'notifications_opt_in_bonus',
@@ -51,8 +53,8 @@ export async function awardNotificationOptInBonus(
 
   if (ledgerError) return { awarded: false, reason: 'ledger_insert_failed' }
 
-  await admin.from('learner_profiles').update({ coin_balance: nextBalance }).eq('user_id', input.userId)
-  await admin
+  await db.from('learner_profiles').update({ coin_balance: nextBalance }).eq('user_id', input.userId)
+  await db
     .from('user_notification_settings')
     .upsert({ user_id: input.userId, coin_opt_in_awarded_at: new Date().toISOString() })
 
@@ -60,18 +62,19 @@ export async function awardNotificationOptInBonus(
 }
 
 export async function runMonthlyNotificationBonuses(admin: SupabaseClient<unknown>, monthStartIso?: string) {
+  const db = asNotificationDb(admin)
   const now = new Date()
   const monthStart = monthStartIso ? new Date(monthStartIso) : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
   const lookback = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-  const { data: users } = await admin
+  const { data: users } = await db
     .from('user_notification_settings')
     .select('user_id, frequency_mode, last_monthly_bonus_at')
 
   for (const row of users ?? []) {
     if (row.last_monthly_bonus_at && new Date(row.last_monthly_bonus_at) >= monthStart) continue
 
-    const { data: stats } = await admin
+    const { data: stats } = await db
       .from('notification_delivery_log')
       .select('status, channel, created_at')
       .eq('user_id', row.user_id)
@@ -83,13 +86,13 @@ export async function runMonthlyNotificationBonuses(admin: SupabaseClient<unknow
     const openRate = sent > 0 ? engaged / sent : 0
 
     if (sent >= 10 && openRate >= 0.3) {
-      const { data: profile } = await admin
+      const { data: profile } = await db
         .from('learner_profiles')
         .select('coin_balance')
         .eq('user_id', row.user_id)
         .maybeSingle()
       const nextBalance = (profile?.coin_balance ?? 0) + 25
-      await admin.from('coin_ledger').insert({
+      await db.from('coin_ledger').insert({
         user_id: row.user_id,
         amount: 25,
         event_type: 'notifications_monthly_engagement_bonus',
@@ -97,8 +100,8 @@ export async function runMonthlyNotificationBonuses(admin: SupabaseClient<unknow
         balance_after: nextBalance,
         metadata: { open_rate: openRate },
       })
-      await admin.from('learner_profiles').update({ coin_balance: nextBalance }).eq('user_id', row.user_id)
-      await admin
+      await db.from('learner_profiles').update({ coin_balance: nextBalance }).eq('user_id', row.user_id)
+      await db
         .from('user_notification_settings')
         .update({ last_monthly_bonus_at: new Date().toISOString() })
         .eq('user_id', row.user_id)
@@ -106,20 +109,20 @@ export async function runMonthlyNotificationBonuses(admin: SupabaseClient<unknow
     }
 
     if (row.frequency_mode === 'minimal') {
-      const { count } = await admin
+        const { count } = await db
         .from('learning_events')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', row.user_id)
         .eq('event_type', 'quest_completed')
         .gte('created_at', monthStart.toISOString())
       if ((count ?? 0) >= 4) {
-        const { data: profile } = await admin
+        const { data: profile } = await db
           .from('learner_profiles')
           .select('coin_balance')
           .eq('user_id', row.user_id)
           .maybeSingle()
         const nextBalance = (profile?.coin_balance ?? 0) + 10
-        await admin.from('coin_ledger').insert({
+        await db.from('coin_ledger').insert({
           user_id: row.user_id,
           amount: 10,
           event_type: 'notifications_offline_focus_bonus',
@@ -127,8 +130,8 @@ export async function runMonthlyNotificationBonuses(admin: SupabaseClient<unknow
           balance_after: nextBalance,
           metadata: { quest_count: count ?? 0 },
         })
-        await admin.from('learner_profiles').update({ coin_balance: nextBalance }).eq('user_id', row.user_id)
-        await admin
+        await db.from('learner_profiles').update({ coin_balance: nextBalance }).eq('user_id', row.user_id)
+        await db
           .from('user_notification_settings')
           .update({ last_monthly_bonus_at: new Date().toISOString() })
           .eq('user_id', row.user_id)

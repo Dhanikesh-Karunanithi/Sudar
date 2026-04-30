@@ -78,8 +78,18 @@ export async function buildStudioContext(
   }
 
   const userIds = new Set<string>((orgMembers ?? []).map((m) => m.user_id))
+  const editableCourseIds = new Set((courses ?? []).map((c) => c.id))
   const publishedCourses = (courses ?? []).filter((c) => c.status === 'published')
   const courseIds = new Set(publishedCourses.map((c) => c.id))
+  const { data: modules } = editableCourseIds.size
+    ? await admin
+      .from('modules')
+      .select('id, course_id, title, order_index')
+      .in('course_id', Array.from(editableCourseIds))
+      .order('order_index', { ascending: true })
+    : { data: [] as Array<{ id: string; course_id: string; title: string; order_index: number }> }
+  const moduleIds = new Set((modules ?? []).map((m) => m.id))
+
   const publishedPaths = (paths ?? []).filter((p) => p.status === 'published')
   const pathIds = new Set(publishedPaths.map((p) => p.id))
 
@@ -156,6 +166,7 @@ export async function buildStudioContext(
   ].filter(Boolean).join(' ')
 
   let focusUserText = ''
+  let activeCourseText = ''
   if (focusUserId && userIds.has(focusUserId)) {
     const enrollments = orgEnrollments.filter((e) => e.user_id === focusUserId)
     const { data: perfRecords } = await admin
@@ -173,6 +184,19 @@ ${perfRecords?.length ? `Performance records: ${perfRecords.length} (keys: ${per
 `
   }
 
+  const routeCourseMatch = /^\/courses\/([^/]+)/.exec(route)
+  const activeCourseId = routeCourseMatch?.[1]
+  if (activeCourseId && editableCourseIds.has(activeCourseId)) {
+    const activeCourse = (courses ?? []).find((c) => c.id === activeCourseId)
+    const activeModules = (modules ?? []).filter((m) => m.course_id === activeCourseId)
+    activeCourseText = `
+Active course: ${(activeCourse?.title as string) ?? 'Unknown'} [${activeCourseId}]
+Course status: ${(activeCourse?.status as string) ?? 'unknown'}
+Modules:
+${activeModules.map((m) => `- [${m.id}] ${m.title}`).join('\n') || '(none)'}
+`.trim()
+  }
+
   const contextPrompt = `
 ${SUDAR_STUDIO_PLATFORM_KNOWLEDGE}
 
@@ -181,6 +205,7 @@ ${SUDAR_STUDIO_PLATFORM_KNOWLEDGE}
 
 Current route: ${route || '(dashboard or unknown)'}
 ${focusUserText}
+${activeCourseText ? `\n${activeCourseText}\n` : ''}
 
 ## Org configuration (this organization's settings)
 ${orgConfigText || 'No custom org configuration set.'}
@@ -208,6 +233,8 @@ ${pathLines.length ? pathLines.join('\n') : '(none)'}
     orgSummary,
     userIds,
     courseIds,
+    editableCourseIds,
+    moduleIds,
     pathIds,
     analyticsSummaryText,
   }

@@ -102,6 +102,7 @@ async def tutor_query(
 
 
 @router.post("/nudge", response_model=NudgeResponse)
+@limiter.limit("120/minute")
 async def generate_nudge(
     request: Request,
     body: NudgeRequest,

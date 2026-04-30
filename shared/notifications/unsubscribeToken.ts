@@ -16,8 +16,8 @@ function base64UrlDecode(input: string): string {
 }
 
 function tokenSecret(): string {
-  const secret = process.env.NOTIFICATION_UNSUBSCRIBE_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!secret) throw new Error('NOTIFICATION_UNSUBSCRIBE_SECRET or SUPABASE_SERVICE_ROLE_KEY must be set')
+  const secret = process.env.NOTIFICATION_UNSUBSCRIBE_SECRET?.trim()
+  if (!secret) throw new Error('NOTIFICATION_UNSUBSCRIBE_SECRET must be set')
   return secret
 }
 

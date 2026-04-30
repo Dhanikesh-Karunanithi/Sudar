@@ -46,7 +46,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ success: false, error: 'Course not found' }, { status: 404 })
   }
 
-  const course = courseRow as { id: string; title: string; modules: ModuleRow[] | null }
+  const course = courseRow as unknown as { id: string; title: string; modules: ModuleRow[] | null }
   const modules = course.modules ?? []
   if (modules.length === 0) {
     return NextResponse.json({ success: false, error: 'Course has no modules to export' }, { status: 400 })

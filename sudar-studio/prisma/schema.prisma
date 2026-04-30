@@ -30,6 +30,7 @@ model Profile {
 
   org                Organisation?            @relation(fields: [orgId], references: [id])
   orgMemberships     OrgMember[]
+  lmsIdentityLinksAsSudar LmsIdentityLink[] @relation("LmsLinkSudarUser")
   learnerProfile      LearnerProfile?
   performanceRecords  LearnerPerformanceRecord[]
   coursesCreated      Course[]                @relation("CourseCreator")
@@ -80,6 +81,8 @@ model Organisation {
   learnerGroups        LearnerGroup[]
   tagGroups            TagGroup[]
   orgTags              OrgTag[]
+  lmsIdentityLinks     LmsIdentityLink[]
+  ltiPlatformDeployments LtiPlatformDeployment[]
 
   @@map("organisations")
 }
@@ -96,6 +99,43 @@ model IntegrationApiKey {
   org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   @@map("integration_api_keys")
+}
+
+/// Maps LMS external user ids (e.g. Moodle internal id, LTI subject) to Sudar profiles.id. Partial unique (active rows) is enforced in SQL migration.
+model LmsIdentityLink {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId            String    @map("org_id") @db.Uuid
+  provider         String    @default("moodle")
+  externalUserId   String    @map("external_user_id")
+  externalEmail    String?   @map("external_email")
+  sudarUserId      String    @map("sudar_user_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at")
+  revokedAt        DateTime? @map("revoked_at")
+  metadata         Json      @default("{}") @db.JsonB
+
+  org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sudarUser Profile      @relation("LmsLinkSudarUser", fields: [sudarUserId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, provider, externalUserId])
+  @@index([sudarUserId])
+  @@map("lms_identity_links")
+}
+
+/// Registered LTI 1.3 platform deployments (Moodle/Canvas) for org-scoped launch verification.
+model LtiPlatformDeployment {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId            String   @map("org_id") @db.Uuid
+  issuer           String
+  clientId         String   @map("client_id")
+  deploymentId     String   @map("deployment_id")
+  platformJwksUri  String   @map("platform_jwks_uri")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([issuer, clientId, deploymentId])
+  @@index([orgId])
+  @@map("lti_platform_deployments")
 }
 
 model OrgMember {

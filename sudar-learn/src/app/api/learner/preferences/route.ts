@@ -4,6 +4,8 @@ import type { MascotId, MascotIntensity, MascotMode, MascotSupportStyle } from '
 import { computeProfileCompleteness } from '@/lib/gamification/profileCompleteness'
 import { evaluateGamification } from '@/lib/gamification/engine'
 import { normalizeTtsVoiceId, TTS_VOICE_OPTIONS_BY_ID } from '@/lib/audio/voices'
+import { loadLearnerAgentsAccess } from '@/lib/org/sudarAgentsAccess'
+import { resolveSudarAgentsLearnerPrefs } from '../../../../../../shared/sudarAgentsOrgSettings'
 
 const MASCOT_IDS: MascotId[] = ['focus', 'memory', 'confidence', 'sudar']
 const MASCOT_MODES: MascotMode[] = ['all', 'selected', 'hero-only']
@@ -28,6 +30,17 @@ export async function GET() {
   const ctx = (profile?.ai_tutor_context as Record<string, unknown>) ?? {}
   const prefs = (ctx.preferences as Record<string, string | null>) ?? {}
   const normalizedTtsVoice = normalizeTtsVoiceId(prefs.tts_voice)
+  const access = await loadLearnerAgentsAccess(admin, user.id)
+  const sudar_agents_prefs = resolveSudarAgentsLearnerPrefs(
+    (prefs as Record<string, unknown>) ?? {},
+  )
+  const org_agents_gate = access
+    ? {
+        enabled: access.resolved.enabled,
+        learner_week_plan: access.resolved.features.learner_week_plan,
+        spacing_nudges_org: access.resolved.features.spacing_nudges,
+      }
+    : null
   return NextResponse.json({
     tts_voice: normalizedTtsVoice ?? null,
     tutor_model: prefs.tutor_model ?? null,
@@ -35,6 +48,8 @@ export async function GET() {
     mascot_style: prefs.mascot_style ?? 'balanced',
     mascot_intensity: prefs.mascot_intensity ?? 'high',
     mascot_companions: Array.isArray(prefs.mascot_companions) ? prefs.mascot_companions : ['focus', 'memory', 'confidence'],
+    sudar_agents: sudar_agents_prefs,
+    org_sudar_agents: org_agents_gate,
   })
 }
 
@@ -60,6 +75,18 @@ export async function PATCH(request: NextRequest) {
   const mascot_companions = Array.isArray(body.mascot_companions)
     ? body.mascot_companions.filter((id: unknown): id is MascotId => typeof id === 'string' && MASCOT_IDS.includes(id as MascotId))
     : undefined
+  let sudar_agents_patch: Record<string, boolean> | undefined
+  if (
+    typeof body.sudar_agents === 'object'
+    && body.sudar_agents !== null
+    && !Array.isArray(body.sudar_agents)
+  ) {
+    const sa = body.sudar_agents as Record<string, unknown>
+    const next: Record<string, boolean> = {}
+    if (typeof sa.week_plan_surfaces === 'boolean') next.week_plan_surfaces = sa.week_plan_surfaces
+    if (typeof sa.spacing_nudges === 'boolean') next.spacing_nudges = sa.spacing_nudges
+    if (Object.keys(next).length > 0) sudar_agents_patch = next
+  }
   if (
     tts_voice === undefined
     && tutor_model === undefined
@@ -67,6 +94,7 @@ export async function PATCH(request: NextRequest) {
     && mascot_style === undefined
     && mascot_intensity === undefined
     && mascot_companions === undefined
+    && sudar_agents_patch === undefined
   ) {
     return NextResponse.json({ error: 'Provide at least one valid preference value' }, { status: 400 })
   }
@@ -80,6 +108,14 @@ export async function PATCH(request: NextRequest) {
 
   const ctx = (profile?.ai_tutor_context as Record<string, unknown>) ?? {}
   const existingPrefs = (ctx.preferences as Record<string, unknown>) ?? {}
+  const existingSudarAgents =
+    typeof existingPrefs.sudar_agents === 'object'
+    && existingPrefs.sudar_agents !== null
+    && !Array.isArray(existingPrefs.sudar_agents)
+      ? (existingPrefs.sudar_agents as Record<string, unknown>)
+      : {}
+  const updatedSudarAgents =
+    sudar_agents_patch !== undefined ? { ...existingSudarAgents, ...sudar_agents_patch } : undefined
   const updatedPrefs = {
     ...existingPrefs,
     ...(tts_voice !== undefined && { tts_voice }),
@@ -88,6 +124,7 @@ export async function PATCH(request: NextRequest) {
     ...(mascot_style !== undefined && { mascot_style }),
     ...(mascot_intensity !== undefined && { mascot_intensity }),
     ...(mascot_companions !== undefined && { mascot_companions }),
+    ...(updatedSudarAgents !== undefined && { sudar_agents: updatedSudarAgents }),
   }
   const updatedCtx: Record<string, unknown> = { ...ctx, preferences: updatedPrefs }
   const hasOrgContext = hasValue(updatedCtx.role_context)

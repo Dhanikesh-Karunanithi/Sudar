@@ -67,7 +67,7 @@ Once the preprint has an arXiv ID (e.g. 2603.xxxxx), you can cite:
 ```bibtex
 @article{karunanithi2026alp,
   author  = {Karunanithi, Dhanikesh},
-  title   = {From Course Hosting to Adaptive Learning: An AI-Native Platform and Plugin Architecture for Learner Memory and Multimodal Delivery},
+  title   = {Learning That Remembers You: An AI-Native Ecosystem for Adaptive, Memory-Aware, and Multimodal Education at Scale},
   journal = {arXiv preprint},
   year    = {2026},
   note    = {arXiv:XXXX.XXXXX},
@@ -76,3 +76,16 @@ Once the preprint has an arXiv ID (e.g. 2603.xxxxx), you can cite:
 ```
 
 Replace `XXXX.XXXXX` with the actual arXiv identifier.
+
+## Post-acceptance update checklist
+
+After arXiv assigns your identifier, replace placeholder IDs in:
+
+- `docs/research/ARXIV_SUBMISSION.md` (citation block)
+- `docs/research/GET_PDF_AND_ARXIV.md` (example public URL)
+- Any top-level README/docs references you want to publish publicly
+
+Use the final canonical form:
+
+- Abstract URL: `https://arxiv.org/abs/<arxiv-id>`
+- PDF URL: `https://arxiv.org/pdf/<arxiv-id>.pdf`

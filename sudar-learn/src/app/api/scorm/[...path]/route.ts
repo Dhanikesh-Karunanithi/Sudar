@@ -9,7 +9,8 @@
  *  - The SCORM API shim's postMessage reaches the parent without CORS issues
  */
 
-import { createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { canLearnerAccessScormPath, normalizeStoragePath } from '@/lib/security/scormAccess'
 import { NextRequest, NextResponse } from 'next/server'
 
 const MIME: Record<string, string> = {
@@ -42,11 +43,20 @@ const MIME: Record<string, string> = {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
-  const storagePath = params.path.join('/')
+  const { path } = await params
+  const storagePath = normalizeStoragePath(path)
+  if (!storagePath) return new NextResponse('Not found', { status: 404 })
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return new NextResponse('Unauthorized', { status: 401 })
 
   const admin = createAdminClient()
+  const allowed = await canLearnerAccessScormPath(admin, user.id, storagePath)
+  if (!allowed) return new NextResponse('Forbidden', { status: 403 })
+
   const { data, error } = await admin.storage
     .from('course-media')
     .download(storagePath)

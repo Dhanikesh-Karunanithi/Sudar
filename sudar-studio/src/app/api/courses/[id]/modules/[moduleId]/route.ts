@@ -27,6 +27,16 @@ export async function PATCH(
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (typeof body.source === 'string' && body.source.startsWith('studio_chat_')) {
+    await admin.from('learning_events').insert({
+      user_id: user.id,
+      course_id: id,
+      module_id: moduleId,
+      event_type: body.source === 'studio_chat_auto_apply' ? 'studio_chat_auto_apply_used' : 'studio_chat_apply_clicked',
+      payload: { source: body.source },
+      modality: 'studio',
+    })
+  }
   return NextResponse.json(data)
 }
 

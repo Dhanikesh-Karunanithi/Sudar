@@ -37,7 +37,7 @@
 #### 1.3 Visual Course Editor
 | Feature | Description | Phase |
 |---|---|---|
-| 14 visual templates | Modern, Minimal, Classic, Magazine, Card-Based, Timeline, Storybook, Dashboard, Gaming, Dark Mode, Corporate, Academic, Creative, Print-Ready | 1 |
+| Five learning personas + block layouts | Studio ships five named personas (`learningPersonas.ts`) plus rich block-based layouts; legacy roadmap included more named “templates” — align marketing with shipped personas. | 1 |
 | Live preview | Real-time preview of how content looks in each template | 1 |
 | Block-based editing | Drag-and-drop content blocks (text, image, video, quiz, etc.) | 1 |
 | Inline text editing | Click any text to edit directly | 1 |

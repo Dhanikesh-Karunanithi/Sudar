@@ -17,7 +17,8 @@ interface PathCourse {
   seq_status?: string
 }
 
-export default async function LearnPathDetailPage({ params }: { params: { id: string } }) {
+export default async function LearnPathDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const admin = createAdminClient()
@@ -25,7 +26,7 @@ export default async function LearnPathDetailPage({ params }: { params: { id: st
   const { data: path } = await admin
     .from('learning_paths')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('status', 'published')
     .single()
 
@@ -35,7 +36,7 @@ export default async function LearnPathDetailPage({ params }: { params: { id: st
     .from('enrollments')
     .select('id, status, progress_pct, personalized_sequence')
     .eq('user_id', user!.id)
-    .eq('path_id', params.id)
+    .eq('path_id', id)
     .single()
 
   // Get completion status for each course
@@ -59,7 +60,7 @@ export default async function LearnPathDetailPage({ params }: { params: { id: st
     .from('certifications')
     .select('verification_code, issued_at')
     .eq('user_id', user!.id)
-    .eq('path_id', params.id)
+    .eq('path_id', id)
     .single()
 
   const mandatoryCompleted = displayCourses.filter((c) => c.is_mandatory).every(
@@ -151,7 +152,7 @@ export default async function LearnPathDetailPage({ params }: { params: { id: st
             </Link>
           </div>
         ) : !enrollment ? (
-          <PathEnrollButton pathId={params.id} />
+          <PathEnrollButton pathId={id} />
         ) : null}
       </BentoCard>
 

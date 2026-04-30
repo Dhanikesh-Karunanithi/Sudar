@@ -1,10 +1,14 @@
 """
 Sudar Intelligence — Modality dispatcher routes.
 Handles generation of content in different modalities (video, mindmap, audio, etc.).
+All routes require Supabase JWT or X-Intelligence-Service-Secret (see auth.py).
 """
-from fastapi import APIRouter
+from typing import Annotated, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
-from typing import Optional
+
+from src.api.auth import require_learner_match, verify_supabase_jwt_or_service
 
 router = APIRouter()
 
@@ -34,20 +38,28 @@ class VideoGenerateResponse(BaseModel):
 
 
 @router.post("/recommend", response_model=ModalityRecommendResponse)
-async def recommend_modality(request: ModalityRecommendRequest):
+async def recommend_modality(
+    req: Request,
+    body: ModalityRecommendRequest,
+    _auth: Annotated[str | None, Depends(verify_supabase_jwt_or_service)] = None,
+):
     """
-    Recommends a modality switch based on learner engagement signals.
-    Reads learner_profiles.modality_scores from Supabase.
+    Reserved for affinity-driven modality switching. Canonical behaviour today
+    lives in Sudar Learn (twin rollups / UX); this endpoint returns 501 until wired.
     """
-    return ModalityRecommendResponse(
-        recommended_modality="video",
-        confidence=0.7,
-        reason="Your engagement scores are higher for video content.",
+    require_learner_match(req, body.user_id)
+    raise HTTPException(
+        status_code=501,
+        detail="Not implemented: use Sudar Learn for modality-aware recommendations.",
     )
 
 
 @router.post("/video/generate", response_model=VideoGenerateResponse)
-async def generate_video(request: VideoGenerateRequest):
+async def generate_video(
+    _req: Request,
+    _body: VideoGenerateRequest,
+    _auth: Annotated[str | None, Depends(verify_supabase_jwt_or_service)] = None,
+):
     """
     Stub response: production Watch jobs are started from Sudar Learn, which proxies
     to SudarVid (`SUDARVID_URL`, repo folder `sudar_vid`). Remotion remains optional via `REMOTION_SERVER_URL`.

@@ -6,6 +6,8 @@
 > why it exists, and how to build it correctly. The context here is not optional — it is the
 > architectural contract you must follow.
 
+> **Naming:** This **`AGENTS.md`** is for **coding agents** (Cursor, Copilot, etc.). The **product** feature **Sudar Agents** (bounded AI orchestration, audit trail, Intelligence gateway) is documented in **`docs/AGENTS_PLATFORM.md`**.
+
 ---
 
 ## Cursor: Agent mode vs Plan mode
@@ -54,8 +56,8 @@ Sudar/  (repo: Dhanikesh-Karunanithi/Sudar — legacy dir names byteos-* kept fo
 ├── AGENTS.md                 ← This file
 ├── .cursorrules              ← Coding rules
 ├── docs/                     ← All planning documents
-├── sudar-studio/            ← Sudar Studio (Admin/creator app, Next.js 14)
-├── sudar-learn/             ← Sudar Learn (Learner app, Next.js 14)
+├── sudar-studio/            ← Sudar Studio (Admin/creator app, Next.js 15)
+├── sudar-learn/             ← Sudar Learn (Learner app, Next.js 15)
 ├── sudar-intelligence/      ← Sudar Intelligence (AI engine, Python FastAPI)
 └── sudar_vid/               ← SudarVid (Watch modality video; Python FastAPI, separate port)
 ```
@@ -67,7 +69,7 @@ Sudar/  (repo: Dhanikesh-Karunanithi/Sudar — legacy dir names byteos-* kept fo
 ### 1. Sudar Studio (`/sudar-studio`)
 **Who uses it**: Admins, L&D managers, content creators
 **What it does**: Course creation, learning path management, analytics, org settings
-**Stack**: Next.js 14, TypeScript, Tailwind CSS, Prisma, Supabase
+**Stack**: Next.js 15, TypeScript, Tailwind CSS, Prisma, Supabase
 **Port**: 3000
 **Key files**:
 - `app/` — Next.js App Router pages
@@ -79,7 +81,7 @@ Sudar/  (repo: Dhanikesh-Karunanithi/Sudar — legacy dir names byteos-* kept fo
 ### 2. Sudar Learn (`/sudar-learn`)
 **Who uses it**: Learners
 **What it does**: Take courses, interact with AI tutor "Sudar", track progress, switch modalities
-**Stack**: Next.js 14, TypeScript, Tailwind CSS, Prisma, Supabase, Framer Motion, Zustand
+**Stack**: Next.js 15, TypeScript, Tailwind CSS, Prisma, Supabase, Framer Motion, Zustand
 **Port**: 3001
 **Key files**:
 - `app/` — Next.js App Router pages
@@ -91,7 +93,7 @@ Sudar/  (repo: Dhanikesh-Karunanithi/Sudar — legacy dir names byteos-* kept fo
 **Who uses it**: Called by sudar-learn and sudar-studio via HTTP
 **What it does**: All heavy AI computation — adaptive engine, AI tutor, content generation
 **Stack**: Python 3.11+, FastAPI, Together AI, Supabase Python client
-**Port**: 8000
+**Port**: typically **8001** in local dev when SudarVid uses **8000** (`scripts/dev-with-sudarvid.mjs`); set `SUDAR_INTELLIGENCE_URL` / `BYTEOS_INTELLIGENCE_URL` accordingly
 **Key files**:
 - `src/api/` — FastAPI route handlers
 - `src/adaptive/` — Adaptive learning engine
@@ -140,7 +142,7 @@ that accumulates signals over time:
 - **Modality scores** (0.0 to 1.0): How well the learner engages with each modality
 - **Behavioral signals**: Session duration, completion rate, replay rate, drop-off patterns
 - **Skill graph**: What they know, what gaps exist
-- **Next Best Action**: AI-computed recommendation for what to do next
+- **Next Best Action**: AI-computed recommendation for what to do next (computed primarily in **Learn** today; Intelligence may be called for tutor/TTS and related tasks)
 
 The Digital Learner Twin is NEVER shown in raw form to the learner.
 Instead, it silently powers ALL personalization decisions behind the scenes.

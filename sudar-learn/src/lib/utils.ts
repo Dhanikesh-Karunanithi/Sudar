@@ -19,3 +19,24 @@ export function stripTutorActionsFromText(content: string): string {
   }
   return t
 }
+
+/** Strip trailing BLOCKS: [...] JSON from tutor text (not shown in chat when blocks are rendered separately). */
+export function stripTutorBlocksFromText(content: string): string {
+  if (!content?.trim()) return content ?? ''
+  let t = content.trim()
+  const withNewline = t.match(/\nBLOCKS:\s*[\s\S]+$/)
+  if (withNewline && typeof withNewline.index === 'number') {
+    t = t.slice(0, withNewline.index).trim().replace(/\n+$/, '')
+  }
+  const noNewline = t.match(/BLOCKS:\s*[\s\S]+$/)
+  if (noNewline && typeof noNewline.index === 'number') {
+    t = t.slice(0, noNewline.index).trim().replace(/\n+$/, '')
+  }
+  t = t.replace(/\n?```tutor_blocks\s*[\s\S]*?```\s*$/i, '').trim()
+  return t
+}
+
+/** Strip ACTIONS and BLOCKS markers so assistant bubbles never leak structured tails. */
+export function stripTutorModelArtifactsFromText(content: string): string {
+  return stripTutorBlocksFromText(stripTutorActionsFromText(content))
+}

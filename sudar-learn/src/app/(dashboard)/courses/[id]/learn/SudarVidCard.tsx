@@ -24,6 +24,26 @@ function storageKey(moduleId: string) {
   return `${STORAGE_KEY_PREFIX}${moduleId}_${RENDER_SCHEMA_VERSION}`
 }
 
+type CachedVideoJob = {
+  job_id: string
+  engine_mode?: 'classic' | 'premium'
+  fallback_used?: boolean
+}
+
+function readCachedJob(moduleId: string): CachedVideoJob | null {
+  const raw = localStorage.getItem(storageKey(moduleId))
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (parsed && typeof parsed === 'object' && typeof (parsed as { job_id?: unknown }).job_id === 'string') {
+      return parsed as CachedVideoJob
+    }
+  } catch {
+    // Backward compatibility: old cache format was just a job id string.
+  }
+  return { job_id: raw }
+}
+
 function regenerateCountKey(moduleId: string) {
   return REGEN_COUNT_KEY_PREFIX + moduleId
 }
@@ -47,6 +67,16 @@ function friendlyStep(event: string, data?: Record<string, unknown>): string {
   return STEP_LABELS[event] ?? 'Working…'
 }
 
+function parseEventData(raw: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (!parsed || typeof parsed !== 'object') return null
+    return parsed as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
 export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: Props) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [jobId, setJobId] = useState<string | null>(null)
@@ -55,6 +85,7 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
   const [error, setError] = useState<string | null>(null)
   const [fullscreen, setFullscreen] = useState(false)
   const [regenerateOpen, setRegenerateOpen] = useState(false)
+  const [engineMode, setEngineMode] = useState<'classic' | 'premium'>('classic')
   const [regenerateReason, setRegenerateReason] = useState('timing-sync')
   const [regenerateGoals, setRegenerateGoals] = useState<string[]>(['audio_caption_match'])
   const [regenerateNotes, setRegenerateNotes] = useState('')
@@ -66,20 +97,22 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
   useEffect(() => {
     const attempts = Number(localStorage.getItem(regenerateCountKey(moduleId)) ?? '0')
     setRegenerateCount(Number.isFinite(attempts) ? attempts : 0)
-    const cached = localStorage.getItem(storageKey(moduleId))
+    const cached = readCachedJob(moduleId)
     if (!cached) return
     setPhase('checking')
-    fetch(`/api/ai/generate-video/status/${cached}`)
+    fetch(`/api/ai/generate-video/status/${cached.job_id}`)
       .then((r) => r.json())
-      .then((data: { status?: string; job_id?: string }) => {
+      .then((data: { status?: string; job_id?: string; engine_mode?: 'classic' | 'premium' }) => {
         if (data.status === 'done') {
-          setJobId(cached)
+          setJobId(cached.job_id)
+          if (data.engine_mode) setEngineMode(data.engine_mode)
           setPhase('done')
         } else if (data.status === 'running' || data.status === 'queued') {
-          setJobId(cached)
+          setJobId(cached.job_id)
+          if (data.engine_mode) setEngineMode(data.engine_mode)
           setPhase('generating')
           setProgressStep('Resuming…')
-          openStream(cached)
+          openStream(cached.job_id)
         } else {
           // error or missing — clear cache and show idle
           localStorage.removeItem(storageKey(moduleId))
@@ -101,7 +134,7 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
   }, [])
 
   useEffect(() => {
-    function handleQuizAttemptFromVideo(event: MessageEvent) {
+    function handleSudarVidMessage(event: MessageEvent) {
       if (event.origin !== window.location.origin) return
       if (event.source !== iframeRef.current?.contentWindow) return
       const data = event.data as {
@@ -114,9 +147,35 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
           correct_index?: number
           is_correct?: boolean
           explanation?: string
+          event_type?: 'video_play' | 'video_pause' | 'video_replay'
+          scene_index?: number
+          scene_count?: number
+          scene_from?: number
+          scene_to?: number
         }
       }
-      if (data?.type !== 'sudarvid_quiz_attempt' || data?.source !== 'sudarvid' || !data.detail) return
+      if (!data?.type || data?.source !== 'sudarvid' || !data.detail) return
+
+      if (data.type === 'sudarvid_telemetry') {
+        const eventType = data.detail.event_type
+        if (!eventType) return
+        postLearningEvent({
+          event_type: eventType,
+          course_id: courseId,
+          module_id: moduleId,
+          modality: 'video',
+          payload: {
+            source: 'sudarvid',
+            scene_index: typeof data.detail.scene_index === 'number' ? data.detail.scene_index : null,
+            scene_count: typeof data.detail.scene_count === 'number' ? data.detail.scene_count : null,
+            scene_from: typeof data.detail.scene_from === 'number' ? data.detail.scene_from : null,
+            scene_to: typeof data.detail.scene_to === 'number' ? data.detail.scene_to : null,
+          },
+        })
+        return
+      }
+
+      if (data.type !== 'sudarvid_quiz_attempt') return
 
       const question = String(data.detail.question ?? '').trim()
       const isCorrect = Boolean(data.detail.is_correct)
@@ -139,9 +198,9 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
       })
     }
 
-    window.addEventListener('message', handleQuizAttemptFromVideo)
+    window.addEventListener('message', handleSudarVidMessage)
     return () => {
-      window.removeEventListener('message', handleQuizAttemptFromVideo)
+      window.removeEventListener('message', handleSudarVidMessage)
     }
   }, [courseId, moduleId])
 
@@ -151,7 +210,8 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
     esRef.current = es
 
     es.addEventListener('status', (e) => {
-      const data = JSON.parse(e.data) as { status: string; step?: string; error?: string }
+      const data = parseEventData(e.data) as { status?: string; step?: string; error?: string } | null
+      if (!data?.status) return
       if (data.status === 'done') {
         setProgressStep('Done!')
         setProgressPct(100)
@@ -167,7 +227,7 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
     // Progress step events from SudarVid
     for (const evt of ['planning', 'images_start', 'image_progress', 'audio', 'rendering', 'rendering_video', 'loader_copy']) {
       es.addEventListener(evt, (e) => {
-        const data = JSON.parse(e.data) as Record<string, unknown>
+        const data = parseEventData(e.data) ?? {}
         setProgressStep(friendlyStep(evt, data))
         // Rough progress percentages
         const pctMap: Record<string, number> = {
@@ -219,13 +279,23 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
           regenerate,
         }),
       })
-      const data = await res.json() as { job_id?: string; error?: string }
+      const data = await res.json() as {
+        job_id?: string
+        error?: string
+        engine_mode?: 'classic' | 'premium'
+        fallback_used?: boolean
+      }
       if (!res.ok || !data.job_id) {
         setError(data.error ?? 'Failed to start video generation.')
         setPhase('error')
         return
       }
-      localStorage.setItem(storageKey(moduleId), data.job_id)
+      localStorage.setItem(storageKey(moduleId), JSON.stringify({
+        job_id: data.job_id,
+        engine_mode: data.engine_mode ?? 'classic',
+        fallback_used: Boolean(data.fallback_used),
+      }))
+      setEngineMode(data.engine_mode ?? 'classic')
       if (regenerate) {
         const nextCount = Math.min(REGEN_LIMIT, regenerateCount + 1)
         localStorage.setItem(regenerateCountKey(moduleId), String(nextCount))
@@ -289,7 +359,9 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
         </div>
         <button
           type="button"
-          onClick={handleGenerate}
+          onClick={() => {
+            void handleGenerate()
+          }}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-primary text-white shadow-md hover:bg-primary/90 transition-colors"
         >
           <Sparkles className="w-4 h-4" />
@@ -366,6 +438,9 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
       <div className="flex items-center justify-between gap-2 shrink-0">
         <p className="text-xs text-muted-foreground">
           Video for <span className="font-medium text-card-foreground">{moduleTitle}</span>
+          <span className="ml-2 inline-flex rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wide">
+            {engineMode}
+          </span>
         </p>
         <div className="flex items-center gap-2">
           <button

@@ -51,6 +51,8 @@ Every new feature or fix should map to at least one of these pillars. If it does
 - **RAG (Learn)**: content_chunks, ingest API, tutor uses it for course search.  
 - **Floating Sudar Chat**, structured tutor responses, outcome logging, validate-memory quick preferences, memory insights, SCORM delivery proxy, change-password flow (see UPDATES.md 2026-03-08).
 
+**Sudar Agents (v1 scaffold — shipped / in motion)** — Gateway on Sudar Intelligence, Learn/Studio BFFs, `agent_runs` persistence, Studio **Sudar Agents** observability runs table, cohort pulse wiring, spacing-nudge cron gates, organisation settings (`sudar_agents`). Roadmap / architecture: **[docs/AGENTS_PLATFORM.md](AGENTS_PLATFORM.md)**.
+
 **Remaining gaps vs. ultimate goal**  
 - **Modality**: Text, Flashcards, and Listen (Audio TTS) live; Video/Podcast/MindMap use pre-generated or on-demand content; SudarFeed/SudarPlay still placeholders.  
 - **Polish**: Server-generated certificate PDF is implemented (`GET /api/certificates/[code]/pdf`); further polish (branding, locale) as needed.  
@@ -129,4 +131,4 @@ Priorities are chosen to maximise progress toward the four pillars without overb
 
 ---
 
-*Last updated: 2026-03-15. Production deployment (Vercel + Intelligence hosting) documented in docs/VERCEL_DEPLOYMENT.md and docs/INTELLIGENCE_DEPLOYMENT.md. Pilot (LAMP Phase 3) after build complete.*
+*Last updated: 2026-04-27. Production deployment (Vercel + Intelligence hosting) documented in docs/VERCEL_DEPLOYMENT.md and docs/INTELLIGENCE_DEPLOYMENT.md. Local dev: SudarVid defaults to port 8000 and Sudar Intelligence to 8001 via `scripts/dev-with-sudarvid.mjs`; set `SUDAR_INTELLIGENCE_URL` / `BYTEOS_INTELLIGENCE_URL` and `SUDARVID_URL` to match.*

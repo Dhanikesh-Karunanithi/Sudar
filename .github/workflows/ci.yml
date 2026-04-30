@@ -1,0 +1,71 @@
+# Sudar credibility gates: lint, test, build, dependency audit, security audit (non-blocking until queue cleared).
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  sudar-learn:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sudar-learn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: sudar-learn/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  sudar-studio:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sudar-studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: sudar-studio/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [sudar-learn, sudar-studio]
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
+      - run: npm ci
+      - run: npm audit --audit-level=high
+
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Service-role callsite audit (non-blocking)
+        continue-on-error: true
+        run: npm run security:audit

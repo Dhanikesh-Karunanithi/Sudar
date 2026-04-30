@@ -19,13 +19,12 @@ export function AlpEmbedChat({ token, userId, courseId, moduleId }: AlpEmbedChat
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
-
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  async function send() {
-    const text = message.trim()
+  async function sendWithText(overrideMessage?: string) {
+    const text = (overrideMessage ?? message).trim()
     if (!text || loading) return
     setMessage('')
     setMessages((m) => [...m, { role: 'user', content: text }])
@@ -66,6 +65,10 @@ export function AlpEmbedChat({ token, userId, courseId, moduleId }: AlpEmbedChat
     }
   }
 
+  function send() {
+    void sendWithText()
+  }
+
   return (
     <div className="flex flex-col h-full max-h-[80vh]">
       <div className="px-3 py-2 border-b border-slate-700 flex items-center gap-2">
@@ -89,7 +92,25 @@ export function AlpEmbedChat({ token, userId, courseId, moduleId }: AlpEmbedChat
               }`}
             >
               {m.role === 'assistant' && m.blocks?.length ? (
-                <GenerativeBlockRenderer blocks={m.blocks} className="text-slate-200" />
+                <GenerativeBlockRenderer
+                  blocks={m.blocks}
+                  className="text-slate-200"
+                  onTutorChoice={(d) => {
+                    void fetch('/api/alp/tutor/choice', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({
+                        user_id: userId,
+                        block_id: d.blockId,
+                        choice_id: d.choiceId,
+                        label: d.label,
+                        course_id: courseId,
+                        module_id: moduleId,
+                      }),
+                    }).catch(() => {})
+                    void sendWithText(d.followUpMessage)
+                  }}
+                />
               ) : m.role === 'assistant' ? (
                 <div className="space-y-2">
                   <ChatMarkdown text={m.content} />
@@ -120,6 +141,7 @@ export function AlpEmbedChat({ token, userId, courseId, moduleId }: AlpEmbedChat
         />
         <button
           type="button"
+          data-alp-embed-send
           onClick={send}
           disabled={loading || !message.trim()}
           className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-500 disabled:opacity-50 disabled:pointer-events-none"

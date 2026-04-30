@@ -34,7 +34,7 @@ export default async function CoursesPage() {
 
   const courses =
     rawCourses?.map((c) => {
-      const row = c as Row
+      const row = c as unknown as Row
       const n = row.modules?.[0]?.count
       return {
         id: row.id,

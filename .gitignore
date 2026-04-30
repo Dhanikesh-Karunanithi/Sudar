@@ -60,3 +60,9 @@ htmlcov/
 # Misc
 *.pem
 .cache/
+
+# Local toolchain binaries (install per machine; do not vendor)
+.tools/
+
+# Supabase CLI local state
+supabase/.temp/

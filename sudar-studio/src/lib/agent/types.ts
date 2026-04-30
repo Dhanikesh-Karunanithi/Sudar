@@ -24,6 +24,8 @@ export const STUDIO_ACTION_TYPES = [
   'get_analytics_summary',
   'export_users_csv',
   'export_course_time',
+  'draft_module_content',
+  'apply_module_content',
 ] as const
 
 export type StudioActionType = (typeof STUDIO_ACTION_TYPES)[number]
@@ -66,6 +68,23 @@ export interface StudioActionExportCourseTime {
   label?: string
 }
 
+export interface StudioActionDraftModuleContent {
+  type: 'draft_module_content'
+  course_id: string
+  module_id: string
+  prompt: string
+  label?: string
+}
+
+export interface StudioActionApplyModuleContent {
+  type: 'apply_module_content'
+  course_id: string
+  module_id: string
+  content: string
+  mode?: 'replace' | 'append'
+  label?: string
+}
+
 export type StudioAction =
   | StudioActionOpenUser
   | StudioActionOpenCourse
@@ -75,6 +94,8 @@ export type StudioAction =
   | { type: 'get_analytics_summary'; label?: string }
   | { type: 'export_users_csv'; label?: string }
   | StudioActionExportCourseTime
+  | StudioActionDraftModuleContent
+  | StudioActionApplyModuleContent
 
 export interface StudioContextResult {
   /** Full prompt-ready context string to inject into the system prompt. */
@@ -93,6 +114,10 @@ export interface StudioContextResult {
   userIds: Set<string>
   /** Valid course IDs in this org (published, for assignment). */
   courseIds: Set<string>
+  /** Valid course IDs editable by the user (draft or published). */
+  editableCourseIds: Set<string>
+  /** Valid module IDs for editable courses. */
+  moduleIds: Set<string>
   /** Valid path IDs in this org (published). */
   pathIds: Set<string>
   /** Precomputed analytics summary text (for get_analytics_summary or initial context). */

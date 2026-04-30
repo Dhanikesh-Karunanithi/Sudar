@@ -52,6 +52,102 @@ export type Database = {
         Update: { org_id?: string; email?: string; role?: string; created_at?: string }
         Relationships: []
       }
+      org_members: {
+        Row: { id: string; org_id: string; user_id: string; role: string; joined_at: string }
+        Insert: { id?: string; org_id: string; user_id: string; role?: string; joined_at?: string }
+        Update: { org_id?: string; user_id?: string; role?: string; joined_at?: string }
+        Relationships: []
+      }
+      integration_api_keys: {
+        Row: {
+          id: string
+          org_id: string
+          name: string
+          key_hash: string
+          key_prefix: string
+          created_at: string
+          last_used_at: string | null
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          name: string
+          key_hash: string
+          key_prefix: string
+          created_at?: string
+          last_used_at?: string | null
+        }
+        Update: {
+          org_id?: string
+          name?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+        }
+        Relationships: []
+      }
+      lms_identity_links: {
+        Row: {
+          id: string
+          org_id: string
+          provider: string
+          external_user_id: string
+          external_email: string | null
+          sudar_user_id: string
+          created_at: string
+          revoked_at: string | null
+          metadata: Json
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          provider?: string
+          external_user_id: string
+          external_email?: string | null
+          sudar_user_id: string
+          created_at?: string
+          revoked_at?: string | null
+          metadata?: Json
+        }
+        Update: {
+          org_id?: string
+          provider?: string
+          external_user_id?: string
+          external_email?: string | null
+          sudar_user_id?: string
+          revoked_at?: string | null
+          metadata?: Json
+        }
+        Relationships: []
+      }
+      lti_platform_deployments: {
+        Row: {
+          id: string
+          org_id: string
+          issuer: string
+          client_id: string
+          deployment_id: string
+          platform_jwks_uri: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          issuer: string
+          client_id: string
+          deployment_id: string
+          platform_jwks_uri: string
+          created_at?: string
+        }
+        Update: {
+          org_id?: string
+          issuer?: string
+          client_id?: string
+          deployment_id?: string
+          platform_jwks_uri?: string
+        }
+        Relationships: []
+      }
       learner_profiles: {
         Row: {
           id: string
@@ -546,7 +642,15 @@ export type Database = {
           modality_variants?: Json | null
           quiz?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'modules_course_id_fkey'
+            columns: ['course_id']
+            isOneToOne: false
+            referencedRelation: 'courses'
+            referencedColumns: ['id']
+          },
+        ]
       }
       enrollments: {
         Row: {
@@ -585,7 +689,22 @@ export type Database = {
           personalized_welcome?: Json | null
           personalization_overlays?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'enrollments_course_id_fkey'
+            columns: ['course_id']
+            isOneToOne: false
+            referencedRelation: 'courses'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'enrollments_path_id_fkey'
+            columns: ['path_id']
+            isOneToOne: false
+            referencedRelation: 'learning_paths'
+            referencedColumns: ['id']
+          },
+        ]
       }
       learner_groups: {
         Row: {
@@ -675,6 +794,137 @@ export type Database = {
           helpful?: boolean | null
         }
         Relationships: []
+      }
+      agent_runs: {
+        Row: {
+          id: string
+          org_id: string
+          actor_user_id: string
+          subject_user_id: string | null
+          team: string
+          goal: string
+          goal_kind: string
+          status: string
+          plan: Json
+          tool_calls: Json
+          artifact: Json | null
+          policy_pack_id: string
+          error: string | null
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          actor_user_id: string
+          subject_user_id?: string | null
+          team: string
+          goal?: string
+          goal_kind?: string
+          status?: string
+          plan?: Json
+          tool_calls?: Json
+          artifact?: Json | null
+          policy_pack_id?: string
+          error?: string | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          status?: string
+          plan?: Json
+          tool_calls?: Json
+          artifact?: Json | null
+          error?: string | null
+          completed_at?: string | null
+        }
+        Relationships: []
+      }
+      learning_paths: {
+        Row: {
+          id: string
+          org_id: string
+          created_by: string
+          title: string
+          description: string | null
+          thumbnail_url: string | null
+          status: string
+          courses: Json
+          target_skills: Json | null
+          certification_config: Json | null
+          is_adaptive: boolean
+          is_mandatory: boolean
+          issues_certificate: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          created_by: string
+          title: string
+          description?: string | null
+          thumbnail_url?: string | null
+          status?: string
+          courses: Json
+          target_skills?: Json | null
+          certification_config?: Json | null
+          is_adaptive?: boolean
+          is_mandatory?: boolean
+          issues_certificate?: boolean
+          created_at?: string
+        }
+        Update: {
+          title?: string
+          description?: string | null
+          thumbnail_url?: string | null
+          status?: string
+          courses?: Json
+          target_skills?: Json | null
+          certification_config?: Json | null
+          is_adaptive?: boolean
+          is_mandatory?: boolean
+          issues_certificate?: boolean
+        }
+        Relationships: []
+      }
+      certifications: {
+        Row: {
+          id: string
+          user_id: string
+          path_id: string
+          issued_at: string
+          expires_at: string | null
+          certificate_url: string | null
+          verification_code: string | null
+          recipient_name: string | null
+          path_title: string | null
+          org_name: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          path_id: string
+          issued_at?: string
+          expires_at?: string | null
+          certificate_url?: string | null
+          verification_code?: string | null
+          recipient_name?: string | null
+          path_title?: string | null
+          org_name?: string | null
+        }
+        Update: {
+          expires_at?: string | null
+          certificate_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'certifications_path_id_fkey'
+            columns: ['path_id']
+            isOneToOne: false
+            referencedRelation: 'learning_paths'
+            referencedColumns: ['id']
+          },
+        ]
       }
       skills: {
         Row: {

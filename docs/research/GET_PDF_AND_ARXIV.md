@@ -42,8 +42,7 @@ You will use the **same Overleaf project** (or the same `paper.tex` and `referen
 
 If you have **TeX Live** or **MiKTeX** installed:
 
-1. Open a terminal in the folder:  
-   `c:\Users\dkaru002\Desktop\Dhani-Laboratory\ByteAI\ByteOS\docs\research`
+1. Open a terminal in the repository's **`docs/research`** directory (path depends on your machine).
 
 2. Run (PowerShell or Command Prompt):
    ```bash
@@ -89,8 +88,8 @@ Do this **after** you have confirmed the PDF compiles (e.g. in Overleaf or local
    - No PDF (arXiv generates it from your LaTeX).
 
 4. **If you use a .zip**
-   - A ready-made **`arxiv-upload.zip`** is in this folder (`docs/research/`); it contains only `paper.tex` and `references.bib`. You can upload that file to arXiv as-is.
-   - Or create your own zip with **only** `paper.tex` and `references.bib` at the root of the archive.
+   - Create a zip with **only** `paper.tex` and `references.bib` at the root of the archive (no subfolder nesting).
+   - Example file name: **`arxiv-upload.zip`**.
    - Upload the `.zip` in the “Upload files” area.
 
 5. After upload, arXiv will show the list of files. Confirm `paper.tex` and `references.bib` are there, then **Continue**.
@@ -105,7 +104,7 @@ Do this **after** you have confirmed the PDF compiles (e.g. in Overleaf or local
 
 1. **Title**
    - Copy from the paper, e.g.:  
-     `From Course Hosting to Adaptive Learning: An AI-Native Platform and Plugin Architecture for Learner Memory and Multimodal Delivery`
+     `Learning That Remembers You: An AI-Native Ecosystem for Adaptive, Memory-Aware, and Multimodal Education at Scale`
 
 2. **Authors**
    - Add your name (e.g. Dhanikesh Karunanithi) and, if you want, affiliation (e.g. “Independent” or your institution). Add co-authors if any.

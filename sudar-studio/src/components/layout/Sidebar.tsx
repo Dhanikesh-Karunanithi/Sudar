@@ -21,6 +21,7 @@ import {
   GraduationCap,
   Sparkles,
   Trophy,
+  Bot,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -51,6 +52,7 @@ const contentNavItems = [
 
 const organizationNavItems = [
   { label: 'Users', href: '/users', icon: Users },
+  { label: 'Sudar Agents', href: '/agents', icon: Bot },
   { label: 'Governance', href: '/governance', icon: ShieldCheck },
   { label: 'Integrations', href: '/integrations', icon: Plug },
   { label: 'AI & API Keys', href: '/settings/keys', icon: Key },

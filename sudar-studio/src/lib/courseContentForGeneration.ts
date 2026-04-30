@@ -64,7 +64,7 @@ export async function getCourseContentForGeneration(
 
   if (error || !data) return null
 
-  const modules = (data as { modules: ModuleRow[] }).modules
+  const modules = (data as unknown as { modules: ModuleRow[] }).modules
   if (!Array.isArray(modules) || modules.length === 0) return null
 
   const sorted = [...modules].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))

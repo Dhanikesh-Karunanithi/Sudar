@@ -11,8 +11,30 @@ export interface TutorAction {
   path_id?: string
 }
 
-export const TUTOR_BLOCK_TYPES = ['text', 'action_group', 'card', 'workflow_status', 'external_action', 'quiz'] as const
+export const TUTOR_BLOCK_TYPES = [
+  'text',
+  'action_group',
+  'card',
+  'workflow_status',
+  'external_action',
+  'quiz',
+  'choice_group',
+  'concept_card',
+  'diagram',
+  'timeline',
+  'media_card',
+  'interactive_demo',
+] as const
 export type TutorBlockType = (typeof TUTOR_BLOCK_TYPES)[number]
+
+/** Curated interactive templates — model supplies JSON params only, no arbitrary code. */
+export const TUTOR_INTERACTIVE_COMPONENT_IDS = [
+  'molecule_viewer',
+  'cell_model',
+  'physics_demo',
+  'placeholder',
+] as const
+export type TutorInteractiveComponentId = (typeof TUTOR_INTERACTIVE_COMPONENT_IDS)[number]
 
 export interface TutorBlock {
   id: string
@@ -62,6 +84,72 @@ export interface QuizBlockPayload {
   options: QuizOption[]
   topic: string
   difficulty: 'recall' | 'application' | 'challenge'
+}
+
+/** Inline clarification / tap-to-continue (same shape as proactive chips, scoped to a block). */
+export interface ChoiceGroupItem {
+  id: string
+  label: string
+  /** Server-normalized: defaults to `label` if omitted in raw JSON. */
+  follow_up_message: string
+}
+
+export interface ChoiceGroupBlockPayload {
+  question?: string
+  choices: ChoiceGroupItem[]
+  mode?: 'single'
+}
+
+export interface ConceptCardBlockPayload {
+  title: string
+  key_idea: string
+  analogy?: string
+  misconception?: string
+}
+
+export interface DiagramNode {
+  id: string
+  label: string
+}
+
+export interface DiagramEdge {
+  from: string
+  to: string
+  label?: string
+}
+
+export interface DiagramBlockPayload {
+  title?: string
+  nodes: DiagramNode[]
+  edges?: DiagramEdge[]
+}
+
+export interface TimelineItem {
+  id: string
+  title: string
+  description?: string
+}
+
+export interface TimelineBlockPayload {
+  title?: string
+  items: TimelineItem[]
+}
+
+export interface MediaCardBlockPayload {
+  title: string
+  snippet?: string
+  image_url?: string
+  link_url?: string
+  attribution?: string
+  /** e.g. "Web result", "Image search" */
+  source_label?: string
+}
+
+export interface InteractiveDemoBlockPayload {
+  component_id: TutorInteractiveComponentId
+  label?: string
+  /** Small JSON-only params for curated components */
+  params?: Record<string, unknown>
 }
 
 export interface TutorQueryResponse {

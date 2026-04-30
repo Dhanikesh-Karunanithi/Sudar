@@ -40,6 +40,11 @@ export interface OrgAiCompliance {
   tutor_redact_echoed_secrets?: boolean
   /** Reserved: stricter output moderation for high-reg orgs. */
   tutor_output_moderation_strict?: boolean
+  /**
+   * When true, Sudar may attach web/image search resource cards in course chat (server-side only).
+   * Default false if omitted; also gated by TUTOR_WEB_ENRICHMENT_ENABLED on the host.
+   */
+  tutor_web_enrichment_enabled?: boolean
 }
 
 export function defaultPersonalizationSettings(): CoursePersonalizationSettings {

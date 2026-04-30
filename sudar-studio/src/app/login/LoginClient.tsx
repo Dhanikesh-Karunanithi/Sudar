@@ -84,7 +84,7 @@ export function LoginClient() {
 
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: 'Visual templates', value: '14' },
+              { label: 'Learning personas', value: '5' },
               { label: 'Modalities', value: '7' },
               { label: 'Learner model', value: 'Twin' },
               { label: 'Exports', value: 'SCORM' },

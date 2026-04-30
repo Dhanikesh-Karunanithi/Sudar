@@ -96,6 +96,25 @@ export const ADMIN_AI_LITERACY_LESSONS: AdminAiLiteracyLesson[] = [
     ],
   },
   {
+    id: 'sudar-agents-for-admins',
+    title: 'Sudar Agents (for admins)',
+    summary: 'Bounded automation with an audit trail—not “extra chatbots”.',
+    sections: [
+      {
+        paragraphs: [
+          'Sudar Agents are short, task-style runs Sudar performs when you ask—for example a cohort “path health” snapshot or a learner week-plan sketch. Each run stores a compact plan and tool trace in your database so reviewers can see what happened without reading a long chat transcript.',
+          'In Studio, Organisation → Sudar Agents shows recent runs. “Run cohort pulse” triggers a path-and-cohort rollup for your org. Admins can enable or disable Agents and individual features under Org settings.',
+        ],
+      },
+      {
+        heading: 'What it is not',
+        paragraphs: [
+          'Agents are not separate mascot conversations. The tutor “Sudar” remains the chat surface. Agents are orchestration you trigger for operational insight, with org and (where implemented) learner switches for privacy and consent.',
+        ],
+      },
+    ],
+  },
+  {
     id: 'troubleshooting',
     title: 'Troubleshooting',
     summary: 'When Sudar says it cannot reach the AI.',

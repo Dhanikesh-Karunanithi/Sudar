@@ -15,9 +15,11 @@ export default async function CourseLearnPage({
   params,
   searchParams,
 }: {
-  params: { id: string }
-  searchParams: { module?: string }
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ module?: string }>
 }) {
+  const { id } = await params
+  const { module: selectedModuleId } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -30,17 +32,17 @@ export default async function CourseLearnPage({
     .from('enrollments')
     .select('id, progress_pct, status, personalized_welcome, personalization_overlays')
     .eq('user_id', user.id)
-    .eq('course_id', params.id)
+    .eq('course_id', id)
     .single()
 
-  if (!enrollment) redirect(`/courses/${params.id}`)
+  if (!enrollment) redirect(`/courses/${id}`)
 
-  const personalizationAccess = await resolvePersonalizationAccess(admin, user.id, params.id)
+  const personalizationAccess = await resolvePersonalizationAccess(admin, user.id, id)
 
   const { data: course } = await admin
     .from('courses')
     .select('id, title, template, settings, modules(id, title, content, modality_variants, order_index, quiz, sudarplay_map_url, sudarplay_map_id)')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('status', 'published')
     .order('order_index', { referencedTable: 'modules', ascending: true })
     .single()
@@ -51,7 +53,7 @@ export default async function CourseLearnPage({
     .from('learning_events')
     .select('module_id')
     .eq('user_id', user.id)
-    .eq('course_id', params.id)
+    .eq('course_id', id)
     .eq('event_type', 'module_complete')
 
   const completedModuleIds = new Set(
@@ -60,7 +62,7 @@ export default async function CourseLearnPage({
       .filter((id): id is string => typeof id === 'string')
   )
 
-  const activeModuleId = searchParams.module ?? course.modules[0].id
+  const activeModuleId = selectedModuleId ?? course.modules[0].id
 
   const welcomeRaw = enrollment.personalized_welcome as Record<string, unknown> | null
   const hasStoredWelcome =

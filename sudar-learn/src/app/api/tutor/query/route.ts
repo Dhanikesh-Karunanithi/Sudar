@@ -1,7 +1,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import type { TutorAction, TutorActionType } from '@/types/tutor'
+import type { TutorAction, TutorActionType, TutorBlock } from '@/types/tutor'
 import { TUTOR_ACTION_TYPES } from '@/types/tutor'
 import { retrieveChunks } from '@/lib/rag/retrieve'
 import { getCachedPublishedCourses, getCachedPublishedPaths } from '@/lib/cache'
@@ -23,7 +23,13 @@ import {
 } from '@/lib/security/sensitiveInputGuard'
 import { parseOrgAiCompliance, type OrgAiCompliance } from '@/types/personalization'
 import { loadSkillGapSummary, recordMasteredTopics, recordStruggleTopics } from '@/lib/learner/syncTopicSkills'
-import { parseTutorActionsFromText } from '@/lib/tutor/responseContract'
+import { parseTutorModelOutput } from '@/lib/tutor/responseContract'
+import { sanitizeTutorBlocks } from '@/lib/tutor/tutorBlockSanitize'
+import {
+  detectsTutorResourceIntent,
+  searchImagesForTutor,
+  searchWebForTutor,
+} from '@/lib/tutor/webResources'
 const GUARDRAIL_REFUSAL_MESSAGE = "I'm here to help with your courses and learning. I can't help with that. What would you like to learn today?"
 const SENSITIVE_DATA_REFUSAL_MESSAGE = (
   "I'm here to help with learning. I can't process payment card numbers, government ID numbers, bank details, or private keys in chat. Remove sensitive details and ask again."
@@ -234,6 +240,57 @@ function validateActions(
     }
   }
   return out
+}
+
+function isTutorWebEnrichmentEnabled(org: OrgAiCompliance): boolean {
+  if (org.tutor_web_enrichment_enabled === false) return false
+  if (org.tutor_web_enrichment_enabled === true) return true
+  return process.env.TUTOR_WEB_ENRICHMENT_ENABLED === 'true'
+}
+
+/**
+ * When org/env allows and the learner’s message asks for web/images, attach cited resource cards.
+ */
+async function buildTutorResourceBlocks(
+  org: OrgAiCompliance,
+  userMessage: string,
+  courseTitle: string,
+  moduleTitle: string,
+): Promise<TutorBlock[]> {
+  if (!isTutorWebEnrichmentEnabled(org)) return []
+  if (!detectsTutorResourceIntent(userMessage)) return []
+  const q = [moduleTitle, courseTitle, userMessage].filter(Boolean).join(' ').trim().slice(0, 200)
+  if (q.length < 4) return []
+  const [web, images] = await Promise.all([searchWebForTutor(q, 1), searchImagesForTutor(q, 1)])
+  const raw: TutorBlock[] = []
+  if (images[0]) {
+    raw.push({
+      id: 'tutor-res-image',
+      type: 'media_card',
+      payload: {
+        title: `Image: ${moduleTitle || courseTitle || 'Topic'}`.slice(0, 200),
+        image_url: images[0].url,
+        link_url: images[0].url,
+        snippet: images[0].alt,
+        attribution: images[0].attribution,
+        source_label: 'Image search (verify with your course)',
+      },
+    })
+  }
+  if (web[0]) {
+    raw.push({
+      id: 'tutor-res-web',
+      type: 'media_card',
+      payload: {
+        title: web[0].title.slice(0, 200),
+        snippet: web[0].snippet,
+        link_url: web[0].link,
+        source_label: 'Web result',
+        attribution: 'Cross-check with your module; web results may be incomplete.',
+      },
+    })
+  }
+  return sanitizeTutorBlocks(raw)
 }
 
 // Allowed tutor models (serverless); set TOGETHER_TUTOR_MODEL in .env.local to override.
@@ -762,6 +819,9 @@ Formatting & Engagement (always apply):
 - Use bullet lists (- item) or numbered lists for steps, comparisons, or multiple points.
 - Use relatable real-world analogies and concrete examples — make abstract ideas tangible.
 - For longer explanations, end with a short follow-up nudge like "Want me to go deeper on any part?" or a quick question to check understanding.
+- When the question is vague, offers multiple valid angles, or you want to match the learner's style, you may add tap-to-continue **choice_group** options via the BLOCKS line below. Keep labels short. Do not repeat your full answer inside BLOCKS.
+- Optional **BLOCKS** (place after your answer; before ACTIONS when you use both). One line: BLOCKS: followed by a JSON array of objects with "id", "type", "payload". Valid types: **choice_group** (payload: question optional, choices: [{id, label, follow_up_message}]), **concept_card** (title, key_idea, analogy?, misconception?), **diagram** (title?, nodes: [{id, label}], edges?: [{from, to, label?}]), **timeline** (title?, items: [{id, title, description?}]), **media_card** (title, snippet?, image_url?, link_url?, only use URLs you are confident are safe https links), **interactive_demo** (component_id: molecule_viewer|cell_model|physics_demo|placeholder, label?, params object). Do not invent file URLs. Example:
+BLOCKS: [{"id":"c1","type":"choice_group","payload":{"question":"How should we continue?","choices":[{"id":"a","label":"Use a simple analogy","follow_up_message":"Explain using a simple analogy."},{"id":"b","label":"Step-by-step","follow_up_message":"Walk me through step by step."}]}}]
 - Never dump a wall of prose. Even short answers should be well-structured and easy to skim.
 
 Reasoning: When answering, think step by step (what did they ask → what context is relevant → best answer/action), then give your direct answer. Use the course content and learner context below to personalize every response.
@@ -812,10 +872,12 @@ How to personalize:
     )
   }
 
-  // ── Parse and validate ACTIONS from response (output guardrail) ─────────
-  const parsedActions = parseTutorActionsFromText(aiResponse)
-  let responseText = parsedActions.text
-  const rawActions = parsedActions.rawActions
+  // ── Parse and validate ACTIONS + optional BLOCKS from response (output guardrails) ──
+  const modelOut = parseTutorModelOutput(aiResponse)
+  let responseText = modelOut.text
+  const rawActions = modelOut.rawActions
+  const modelBlocksFromParse = sanitizeTutorBlocks(modelOut.rawBlocks).filter((b) => b.type !== 'text')
+
   if (orgAiCompliance.tutor_redact_echoed_secrets !== false) {
     responseText = redactEchoedSensitiveDigits(responseText)
   }
@@ -826,7 +888,10 @@ How to personalize:
   if (!responseText) {
     responseText = 'I had trouble formatting that answer. Please ask again and I will retry.'
   }
-  if (parsedActions.malformedActions && actions.length === 0) {
+  if (modelOut.malformedBlocks && /\nBLOCKS:\s*/i.test(aiResponse)) {
+    responseText = `${responseText}\n\nI could not parse structured learning cards for that answer. Try asking again, or request a specific format.`
+  }
+  if (modelOut.malformedActions && actions.length === 0) {
     responseText = `${responseText}\n\nI could not generate quick action buttons for that response yet.`
   }
 
@@ -861,7 +926,10 @@ How to personalize:
   // ── 6. Async memory update (fire and forget) ───────────────────────────
   updateLearnerMemory(user.id, message, responseText, admin, aiDeps).catch(() => {})
 
-  // ── 7. Quiz block (if quiz intent detected) ───────────────────────────
+  // ── 7. Optional web/image resource cards (org + env gated) ─────────────
+  const resourceBlocks = await buildTutorResourceBlocks(orgAiCompliance, message, courseTitle, currentModuleTitle)
+
+  // ── 8. Quiz block (if quiz intent detected) ───────────────────────────
   let quizBlock: { id: string; type: 'quiz'; payload: Record<string, unknown> } | null = null
   if (detectsQuizIntent(message)) {
     const conversationContext = Array.isArray(conversation_history)
@@ -873,10 +941,16 @@ How to personalize:
     }
   }
 
-  const blocks: Array<{ id: string; type: string; payload: Record<string, unknown> }> = [
-    { id: 'text-1', type: 'text', payload: { content: responseText } },
-  ]
-  if (actions.length > 0) blocks.push({ id: 'actions-1', type: 'action_group', payload: { actions } })
+  const blocks: TutorBlock[] = [{ id: 'text-1', type: 'text', payload: { content: responseText } }]
+  for (const b of modelBlocksFromParse) {
+    blocks.push(b)
+  }
+  for (const b of resourceBlocks) {
+    blocks.push(b)
+  }
+  if (actions.length > 0) {
+    blocks.push({ id: 'actions-1', type: 'action_group', payload: { actions } as unknown as Record<string, unknown> })
+  }
   if (quizBlock) blocks.push(quizBlock)
 
   return NextResponse.json({

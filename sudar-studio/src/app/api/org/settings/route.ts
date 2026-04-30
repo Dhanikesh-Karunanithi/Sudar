@@ -13,6 +13,8 @@ import {
 } from '@/types/orgAiInference'
 import type { Json } from '@/types/database'
 import { normalizeTtsVoiceId, TTS_VOICE_OPTIONS_BY_ID } from '@/lib/audio/voices'
+import { orgSudarAgentsPatchSchema } from '@/types/orgSudarAgents'
+import { resolveSudarAgentsFromOrgSettings } from '../../../../../../shared/sudarAgentsOrgSettings'
 
 /**
  * GET /api/org/settings — Return current org settings (performance_config, etc.). Admin/Manager only.
@@ -45,6 +47,7 @@ export async function GET() {
   const notification_policy = (settings.notification_policy as Record<string, unknown> | undefined) ?? {}
   const notification_branding = (settings.notification_branding as Record<string, unknown> | undefined) ?? {}
   const ai_inference = parseOrgAiInference(settings)
+  const sudar_agents = resolveSudarAgentsFromOrgSettings(settings)
 
   return NextResponse.json({
     performance_config,
@@ -111,6 +114,7 @@ export async function GET() {
       feature_available: isOrgPrivateAiFeatureEnabled(),
       bearer_configured: Boolean(getPrivateLlmBearerToken()),
     },
+    sudar_agents,
   })
 }
 
@@ -274,6 +278,52 @@ export async function PATCH(request: Request) {
       }
     }
     updatedSettings.ai_inference = mergedInference
+  }
+
+  if (body.sudar_agents !== undefined) {
+    if (typeof body.sudar_agents !== 'object' || body.sudar_agents === null || Array.isArray(body.sudar_agents)) {
+      return NextResponse.json({ error: 'Invalid sudar_agents' }, { status: 400 })
+    }
+    const parsed = orgSudarAgentsPatchSchema.safeParse(body.sudar_agents)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid sudar_agents', details: parsed.error.flatten() },
+        { status: 400 }
+      )
+    }
+    const prevRaw =
+      typeof currentSettings.sudar_agents === 'object' && currentSettings.sudar_agents !== null && !Array.isArray(currentSettings.sudar_agents)
+        ? (currentSettings.sudar_agents as Record<string, unknown>)
+        : {}
+    const prevFeat =
+      typeof prevRaw.features === 'object' && prevRaw.features !== null && !Array.isArray(prevRaw.features)
+        ? (prevRaw.features as Record<string, unknown>)
+        : {}
+    const merged: Record<string, unknown> = {
+      ...prevRaw,
+      ...(parsed.data.enabled !== undefined ? { enabled: parsed.data.enabled } : {}),
+      ...(parsed.data.policy_pack_id !== undefined ? { policy_pack_id: parsed.data.policy_pack_id } : {}),
+      ...(parsed.data.admin_explanation_level !== undefined
+        ? { admin_explanation_level: parsed.data.admin_explanation_level }
+        : {}),
+    }
+    if (parsed.data.features !== undefined) {
+      merged.features = {
+        ...prevFeat,
+        ...(parsed.data.features.cohort_pulse !== undefined
+          ? { cohort_pulse: parsed.data.features.cohort_pulse }
+          : {}),
+        ...(parsed.data.features.learner_week_plan !== undefined
+          ? { learner_week_plan: parsed.data.features.learner_week_plan }
+          : {}),
+        ...(parsed.data.features.spacing_nudges !== undefined
+          ? { spacing_nudges: parsed.data.features.spacing_nudges }
+          : {}),
+      }
+    } else if (Object.keys(prevFeat).length > 0) {
+      merged.features = { ...prevFeat }
+    }
+    updatedSettings.sudar_agents = merged
   }
 
   const { error } = await admin

@@ -3,10 +3,12 @@ Sudar Intelligence — Content Generation Routes
 Handles course content generation requests from Sudar Studio.
 Uses provider-agnostic AI client (OpenRouter, Together, OpenAI, Anthropic, custom).
 """
-from fastapi import APIRouter
-from pydantic import BaseModel
-from typing import Optional
+from typing import Annotated
 
+from fastapi import APIRouter, Depends, Request
+from pydantic import BaseModel
+
+from src.api.auth import verify_supabase_jwt_or_service
 from src.core.ai_client import _get_provider
 
 router = APIRouter()
@@ -31,7 +33,11 @@ class ContentGenerateResponse(BaseModel):
 
 
 @router.post("/generate", response_model=ContentGenerateResponse)
-async def generate_content(request: ContentGenerateRequest):
+async def generate_content(
+    _req: Request,
+    _body: ContentGenerateRequest,
+    _auth: Annotated[str | None, Depends(verify_supabase_jwt_or_service)] = None,
+):
     """
     Generates a complete course structure from source material.
     Called by Sudar Studio's course builder.

@@ -13,6 +13,7 @@ import {
   Shield,
   Server,
   BookOpen,
+  Bot,
 } from 'lucide-react'
 import { SudarInlineLoader, SudarLoadingFrost } from '@/components/branding/SudarBrandLoader'
 import type { PerformanceConfig, KpiDefinition, TermDefinition } from '@/types/performance'
@@ -55,6 +56,13 @@ export default function SettingsPage() {
   const [privateAiTestStatus, setPrivateAiTestStatus] = useState<string | null>(null)
   const [privateAiTesting, setPrivateAiTesting] = useState(false)
   const [voiceProviderStatuses, setVoiceProviderStatuses] = useState<VoiceLibraryProviderStatus[]>([])
+  const [agentsEnabled, setAgentsEnabled] = useState(true)
+  const [agentsCohortPulse, setAgentsCohortPulse] = useState(true)
+  const [agentsLearnerWeekPlan, setAgentsLearnerWeekPlan] = useState(true)
+  const [agentsSpacingNudges, setAgentsSpacingNudges] = useState(true)
+  const [agentsPolicyPackId, setAgentsPolicyPackId] = useState('default')
+  const [agentsExplanationLevel, setAgentsExplanationLevel] = useState<'simple' | 'advanced'>('simple')
+  const [showAgentsFieldDetails, setShowAgentsFieldDetails] = useState(false)
 
   const fetchSettings = useCallback(async () => {
     const res = await fetch('/api/org/settings')
@@ -88,6 +96,22 @@ export default function SettingsPage() {
       setBlockHighRiskPiiInTutor(data.ai_compliance.block_high_risk_pii_in_tutor !== false)
       setTutorRedactEchoedSecrets(data.ai_compliance.tutor_redact_echoed_secrets !== false)
       setTutorOutputModerationStrict(data.ai_compliance.tutor_output_moderation_strict === true)
+    }
+    if (data.sudar_agents) {
+      const sa = data.sudar_agents as Record<string, unknown>
+      setAgentsEnabled(sa.enabled !== false)
+      const ft = sa.features as Record<string, unknown> | undefined
+      if (ft) {
+        setAgentsCohortPulse(ft.cohort_pulse !== false)
+        setAgentsLearnerWeekPlan(ft.learner_week_plan !== false)
+        setAgentsSpacingNudges(ft.spacing_nudges !== false)
+      }
+      if (typeof sa.policy_pack_id === 'string' && sa.policy_pack_id.trim()) {
+        setAgentsPolicyPackId(sa.policy_pack_id.trim())
+      }
+      if (sa.admin_explanation_level === 'advanced' || sa.admin_explanation_level === 'simple') {
+        setAgentsExplanationLevel(sa.admin_explanation_level)
+      }
     }
     if (data.ai_inference) {
       setUsePrivateServer(data.ai_inference.use_private_server === true)
@@ -172,6 +196,16 @@ export default function SettingsPage() {
             private_server_model: privateServerModel,
           },
         }),
+        sudar_agents: {
+          enabled: agentsEnabled,
+          features: {
+            cohort_pulse: agentsCohortPulse,
+            learner_week_plan: agentsLearnerWeekPlan,
+            spacing_nudges: agentsSpacingNudges,
+          },
+          policy_pack_id: agentsPolicyPackId.trim() || 'default',
+          admin_explanation_level: agentsExplanationLevel,
+        },
       }),
     })
     setSaving(false)
@@ -526,6 +560,104 @@ export default function SettingsPage() {
             Strict output moderation (extra redaction on tutor and Studio agent replies)
           </label>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Bot className="w-4 h-4 text-indigo-400/90" />
+          <h2 className="font-semibold text-white">Sudar Agents</h2>
+        </div>
+        <p className="text-slate-500 text-sm">
+          Turn off orchestration for this organisation or trim individual capabilities. Learners only see automation your org allows; see{' '}
+          <Link href="/agents" className="text-indigo-400 hover:text-indigo-300">
+            Sudar Agents
+          </Link>{' '}
+          for recent runs.
+        </p>
+        <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={agentsEnabled}
+            onChange={(e) => setAgentsEnabled(e.target.checked)}
+            className="rounded border-slate-600"
+          />
+          Enable Sudar Agents for this organisation
+        </label>
+        <p className="text-slate-500 text-xs">
+          Default Studio agents view:{' '}
+          <label className="inline-flex items-center gap-2 cursor-pointer text-slate-400">
+            <input
+              type="radio"
+              name="agents_explain"
+              checked={agentsExplanationLevel === 'simple'}
+              onChange={() => setAgentsExplanationLevel('simple')}
+              className="rounded border-slate-600"
+            />
+            Simple
+          </label>
+          <label className="inline-flex items-center gap-2 cursor-pointer text-slate-400 ml-3">
+            <input
+              type="radio"
+              name="agents_explain"
+              checked={agentsExplanationLevel === 'advanced'}
+              onChange={() => setAgentsExplanationLevel('advanced')}
+              className="rounded border-slate-600"
+            />
+            Advanced
+          </label>
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowAgentsFieldDetails((v) => !v)}
+          className="text-xs text-indigo-400 hover:text-indigo-300"
+        >
+          {showAgentsFieldDetails ? 'Hide' : 'Show'} advanced fields
+        </button>
+        {showAgentsFieldDetails && (
+          <div className="space-y-3 pl-1 border-l-2 border-slate-700 ml-1">
+            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agentsCohortPulse}
+                onChange={(e) => setAgentsCohortPulse(e.target.checked)}
+                disabled={!agentsEnabled}
+                className="rounded border-slate-600 disabled:opacity-40"
+              />
+              Cohort pulse (path health) in Studio
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agentsLearnerWeekPlan}
+                onChange={(e) => setAgentsLearnerWeekPlan(e.target.checked)}
+                disabled={!agentsEnabled}
+                className="rounded border-slate-600 disabled:opacity-40"
+              />
+              Learner week-plan API / dashboard strip
+            </label>
+            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agentsSpacingNudges}
+                onChange={(e) => setAgentsSpacingNudges(e.target.checked)}
+                disabled={!agentsEnabled}
+                className="rounded border-slate-600 disabled:opacity-40"
+              />
+              Spacing-style notification cron
+            </label>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Policy pack id</label>
+              <input
+                type="text"
+                value={agentsPolicyPackId}
+                onChange={(e) => setAgentsPolicyPackId(e.target.value)}
+                disabled={!agentsEnabled}
+                className="w-full max-w-sm rounded-lg border border-slate-700 bg-slate-800 text-white px-3 py-2 text-sm disabled:opacity-40"
+              />
+              <p className="text-slate-500 text-xs mt-1">Forwarded to Intelligence when supported (default: default).</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-4">

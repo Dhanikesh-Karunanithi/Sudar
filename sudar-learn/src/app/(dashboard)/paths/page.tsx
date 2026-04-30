@@ -10,8 +10,9 @@ interface PathCourse { course_id: string; order_index: number; is_mandatory: boo
 export default async function LearnPathsPage({
   searchParams,
 }: {
-  searchParams?: { q?: string }
+  searchParams?: Promise<{ q?: string }>
 }) {
+  const { q } = (await searchParams) ?? {}
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const admin = createAdminClient()
@@ -21,7 +22,7 @@ export default async function LearnPathsPage({
     admin.from('enrollments').select('path_id, status, progress_pct, personalized_sequence').eq('user_id', user!.id).not('path_id', 'is', null),
   ])
 
-  const searchQuery = (searchParams?.q ?? '').trim().toLowerCase()
+  const searchQuery = (q ?? '').trim().toLowerCase()
   const visiblePaths = (paths ?? []).filter((p) => {
     if (!searchQuery) return true
     const title = (p.title ?? '').toLowerCase()
@@ -120,7 +121,7 @@ export default async function LearnPathsPage({
         <p className="text-muted-foreground text-sm mt-1">Structured programmes that guide you through multiple courses</p>
         {searchQuery && (
           <p className="text-xs text-muted-foreground mt-2">
-            Showing results for <span className="font-semibold text-card-foreground">&quot;{searchParams?.q}&quot;</span>
+            Showing results for <span className="font-semibold text-card-foreground">&quot;{q}&quot;</span>
           </p>
         )}
       </div>

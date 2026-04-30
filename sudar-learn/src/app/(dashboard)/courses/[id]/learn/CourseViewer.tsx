@@ -9,7 +9,7 @@ import {
   ChevronDown, FileText, Video, Network,
   Layers, Zap, MessageSquarePlus, Pin, PinOff, PanelLeftClose, Mic, Maximize2, Minimize2, Headphones, Gamepad2
 } from 'lucide-react'
-import { cn, stripTutorActionsFromText } from '@/lib/utils'
+import { cn, stripTutorModelArtifactsFromText } from '@/lib/utils'
 import { renderCourseMarkdown } from '@/lib/courseBodyMarkdown'
 import { QuizCard } from './QuizCard'
 import { FlashcardsCard, type FlashcardPair } from './FlashcardsCard'
@@ -24,7 +24,7 @@ import { CourseThemeProvider } from '@/components/learn/CourseThemeProvider'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { GenerativeBlockRenderer } from '@/components/tutor/GenerativeBlockRenderer'
 import { ChatMarkdown } from '@/components/tutor/ChatMarkdown'
-import { isRichContent, isScormContent, type RichContent } from '@/types/content'
+import { isRichContent, isScormContent, type ModuleContent } from '@/types/content'
 import { postLearningEvent } from '@/lib/learn/postLearningEvent'
 import type { ProactivePromptChoice, TutorAction, TutorBlock, TutorQueryResponse } from '@/types/tutor'
 import { ProactiveSudarChoiceChips } from '@/components/tutor/ProactiveSudarChoiceChips'
@@ -47,7 +47,7 @@ interface QuizQuestion {
 interface Module {
   id: string
   title: string
-  content: ({ type: string; body?: string } & Partial<RichContent>) | null
+  content: ModuleContent | null
   order_index: number
   quiz?: { questions: QuizQuestion[] } | null
   sudarplay_map_url?: string | null
@@ -464,7 +464,7 @@ export function CourseViewer({
   const modalitySwitchReadyRef = useRef(false)
   const [flashcardsByModule, setFlashcardsByModule] = useState<Record<string, FlashcardPair[]>>({})
   const [flashcardsLoading, setFlashcardsLoading] = useState(false)
-  const [mindmapByModule, setMindmapByModule] = useState<Record<string, MindMapNode>>({})
+  const [mindmapByModule, setMindmapByModule] = useState<Record<string, MindMapNode | null>>({})
   const [mindmapLoading, setMindmapLoading] = useState(false)
   const [mindmapScope, setMindmapScope] = useState<'module' | 'course'>('module')
   const [mindmapCourse, setMindmapCourse] = useState<MindMapNode | null>(null)
@@ -1122,7 +1122,7 @@ export function CourseViewer({
         }),
       })
       const text = await res.text()
-      let data: TutorQueryResponse = {}
+      let data: TutorQueryResponse & { error?: string } = {}
       if (text) {
         try {
           data = validateTutorQueryResponsePayload(JSON.parse(text))
@@ -2176,12 +2176,26 @@ export function CourseViewer({
                               }),
                             }).catch(() => {})
                           } }
+                          onTutorChoice={(d) => {
+                            void fetch('/api/tutor/choice', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                block_id: d.blockId,
+                                choice_id: d.choiceId,
+                                label: d.label,
+                                course_id: course.id,
+                                module_id: currentModuleId,
+                              }),
+                            }).catch(() => {})
+                            void handleTutorSend(d.followUpMessage)
+                          }}
                           onQuizRetry={() => handleTutorSend('Give me another quiz question')}
                         />
                       ) : (
                         <span className="contents block">
                       {msg.role === 'assistant' ? (
-                        <ChatMarkdown text={stripTutorActionsFromText(msg.content)} />
+                        <ChatMarkdown text={stripTutorModelArtifactsFromText(msg.content)} />
                       ) : (
                         <>
                           {msg.content}

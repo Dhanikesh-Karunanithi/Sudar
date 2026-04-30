@@ -34,7 +34,17 @@ export async function POST(request: NextRequest) {
   if (!body.template_id) return NextResponse.json({ error: 'template_id required' }, { status: 400 })
 
   const admin = createAdminClient()
-  const { data, error } = await admin
+  // Supabase generated types do not always model dynamic insert payloads for nested JSON.
+  // Keep the runtime correct, while avoiding type-checker false positives.
+  const unsafeAdmin = admin as unknown as {
+    from: (table: string) => {
+      insert: (values: unknown) => {
+        select: (columns: string) => { single: () => Promise<{ data: unknown; error: { message: string } | null }> }
+      }
+    }
+  }
+
+  const { data, error } = await unsafeAdmin
     .from('notification_campaigns')
     .insert({
       org_id: orgId,

@@ -19,7 +19,7 @@ Before adding features, check **docs/STRATEGIC_PATH.md** for current state and p
 ---
 
 ## Tech Stack (Do Not Deviate)
-- Frontend: Next.js 14 (App Router), TypeScript 5, Tailwind CSS 3
+- Frontend: Next.js 15 (App Router), TypeScript 5, Tailwind CSS 3
 - Database: Supabase (PostgreSQL via Prisma ORM)
 - Auth: Supabase Auth (shared across Studio + Learn)
 - State: Zustand for complex client state

@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { isLearnPublicPath } from '@/lib/security/learnPublicPaths'
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -30,8 +32,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const publicPaths = ['/login', '/signup', '/auth/callback']
-  const isPublicPath = publicPaths.some((p) => pathname.startsWith(p))
+  const isPublicPath = isLearnPublicPath(pathname)
 
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone()

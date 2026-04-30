@@ -5,7 +5,8 @@
  * See docs/ALP_API.md for the contract.
  */
 import { createAdminClient } from '@/lib/supabase/server'
-import { validateAlpKey, getAlpKeyFromRequest } from '@/lib/alp-auth'
+import { validateAlpKey, getAlpKeyFromRequest, rejectAlpUserOutsideOrg } from '@/lib/alp-auth'
+import type { Json } from '@/types/database'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
@@ -28,6 +29,8 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient()
+  const orgError = await rejectAlpUserOutsideOrg(admin, auth, user_id)
+  if (orgError) return orgError
 
   for (const ev of events) {
     const { event_type, course_id, module_id, payload, modality, duration_secs } = ev
@@ -38,7 +41,7 @@ export async function POST(request: NextRequest) {
       course_id: course_id ?? null,
       module_id: module_id ?? null,
       event_type,
-      payload: payload ?? null,
+      payload: (payload ?? null) as Json,
       modality: modality ?? 'text',
       duration_secs: duration_secs ?? null,
     })

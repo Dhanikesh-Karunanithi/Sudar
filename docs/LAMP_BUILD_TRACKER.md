@@ -8,7 +8,7 @@
 - Leave **Status** as `Not started` until work begins. Do not remove or rename task IDs.
 - When a completed task affects what the **paper** claims (e.g. a new shipped feature): update [docs/research/paper.tex](research/paper.tex) and/or [docs/LAMP-Updated-Draft.md](LAMP-Updated-Draft.md) per [docs/research/PAPER_SYNC.md](research/PAPER_SYNC.md) so the paper stays aligned with the build.
 
-**Last updated**: 2026-03-15
+**Last updated**: 2026-04-27
 
 ---
 
@@ -17,9 +17,9 @@
 | ID | Task | Status | Note |
 |----|------|--------|------|
 | B1 | ALP API documentation (docs/ALP_API.md or ECOSYSTEM subsection) | Done | docs/ALP_API.md created; event ingestion, learner/tutor/next-action, SCORM/xAPI. |
-| B2 | SudarMemory — event ingestion from Moodle/LRS into ALP | Done | POST /api/alp/events in Learn; ALP_API_KEY auth; docs/ALP_API.md updated. |
-| B3 | SudarChat — tutor in Moodle (block or LTI) | Done | POST /api/alp/tutor/query in Learn; Moodle block calls this. |
-| B4 | SudarRecommend — next-action block in Moodle dashboard | Done | POST /api/alp/next-action in Learn; Moodle block calls this. |
+| B2 | SudarMemory — event ingestion from Moodle/LRS into ALP | Done | `local_sudaralp`: Moodle userid → Sudar UUID via `/api/alp/identity/resolve`; queue retry/backoff + `dead` DLQ; observer optional fail-closed skip. |
+| B3 | SudarChat — tutor in Moodle (block or LTI) | Done | `tutor.php` + `block_sudaralp`; LTI `POST /api/alp/lti/launch` + `GET /api/alp/lti/jwks` on Learn; embed-token unchanged. |
+| B4 | SudarRecommend — next-action block in Moodle dashboard | Done | `nextaction.php` + block; golden payload Vitest (`alpGoldenContracts.test.ts`). |
 | B5 | Pilot plan (docs/PILOT_PLAN.md) | Done | docs/PILOT_PLAN.md created; partners, criteria, data, RQ link. |
 
 **Phase 1 gate**: All of B1–B5 Done before starting Phase 2.

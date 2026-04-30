@@ -6,9 +6,16 @@ This folder contains the scientific paper draft and submission materials for the
 
 - **Title (in `paper.tex`):** *Learning That Remembers You: An AI-Native Ecosystem for Adaptive, Memory-Aware, and Multimodal Education at Scale*  
 - **Technology name in paper:** Adaptive Learning Layer (ALP) for the plugin architecture; reference implementation: Sudar (canonical repository: https://github.com/Dhanikesh-Karunanithi/Sudar).  
-- **File:** [paper.tex](paper.tex) — LaTeX source (two-column, ~8–10 pages). **Source revision v3 (April 2026):** maturity-aware modalities, ALP reference API status, engagement/trust layers.  
-- **Snapshot PDF (v4):** [Sudar_LAMP_Paper_v4.pdf](Sudar_LAMP_Paper_v4.pdf) — refreshed from current `paper.tex` build (April 2026).  
+- **File:** [paper.tex](paper.tex) — LaTeX source (two-column, ~8–10 pages). **Revision (April 2026):** credibility pass (marginal AI cost vs TCO, ALP as Learn reference API + roadmap plugins, Learn-first next-action, Next.js 15). Rebuild PDF after edits (`pdflatex` / Overleaf).  
+- **Snapshot PDF:** [Sudar_LAMP_Paper_v4.pdf](Sudar_LAMP_Paper_v4.pdf) — last exported snapshot; may lag `paper.tex` until you recompile.  
 - **References:** [references.bib](references.bib) — BibTeX.
+
+## Credibility and evaluation (supporting the paper)
+
+- [COST_WORKSHEET.md](COST_WORKSHEET.md) — marginal AI cost assumptions (vs TCO).  
+- [EVALUATION_APPENDIX.md](EVALUATION_APPENDIX.md) — what is claimed today vs after pilots.  
+- [PILOT_PROTOCOL.md](PILOT_PROTOCOL.md) — template for institutional pilots.  
+- Repo root: `scripts/benchmark-sudar.mjs` — benchmark harness stub (`npm run benchmark:sudar` from monorepo root).
 
 ## Build
 

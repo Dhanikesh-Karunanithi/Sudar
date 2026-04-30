@@ -74,6 +74,8 @@ The **ALP (Adaptive Learning Layer)** is the intelligence layer: your LMS sends 
 The Provisioning API allows batch creation of users and org membership so institutions can plug in their directory (HRIS/SIS) without manual invites only.
 
 - **Endpoint**: `POST /api/org/provisioning/users` (Studio app; use your Studio base URL, e.g. `https://studio.yoursudar.com`).
+- **LMS identity mapping**: `POST /api/org/provisioning/lms-identity-links` and `DELETE /api/org/provisioning/lms-identity-links` — map LMS `external_user_id` (e.g. Moodle internal id) to Sudar `profiles.id` UUIDs required by ALP. Same auth headers as user provisioning. See [ALP_API.md](ALP_API.md) §3.5.
+- **LTI platform registration**: `POST /api/org/provisioning/lti-deployments` — register `issuer`, `client_id`, `deployment_id`, and `platform_jwks_uri` from the LMS LTI tool so Learn can verify `id_token` on `POST /api/alp/lti/launch`. See [ALP_API.md](ALP_API.md) §3.5.
 - **Auth**: Key-based. Use an org-scoped Integration API key from Studio → Integrations → ALP & API access. Send it in the `x-alp-api-key` header or `Authorization: Bearer <key>`.
 - **Payload**: `{ "users": [ { "email": "user@example.com", "full_name": "Optional", "role": "LEARNER" } ] }`. `role` is one of `ADMIN`, `MANAGER`, `CREATOR`, `LEARNER` (default `LEARNER`). Max 200 users per request.
 - **Behavior**: For each item, the server creates a Supabase Auth user (with a random temporary password and `require_password_change`), a `profiles` row, an `org_members` row, and a `learner_profiles` row if missing. If the email already exists in Auth, that row returns `ok: false` with an error.

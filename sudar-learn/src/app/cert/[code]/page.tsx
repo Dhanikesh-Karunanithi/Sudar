@@ -4,13 +4,14 @@ import { Award, CheckCircle2, Calendar, Building2, BadgeCheck, Route } from 'luc
 import Link from 'next/link'
 import { CertActions } from './CertActions'
 
-export default async function CertificatePage({ params }: { params: { code: string } }) {
+export default async function CertificatePage({ params }: { params: Promise<{ code: string }> }) {
+  const { code } = await params
   const admin = createAdminClient()
 
   const { data: cert } = await admin
     .from('certifications')
     .select('*, path:learning_paths(title, description, courses)')
-    .eq('verification_code', params.code)
+    .eq('verification_code', code)
     .single()
 
   if (!cert) notFound()

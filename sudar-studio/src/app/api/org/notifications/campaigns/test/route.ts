@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
-import { sendEmailNotification } from '../../../../../../../../../shared/notifications/channels/email'
-import { createUnsubscribeToken } from '../../../../../../../../../shared/notifications/unsubscribeToken'
-import { buildUnsubscribeUrl } from '../../../../../../../../../shared/notifications/channels/email'
+import type { Database } from '@/types/database'
+import {
+  buildUnsubscribeUrl,
+  sendEmailNotification,
+} from '../../../../../../../../shared/notifications/channels/email'
+import { createUnsubscribeToken } from '../../../../../../../../shared/notifications/unsubscribeToken'
+
+type NotificationDeliveryInsert = Database['public']['Tables']['notification_delivery_log']['Insert']
 
 function renderTemplate(template: string, vars: Record<string, string>): string {
   return template.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, key: string) => vars[key] ?? '')
@@ -68,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  await admin.from('notification_delivery_log').insert({
+  const deliveryLog: NotificationDeliveryInsert = {
     user_id: user.id,
     template_id: template.id,
     category_slug: template.category_slug,
@@ -76,7 +81,9 @@ export async function POST(request: NextRequest) {
     status: 'sent',
     sent_at: new Date().toISOString(),
     metadata: { source: 'campaign_test' },
-  })
+  }
+
+  await admin.from('notification_delivery_log').insert(deliveryLog)
 
   return NextResponse.json({ ok: true, preview: { title, body: bodyText, ctaUrl } })
 }

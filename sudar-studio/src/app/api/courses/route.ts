@@ -2,6 +2,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getOrCreateOrg } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchOrgTagCatalog, resolveOrCreateOrgTagsForLabels, setCourseOrgTagIds } from '@/lib/courseTags'
+import { getCourseTemplate } from '@/lib/courseTemplates'
 import type { Database } from '@/types/database'
 
 type CourseInsert = Database['public']['Tables']['courses']['Insert']
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest) {
     tag_labels?: string[]
     thumbnail_url?: string | null
     banner_url?: string | null
+    manual_template_id?: string
   }
 
   if (!body.title?.trim()) return NextResponse.json({ error: 'title required' }, { status: 400 })
@@ -75,6 +77,24 @@ export async function POST(request: NextRequest) {
     } catch {
       /* non-fatal */
     }
+  }
+
+  if (data?.id) {
+    const template = getCourseTemplate(body.manual_template_id)
+    await admin.from('modules').insert({
+      course_id: data.id,
+      title: template.moduleTitle,
+      content: template.content,
+      order_index: 0,
+    })
+    await admin.from('learning_events').insert({
+      user_id: user.id,
+      course_id: data.id,
+      module_id: null,
+      event_type: 'studio_module_created_from_template',
+      payload: { template_id: template.id },
+      modality: 'studio',
+    })
   }
 
   return NextResponse.json(data, { status: 201 })

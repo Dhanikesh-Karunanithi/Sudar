@@ -3,11 +3,12 @@ import { Search, BookOpen, Route, ArrowRight } from 'lucide-react'
 import { getCachedPublishedCourses, getCachedPublishedPaths } from '@/lib/cache'
 
 type SearchPageProps = {
-  searchParams?: { q?: string }
+  searchParams?: Promise<{ q?: string }>
 }
 
 export default async function GlobalSearchPage({ searchParams }: SearchPageProps) {
-  const query = (searchParams?.q ?? '').trim()
+  const { q } = (await searchParams) ?? {}
+  const query = (q ?? '').trim()
   const normalized = query.toLowerCase()
 
   const [courses, paths] = query

@@ -13,6 +13,7 @@ import { ScormExtractedTextEditor } from '@/components/course/ScormExtractedText
 import type { ModuleContent } from '@/types/content'
 import { isScormContent } from '@/types/content'
 import { cn } from '@/lib/utils'
+import { COURSE_TEMPLATES, getCourseTemplate } from '@/lib/courseTemplates'
 
 export interface CourseStudioWorkspaceProps {
   courseId: string
@@ -55,6 +56,10 @@ export function CourseStudioWorkspace({ courseId, initialModules }: CourseStudio
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [historyTick, setHistoryTick] = useState(0)
+  const [creatingModule, setCreatingModule] = useState(false)
+  const [newModuleTitle, setNewModuleTitle] = useState('')
+  const [selectedTemplateId, setSelectedTemplateId] = useState('structured_lesson')
+  const [modulePrompt, setModulePrompt] = useState('')
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const modulesRef = useRef(modules)
   const pastRef = useRef<Map<string, ModuleContent[]>>(new Map())
@@ -120,6 +125,18 @@ export function CourseStudioWorkspace({ courseId, initialModules }: CourseStudio
   useEffect(() => {
     setActiveKey(null)
   }, [activeModuleId])
+
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('studio-authoring-context', {
+        detail: {
+          courseId,
+          activeModuleId: activeModuleId ?? null,
+          activeKey: activeKey ?? null,
+        },
+      })
+    )
+  }, [activeKey, activeModuleId, courseId])
 
   const bumpHistory = useCallback(() => setHistoryTick((x) => x + 1), [])
 
@@ -348,6 +365,52 @@ export function CourseStudioWorkspace({ courseId, initialModules }: CourseStudio
   const activeScorm =
     activeModule?.content && isScormContent(activeModule.content) ? activeModule.content : null
 
+  const createModule = useCallback(async (args?: { title?: string; templateId?: string; topic?: string }) => {
+    const title = (args?.title ?? '').trim()
+    const template = getCourseTemplate(args?.templateId ?? selectedTemplateId)
+    setCreatingModule(true)
+    setLoadError(null)
+    try {
+      let moduleContent = template.content
+      if (args?.topic?.trim()) {
+        const aiRes = await fetch('/api/ai/generate-module', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic: args.topic.trim(),
+            module_title: title || undefined,
+            difficulty: 'intermediate',
+          }),
+        })
+        const aiData = (await aiRes.json().catch(() => ({}))) as { content?: string; error?: string }
+        if (aiRes.ok && aiData.content?.trim()) {
+          moduleContent = { type: 'text', body: aiData.content.trim() }
+        }
+      }
+
+      const res = await fetch(`/api/courses/${courseId}/modules`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title || template.moduleTitle,
+          content: moduleContent,
+        }),
+      })
+      const created = (await res.json().catch(() => ({}))) as PreviewModule & { error?: string }
+      if (!res.ok || !created?.id) {
+        throw new Error(created.error ?? 'Failed to create module')
+      }
+      setModules((prev) => sortModules([...prev, created]))
+      setActiveModuleId(created.id)
+      setNewModuleTitle('')
+      setModulePrompt('')
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : 'Module creation failed')
+    } finally {
+      setCreatingModule(false)
+    }
+  }, [courseId, selectedTemplateId])
+
   if (loading) {
     return (
       <div className="flex items-center justify-center gap-3 py-16 text-slate-500" aria-busy="true">
@@ -455,6 +518,51 @@ export function CourseStudioWorkspace({ courseId, initialModules }: CourseStudio
           <p className="border-b border-slate-700/80 p-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
             Modules
           </p>
+          <div className="space-y-2 border-b border-slate-700/80 p-2">
+            <input
+              type="text"
+              value={newModuleTitle}
+              onChange={(e) => setNewModuleTitle(e.target.value)}
+              placeholder="New module title"
+              className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+            />
+            <select
+              value={selectedTemplateId}
+              onChange={(e) => setSelectedTemplateId(e.target.value)}
+              className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+            >
+              {COURSE_TEMPLATES.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.label}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={modulePrompt}
+              onChange={(e) => setModulePrompt(e.target.value)}
+              placeholder="Optional AI topic prompt"
+              className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+            />
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                disabled={creatingModule}
+                onClick={() => void createModule({ title: newModuleTitle, templateId: selectedTemplateId })}
+                className="rounded-md border border-slate-600 bg-slate-900 px-2 py-1.5 text-[11px] text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+              >
+                Add module
+              </button>
+              <button
+                type="button"
+                disabled={creatingModule || !modulePrompt.trim()}
+                onClick={() => void createModule({ title: newModuleTitle, topic: modulePrompt, templateId: selectedTemplateId })}
+                className="rounded-md border border-indigo-500/40 bg-indigo-600/20 px-2 py-1.5 text-[11px] text-indigo-100 hover:bg-indigo-600/30 disabled:opacity-50"
+              >
+                Add with AI
+              </button>
+            </div>
+          </div>
           <nav className="p-2" aria-label="Module list">
             {modules.map((m, idx) => (
               <button
@@ -502,7 +610,20 @@ export function CourseStudioWorkspace({ courseId, initialModules }: CourseStudio
                 ) : null}
               </>
             ) : (
-              <p className="text-sm text-slate-500">No module to edit.</p>
+              <div className="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
+                <p className="text-sm font-medium text-slate-200">No module to edit yet</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Create your first module from the left panel. Pick a template or use an AI prompt to generate a draft.
+                </p>
+                <button
+                  type="button"
+                  disabled={creatingModule}
+                  onClick={() => void createModule({ templateId: selectedTemplateId })}
+                  className="mt-3 rounded-lg border border-indigo-500/40 bg-indigo-600/20 px-3 py-1.5 text-xs font-medium text-indigo-100 hover:bg-indigo-600/30 disabled:opacity-50"
+                >
+                  Create first module
+                </button>
+              </div>
             )}
           </div>
           <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 w-[calc(100%-1rem)] max-w-xl -translate-x-1/2 px-2">

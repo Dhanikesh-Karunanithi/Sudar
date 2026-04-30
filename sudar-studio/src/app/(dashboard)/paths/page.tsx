@@ -34,7 +34,7 @@ export default async function PathsPage() {
     .eq('org_id', orgId)
     .order('created_at', { ascending: false })
 
-  const paths = (pathsData ?? []) as PathRow[]
+  const paths = (pathsData ?? []) as unknown as PathRow[]
   const pathIds = paths.map((p) => p.id)
   const { data: enrollments } = pathIds.length > 0
     ? await admin.from('enrollments').select('path_id, status').in('path_id', pathIds)

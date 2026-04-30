@@ -6,7 +6,7 @@
 
 *Learns with you, for you.*
 
-An open-source, **AI-native learning operating system** for teams that need **authoring, delivery, and adaptive intelligence** in one place — with **ALP** (Adaptive Learning Protocol) to bring memory-aware tutoring and learner modelling to the LMSs you already use.
+An open-source, **AI-native learning operating system** for teams that need **authoring, delivery, and adaptive intelligence** in one place — with **ALP** (Adaptive Learning Layer): reference HTTP APIs on **Sudar Learn** toward memory-aware tutoring and learner modelling for LMSs you already use (vendor installable plugins are packaging on top of this contract).
 
 [**Website & story →**](https://teachwithsudar.com) · [**Research foundation →**](./RESEARCH_FOUNDATION.md) · [**Full architecture & schema →**](./ECOSYSTEM.md)
 
@@ -22,11 +22,11 @@ Most corporate systems **deliver content**. Sudar is built to **learn how each p
 |--|--------|-----------------------------|
 | **Learner model** | Durable Digital Learner Twin + telemetry | Shallow or none |
 | **Tutor** | Sudar — reactive & proactive (tap-to-reply nudges, cross-session memory) | Often stateless chat |
-| **Delivery** | Author once: text, video, audio, mind map, flashcards, feed, game, SCORM, and more | Often text/video only |
+| **Delivery** | Author once: text, listen (TTS), watch, map, flashcards, SCORM; feed/game where wired or roadmap | Often text/video only |
 | **Your existing stack** | **ALP**: APIs and embed paths toward Moodle, Canvas, and similar | Hard to extend |
 | **Source** | Open (Apache 2.0) | Usually closed |
 
-The science and design trade-offs behind Sudar are documented in [RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md). A feature-level checklist lives in [docs/PRODUCT_FEATURES.md](./docs/PRODUCT_FEATURES.md) and [docs/SHIPPED_FEATURES.md](./docs/SHIPPED_FEATURES.md).
+The science and design trade-offs behind Sudar are documented in [RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md). A feature-level checklist lives in [docs/PRODUCT_FEATURES.md](./docs/PRODUCT_FEATURES.md) and [docs/SHIPPED_FEATURES.md](./docs/SHIPPED_FEATURES.md). **Sudar Agents** (bounded orchestration + audit trail) is documented in [docs/AGENTS_PLATFORM.md](./docs/AGENTS_PLATFORM.md).
 
 ---
 
@@ -38,7 +38,7 @@ Sudar is three applications plus a shared data plane:
 |---------|----------------|--------------|----------------|
 | **Sudar Studio** | L&D, admins, creators | Courses, learning paths, assignments, analytics, org settings, governance | 3000 |
 | **Sudar Learn** | Learners | Dashboard, course experience, Sudar tutor, paths, progress, certificates | 3001 |
-| **Sudar Intelligence** | Your backend | Adaptive engine, tutor, recommendations, content generation, modality intelligence | 8000 |
+| **Sudar Intelligence** | Your backend | Tutor, TTS, generation, SudarPlay bridge; **next-best-action / twin rollups** are primarily in **Learn** today | **8001** local default when SudarVid uses **8000** |
 
 **Supabase (PostgreSQL)** is the single source of truth: auth, content, `learner_profiles`, `learning_events`, `ai_interactions`, and more — so Studio, Learn, and Intelligence stay aligned. See [ECOSYSTEM.md](./ECOSYSTEM.md) for the canonical schema and roadmap.
 
@@ -110,7 +110,7 @@ cd Sudar
 1. **Supabase** — Create a project; align schema with [ECOSYSTEM.md](./ECOSYSTEM.md) (and Prisma in each app where used).  
 2. **Studio** — `cd sudar-studio`, copy `.env.example` → `.env.local`, set Supabase + AI keys, `npm install`, `npx prisma db push`, `npm run dev` → http://localhost:3000  
 3. **Learn** — `cd sudar-learn`, same pattern → http://localhost:3001  
-4. **Intelligence** (recommended for full AI features) — `cd sudar-intelligence`, `pip install -r requirements.txt`, configure `.env`, `uvicorn src.api.main:app --reload --port 8000`
+4. **Intelligence** (recommended for full AI features) — `cd sudar-intelligence`, `pip install -r requirements.txt`, configure `.env`, `uvicorn src.api.main:app --reload --port 8001` (use **8000** for SudarVid only). Or run Learn/Studio via `npm run dev` from each app to start SudarVid + Intelligence with defaults (`scripts/dev-with-sudarvid.mjs`).
 
 **Marketing site (optional):** `cd teachwithsudar`, `npm install`, `npm run dev` (see that package’s README for the port).
 

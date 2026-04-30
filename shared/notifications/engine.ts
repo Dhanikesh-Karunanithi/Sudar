@@ -1,13 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { NOTIFICATION_CATEGORY_CONFIG, type NotificationCategorySlug, type NotificationChannel } from './categories'
-
-type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+import { asNotificationDb, type Json } from './dbTypes'
 
 export interface DispatchNotificationInput {
   userId: string
@@ -43,11 +36,12 @@ async function resolveChannels(
   admin: SupabaseClient<unknown>,
   input: DispatchNotificationInput
 ): Promise<{ channels: NotificationChannel[]; suppressed: Array<{ channel: NotificationChannel; reason: string }> }> {
+  const db = asNotificationDb(admin)
   const categoryConfig = NOTIFICATION_CATEGORY_CONFIG[input.category]
   const base = new Set<NotificationChannel>(input.preferredChannels ?? categoryConfig.defaultChannels)
   for (const c of input.orgMandatoryChannels ?? []) base.add(c)
 
-  const { data: prefs } = await admin
+  const { data: prefs } = await db
     .from('notification_preferences')
     .select('channel, enabled')
     .eq('user_id', input.userId)
@@ -74,12 +68,13 @@ async function applyRateAndQuietHours(
   input: DispatchNotificationInput,
   channels: NotificationChannel[]
 ): Promise<{ allowed: NotificationChannel[]; suppressed: Array<{ channel: NotificationChannel; reason: string }> }> {
+  const db = asNotificationDb(admin)
   const now = new Date()
   const cfg = NOTIFICATION_CATEGORY_CONFIG[input.category]
   const dayStart = new Date(now)
   dayStart.setUTCHours(0, 0, 0, 0)
 
-  const { count } = await admin
+  const { count } = await db
     .from('notification_delivery_log')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', input.userId)
@@ -94,7 +89,7 @@ async function applyRateAndQuietHours(
     }
   }
 
-  const { data: settings } = await admin
+  const { data: settings } = await db
     .from('user_notification_settings')
     .select('timezone, quiet_hours_start, quiet_hours_end')
     .eq('user_id', input.userId)
@@ -128,7 +123,8 @@ async function logDelivery(
   notificationId?: string,
   metadata?: Record<string, unknown>
 ) {
-  await admin.from('notification_delivery_log').insert({
+  const db = asNotificationDb(admin)
+  await db.from('notification_delivery_log').insert({
     user_id: userId,
     notification_id: notificationId ?? null,
     category_slug: category,
@@ -145,13 +141,14 @@ export async function dispatchNotification(
   input: DispatchNotificationInput,
   handlers: Partial<Record<NotificationChannel, (payload: DispatchNotificationInput & { channel: NotificationChannel; notificationId?: string }) => Promise<void>>>
 ): Promise<NotificationDispatchResult> {
+  const db = asNotificationDb(admin)
   const { channels, suppressed } = await resolveChannels(admin, input)
   const throttled = await applyRateAndQuietHours(admin, input, channels)
   const allSuppressed = [...suppressed, ...throttled.suppressed]
 
   let notificationId: string | undefined
   if (throttled.allowed.includes('in_app')) {
-    const { data } = await admin
+    const { data } = await db
       .from('user_notifications')
       .insert({
         user_id: input.userId,

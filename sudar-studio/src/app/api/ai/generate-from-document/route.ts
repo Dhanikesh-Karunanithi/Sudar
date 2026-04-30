@@ -16,6 +16,7 @@ import {
 } from '@/lib/courseTags'
 import { suggestExperiencePackFromText } from '@/lib/themes/experiencePacks'
 import { fillEmptyModulesForCourse } from '@/lib/ai/courseGeneration'
+import { safeFetchText } from '@/lib/security/safeFetch'
 
 const MAX_DOC_CHARS = 45000
 
@@ -63,9 +64,11 @@ async function extractTextFromBuffer(buffer: Buffer, mimeType: string): Promise<
 }
 
 async function extractTextFromUrl(url: string): Promise<string> {
-  const res = await fetch(url, { headers: { 'User-Agent': 'Sudar/1' } })
-  if (!res.ok) throw new Error(`Failed to fetch URL: ${res.status}`)
-  const html = await res.text()
+  const html = await safeFetchText(url, {
+    headers: { 'User-Agent': 'Sudar/1' },
+    maxBytes: 1_000_000,
+    timeoutMs: 10_000,
+  })
   const stripped = html.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?<\/style>/gi, '')
   return stripped.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, MAX_DOC_CHARS)
 }

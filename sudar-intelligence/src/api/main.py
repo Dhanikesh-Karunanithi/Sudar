@@ -9,17 +9,21 @@ from contextlib import asynccontextmanager
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from src.api.routes import tutor, learner, content, modality, health, audio
+from src.api.routes import tutor, learner, content, modality, health, audio, agents
 from src.api.logging_middleware import LoggingMiddleware
 from src.sudarplay.router import router as sudarplay_router
 
-# CORS: default localhost; in production set CORS_ORIGINS (comma-separated) e.g. https://sudar-studio.vercel.app,https://sudar-learn.vercel.app
+# CORS: default localhost for dev; in production CORS_ORIGINS must be set explicitly (no implicit localhost).
 _default_origins = ["http://localhost:3000", "http://localhost:3001"]
-_cors_origins_env = os.getenv("CORS_ORIGINS", "")
-CORS_ORIGINS = [o.strip() for o in _cors_origins_env.split(",") if o.strip()] or _default_origins
+_is_production = os.getenv("ENV", "").strip().lower() in ("production", "prod")
+_cors_origins_env = os.getenv("CORS_ORIGINS", "").strip()
+if _is_production and not _cors_origins_env:
+    raise RuntimeError(
+        "CORS_ORIGINS must be set in production (comma-separated origins, e.g. https://learn.example.com,https://studio.example.com)"
+    )
+CORS_ORIGINS = [o.strip() for o in _cors_origins_env.split(",") if o.strip()] if _cors_origins_env else _default_origins
 
 # Disable Swagger/ReDoc in production to reduce attack surface
-_is_production = os.getenv("ENV", "").strip().lower() in ("production", "prod")
 _docs_url = None if _is_production else "/docs"
 _redoc_url = None if _is_production else "/redoc"
 
@@ -50,7 +54,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    # Keep permissive headers until each client sends a known fixed set (Learn/Studio/ALP vary).
     allow_headers=["*"],
 )
 
@@ -71,4 +76,5 @@ app.include_router(learner.router, prefix="/api/learner", tags=["Learner"])
 app.include_router(content.router, prefix="/api/content", tags=["Content Generation"])
 app.include_router(modality.router, prefix="/api/modality", tags=["Modality"])
 app.include_router(audio.router, prefix="/api/audio", tags=["Audio TTS"])
+app.include_router(agents.router, prefix="/api/agents", tags=["Sudar Agents"])
 app.include_router(sudarplay_router, prefix="/api/sudarplay", tags=["sudarplay"])

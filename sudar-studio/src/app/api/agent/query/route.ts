@@ -31,7 +31,9 @@ function validateAndParseActions(
   rawActions: Array<Record<string, unknown>>,
   userIds: Set<string>,
   courseIds: Set<string>,
-  pathIds: Set<string>
+  pathIds: Set<string>,
+  editableCourseIds: Set<string>,
+  moduleIds: Set<string>
 ): StudioAction[] {
   const out: StudioAction[] = []
   for (const a of rawActions) {
@@ -55,6 +57,37 @@ function validateAndParseActions(
       out.push({ type: 'export_users_csv', label: label || 'Export users CSV' })
     } else if (type === 'export_course_time' && typeof a.course_id === 'string' && courseIds.has(a.course_id)) {
       out.push({ type: 'export_course_time', course_id: a.course_id, label: label || 'Export course time' })
+    } else if (
+      type === 'draft_module_content' &&
+      typeof a.course_id === 'string' &&
+      typeof a.module_id === 'string' &&
+      typeof a.prompt === 'string' &&
+      editableCourseIds.has(a.course_id) &&
+      moduleIds.has(a.module_id)
+    ) {
+      out.push({
+        type: 'draft_module_content',
+        course_id: a.course_id,
+        module_id: a.module_id,
+        prompt: a.prompt.slice(0, 1000),
+        label: label || 'Draft module content',
+      })
+    } else if (
+      type === 'apply_module_content' &&
+      typeof a.course_id === 'string' &&
+      typeof a.module_id === 'string' &&
+      typeof a.content === 'string' &&
+      editableCourseIds.has(a.course_id) &&
+      moduleIds.has(a.module_id)
+    ) {
+      out.push({
+        type: 'apply_module_content',
+        course_id: a.course_id,
+        module_id: a.module_id,
+        content: a.content.slice(0, 24000),
+        mode: a.mode === 'append' ? 'append' : 'replace',
+        label: label || 'Apply module content',
+      })
     }
   }
   return out
@@ -74,7 +107,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let body: { message?: string; conversation_history?: unknown[]; route?: string; focus_user_id?: string } = {}
+    let body: {
+      message?: string
+      conversation_history?: unknown[]
+      route?: string
+      focus_user_id?: string
+      authoring_context?: { courseId?: string | null; activeModuleId?: string | null; activeKey?: string | null }
+    } = {}
     try {
       body = await request.json()
     } catch {
@@ -111,6 +150,7 @@ export async function POST(request: NextRequest) {
       }
     }
     const route = typeof body.route === 'string' ? body.route : ''
+    const authoringCtx = body.authoring_context ?? {}
     const focusUserId = typeof body.focus_user_id === 'string' ? body.focus_user_id : undefined
 
     const ctx = await buildStudioContext(admin, orgId, { route, focusUserId })
@@ -129,11 +169,14 @@ Allowed action types and JSON shapes:
 - get_analytics_summary: {"type":"get_analytics_summary","label":"Show summary"}
 - export_users_csv: {"type":"export_users_csv","label":"Download users CSV"}
 - export_course_time: {"type":"export_course_time","course_id":"<uuid>","label":"Download course time report"}
+- draft_module_content: {"type":"draft_module_content","course_id":"<uuid>","module_id":"<uuid>","prompt":"<what to write>","label":"Draft module"}
+- apply_module_content: {"type":"apply_module_content","course_id":"<uuid>","module_id":"<uuid>","content":"<markdown>","mode":"replace|append","label":"Apply content"}
 
-Use only IDs that appear in the context below. You may output multiple actions in the ACTIONS array. Omit the ACTIONS line if no action is needed.
+Use only IDs that appear in the context below. You may output multiple actions in the ACTIONS array. Omit the ACTIONS line if no action is needed. For content authoring, prefer drafting first, then apply only when user clearly asks to push it into the module.
 
 Context:
-${ctx.contextPrompt}`
+${ctx.contextPrompt}
+${authoringCtx.courseId ? `\nLive authoring context: course=${authoringCtx.courseId}, module=${authoringCtx.activeModuleId ?? 'none'}, region=${authoringCtx.activeKey ?? 'none'}` : ''}`
 
     const conversationHistory = (Array.isArray(body.conversation_history) ? body.conversation_history : []) as Array<{ role?: string; content?: string }>
     const messages = [
@@ -162,7 +205,7 @@ ${ctx.contextPrompt}`
       responseText = applyStrictOutputRedaction(responseText)
     }
     const { text: responseTextClean, rawActions } = parseActionsFromResponse(responseText)
-    const actions = validateAndParseActions(rawActions, ctx.userIds, ctx.courseIds, ctx.pathIds)
+    const actions = validateAndParseActions(rawActions, ctx.userIds, ctx.courseIds, ctx.pathIds, ctx.editableCourseIds, ctx.moduleIds)
 
     const blocks: Array<{ id: string; type: string; payload: Record<string, unknown> }> = [
       { id: 'text-1', type: 'text', payload: { content: responseTextClean } },
@@ -284,6 +327,102 @@ ${ctx.contextPrompt}`
           payload: { filename: `course-time-${courseId.slice(0, 8)}-${new Date().toISOString().slice(0, 10)}.csv`, mimeType: 'text/csv', contentBase64: base64 },
         })
         actionResults.push({ type: 'export_course_time', message: 'Course time report ready. Use the download button below.' })
+      } else if (action.type === 'draft_module_content') {
+        const { data: moduleRow } = await admin
+          .from('modules')
+          .select('id, title, content')
+          .eq('id', action.module_id)
+          .eq('course_id', action.course_id)
+          .single()
+        if (!moduleRow) {
+          actionResults.push({ type: 'draft_module_content', message: 'Module not found.' })
+          continue
+        }
+        const moduleContent = (moduleRow.content as Record<string, unknown> | null) ?? {}
+        const currentText =
+          typeof moduleContent.body === 'string'
+            ? moduleContent.body
+            : typeof moduleContent.introduction === 'string'
+              ? moduleContent.introduction
+              : ''
+        try {
+          const { content: drafted } = await chatCompletion(
+            {
+              messages: [
+                {
+                  role: 'system',
+                  content:
+                    'You are a course authoring assistant for Sudar Studio. Return only markdown lesson content, no preamble.',
+                },
+                {
+                  role: 'user',
+                  content: `Module title: ${moduleRow.title}\n\nCurrent content:\n${currentText}\n\nInstruction:\n${action.prompt}\n\nReturn improved module markdown now.`,
+                },
+              ],
+              max_tokens: 1200,
+              temperature: 0.5,
+            },
+            chatAiCtx
+          )
+          const draftText = drafted?.trim()
+          if (!draftText) {
+            actionResults.push({ type: 'draft_module_content', message: 'Could not draft module content.' })
+            continue
+          }
+          blocks.push({
+            id: `draft-module-${action.module_id}`,
+            type: 'module_apply',
+            payload: {
+              courseId: action.course_id,
+              moduleId: action.module_id,
+              mode: 'replace',
+              previousContent: currentText,
+              content: draftText,
+              label: action.label ?? 'Apply draft to module',
+            },
+          })
+          actionResults.push({ type: 'draft_module_content', message: 'Draft created. Review and apply from chat.' })
+        } catch {
+          actionResults.push({ type: 'draft_module_content', message: 'Draft generation failed.' })
+        }
+      } else if (action.type === 'apply_module_content') {
+        const { data: moduleRow } = await admin
+          .from('modules')
+          .select('id, content')
+          .eq('id', action.module_id)
+          .eq('course_id', action.course_id)
+          .single()
+        if (!moduleRow) {
+          actionResults.push({ type: 'apply_module_content', message: 'Module not found.' })
+          continue
+        }
+        const previous = (moduleRow.content as Record<string, unknown> | null) ?? {}
+        const nextBody =
+          action.mode === 'append' && typeof previous.body === 'string'
+            ? `${previous.body}\n\n${action.content}`.trim()
+            : action.content
+        const nextContent =
+          previous.type === 'text' || !previous.type
+            ? { type: 'text', body: nextBody }
+            : { ...previous, introduction: nextBody }
+        const { error: patchError } = await admin
+          .from('modules')
+          .update({ content: nextContent })
+          .eq('id', action.module_id)
+          .eq('course_id', action.course_id)
+        if (patchError) {
+          actionResults.push({ type: 'apply_module_content', message: `Failed to apply content: ${patchError.message}` })
+          continue
+        }
+        await admin.from('learning_events').insert({
+          user_id: user.id,
+          course_id: action.course_id,
+          module_id: action.module_id,
+          event_type: 'studio_chat_apply_content',
+          payload: { mode: action.mode ?? 'replace' },
+          modality: 'studio',
+        })
+        actionResults.push({ type: 'apply_module_content', message: 'Content applied to module successfully.' })
       }
     }
 

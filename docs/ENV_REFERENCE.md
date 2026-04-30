@@ -15,7 +15,8 @@ This is the single source of truth for all environment variables used across Sud
 | `SUPABASE_SERVICE_ROLE_KEY` | Studio, Learn | Supabase service role key (server-only). Same dashboard. |
 | `NEXTAUTH_URL` | Studio, Learn | Base URL of the app (e.g. `http://localhost:3000` for Studio, `http://localhost:3001` for Learn). |
 | `NEXTAUTH_SECRET` | Studio, Learn | Random 32+ character string for session signing. Generate with `openssl rand -base64 32`. |
-| `BYTEOS_INTELLIGENCE_URL` | Studio, Learn | Sudar Intelligence API base URL (e.g. `http://localhost:8000`). |
+| `SUDAR_INTELLIGENCE_URL` | Studio, Learn | Preferred: Sudar Intelligence API base URL. With `scripts/dev-with-sudarvid.mjs`, default is `http://localhost:8001` (SudarVid uses **8000**). |
+| `BYTEOS_INTELLIGENCE_URL` | Studio, Learn | Legacy alias for Intelligence URL; same semantics as `SUDAR_INTELLIGENCE_URL`. |
 
 ---
 
@@ -103,12 +104,13 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 
 ---
 
-## Media search (optional — Studio course editor)
+## Media search (optional — Studio course editor; also Learn tutor web/image cards when enabled)
 
 | Variable | App | Description | Get key |
 |----------|-----|-------------|---------|
-| `GOOGLE_SEARCH_API_KEY` | Studio | Google Custom Search (images + web for research). | [Google Cloud Console](https://console.cloud.google.com/) → APIs → Custom Search API |
-| `GOOGLE_SEARCH_ENGINE_ID` | Studio | Custom Search Engine ID (create at [programmablesearchengine.google.com](https://programmablesearchengine.google.com/)). | Same |
+| `GOOGLE_SEARCH_API_KEY` | Studio, Learn | Google Custom Search (images + web for research; Learn uses same keys for optional tutor `media_card` enrichment). | [Google Cloud Console](https://console.cloud.google.com/) → APIs → Custom Search API |
+| `GOOGLE_SEARCH_ENGINE_ID` | Studio, Learn | Custom Search Engine ID (create at [programmablesearchengine.google.com](https://programmablesearchengine.google.com/)). | Same |
+| `TUTOR_WEB_ENRICHMENT_ENABLED` | Learn | When `true`, enables server-side web/image search helper for course tutor when the org also allows it (`settings.ai_compliance.tutor_web_enrichment_enabled` not `false`). Default off if unset. | — |
 | `PEXELS_API_KEY` | Studio | [Pexels](https://www.pexels.com/api/) — stock photos/videos. | pexels.com/api |
 | `UNSPLASH_ACCESS_KEY` | Studio | [Unsplash](https://unsplash.com/developers) — stock photos. | unsplash.com/developers |
 | `GIPHY_API_KEY` | Studio | [Giphy](https://developers.giphy.com/) — animated GIFs. | developers.giphy.com |
@@ -122,8 +124,12 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 |----------|-----|-------------|---------|
 | `NEXT_PUBLIC_LEARN_APP_URL` | Studio | Learn app base URL (for Integrations page, embed URL builder). e.g. `http://localhost:3001`. | — |
 | `ALP_API_KEY` | Learn | Optional. If set, POST /api/alp/events requires this key (or keys from Studio → Integrations). | Create in Studio → Integrations |
-| `ALP_EMBED_SECRET` | Learn | Signing secret for embed tokens. Defaults to ALP_API_KEY if not set. | — |
+| `ALP_EMBED_SIGNING_SECRET` | Learn | Dedicated signing secret for embed tokens. Required for `/api/alp/embed-token`; do not reuse `ALP_API_KEY`. | Generate a random secret |
+| `ALP_EMBED_SECRET` | Learn | Legacy alias for `ALP_EMBED_SIGNING_SECRET`. Prefer the dedicated variable above. | — |
+| `ALP_LTI_TOOL_JWKS_JSON` | Learn | JSON JWKS document `{ "keys": [ ... ] }` exposed at `GET /api/alp/lti/jwks` for LTI 1.3 tool registration in the LMS. | Generate an RSA keypair and publish the public JWK set |
 | `NEXT_PUBLIC_APP_URL` | Learn | Public URL of Learn app (certificates, embed). | — |
+| `NOTIFICATION_UNSUBSCRIBE_SECRET` | Learn, Studio | Dedicated HMAC secret for unsubscribe tokens. Required anywhere notification emails are sent. | Generate a random secret |
+| `NOTIFICATION_LINK_SIGNING_SECRET` | Learn | Dedicated HMAC secret for notification tracking links. | Generate a random secret |
 
 ---
 
@@ -132,6 +138,8 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 | Variable | App | Description |
 |----------|-----|-------------|
 | `SUDARVID_URL` | Learn, Studio (optional), Intelligence (optional) | SudarVid microservice base URL for the Watch modality (e.g. `http://localhost:8000`). Code and docs use this name only; run the service from repo folder `sudar_vid`. |
+| `SUDARVID_ENGINE_MODE` | Learn | Default Watch generation engine mode for contract requests (`classic` default, optional `premium`). |
+| `SUDARVID_HTTP_FALLBACK_ENABLED` | Learn | Contract fallback switch. When `true`, premium start failures retry once with classic mode. Defaults to `false` (strict HTTP contract mode). |
 | `REMOTION_SERVER_URL` | Studio, Intelligence | Remotion render server (e.g. `http://localhost:3040`). |
 
 ---
@@ -142,8 +150,12 @@ Same Supabase and AI provider keys as above. See `sudar-intelligence/.env.exampl
 
 Security hardening vars:
 
+- `CORS_ORIGINS` (Intelligence): comma-separated browser origins allowed to call Intelligence (e.g. `http://localhost:3001,http://localhost:3000`). **Required in production:** if `ENV`/`ENVIRONMENT` is `production` and this is unset/empty, the Intelligence process exits at startup.
 - `SUPABASE_JWT_SECRET` (Intelligence): validates Supabase JWTs from Learn/Studio.
-- `INTELLIGENCE_SERVICE_SECRET` (Intelligence + Learn + Studio): optional shared secret used for ALP and Studio TTS server-to-server proxy calls via `X-Intelligence-Service-Secret`.
+- `INTELLIGENCE_SERVICE_SECRET` (Intelligence + Learn + Studio): optional shared secret used for ALP, Studio TTS server-to-server proxy calls, Sudar Agents **internal** Learn helpers (`POST /api/internal/agent-tools/*`), and similar paths via `X-Intelligence-Service-Secret`. **Must match** on Intelligence and Learn when those routes are enabled.
+- `LEARN_INTERNAL_URL` (Intelligence): base URL of the **Sudar Learn** deployment (server-only). Used by the agents orchestrator when calling **`/api/internal/agent-tools/next-best-action`** so Intelligence reuses Learn’s canonical next-best-action implementation. Omit in local setups that do not wire agents → NBA tooling.
+
+Sudar Agents org-level behaviour is stored in Postgres (`organisations.settings.sudar_agents`), not env vars — see **[docs/AGENTS_PLATFORM.md](AGENTS_PLATFORM.md)**.
 
 ---
 
@@ -151,9 +163,12 @@ Security hardening vars:
 
 | Variable | App | Description |
 |----------|-----|-------------|
-| `CRON_SECRET` | Studio | Secret for cron endpoints (e.g. compliance reminders). |
+| `CRON_SECRET` | Studio, Learn | Required secret for cron endpoints; cron routes fail closed when this is missing. |
 | `RESEND_API_KEY` | Studio | [Resend](https://resend.com) — email for reminders. |
 | `RESEND_FROM` | Studio | From address (e.g. `Sudar <onboarding@resend.dev>`). |
+| `DOCUMENT_URL_HOST_ALLOWLIST` | Studio | Optional comma-separated host allowlist for document URL ingestion; local/private network targets are blocked even when unset. |
+| `ENABLE_DANGEROUS_ADMIN_TOOLS` | Studio | Must be `true` before destructive local-only admin tools like purge-users are reachable. Leave unset in production. |
+| `PURGE_KEEP_EMAIL` | Studio | Required keeper email when the dangerous purge-users tool is explicitly enabled. |
 | `ENABLE_ANALYTICS_ENGINE` | Studio, Learn | Set `true` to enable analytics engine APIs; set `false` to disable analytics endpoints during staged rollout. |
 | `LANGFUSE_*` | Studio | Optional observability (Langfuse). |
 

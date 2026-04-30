@@ -1,0 +1,3 @@
+Contact: https://github.com/Dhanikesh-Karunanithi/Sudar/security/advisories/new
+Policy: https://github.com/Dhanikesh-Karunanithi/Sudar/blob/main/SECURITY.md
+Preferred-Languages: en

@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
+import type { Database, Json } from '@/types/database'
+
+type NotificationTemplateInsert = Database['public']['Tables']['notification_templates']['Insert']
+
+function optionalString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
+function stringArray(value: unknown, fallback: string[]): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : fallback
+}
 
 export async function GET() {
   const supabase = await createClient()
@@ -35,22 +46,24 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient()
+  const templateInsert: NotificationTemplateInsert = {
+    org_id: orgId,
+    slug: String(body.slug),
+    category_slug: String(body.category_slug),
+    title_mustache: String(body.title_mustache),
+    body_mustache: optionalString(body.body_mustache),
+    cta_label: optionalString(body.cta_label),
+    cta_url_mustache: optionalString(body.cta_url_mustache),
+    branding: (body.branding ?? {}) as Json,
+    channels: stringArray(body.channels, ['in_app']),
+    locale: optionalString(body.locale) ?? 'en',
+    is_active: typeof body.is_active === 'boolean' ? body.is_active : true,
+    created_by: user.id,
+  }
+
   const { data, error } = await admin
     .from('notification_templates')
-    .insert({
-      org_id: orgId,
-      slug: body.slug,
-      category_slug: body.category_slug,
-      title_mustache: body.title_mustache,
-      body_mustache: body.body_mustache ?? null,
-      cta_label: body.cta_label ?? null,
-      cta_url_mustache: body.cta_url_mustache ?? null,
-      branding: body.branding ?? {},
-      channels: body.channels ?? ['in_app'],
-      locale: body.locale ?? 'en',
-      is_active: body.is_active ?? true,
-      created_by: user.id,
-    })
+    .insert(templateInsert)
     .select('*')
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

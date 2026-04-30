@@ -24,7 +24,7 @@ export default async function CoursePreviewPage({
   if (error || !course) redirect('/courses')
 
   type CourseRow = { id: string; title: string | null; description: string | null; modules?: Array<{ id: string; title: string; content: unknown; order_index: number }> }
-  const c = course as CourseRow
+  const c = course as unknown as CourseRow
   const modules: PreviewModule[] = (c.modules ?? []).map((m) => ({
     id: m.id,
     title: m.title,

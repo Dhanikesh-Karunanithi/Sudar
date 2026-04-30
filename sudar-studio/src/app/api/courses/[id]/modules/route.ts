@@ -41,5 +41,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  await admin.from('learning_events').insert({
+    user_id: user.id,
+    course_id: id,
+    module_id: data.id,
+    event_type: 'studio_module_created_from_template',
+    payload: { title: data.title },
+    modality: 'studio',
+  })
   return NextResponse.json(data, { status: 201 })
 }

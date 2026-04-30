@@ -14,7 +14,8 @@ const difficultyConfig = {
   advanced: { label: 'Advanced', class: 'text-destructive bg-destructive/10 border border-destructive/30' },
 }
 
-export default async function CourseDetailPage({ params }: { params: { id: string } }) {
+export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const admin = createAdminClient()
@@ -24,7 +25,7 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
     .select(
       'id, title, description, difficulty, estimated_duration_mins, tags, thumbnail_url, banner_url, modules(id, title, order_index)'
     )
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('status', 'published')
     .order('order_index', { referencedTable: 'modules', ascending: true })
     .single()
@@ -35,14 +36,14 @@ export default async function CourseDetailPage({ params }: { params: { id: strin
     .from('enrollments')
     .select('id, status, progress_pct, started_at, completed_at')
     .eq('user_id', user!.id)
-    .eq('course_id', params.id)
+    .eq('course_id', id)
     .single()
 
   const { data: completedEvents } = await admin
     .from('learning_events')
     .select('module_id')
     .eq('user_id', user!.id)
-    .eq('course_id', params.id)
+    .eq('course_id', id)
     .eq('event_type', 'module_complete')
 
   const completedModuleIds = new Set(completedEvents?.map((e) => e.module_id) ?? [])

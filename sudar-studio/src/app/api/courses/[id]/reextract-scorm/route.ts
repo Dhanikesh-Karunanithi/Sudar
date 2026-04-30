@@ -64,7 +64,7 @@ export async function POST(
     content: { type?: string; launch_url?: string; scorm_text_content?: string } | null
     order_index: number
   }> }
-  const c = course as CourseRow
+  const c = course as unknown as CourseRow
   const modules = (c.modules as Array<{
     id: string
     title: string

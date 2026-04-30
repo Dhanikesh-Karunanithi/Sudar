@@ -1,5 +1,6 @@
 import webpush from 'web-push'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { asNotificationDb } from '../dbTypes'
 
 let configured = false
 function configureWebPush() {
@@ -16,9 +17,10 @@ export async function sendWebPush(
   admin: SupabaseClient<unknown>,
   input: { userId: string; title: string; body?: string | null; linkUrl?: string | null; notificationId?: string }
 ) {
+  const db = asNotificationDb(admin)
   configureWebPush()
   if (!configured) return
-  const { data: channels } = await admin
+  const { data: channels } = await db
     .from('notification_channels')
     .select('id, endpoint_payload')
     .eq('user_id', input.userId)
@@ -37,7 +39,7 @@ export async function sendWebPush(
     try {
       await webpush.sendNotification((row.endpoint_payload as object) ?? {}, payload)
     } catch {
-      await admin
+      await db
         .from('notification_channels')
         .update({ revoked_at: new Date().toISOString() })
         .eq('id', row.id)

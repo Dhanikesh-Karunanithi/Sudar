@@ -4,6 +4,7 @@
  * Returns { valid, keyId } so routes can update last_used_at when keyId is set.
  */
 import { createHash, createHmac } from 'crypto'
+import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 
 function hashKey(key: string): string {
@@ -61,15 +62,43 @@ type SupabaseLikeClient = {
  * Verifies that user_id is a member of the given org (org_members).
  * Used for org-scoped ALP keys to prevent IDOR: key holder must only access learners in their org.
  */
-export async function isUserInOrg(admin: SupabaseLikeClient, userId: string, orgId: string): Promise<boolean> {
+export async function isUserInOrg(adminClient: unknown, userId: string, orgId: string): Promise<boolean> {
+  const admin = adminClient as SupabaseLikeClient
   const { data } = await admin.from('org_members').select('user_id').eq('org_id', orgId).eq('user_id', userId).maybeSingle()
   return !!data
 }
 
-const EMBED_SIGNING_SECRET = process.env.ALP_EMBED_SECRET || process.env.ALP_API_KEY || ''
+export async function rejectAlpUserOutsideOrg(
+  admin: unknown,
+  auth: AlpKeyResult,
+  userId: string,
+): Promise<NextResponse | null> {
+  if (!auth.valid || !auth.orgId) return null
+
+  const inOrg = await isUserInOrg(admin, userId, auth.orgId)
+  if (!inOrg) {
+    return NextResponse.json({ error: 'Forbidden: user not in key organisation' }, { status: 403 })
+  }
+
+  return null
+}
+
+function embedSigningSecret(): string {
+  return process.env.ALP_EMBED_SIGNING_SECRET?.trim() || process.env.ALP_EMBED_SECRET?.trim() || ''
+}
+
+export function getEmbedSigningSecretConfigured(): boolean {
+  return !!embedSigningSecret()
+}
 
 function signForEmbed(payload: string): string {
-  return createHmac('sha256', EMBED_SIGNING_SECRET).update(payload, 'utf8').digest('base64url')
+  const secret = embedSigningSecret()
+  if (!secret) return ''
+  return createHmac('sha256', secret).update(payload, 'utf8').digest('base64url')
+}
+
+export function signEmbedPayload(payload: string): string {
+  return signForEmbed(payload)
 }
 
 /**

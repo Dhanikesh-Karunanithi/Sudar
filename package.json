@@ -3,6 +3,9 @@
   "private": true,
   "description": "Helper scripts for the Sudar repo (no install required for supabase — uses npx).",
   "scripts": {
-    "supabase": "npx --yes supabase@latest"
+    "supabase": "npx --yes supabase@latest",
+    "security:audit": "node scripts/security-audit.mjs",
+    "benchmark:sudar": "node scripts/benchmark-sudar.mjs",
+    "db:apply:agent-runs": "node scripts/apply-agent-runs-sql.cjs"
   }
 }

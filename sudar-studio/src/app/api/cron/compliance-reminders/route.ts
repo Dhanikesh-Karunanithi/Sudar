@@ -4,8 +4,9 @@
  * Requires RESEND_API_KEY and optional RESEND_FROM (defaults to Resend sandbox).
  */
 import { createAdminClient } from '@/lib/supabase/server'
+import { rejectInvalidCronRequest } from '@/lib/security/cronAuth'
 import { NextRequest, NextResponse } from 'next/server'
-import { sendEmailNotification } from '../../../../../../../shared/notifications/channels/email'
+import { sendEmailNotification } from '../../../../../../shared/notifications/channels/email'
 
 function statusFromDue(dueDate: string | null, completed: boolean): 'overdue' | 'at_risk' | null {
   if (completed) return null
@@ -19,10 +20,8 @@ function statusFromDue(dueDate: string | null, completed: boolean): 'overdue' | 
 }
 
 export async function POST(request: NextRequest) {
-  const secret = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? request.nextUrl.searchParams.get('secret')
-  if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const cronError = rejectInvalidCronRequest(request)
+  if (cronError) return cronError
 
   if (!process.env.RESEND_API_KEY) {
     return NextResponse.json(

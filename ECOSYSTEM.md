@@ -57,7 +57,8 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
 ║   Base: SudarLab         ║   Base: SudarVerse-LMS                   ║
 ╠═════════════════════════╩════════════════════════════════════════════╣
 ║             SUDAR INTELLIGENCE (Python FastAPI)                    ║
-║   Port: 8000 · Adaptive Engine · AI Tutor · Modality Dispatcher    ║
+║   Port: 8001 (default with dev script; not 8000 when SudarVid runs) ║
+║   Adaptive Engine · AI Tutor · (modality recommend: see Learn API)   ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                   SUPABASE (Single Source of Truth)                 ║
 ║   Auth · Learner Profiles · Content · Events · Analytics           ║
@@ -65,12 +66,12 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
 ```
 
 ### 3.1 Sudar Studio (`/sudar-studio`)
-- **Base**: SudarLab (Next.js 14, TypeScript, Tailwind CSS, Prisma → Supabase)
+- **Base**: SudarLab (Next.js 15 App Router, TypeScript, Tailwind CSS, Prisma → Supabase)
 - **Purpose**: The admin/creator surface where L&D teams build courses
 - **Key capabilities**:
   - AI-powered course generation from any source (PDF, DOCX, URL, text prompt)
   - RAG pipeline for context-aware generation from uploaded documents
-  - 14 visual course templates
+  - **Learning personas** (five curated visual themes in Studio: `learningPersonas.ts`) plus block-based course layouts; legacy schema field `courses.template` may still reference older template ids
   - Slide Mode (absorbed from bytelabslide)
   - Multi-source media search (Google primary, Pexels, Unsplash, Giphy)
   - Project media peek (images, video scenes, podcast dialogue in one view)
@@ -84,11 +85,11 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
   - Compliance tracking (mandatory training, certifications, due dates)
 
 ### 3.2 Sudar Learn (`/sudar-learn`)
-- **Base**: SudarVerse-LMS (Next.js 14, TypeScript, Tailwind CSS, Prisma → Supabase)
+- **Base**: SudarVerse-LMS (Next.js 15 App Router, TypeScript, Tailwind CSS, Prisma → Supabase)
 - **Purpose**: The learner-facing delivery platform
 - **Key capabilities**:
   - Personalized learner dashboard (based on Supabase learner profile)
-  - Modality switching: Text / Video / Audio / MindMap / Flashcards / SudarFeed / SudarPlay
+  - Modality switching: Text, Listen (TTS), Watch (SudarVid / prebuilt video), Map (mindmap), Flashcards, SCORM; **SudarFeed** and **SudarPlay** are partial or roadmap (see `docs/STRATEGIC_PATH.md`)
   - AI Tutor: RAG over course content (content_chunks + pgvector, ingest API in Learn); Floating Sudar Chat (global); reactive Q&A + **proactive nudges with tap-to-reply chips** (idle on module, session welcome on home, contextual prompts on navigation) + longitudinal memory; structured response blocks (enroll, continue, review); quick memory preferences; outcome logging (`tutor_action_taken`, `proactive_choice`). My Memory page with insights carousel.
   - Skills graph and knowledge gap visualization
   - Next Best Action recommendations
@@ -100,16 +101,15 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
 
 ### 3.3 Sudar Intelligence (`/sudar-intelligence`)
 - **Base**: bytengine (Python FastAPI)
-- **Purpose**: The AI brain — all heavy computation, adaptation, and generation
+- **Purpose**: Heavy AI computation (tutor, TTS, generation). **Not** the sole owner of adaptation: next-best-action and twin rollups are implemented in **Learn** (`/api/intelligence/next-action`, `/api/learner/twin-rollup`); some Intelligence learner routes remain stubs until consolidated.
 - **Key capabilities**:
   - Adaptive difficulty engine (adjusts content complexity per learner)
-  - Modality dispatcher (decides which modality to recommend next)
-  - AI Tutor engine (RAG-powered, longitudinal memory via Supabase; proactive **`/api/tutor/nudge`** may return structured **choices** for ALP / embed clients)
-  - Next Best Action algorithm
-  - Fine-tuning pipeline (Together AI fine-tune on educational data)
+  - AI Tutor engine (RAG-powered; proactive **`/api/tutor/nudge`** may return structured **choices** for ALP / embed clients). Longitudinal context is loaded via Supabase from Learn-managed data.
   - Content generation engine (multi-format, multi-provider)
-  - Learner profile scoring and skill gap mapping
-  - Event processing (ingests learner events and updates profiles)
+  - Learner profile scoring (where implemented); **no shipped in-repo fine-tuning pipeline** today (provider fine-tunes are a future/ops concern)
+  - Event processing (where wired to Intelligence)
+
+**Sudar Agents (gateway)** — Bounded task orchestration (`/api/agents/*` on Intelligence): synchronous and streaming agent runs backed by **`agent_runs`** in Postgres (plans, tool traces, artefacts). Learn and Studio forward **JWT-authenticated** BFF routes; learner tools can call Learn’s **`/api/internal/agent-tools/*`** behind a shared secret for NBA parity with the canonical scorer in Learn. Product documentation: [docs/AGENTS_PLATFORM.md](docs/AGENTS_PLATFORM.md). Org-level enablement and features live in **`organisations.settings.sudar_agents`**.
 
 ### 3.4 Microservices (standalone, called by Intelligence layer)
 - **sudar-vid** (`/sudar_vid`) — SudarVid: Python FastAPI, Together AI (slide planning + image generation), Edge-TTS, FFmpeg, Playwright. Canonical video generation microservice for the Watch modality. Runs on port 8000 (separate from Intelligence); Learn proxies to it via `SUDARVID_URL`. Standalone creator UI is preserved at `/` for direct use outside Sudar.
@@ -128,7 +128,7 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
 
 | Layer | Technology | Why |
 |---|---|---|
-| Studio & Learn frontend | Next.js 14 (App Router) | Most mature base projects are Next.js 14 |
+| Studio & Learn frontend | Next.js 15 (App Router) | Current app `package.json` targets Next 15 |
 | Styling | Tailwind CSS 3 | Consistent across all projects |
 | Language (frontend) | TypeScript 5 | Type safety across the board |
 | ORM | Prisma | Already configured in ByteLab & ByteVerse-LMS |
@@ -136,7 +136,7 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
 | Animation | Framer Motion | Already in ByteVerse-LMS |
 | State management | Zustand | Lightweight, already used in SudarMind & ByteVerse-LMS |
 | AI providers | Together AI (primary), OpenAI (secondary), Anthropic (tertiary) | Cost-effective, multi-model |
-| Backend AI engine | Python FastAPI | Best for ML/AI operations, fine-tuning |
+| Backend AI engine | Python FastAPI | Best for ML/AI operations and orchestration |
 | Video generation | SudarVid — Python FastAPI + Together AI + Edge-TTS + FFmpeg + Playwright | Slide deck + TTS narration; HTML-first (iframe), optional MP4 |
 | Game engine | Phaser.js | SudarPlay |
 | Auth | Supabase Auth | Shared across Studio + Learn |
@@ -209,6 +209,31 @@ integration_api_keys (
   key_prefix text NOT NULL,
   created_at timestamptz DEFAULT now(),
   last_used_at timestamptz
+)
+
+-- LMS / LTI → Sudar profile UUID (see docs/ALP_API.md). Managed via Studio provisioning API + Learn resolve; RLS on, no learner policies (service role only).
+lms_identity_links (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id uuid references organisations NOT NULL ON DELETE CASCADE,
+  provider text NOT NULL DEFAULT 'moodle',  -- e.g. moodle, lti
+  external_user_id text NOT NULL,          -- Moodle userid string or LTI sub
+  external_email text,
+  sudar_user_id uuid references profiles NOT NULL ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  revoked_at timestamptz,                  -- soft revoke; unique active (org, provider, external_user_id) in DB
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb
+)
+
+-- LTI 1.3 platform registrations (issuer + OAuth client + deployment → org). Used to verify id_token on launch.
+lti_platform_deployments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id uuid references organisations NOT NULL ON DELETE CASCADE,
+  issuer text NOT NULL,
+  client_id text NOT NULL,
+  deployment_id text NOT NULL,
+  platform_jwks_uri text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (issuer, client_id, deployment_id)
 )
 ```
 
@@ -302,7 +327,7 @@ courses (
   description text,
   thumbnail_url text,
   status text DEFAULT 'draft', -- 'draft' | 'published' | 'archived'
-  template text,               -- which of the 14 visual templates
+  template text,               -- legacy / persona key (see Studio learning personas)
   difficulty text,             -- 'beginner' | 'intermediate' | 'advanced'
   estimated_duration_mins integer,
   target_skills jsonb,         -- [{skill_id, target_proficiency}]
@@ -474,7 +499,7 @@ compliance_records (
 - Learn writes to: `learning_events`, `ai_interactions`, `enrollments`
 - Learn reads from: `courses`, `modules`, `learning_paths`, `learner_profiles`, `learner_skills`
 
-### Learn → Intelligence (`http://localhost:8000`)
+### Learn → Intelligence (`http://localhost:8001` when using `scripts/dev-with-sudarvid.mjs`, which reserves **8000** for SudarVid)
 ```
 POST /api/tutor/query         — AI tutor Q&A
 POST /api/tutor/nudge         — proactive nudge generation (optional `choices` for MCQ-style follow-ups)
@@ -488,7 +513,7 @@ POST /api/game/generate       — trigger SudarPlay game generation
 ```
 
 ### Intelligence → External Services
-- Together AI API (primary LLM + embeddings + fine-tuning)
+- Together AI API (primary LLM + embeddings)
 - OpenAI API (fallback)
 - Anthropic API (fallback)
 - SudarVid (`SUDARVID_URL` → `sudar_vid` service)
@@ -510,13 +535,13 @@ ByteOS/
 │   ├── PRODUCT_FEATURES.md
 │   ├── USER_PERSONAS.md
 │   └── USER_FLOWS.md
-├── sudar-studio/            ← Next.js 14 (SudarLab base)
+├── sudar-studio/            ← Next.js 15 (SudarLab base)
 │   ├── app/
 │   ├── components/
 │   ├── lib/
 │   ├── prisma/
 │   └── package.json
-├── sudar-learn/             ← Next.js 14 (SudarVerse-LMS base)
+├── sudar-learn/             ← Next.js 15 (SudarVerse-LMS base)
 │   ├── app/
 │   ├── components/
 │   ├── lib/
@@ -560,7 +585,7 @@ ByteOS/
 **Goal**: Personalized dashboard, modality switching, AI tutor
 - [x] Learner home with personalized path (reads `learner_profiles`)
 - [x] Modality switcher on course view
-- [ ] Video modality (wire to SudarVid / Remotion)
+- [x] Watch modality (Learn proxies to SudarVid; optional Remotion for MP4)
 - [x] AI Tutor sidebar (reactive Q&A, RAG against course content)
 - [x] RAG in Learn (content_chunks + pgvector, ingest API, tutor course search)
 - [x] Floating Sudar Chat (global), proactive prompts with **multiple-choice chips** (dashboard + idle nudge), structured responses, outcome logging, validate-memory quick preferences, memory insights
@@ -579,7 +604,7 @@ ByteOS/
 **Goal**: All modalities + compliance + white-label
 - [ ] SudarPlay game modality wired into Learn
 - [ ] shayshay SudarFeed modality
-- [ ] SudarMind mindmap modality
+- [x] SudarMind (mindmap) modality in Learn (on-demand generation where configured)
 - [x] Compliance tracking + certifications
 - [ ] White-label per org
 - [ ] HRIS integration hooks (Workday, BambooHR)
@@ -645,7 +670,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 NEXTAUTH_SECRET=
 NEXTAUTH_URL=
-BYTEOS_INTELLIGENCE_URL=http://localhost:8000
+SUDAR_INTELLIGENCE_URL=http://localhost:8001
+# Legacy alias still supported in code: BYTEOS_INTELLIGENCE_URL
 ```
 
 ### AI (at least one chat provider)
@@ -679,5 +705,5 @@ REMOTION_SERVER_URL=http://localhost:3040
 
 ---
 
-*Last updated: February 2026 | Sudar v1.0 Foundation*
+*Last updated: April 2026 | Sudar v1.0 Foundation (credibility pass: ports, Next 15, personas vs templates)*
 *This document is the single source of truth for the Sudar ecosystem.*

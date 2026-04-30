@@ -4,6 +4,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { rejectInvalidCronRequest } from '@/lib/security/cronAuth'
 
 function normalizeDate(input: string | null): string {
   if (!input) return new Date().toISOString().slice(0, 10)
@@ -17,12 +18,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Analytics engine disabled' }, { status: 503 })
   }
 
-  const secret =
-    request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ??
-    request.nextUrl.searchParams.get('secret')
-  if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const cronError = rejectInvalidCronRequest(request)
+  if (cronError) return cronError
 
   const body = await request.json().catch(() => ({} as Record<string, unknown>))
   const targetDate = normalizeDate(

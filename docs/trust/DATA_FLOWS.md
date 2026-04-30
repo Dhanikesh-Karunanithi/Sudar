@@ -10,11 +10,14 @@ Canonical schema: [ECOSYSTEM.md](../../ECOSYSTEM.md) Section 5.
 4. Interactions persisted in `ai_interactions` and `learning_events` when configured.
 5. **Digital Learner Twin rollups** — Learn `POST /api/learner/twin-rollup` aggregates recent `learning_events` into `learner_profiles` (e.g. `modality_scores`, engagement fields). Throttled; also triggered after meaningful events and on dashboard load.
 6. **Next best action (NBA)** — Learn `POST /api/intelligence/next-action` scores **published courses** for enrollment recommendations and stores the result in `learner_profiles.next_best_action`. It is not a full “next step in-lesson” planner unless product copy states that scope.
+7. **SCORM delivery** — Learn serves SCORM package assets from Supabase Storage through `/api/scorm/...`. The route extracts `courseId` from `scorm-packages/{courseId}/...` and verifies learner enrollment before using the service-role storage client.
+8. **SudarVid delivery** — Learn starts video generation only for enrolled course/module pairs, records `video_generate_start` with the returned `job_id`, then requires that ownership record before proxying status, stream, or render assets from SudarVid.
 
 ### Row Level Security (important nuance)
 
 - Supabase **RLS** on `learner_profiles`, `learning_events`, and `ai_interactions` restricts **learner direct** access to their own rows (`user_id = auth.uid()`). See `supabase/migrations/20260317000000_rls_learner_tables.sql`.
 - **Server routes** in Learn and Studio typically use the **service role / admin Supabase client**, which **bypasses RLS**. Security for those paths relies on app-layer auth, org scoping, and operational access control—not on RLS alone.
+- High-risk service-role storage paths now include explicit object-level checks before download: SCORM packages require enrollment or Studio content-editor rights; SudarVid job output requires a matching authenticated `job_id` ownership event.
 
 ### Model providers and training
 
@@ -25,6 +28,8 @@ Canonical schema: [ECOSYSTEM.md](../../ECOSYSTEM.md) Section 5.
 1. Same Supabase project; `org_members` determines role.
 2. Course authoring, user management, org `settings` JSON (e.g. `ai_compliance`, `ai_models`).
 3. Studio agent chat → `/api/agent/query` with org-scoped context.
+4. Document URL ingestion uses an SSRF-safe fetch path before content is sent to course generation.
+5. Destructive operational tooling is disabled by default and gated behind super-admin, environment flags, same-origin checks, and explicit confirmation.
 
 ## Intelligence service
 

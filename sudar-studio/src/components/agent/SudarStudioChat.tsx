@@ -17,6 +17,41 @@ interface Message {
   blocks?: Array<{ id: string; type: string; payload: Record<string, unknown> }>
 }
 
+interface StudioAuthoringContext {
+  courseId: string | null
+  activeModuleId: string | null
+  activeKey: string | null
+}
+
+function buildDiffRows(beforeText: string, afterText: string): Array<{ kind: 'same' | 'add' | 'remove'; text: string }> {
+  const before = beforeText.split('\n')
+  const after = afterText.split('\n')
+  const rows: Array<{ kind: 'same' | 'add' | 'remove'; text: string }> = []
+  let i = 0
+  let j = 0
+  while (i < before.length || j < after.length) {
+    const b = before[i]
+    const a = after[j]
+    if (b === a) {
+      rows.push({ kind: 'same', text: b ?? '' })
+      i += 1
+      j += 1
+      continue
+    }
+    if (a !== undefined && !before.slice(i, i + 4).includes(a)) {
+      rows.push({ kind: 'add', text: a })
+      j += 1
+      continue
+    }
+    if (b !== undefined) {
+      rows.push({ kind: 'remove', text: b })
+      i += 1
+      continue
+    }
+  }
+  return rows
+}
+
 const QUICK_PROMPTS = [
   'Add a user',
   'Assign a course to someone',
@@ -34,6 +69,12 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
+  const [autoApply, setAutoApply] = useState(false)
+  const [authoringContext, setAuthoringContext] = useState<StudioAuthoringContext>({
+    courseId: null,
+    activeModuleId: null,
+    activeKey: null,
+  })
   const listRef = useRef<HTMLDivElement>(null)
 
   const route = pathname ?? ''
@@ -44,6 +85,42 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
       listRef.current.scrollTop = listRef.current.scrollHeight
     }
   }, [isOpen, messages])
+
+  useEffect(() => {
+    function onAuthoringContext(event: Event) {
+      const detail = (event as CustomEvent<StudioAuthoringContext>).detail
+      if (!detail) return
+      setAuthoringContext({
+        courseId: detail.courseId ?? null,
+        activeModuleId: detail.activeModuleId ?? null,
+        activeKey: detail.activeKey ?? null,
+      })
+    }
+    window.addEventListener('studio-authoring-context', onAuthoringContext as EventListener)
+    return () => window.removeEventListener('studio-authoring-context', onAuthoringContext as EventListener)
+  }, [])
+
+  async function applyModuleContent(
+    courseId: string,
+    moduleId: string,
+    content: string,
+    mode: 'replace' | 'append' = 'replace',
+    source: 'studio_chat_apply' | 'studio_chat_auto_apply' = 'studio_chat_apply'
+  ) {
+    const courseRes = await fetch(`/api/courses/${courseId}`)
+    const courseData = (await courseRes.json().catch(() => ({}))) as { modules?: Array<{ id: string; content?: { body?: string } }> }
+    const moduleData = courseData.modules?.find((m) => m.id === moduleId)
+    const currentBody =
+      mode === 'append' && typeof moduleData?.content?.body === 'string'
+        ? `${moduleData.content.body}\n\n${content}`.trim()
+        : content
+    const nextContent = { type: 'text', body: currentBody }
+    await fetch(`/api/courses/${courseId}/modules/${moduleId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: nextContent, source }),
+    })
+  }
 
   async function handleSendWithMessage(msg: string) {
     const trimmed = msg.trim()
@@ -61,6 +138,7 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
           message: trimmed,
           conversation_history: newMessages.slice(0, -1),
           route,
+          authoring_context: authoringContext,
           ...(focusUserId ? { focus_user_id: focusUserId } : {}),
         }),
       })
@@ -80,15 +158,26 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
         ])
         return
       }
+      const assistantMsg: Message = {
+        role: 'assistant',
+        content: data.response ?? 'Sorry, I had trouble answering that.',
+        actions: data.actions?.length ? data.actions : undefined,
+        blocks: data.blocks,
+      }
       setMessages([
         ...newMessages,
-        {
-          role: 'assistant',
-          content: data.response ?? 'Sorry, I had trouble answering that.',
-          actions: data.actions?.length ? data.actions : undefined,
-          blocks: data.blocks,
-        },
+        assistantMsg,
       ])
+      if (autoApply && assistantMsg.blocks?.length) {
+        for (const block of assistantMsg.blocks) {
+          if (block.type === 'module_apply') {
+            const payload = block.payload as { courseId?: string; moduleId?: string; content?: string; mode?: 'replace' | 'append' }
+            if (payload.courseId && payload.moduleId && payload.content) {
+              await applyModuleContent(payload.courseId, payload.moduleId, payload.content, payload.mode ?? 'replace', 'studio_chat_auto_apply')
+            }
+          }
+        }
+      }
     } catch {
       setMessages([
         ...newMessages,
@@ -155,6 +244,11 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
                   <p className="mt-0.5 text-muted-foreground text-xs font-semibold uppercase tracking-widest">
                     Studio assistant
                   </p>
+                  {authoringContext.activeModuleId && (
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                      Editing module: {authoringContext.activeModuleId.slice(0, 8)}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center shrink-0">
@@ -179,6 +273,15 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
             </div>
 
             <div ref={listRef} className="flex-1 overflow-y-auto p-5 space-y-4">
+              <label className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={autoApply}
+                  onChange={(e) => setAutoApply(e.target.checked)}
+                  className="rounded border-border bg-card"
+                />
+                Auto-apply chat drafts to module
+              </label>
               {messages.length === 0 && (
                 <>
                   <div className="chat-bubble bg-muted/80 text-card-foreground border border-border">
@@ -244,6 +347,72 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
                             <Download className="w-4 h-4" />
                             Download {filename}
                           </button>
+                        )
+                      }
+                      if (block.type === 'module_apply' && block.payload.content && block.payload.moduleId && block.payload.courseId) {
+                        const payload = block.payload as {
+                          content: string
+                          previousContent?: string
+                          moduleId: string
+                          courseId: string
+                          mode?: 'replace' | 'append'
+                          label?: string
+                        }
+                        const diffRows = buildDiffRows(payload.previousContent ?? '', payload.content)
+                        return (
+                          <div key={block.id} className="rounded-xl border border-border bg-card/70 p-3">
+                            <p className="text-xs font-semibold text-card-foreground">
+                              {payload.label ?? 'Apply drafted content'}
+                            </p>
+                            {payload.previousContent ? (
+                              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                                <div className="rounded-lg border border-border/70 bg-card/70 p-2">
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Before</p>
+                                  <pre className="mt-1 max-h-36 overflow-auto whitespace-pre-wrap text-[11px] text-muted-foreground">
+                                    {payload.previousContent}
+                                  </pre>
+                                </div>
+                                <div className="rounded-lg border border-border/70 bg-card/70 p-2">
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">After</p>
+                                  <pre className="mt-1 max-h-36 overflow-auto whitespace-pre-wrap text-[11px] text-card-foreground">
+                                    {payload.content}
+                                  </pre>
+                                </div>
+                              </div>
+                            ) : (
+                              <pre className="mt-2 max-h-36 overflow-auto whitespace-pre-wrap rounded-lg border border-border/70 bg-card/70 p-2 text-[11px] text-card-foreground">
+                                {payload.content}
+                              </pre>
+                            )}
+                            <div className="mt-2 rounded-lg border border-border/70 bg-black/20 p-2">
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Inline diff</p>
+                              <div className="mt-1 max-h-28 overflow-auto space-y-0.5">
+                                {diffRows.slice(0, 80).map((row, idx) => (
+                                  <p
+                                    key={`${block.id}-${idx}`}
+                                    className={cn(
+                                      'whitespace-pre-wrap text-[10px]',
+                                      row.kind === 'add'
+                                        ? 'text-emerald-300'
+                                        : row.kind === 'remove'
+                                          ? 'text-rose-300'
+                                          : 'text-muted-foreground'
+                                    )}
+                                  >
+                                    {row.kind === 'add' ? '+ ' : row.kind === 'remove' ? '- ' : '  '}
+                                    {row.text || ' '}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => void applyModuleContent(payload.courseId, payload.moduleId, payload.content, payload.mode ?? 'replace', 'studio_chat_apply')}
+                              className="mt-2 inline-flex items-center gap-1 rounded-pill bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                            >
+                              Apply to module
+                            </button>
+                          </div>
                         )
                       }
                       return null

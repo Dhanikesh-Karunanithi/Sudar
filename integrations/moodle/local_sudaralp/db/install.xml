@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sudaralp/db" VERSION="2026042710" COMMENT="Sudar ALP queue table">
+  <TABLES>
+    <TABLE NAME="local_sudaralp_q" COMMENT="Queued events for Sudar ALP forwarding">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="eventtype" TYPE="char" LENGTH="64" NOTNULL="true" DEFAULT=""/>
+        <FIELD NAME="payloadjson" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="attempt_count" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="next_attempt_at" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="last_error" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="pending"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="userid_idx" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="status_next_idx" UNIQUE="false" FIELDS="status, next_attempt_at"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

@@ -1,0 +1,11 @@
+# Default Sudar Agents pedagogy / ops policy pack (referenced by orchestrator + docs).
+id: default
+display_name: Sudar Default
+spacing:
+  min_gap_days_between_nudges: 2
+  max_notifications_per_cron_run: 50
+remediation:
+  suggest_modality_when_dropoffs_14d_gte: 3
+week_plan:
+  max_days_suggested: 7
+  default_session_minutes_fallback: 20

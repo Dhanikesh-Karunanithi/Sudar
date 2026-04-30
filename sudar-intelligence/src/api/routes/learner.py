@@ -11,6 +11,7 @@ from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, field_validator
+from src.agents.learn_client import invoke_next_best_action
 from src.api.auth import require_learner_match, verify_supabase_jwt_or_service
 from src.api.limiter import limiter
 
@@ -100,13 +101,71 @@ async def compute_next_action(
     Reads learner_profiles, enrollments, skill_gaps from Supabase.
     """
     require_learner_match(request, body.user_id)
-    # TODO: Implement Next Best Action algorithm
-    return NextActionResponse(
-        action_type="continue_course",
-        target_id="",
-        reason="You're making great progress — keep going!",
-        confidence=0.8,
-    )
+    payload = await invoke_next_best_action(body.user_id, force=False)
+
+    def fallback(msg: str) -> NextActionResponse:
+        return NextActionResponse(
+            action_type="continue_course",
+            target_id="",
+            reason=msg,
+            confidence=0.55,
+        )
+
+    if not isinstance(payload, dict):
+        return fallback("Could not compute next step — continue with your enrolled content.")
+    if payload.get("error"):
+        return fallback(
+            "Sudar Learn NBA bridge unavailable; configure LEARN_INTERNAL_URL "
+            + "and matching INTELLIGENCE_SERVICE_SECRET in Intelligence and Learn."
+        )
+
+    if payload.get("skipped") == "no_profile":
+        return NextActionResponse(
+            action_type="start_new",
+            target_id="",
+            reason="Complete your learner profile to unlock sharper recommendations.",
+            confidence=0.65,
+        )
+
+    act = payload.get("action") if isinstance(payload.get("action"), dict) else None
+    if not act:
+        return fallback("Momentum looks steady — keep going with today's learning sprint.")
+
+    tgt = act.get("target") if isinstance(act.get("target"), dict) else {}
+    target_id = str(act.get("course_id") or tgt.get("course_id") or "")
+    reason = str(act.get("reason") or "Sudar recommends your next deliberate step.")
+    try:
+        confidence = float(act.get("confidence") or 0.78)
+    except (TypeError, ValueError):
+        confidence = 0.78
+
+    kind_raw = act.get("action_type") or act.get("type") or "course"
+    kind_str = str(kind_raw)
+
+    if kind_str == "all_enrolled":
+        return NextActionResponse(
+            action_type="continue_course",
+            target_id=target_id,
+            reason=reason or "You've engaged broadly — keep momentum on current enrollments.",
+            confidence=confidence,
+        )
+    if kind_str == "recovery_session":
+        return NextActionResponse(
+            action_type="try_modality",
+            target_id=target_id,
+            reason="A lighter session can rebuild focus — shorten the next stint.",
+            confidence=confidence,
+        )
+    if kind_str == "switch_modality":
+        return NextActionResponse(action_type="try_modality", target_id=target_id, reason=reason, confidence=confidence)
+    if kind_str == "retry_quiz":
+        return NextActionResponse(action_type="review_skill", target_id=target_id, reason=reason, confidence=confidence)
+    if kind_str == "continue_module":
+        return NextActionResponse(action_type="continue_course", target_id=target_id, reason=reason, confidence=confidence)
+
+    if target_id:
+        return NextActionResponse(action_type="start_new", target_id=target_id, reason=reason, confidence=confidence)
+    return fallback("Continue your path — Sudar will refresh picks on your dashboard.")
 
 
 @router.post("/next-action-analytics", response_model=AnalyticsNextActionResponse)

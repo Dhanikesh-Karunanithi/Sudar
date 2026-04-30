@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X, Send, ExternalLink, Maximize2, Minimize2 } from 'lucide-react'
 import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
-import { cn, stripTutorActionsFromText } from '@/lib/utils'
+import { cn, stripTutorModelArtifactsFromText } from '@/lib/utils'
 import type { TutorAction, TutorBlock } from '@/types/tutor'
 import { GenerativeBlockRenderer } from './GenerativeBlockRenderer'
 import { ChatMarkdown } from './ChatMarkdown'
@@ -331,11 +331,26 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
                               }),
                             }).catch(() => {})
                           }}
+                          onTutorChoice={(d) => {
+                            const courseFromPath =
+                              (pathname?.match(/^\/courses\/([^/]+)\/learn/) ?? [])[1] ?? undefined
+                            void fetch('/api/tutor/choice', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                block_id: d.blockId,
+                                choice_id: d.choiceId,
+                                label: d.label,
+                                course_id: courseFromPath,
+                              }),
+                            }).catch(() => {})
+                            void handleSendWithMessage(d.followUpMessage)
+                          }}
                           onQuizRetry={() => handleSendWithMessage('Give me another quiz question')}
                         />
                       ) : (
                         <>
-                          {m.role === 'assistant' ? <ChatMarkdown text={stripTutorActionsFromText(m.content)} /> : m.content}
+                          {m.role === 'assistant' ? <ChatMarkdown text={stripTutorModelArtifactsFromText(m.content)} /> : m.content}
                           {m.role === 'assistant' && m.actions && m.actions.length > 0 && (
                             <div className="flex flex-wrap gap-2">
                               {m.actions.map((action, aIdx) => (

@@ -8,8 +8,9 @@ export const metadata: Metadata = { title: 'Courses' }
 export default async function CourseCatalogPage({
   searchParams,
 }: {
-  searchParams?: { q?: string }
+  searchParams?: Promise<{ q?: string }>
 }) {
+  const { q } = (await searchParams) ?? {}
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const admin = createAdminClient()
@@ -25,8 +26,10 @@ export default async function CourseCatalogPage({
   return (
     <CourseCatalogClient
       courses={courses}
-      enrollments={enrollments ?? []}
-      initialSearch={searchParams?.q ?? ''}
+      enrollments={(enrollments ?? []).filter((enrollment): enrollment is { course_id: string; status: string; progress_pct: number } => (
+        typeof enrollment.course_id === 'string'
+      ))}
+      initialSearch={q ?? ''}
     />
   )
 }

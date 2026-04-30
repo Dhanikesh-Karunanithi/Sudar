@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { verifyNotificationTrackingToken } from '../../../../../../shared/notifications/trackingToken'
 
 export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const notificationId = searchParams.get('id')
-  const event = searchParams.get('event')
-  if (!notificationId || !event) return NextResponse.json({ error: 'id and event required' }, { status: 400 })
+  const token = searchParams.get('token')
+  if (!token) return NextResponse.json({ error: 'token required' }, { status: 400 })
+
+  const verification = verifyNotificationTrackingToken(token)
+  if (!verification.valid) {
+    return NextResponse.json({ error: `invalid token: ${verification.reason}` }, { status: 400 })
+  }
+
+  const { notificationId, event } = verification
 
   const admin = createAdminClient()
   const now = new Date().toISOString()

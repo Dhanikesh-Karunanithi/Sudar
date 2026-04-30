@@ -5,6 +5,8 @@ import Link from 'next/link'
 export const metadata: Metadata = { title: 'Learn' }
 import { BookOpen, ArrowRight, GraduationCap, CheckCircle2, Flame, Clock, TrendingUp, Zap, Calendar, Route, Lock, ChevronRight, Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { loadLearnerAgentsAccess, learnerRunBlockedReason } from '@/lib/org/sudarAgentsAccess'
+import { resolveSudarAgentsLearnerPrefs } from '../../../../shared/sudarAgentsOrgSettings'
 import { headers } from 'next/headers'
 import { BentoCard } from '@/components/ui/BentoCard'
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
@@ -358,6 +360,51 @@ export default async function DashboardPage() {
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
 
+  let suggestedFocusAgents: string | null = null
+  if (user?.id && learnerProfile) {
+    const access = await loadLearnerAgentsAccess(admin, user.id)
+    const memCtx = (learnerProfile.ai_tutor_context as Record<string, unknown>) ?? {}
+    const prefRoot = (
+      typeof memCtx.preferences === 'object'
+      && memCtx.preferences !== null
+      && !Array.isArray(memCtx.preferences)
+        ? (memCtx.preferences as Record<string, unknown>)
+        : {}
+    )
+    const agentPrefs = resolveSudarAgentsLearnerPrefs(prefRoot)
+    const canStrip =
+      access
+      && access.resolved.enabled
+      && access.resolved.features.learner_week_plan
+      && agentPrefs.week_plan_surfaces
+      && learnerRunBlockedReason(access, 'week_plan') === null
+    if (canStrip && access) {
+      try {
+        const res = await fetch(`${protocol}://${host}/api/agents/runs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
+          body: JSON.stringify({
+            goal_kind: 'week_plan',
+            force_nba_refresh: false,
+            policy_pack_id: access.resolved.policy_pack_id,
+          }),
+        })
+        if (res.ok) {
+          const j = (await res.json()) as Record<string, unknown>
+          const art = j.artifact as Record<string, unknown> | undefined
+          const sessions = Array.isArray(art?.sessions) ? (art?.sessions as Record<string, unknown>[]) : []
+          const focus0 = typeof sessions[0]?.focus === 'string' ? sessions[0].focus : null
+          const lines = Array.isArray(art?.goal_line) ? (art!.goal_line as unknown[]) : []
+          const goal0 = typeof lines[0] === 'string' ? lines[0] : null
+          suggestedFocusAgents =
+            focus0 ?? goal0 ?? (typeof art?.headline === 'string' ? art.headline : null)
+        }
+      } catch {
+        /* non-fatal */
+      }
+    }
+  }
+
   const nba = learnerProfile?.next_best_action as Record<string, unknown> | null
   const focusedTimeWeekMins = Math.max(0, Math.round(periodStats.thisWeek.totalMins * ((learnerProfile?.overall_engagement_score as number | undefined) ?? 0.7)))
   const suggestedSessionMins = Number(nba?.recommended_duration_mins ?? (streakDays > 0 ? 20 : 12))
@@ -391,6 +438,12 @@ export default async function DashboardPage() {
                   ? `You have ${inProgress.length} course${inProgress.length !== 1 ? 's' : ''} in progress.`
                   : 'Start learning by enrolling in a course.'}
             </p>
+            {suggestedFocusAgents && (
+              <div className="mb-6 rounded-xl border border-primary/25 bg-primary/8 px-4 py-3 text-sm text-card-foreground max-w-2xl">
+                <p className="text-[11px] uppercase tracking-wide text-primary font-semibold mb-1">Suggested focus</p>
+                <p>{suggestedFocusAgents}</p>
+              </div>
+            )}
             {/* Insights row: streak, active days, last active, next deadline */}
             <div className="flex flex-wrap items-center gap-2">
               {streakDays > 0 && (
