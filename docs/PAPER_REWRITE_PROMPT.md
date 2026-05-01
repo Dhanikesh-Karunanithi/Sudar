@@ -220,9 +220,9 @@ The rewritten paper must follow this structure (adapted from the feedback's Grou
 Use this information to add technical precision where the current paper is vague. This comes from the project's ECOSYSTEM.md, RESEARCH_FOUNDATION.md, and codebase documentation.
 
 ### Architecture
-- **Studio** (sudar-studio/): Next.js 14, TypeScript strict, App Router, Tailwind CSS, Prisma → Supabase. Port 3000.
-- **Learn** (sudar-learn/): Next.js 14, TypeScript strict, App Router, Tailwind CSS, Prisma → Supabase, Framer Motion, Zustand. Port 3001.
-- **Intelligence** (sudar-intelligence/): Python 3.11+, FastAPI, async handlers, Pydantic v2, Supabase Python client. Port 8000.
+- **Studio** (sudar-studio/): Next.js 15, TypeScript strict, App Router, Tailwind CSS, Prisma → Supabase. Port 3000.
+- **Learn** (sudar-learn/): Next.js 15, TypeScript strict, App Router, Tailwind CSS, Prisma → Supabase, Framer Motion, Zustand. Port 3001.
+- **Intelligence** (sudar-intelligence/): Python 3.11+, FastAPI, async handlers, Pydantic v2, Supabase Python client. Port 8001 in local dev when SudarVid uses 8000 (see `scripts/dev-with-sudarvid.mjs`).
 - **Shared data layer**: Single Supabase project (PostgreSQL + pgvector). Both Studio and Learn connect to the same instance.
 - **AI providers**: Together AI (primary, open-weight), OpenAI (secondary), Anthropic (tertiary). Provider-agnostic: set `AI_CHAT_PROVIDER` env var. Fallback chain: OpenRouter → Together → OpenAI → Anthropic.
 - **TTS**: Edge-TTS (default, zero cost, 40+ languages, 300+ voices). Optional Sarvam AI Indian English neural voices when `SARVAM_API_KEY` is set.

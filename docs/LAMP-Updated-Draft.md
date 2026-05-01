@@ -73,7 +73,7 @@ The system has three surfaces sharing one data layer:
 2. **Learn (learner):** Personalised dashboard, course viewer with modality switching, AI tutor sidebar (Sudar), progress tracking, and certificates.
 3. **Intelligence (backend):** Adaptive engine, AI tutor engine, modality dispatcher, next-best-action computation, learning-event processing, and TTS audio generation.
 
-All three surfaces share a single source of truth (Supabase / PostgreSQL) for authentication, learner profiles, content, and events. Studio and Learn are Next.js 14 applications; Intelligence is a Python FastAPI service. The event flow is: learner actions and tutor exchanges write to `learning_events` and `ai_interactions`; the Intelligence layer then asynchronously updates the learner profile and next-best-action.
+All three surfaces share a single source of truth (Supabase / PostgreSQL) for authentication, learner profiles, content, and events. Studio and Learn are Next.js 15 applications; Intelligence is a Python FastAPI service. The event flow is: learner actions and tutor exchanges write to `learning_events` and `ai_interactions`; next-best-action and twin rollups are computed primarily in Sudar Learn today, with Intelligence handling tutor RAG, TTS, and content generation.
 
 ### 3.2 Digital Learner Twin and Learner Model
 
@@ -132,17 +132,33 @@ The most novel architectural contribution is the **Adaptive Learning Layer (ALP)
 
 Moodle 4.5 introduced a dedicated AI subsystem with a formal separation between Provider plugins (which interface with external AI services) and Placement plugins (which define where AI functionality appears to users). ALP is architecturally aligned with this model: it acts as an intelligent provider that supplies longitudinal learner context and adaptive recommendations that no default Moodle provider can offer.
 
-**ALP components — five independently deployable plugins:**
+**ALP — reference HTTP surface and roadmap plugin layer:**
 
-1. **SudarMemory.** The foundational layer. It intercepts the host LMS's xAPI or webhook event stream (quiz scores, content completions, time-on-task, tutor exchanges) and maintains a Digital Learner Twin for each user in the ALP database. Requires no visible UI change to the host LMS. Every other ALP plugin queries this Twin as its data source. Zero disruption to existing workflows; maximum leverage of existing event infrastructure.
+The HTTP contract on **Sudar Learn** (`/api/alp/*`) is implemented today; vendor-installable LMS
+packages (e.g. Moodle local plugin + block) are starter / pilot maturity (see
+`docs/ALP_CONNECTOR_DELIVERY.md`). Each ALP component below is labelled **reference** (HTTP
+contract live on Learn) or **roadmap** (target installable plugin / deeper LMS integration).
 
-2. **SudarChat.** Embeds the Sudar AI tutor as a sidebar or modal panel inside any LMS course page. Every message queries the learner's Digital Learner Twin from SudarMemory, so the tutor knows the learner's history, preferences, and prior struggles across *all* their courses on the LMS — not just the current one. Graceful fallback if the Intelligence service is unavailable. Rendered via the LMS's existing block or plugin rendering system without modification of core LMS files.
+1. **SudarMemory (reference).** Host LMS sends xAPI / SCORM outcomes / webhooks to
+   `POST /api/alp/events`; Sudar maintains a Digital Learner Twin (`learner_profiles`) per
+   user. The included Moodle starter plugin (`integrations/moodle/local_sudaralp`) shows the
+   end-to-end forwarding pattern with retry/DLQ and identity-bridge mapping.
 
-3. **SudarStudio Embed.** Adds a "Generate with AI" control to the host LMS's course editor. Instructors can select any module text and generate a mindmap, flashcard set, audio narration, or animated video storyboard — all powered by Sudar Intelligence — and embed the output as a native LMS resource. No content migration required; generated assets live in the LMS's own file store.
+2. **SudarChat (reference).** Embeds the Sudar AI tutor via Learn's signed `/alp/embed`
+   iframe and `POST /api/alp/tutor/query`; Twin context is read from Supabase after
+   org-scoped auth.
 
-4. **SudarRecommend.** A next-best-action widget for the LMS dashboard. External hosts call the Learn ALP proxy `POST /api/alp/next-action` (API key), which forwards to Intelligence; in-app use may call `/api/intelligence/next-action` directly. Returns a personalised recommendation card with no schema changes to the host database.
+3. **SudarStudio Embed (roadmap).** Target: "Generate with AI" inside the host LMS editor.
+   Today, generation runs in Sudar Studio / Learn rather than as installable LMS editor
+   modules.
 
-5. **SudarAdapt.** The most advanced plugin. Integrates with the LMS's conditional activity system (e.g., Moodle's availability conditions) to dynamically unlock or reorder optional content based on ALP's adaptive sequencing recommendations. An administrator designates which activities are ALP-managed; SudarAdapt then routes each learner through the optimal path without any learner-visible complexity.
+4. **SudarRecommend (reference).** Next-best-action via Learn's
+   `POST /api/alp/next-action` (canonical scoring lives in Learn's
+   `/api/intelligence/next-action`). No schema changes are required on the host database.
+
+5. **SudarAdapt (roadmap).** Target: integration with the LMS's conditional activity
+   system to dynamically unlock or reorder optional content based on ALP recommendations.
+   Sudar Learn already supports adaptive path ordering for Sudar-hosted paths.
 
 **Integration flow:**
 
@@ -221,7 +237,7 @@ The principle is: Sudar's persistent learner model and event stream are the shar
 
 The reference platform is implemented with:
 
-- **Next.js 14** (Studio, Learn) — TypeScript strict mode, App Router, Tailwind CSS
+- **Next.js 15** (Studio, Learn) — TypeScript strict mode, App Router, Tailwind CSS
 - **Python 3.11+ FastAPI** (Intelligence) — async handlers, Pydantic v2 models
 - **Supabase** (PostgreSQL + pgvector, auth, storage)
 - **AI providers:** Together AI (primary; open-weight models), OpenAI and Anthropic (optional fallback)

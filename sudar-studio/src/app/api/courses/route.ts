@@ -6,6 +6,7 @@ import { getCourseTemplate } from '@/lib/courseTemplates'
 import type { Database } from '@/types/database'
 
 type CourseInsert = Database['public']['Tables']['courses']['Insert']
+type ModuleInsert = Database['public']['Tables']['modules']['Insert']
 
 export async function GET() {
   const supabase = await createClient()
@@ -81,12 +82,13 @@ export async function POST(request: NextRequest) {
 
   if (data?.id) {
     const template = getCourseTemplate(body.manual_template_id)
-    await admin.from('modules').insert({
+    const moduleInsert: ModuleInsert = {
       course_id: data.id,
       title: template.moduleTitle,
-      content: template.content,
+      content: template.content as unknown as ModuleInsert['content'],
       order_index: 0,
-    })
+    }
+    await admin.from('modules').insert(moduleInsert)
     await admin.from('learning_events').insert({
       user_id: user.id,
       course_id: data.id,

@@ -228,18 +228,19 @@ becomes — creating compounding switching costs.
 
 **Headline**: Built on real technology. Validated by real use.
 
-**What's already built** (SudarAI ecosystem, 18 months of development):
-- SudarLab: Full AI course builder (RAG, 14 templates, SCORM, media search, fact-checking)
-- SudarVerse-LMS: Learner delivery platform with Digital Learner Twin concept
-- SudarPlay: AI game generator from learning objectives (genuinely novel)
-- bytengine: AI content engine with adaptive difficulty and fine-tuning pipeline
-- SudarVid: Text-to-video generation with TTS narration (`sudar_vid`, `SUDARVID_URL`)
-- Remotion: Programmatic MP4 video renderer with HTTP API
-- SudarMind: AI mindmap generator (publishable npm package)
-- Synchronicity: Live deployed application (givemeasignnow.app)
+**What's already built** (Sudar ecosystem, 18 months of development):
+- Sudar Studio: AI course builder — RAG, 5 learning personas (Style Engine), SCORM 1.2 import/export, media search, AI-assisted authoring.
+- Sudar Learn: Learner delivery with the Digital Learner Twin (`learner_profiles`), modality switching, certificates, ALP embed.
+- SudarPlay: AI game generator from learning objectives (experimental modality).
+- Sudar Intelligence: AI engine — tutor RAG, generation pipeline, Agents skill descriptors.
+- SudarVid: Text-to-video with TTS narration (`sudar_vid`, `SUDARVID_URL`).
+- Remotion: Programmatic MP4 video renderer with HTTP API.
+- SudarMind: AI mindmap generator.
 
-**The Sudar reorg**: All of the above is now being consolidated into one unified, production-ready
-platform — Sudar. This is not a concept; it's a consolidation.
+**The Sudar reorg**: The platform is consolidated into Studio + Learn + Intelligence on a shared
+Supabase data plane. **Pilot-ready** for Studio, Learn, and the ALP reference HTTP surface
+(see `docs/ALP_CONNECTOR_DELIVERY.md` for maturity gates); SudarPlay, fully adaptive video,
+and installable LMS plugin packages remain experimental or roadmap.
 
 **Claim discipline note**:
 - Separate currently shipped capabilities from pilot-evaluation claims.

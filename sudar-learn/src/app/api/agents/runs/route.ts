@@ -2,7 +2,7 @@
  * BFF: Sudar Agents runs — forwards to Intelligence with learner JWT.
  */
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { intelligenceBaseUrl } from '@/lib/intelligence/baseUrl'
+import { sudarIntelligenceBaseUrl } from '@/lib/intelligence/baseUrl'
 import { loadLearnerAgentsAccess, learnerRunBlockedReason } from '@/lib/org/sudarAgentsAccess'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: block }, { status: 403 })
   }
 
-  const base = intelligenceBaseUrl()
+  const base = sudarIntelligenceBaseUrl()
   if (!base) {
     return NextResponse.json({ error: 'Sudar Intelligence is not configured' }, { status: 503 })
   }

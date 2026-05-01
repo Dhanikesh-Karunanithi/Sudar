@@ -2,7 +2,7 @@
  * BFF: streamed Sudar Agents run (SSE from Intelligence).
  */
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { intelligenceBaseUrl } from '@/lib/intelligence/baseUrl'
+import { sudarIntelligenceBaseUrl } from '@/lib/intelligence/baseUrl'
 import { loadLearnerAgentsAccess, learnerRunBlockedReason } from '@/lib/org/sudarAgentsAccess'
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  const base = intelligenceBaseUrl()
+  const base = sudarIntelligenceBaseUrl()
   if (!base) {
     return new Response(JSON.stringify({ error: 'Sudar Intelligence is not configured' }), {
       status: 503,

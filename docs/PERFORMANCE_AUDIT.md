@@ -1,6 +1,6 @@
 # Sudar Learn — Performance & Improvement Audit
 
-**Scope**: sudar-learn (Sudar Learn) — learner-facing Next.js 14 app.  
+**Scope**: sudar-learn (Sudar Learn) — learner-facing Next.js 15 app.  
 **Date**: March 2026.
 
 This document summarizes opportunities to make the application **faster** and **more maintainable**, with clear priorities and implementation notes.
