@@ -27,6 +27,12 @@
       ],
       "@shared-sudarart/*": [
         "../shared/sudarart/*"
+      ],
+      "zod": [
+        "./node_modules/zod/index.d.cts"
+      ],
+      "zod/*": [
+        "./node_modules/zod/*"
       ]
     },
     "target": "ES2017"
