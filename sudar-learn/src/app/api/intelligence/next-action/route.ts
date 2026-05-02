@@ -2,7 +2,7 @@
  * Next Best Action Engine — thin route; core logic in `@/lib/intelligence/nextBestActionEngine`.
  */
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkAndIncrementUsage } from '@/lib/usage-limits'
 import { computeNextBestActionForUser } from '@/lib/intelligence/nextBestActionEngine'
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const usage = await checkAndIncrementUsage(admin, user.id, 'next_action')
   if (!usage.allowed) {
     return NextResponse.json(

@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Flame, Clock, CheckCircle2, Target, TrendingUp, Medal, Award, BarChart3, ChevronRight, Crown, PauseCircle, ShieldCheck } from 'lucide-react'
@@ -32,7 +32,7 @@ function ProgressRing({ value, max = 100, size = 64, strokeWidth = 6 }: {
 export default async function KPIDashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const [profileRes, learnerProfileRes] = await Promise.all([
     admin.from('profiles').select('full_name, org_id').eq('id', user!.id).single(),

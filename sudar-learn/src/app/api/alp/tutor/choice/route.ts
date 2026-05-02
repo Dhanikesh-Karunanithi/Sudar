@@ -1,7 +1,7 @@
 /**
  * ALP — log tutor inline choice for embed clients (no browser Supabase session).
  */
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { validateAlpKey, getAlpKeyFromRequest, isUserInOrg, validateEmbedToken } from '@/lib/alp-auth'
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'user_id does not match token' }, { status: 403 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   if (orgId) {
     const inOrg = await isUserInOrg(admin, userId, orgId)
     if (!inOrg) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

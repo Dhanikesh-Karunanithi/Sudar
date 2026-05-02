@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import type { Metadata } from 'next'
 import { getCachedPublishedCourses } from '@/lib/cache'
 import CourseCatalogClient from './CourseCatalogClient'
@@ -13,7 +13,7 @@ export default async function CourseCatalogPage({
   const { q } = (await searchParams) ?? {}
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const [courses, { data: enrollments }] = await Promise.all([
     getCachedPublishedCourses(),

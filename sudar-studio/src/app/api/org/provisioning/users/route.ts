@@ -4,7 +4,7 @@
  * Body: { users: [{ email, full_name?, role?, external_id? }] }. role = org_role (ADMIN | MANAGER | CREATOR | LEARNER).
  * Creates auth user + profile + org_member for each. If email already exists in Auth, that row returns ok: false with error.
  */
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createHash, randomBytes } from 'crypto'
 
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const keyHash = hashKey(key)
 
   const { data: keyRow, error: keyError } = await admin

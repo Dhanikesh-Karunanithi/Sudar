@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   if (input.length === 0) return NextResponse.json({ error: 'users array required' }, { status: 400 })
   if (input.length > BULK_MAX) return NextResponse.json({ error: `Max ${BULK_MAX} users per request` }, { status: 400 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const results: { email: string; ok: boolean; id?: string; error?: string; temp_password?: string }[] = []
 
   for (const row of input) {
@@ -115,7 +115,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'At least one of org_role or banned is required' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   let updated = 0
   const errors: { user_id: string; error: string }[] = []
 
@@ -171,7 +171,7 @@ export async function DELETE(request: NextRequest) {
   if (userIds.length === 0) return NextResponse.json({ error: 'user_ids array required' }, { status: 400 })
   if (userIds.length > BULK_MAX) return NextResponse.json({ error: `Max ${BULK_MAX} users per request` }, { status: 400 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   let removed = 0
   const errors: { user_id: string; error: string }[] = []
 

@@ -3,7 +3,7 @@
  * Delegates to /api/coins/spend — exists as a named semantic endpoint.
  */
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
 
   const { rewardSlug } = parsed.data
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const { data: reward } = await admin
     .from('reward_catalog')

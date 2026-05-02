@@ -4,12 +4,14 @@ Handles reactive Q&A and proactive nudge generation for "Sudar", the AI tutor.
 Uses provider-agnostic AI client (see src.core.ai_client).
 All endpoints require Supabase JWT or X-Intelligence-Service-Secret; body.user_id must match JWT sub when JWT is used.
 """
-from typing import Annotated, Optional
+from typing import Annotated, Any, Optional
 
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, field_validator
 from src.api.auth import require_learner_match, verify_supabase_jwt_or_service
 from src.api.limiter import limiter
+from src.runtime.router import ModelRouter, parse_runtime_policy
+from src.runtime.schemas import RuntimeRoutingMetadata
 
 router = APIRouter()
 
@@ -24,6 +26,7 @@ class TutorQueryRequest(BaseModel):
     message: str
     context_text: str          # The module content for RAG context
     session_history: list[dict] = []  # Last N ai_interactions
+    org_settings: dict[str, Any] | None = None
 
     @field_validator("message")
     @classmethod
@@ -45,6 +48,7 @@ class TutorQueryResponse(BaseModel):
     confidence: float
     sources_used: list[str]
     suggested_modality_switch: Optional[str] = None
+    routing: RuntimeRoutingMetadata
 
 
 class NudgeRequest(BaseModel):
@@ -83,6 +87,8 @@ async def tutor_query(
     Reads recent ai_interactions for longitudinal context.
     """
     require_learner_match(request, body.user_id)
+    policy = parse_runtime_policy(body.org_settings)
+    resolved = await ModelRouter(policy).resolve("chat")
     # TODO: Implement RAG pipeline
     # 1. Embed the user's question
     # 2. Retrieve relevant chunks from context_text
@@ -98,6 +104,7 @@ async def tutor_query(
         ),
         confidence=0.2,
         sources_used=[],
+        routing=resolved.routing,
     )
 
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
 import { createHash } from 'crypto'
 import { awardNotificationOptInBonus } from '../../../../../../../shared/notifications/guardrails'
 
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   if (!endpoint) return NextResponse.json({ error: 'Invalid subscription endpoint' }, { status: 400 })
 
   const endpointHash = createHash('sha256').update(endpoint).digest('hex')
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const { error } = await admin.from('notification_channels').upsert({
     user_id: user.id,

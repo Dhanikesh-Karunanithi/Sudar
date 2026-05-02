@@ -4,7 +4,7 @@
  * Requires TOGETHER_API_KEY (default) or OPENAI_API_KEY and content_chunks table (pgvector). Set EMBED_PROVIDER=together|openai.
  */
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { embedTexts, EMBED_DIMENSIONS } from '@/lib/embed'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const admin = createAdminClient()
+    const admin = createServiceRoleSupabaseClient()
     let body: { course_id?: string } = {}
     try {
       body = await request.json()

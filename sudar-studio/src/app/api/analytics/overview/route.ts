@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
 import { getOrCreateOrg } from '@/lib/org'
 
 export async function GET(request: NextRequest) {
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
 
   const orgId = await getOrCreateOrg(user.id)
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const days = Math.max(1, Math.min(90, Number(request.nextUrl.searchParams.get('days') ?? '30')))
   const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10)
 

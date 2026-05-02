@@ -1,4 +1,4 @@
-﻿import { createClient, createAdminClient } from '@/lib/supabase/server'
+﻿import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getOrCreateOrg } from '@/lib/org'
 import { Shield, AlertTriangle, CheckCircle2, Clock, User, Route, Calendar } from 'lucide-react'
@@ -21,7 +21,7 @@ export default async function CompliancePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const orgId = await getOrCreateOrg(user.id)
 
   const { data: paths } = await admin

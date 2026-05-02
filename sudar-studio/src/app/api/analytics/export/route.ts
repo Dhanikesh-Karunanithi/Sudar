@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
 import { getOrCreateOrg } from '@/lib/org'
 import { z } from 'zod'
 
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
   const { scope, course_id: courseId, days } = parsed.data
   const orgId = await getOrCreateOrg(user.id)
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10)
 
   let rows: Record<string, unknown>[] = []

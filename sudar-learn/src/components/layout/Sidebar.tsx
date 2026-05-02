@@ -10,6 +10,7 @@ import {
   Brain,
   Route,
   Settings,
+  HelpCircle,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -29,6 +30,7 @@ const navItems = [
   { label: 'Paths', href: '/paths', icon: Route },
   { label: 'Progress', href: '/progress', icon: BarChart2 },
   { label: "Sudar's Memory", href: '/memory', icon: Brain },
+  { label: 'Help', href: '/help', icon: HelpCircle },
   { label: 'Settings', href: '/settings', icon: Settings },
 ]
 

@@ -5,7 +5,7 @@
  * and org challenge progression.
  */
 
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { dispatchUserNotification } from '@/lib/notifications/dispatch'
 import { COIN_EARN_RULES, STREAK_MILESTONE_COINS } from './rules'
 import { getLevelForXp, SCHOLAR_RANKS } from './types'
@@ -31,7 +31,7 @@ interface ChallengeProgressRow {
 
 export async function evaluateGamification(input: EngineInput): Promise<GamificationResult> {
   const { userId, eventType, courseId, moduleId, payload } = input
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   // Load current learner_profile (coins, xp, level)
   const { data: profile } = await admin
@@ -265,7 +265,7 @@ interface ConditionContext {
   courseId?: string | null
   moduleId?: string | null
   payload: Record<string, unknown>
-  admin: ReturnType<typeof createAdminClient>
+  admin: ReturnType<typeof createServiceRoleSupabaseClient>
   newXp: number
   newBalance: number
 }
@@ -424,7 +424,7 @@ interface QuestProgressInput {
   courseId?: string | null
   moduleId?: string | null
   payload: Record<string, unknown>
-  admin: ReturnType<typeof createAdminClient>
+  admin: ReturnType<typeof createServiceRoleSupabaseClient>
 }
 
 async function updateQuestProgress(input: QuestProgressInput) {
@@ -563,7 +563,7 @@ interface OrgChallengeInput {
   courseId?: string | null
   moduleId?: string | null
   payload: Record<string, unknown>
-  admin: ReturnType<typeof createAdminClient>
+  admin: ReturnType<typeof createServiceRoleSupabaseClient>
 }
 
 function asNumber(value: unknown): number {
@@ -571,7 +571,7 @@ function asNumber(value: unknown): number {
 }
 
 async function upsertChallengeProgress(
-  admin: ReturnType<typeof createAdminClient>,
+  admin: ReturnType<typeof createServiceRoleSupabaseClient>,
   challengeId: string,
   userId: string,
   contribution: Record<string, unknown>
@@ -607,7 +607,7 @@ async function upsertChallengeProgress(
 }
 
 async function maybeCompleteChallenge(
-  admin: ReturnType<typeof createAdminClient>,
+  admin: ReturnType<typeof createServiceRoleSupabaseClient>,
   row: ChallengeProgressRow | null
 ): Promise<boolean> {
   if (!row || row.completed_at) return false
@@ -620,7 +620,7 @@ async function maybeCompleteChallenge(
 }
 
 async function awardChallengePrize(
-  admin: ReturnType<typeof createAdminClient>,
+  admin: ReturnType<typeof createServiceRoleSupabaseClient>,
   userId: string,
   coinPrize: number,
   challengeId: string

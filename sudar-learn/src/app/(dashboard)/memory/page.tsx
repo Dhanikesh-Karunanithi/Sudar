@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { Bot, Lock, Pencil, Brain, BookOpen, AlertTriangle } from 'lucide-react'
 import { MemoryEditor } from './MemoryEditor'
 import { BentoCard } from '@/components/ui/BentoCard'
@@ -8,7 +8,7 @@ import { InsightsCarousel } from '@/components/memory/InsightsCarousel'
 export default async function MemoryPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const [
     { data: profile },

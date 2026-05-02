@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
 import { createHash } from 'crypto'
 
 export async function POST(request: NextRequest) {
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   if (!body?.endpoint) return NextResponse.json({ error: 'endpoint required' }, { status: 400 })
 
   const endpointHash = createHash('sha256').update(body.endpoint).digest('hex')
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { error } = await admin
     .from('notification_channels')
     .update({ revoked_at: new Date().toISOString(), last_seen_at: new Date().toISOString() })

@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Valid email required' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const role = ['ADMIN', 'MANAGER', 'CREATOR', 'LEARNER'].includes(body.org_role ?? '') ? body.org_role : 'LEARNER'
 
   const { error: inviteConflict } = await admin.from('org_invites').insert({

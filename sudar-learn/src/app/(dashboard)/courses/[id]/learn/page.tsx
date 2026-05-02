@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { CourseViewer, type ModulePersonalizationOverlay } from './CourseViewer'
 import type { ComponentProps } from 'react'
@@ -24,7 +24,7 @@ export default async function CourseLearnPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: profile } = await admin.from('profiles').select('full_name').eq('id', user.id).single()
   const learnerName = profile?.full_name?.split(' ')[0] ?? undefined
 

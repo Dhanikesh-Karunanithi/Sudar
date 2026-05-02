@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import type { Database } from '@/types/database'
 import {
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as { template_id?: string; vars?: Record<string, string> }
   if (!body.template_id) return NextResponse.json({ error: 'template_id required' }, { status: 400 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: template, error } = await admin
     .from('notification_templates')
     .select('id, org_id, category_slug, title_mustache, body_mustache, cta_label, cta_url_mustache, channels')

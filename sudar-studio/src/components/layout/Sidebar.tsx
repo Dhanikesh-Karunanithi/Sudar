@@ -57,7 +57,7 @@ const organizationNavItems = [
   { label: 'Integrations', href: '/integrations', icon: Plug },
   { label: 'AI & API Keys', href: '/settings/keys', icon: Key },
   { label: 'Org settings', href: '/settings', icon: Settings },
-  { label: 'Help & Guides', href: '/help', icon: HelpCircle },
+  { label: 'Sudar Help Center', href: '/help', icon: HelpCircle },
   { label: 'Understanding AI', href: '/help/ai-at-sudar', icon: GraduationCap },
 ]
 

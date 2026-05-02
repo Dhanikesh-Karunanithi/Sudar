@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { listStorageFilesRecursive } from '@/lib/export/listStorageFilesRecursive'
 import { injectScormShim } from '@/lib/scorm/scormApiShim'
 import { isPathUnderCourseScormPackage, normalizeScormStoragePath } from '@/lib/scorm/storagePath'
@@ -12,7 +12,7 @@ const putBodySchema = z.object({
 })
 
 async function getAuthorizedScormModule(
-  admin: ReturnType<typeof createAdminClient>,
+  admin: ReturnType<typeof createServiceRoleSupabaseClient>,
   userId: string,
   courseId: string,
   moduleId: string
@@ -54,7 +54,7 @@ export async function GET(
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const scorm = await getAuthorizedScormModule(admin, user.id, courseId, moduleId)
   if (!scorm) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
@@ -111,7 +111,7 @@ export async function PUT(
     return NextResponse.json({ error: 'Invalid body: path and content are required' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const scorm = await getAuthorizedScormModule(admin, user.id, courseId, moduleId)
   if (!scorm) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 

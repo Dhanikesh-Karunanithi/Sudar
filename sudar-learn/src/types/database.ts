@@ -766,6 +766,28 @@ export type Database = {
         Update: Record<string, never>
         Relationships: []
       }
+      audit_events: {
+        Row: {
+          id: string
+          org_id: string | null
+          actor_user_id: string
+          action: string
+          payload: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          org_id?: string | null
+          actor_user_id: string
+          action: string
+          payload?: Json
+          created_at?: string
+        }
+        Update: {
+          payload?: Json
+        }
+        Relationships: []
+      }
       ai_interactions: {
         Row: {
           id: string

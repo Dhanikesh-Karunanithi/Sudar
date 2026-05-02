@@ -4,7 +4,7 @@
  * Awards coins + XP, handles level-up, writes ledger entries.
  */
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getLevelForXp, SCHOLAR_RANKS } from '@/lib/gamification/types'
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
 
   const { coins, xp, eventType, referenceId, metadata } = parsed.data
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const { data: profile } = await admin
     .from('learner_profiles')

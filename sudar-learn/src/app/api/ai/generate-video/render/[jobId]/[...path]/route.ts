@@ -3,7 +3,7 @@
  * The generated slides.html uses relative URLs for all its assets, so every sub-path
  * of the job folder must resolve through this route when served inside an iframe.
  */
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { getSudarVidBaseUrl } from '@/lib/sudarvid'
 import { canUserAccessSudarVidJob, normalizeRenderAssetPath } from '@/lib/security/sudarVidAccess'
@@ -19,7 +19,7 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return new NextResponse('Unauthorized', { status: 401 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const allowed = await canUserAccessSudarVidJob(admin, user.id, jobId)
   if (!allowed) return new NextResponse('Forbidden', { status: 403 })
 

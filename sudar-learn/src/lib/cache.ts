@@ -1,5 +1,5 @@
 import { unstable_cache } from 'next/cache'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 
 const CATALOG_REVALIDATE_SECONDS = 90
 const PATHS_REVALIDATE_SECONDS = 90
@@ -30,7 +30,7 @@ function withModuleCount(row: CourseCatalogRow) {
 export async function getCachedPublishedCourses() {
   return unstable_cache(
     async () => {
-      const admin = createAdminClient()
+      const admin = createServiceRoleSupabaseClient()
       const { data } = await admin
         .from('courses')
         .select(
@@ -50,7 +50,7 @@ export async function getCachedPublishedCourses() {
 export async function getCachedPublishedPaths() {
   return unstable_cache(
     async () => {
-      const admin = createAdminClient()
+      const admin = createServiceRoleSupabaseClient()
       const { data } = await admin
         .from('learning_paths')
         .select('id, title, description, courses, is_mandatory, status, issues_certificate, is_adaptive')

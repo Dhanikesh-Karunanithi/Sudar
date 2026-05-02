@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { getOrCreateOrg, requireOrgContentEditor } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -9,7 +9,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const orgId = await getOrCreateOrg(user.id)
   const { data, error } = await admin
     .from('org_tags')
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
 
   const slug = parsed.data.slug?.trim() || slugifyTagLabel(parsed.data.label)
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const { data, error } = await admin
     .from('org_tags')

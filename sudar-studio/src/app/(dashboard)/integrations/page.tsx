@@ -132,7 +132,7 @@ export default function IntegrationsPage() {
         </p>
         <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 list-none">
           <li>
-            <Link href="/help#identity" className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-800/50 p-3 block hover:border-slate-600 transition-colors">
+            <Link href="/help/admins/provisioning-checklist#identity" className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-800/50 p-3 block hover:border-slate-600 transition-colors">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400 text-sm font-medium">1</span>
               <div>
                 <span className="text-sm font-medium text-slate-300">Identity</span>
@@ -141,7 +141,7 @@ export default function IntegrationsPage() {
             </Link>
           </li>
           <li>
-            <Link href="/help#directory" className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-800/50 p-3 block hover:border-slate-600 transition-colors">
+            <Link href="/help/admins/provisioning-checklist#directory" className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-800/50 p-3 block hover:border-slate-600 transition-colors">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400 text-sm font-medium">2</span>
               <div>
                 <span className="text-sm font-medium text-slate-300">Directory</span>
@@ -168,7 +168,7 @@ export default function IntegrationsPage() {
             </Link>
           </li>
           <li>
-            <Link href="/help#data" className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-800/50 p-3 block hover:border-slate-600 transition-colors">
+            <Link href="/help/admins/provisioning-checklist#data" className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-800/50 p-3 block hover:border-slate-600 transition-colors">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400 text-sm font-medium">5</span>
               <div>
                 <span className="text-sm font-medium text-slate-300">Data</span>

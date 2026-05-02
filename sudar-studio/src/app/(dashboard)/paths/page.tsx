@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { getOrCreateOrg } from '@/lib/org'
 import Link from 'next/link'
 import { Route, Plus } from 'lucide-react'
@@ -25,7 +25,7 @@ interface PathRow {
 export default async function PathsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const orgId = await getOrCreateOrg(user!.id)
 
   const { data: pathsData } = await admin

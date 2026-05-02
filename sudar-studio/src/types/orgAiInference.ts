@@ -14,6 +14,31 @@ const privateUrlSchema = z
 
 const modelSchema = z.string().trim().max(256)
 
+const runtimeModeSchema = z.enum(['cloud', 'local', 'hybrid'])
+const runtimeCapabilitySchema = z.enum(['chat', 'summarize', 'rewrite', 'flashcards', 'quiz_explain'])
+const runtimeProviderTypeSchema = z.enum(['openai_compatible_local'])
+const runtimeAuthModeSchema = z.enum(['none', 'bearer'])
+
+export const runtimeProviderSchema = z.object({
+  id: z.string().trim().min(1).max(128),
+  type: runtimeProviderTypeSchema.default('openai_compatible_local'),
+  base_url: privateUrlSchema,
+  model: modelSchema,
+  auth_mode: runtimeAuthModeSchema.default('none'),
+  timeout_ms: z.number().int().min(1000).max(120000).default(30000),
+  max_tokens_default: z.number().int().min(32).max(8192).default(512),
+  capabilities: z.array(runtimeCapabilitySchema).default(['chat', 'summarize', 'rewrite']),
+  active: z.boolean().default(true),
+  encrypted_secret_ref: z.string().trim().max(256).nullable().optional(),
+})
+
+export const orgAiRuntimePolicySchema = z.object({
+  mode: runtimeModeSchema.default('cloud'),
+  strict_local: z.boolean().default(false),
+  fallback_enabled: z.boolean().default(true),
+  providers: z.array(runtimeProviderSchema).default([]),
+})
+
 export const orgAiInferencePatchSchema = z
   .object({
     use_private_server: z.boolean().optional(),
@@ -29,6 +54,11 @@ export type OrgAiInferenceStored = {
   private_server_url: string
   private_server_model: string
 }
+
+export type RuntimeCapability = z.infer<typeof runtimeCapabilitySchema>
+export type RuntimeMode = z.infer<typeof runtimeModeSchema>
+export type RuntimeProviderStored = z.infer<typeof runtimeProviderSchema>
+export type OrgAiRuntimePolicy = z.infer<typeof orgAiRuntimePolicySchema>
 
 export type PrivateOpenAiRuntime = {
   baseUrl: string
@@ -109,6 +139,21 @@ export function parseOrgAiInference(settings: unknown): OrgAiInferenceStored {
     private_server_url: typeof ai.private_server_url === 'string' ? ai.private_server_url.trim() : '',
     private_server_model: typeof ai.private_server_model === 'string' ? ai.private_server_model.trim() : '',
   }
+}
+
+export function parseOrgAiRuntimePolicy(settings: unknown): OrgAiRuntimePolicy {
+  const s = settings as Record<string, unknown> | null | undefined
+  const runtime = (s?.ai_runtime as Record<string, unknown> | undefined) ?? {}
+  const parsed = orgAiRuntimePolicySchema.safeParse(runtime)
+  if (!parsed.success) {
+    return { mode: 'cloud', strict_local: false, fallback_enabled: true, providers: [] }
+  }
+  return parsed.data
+}
+
+export function capabilitySupported(policy: OrgAiRuntimePolicy, capability: RuntimeCapability): boolean {
+  if (policy.mode === 'cloud') return true
+  return policy.providers.some((p) => p.active && p.capabilities.includes(capability))
 }
 
 /** Resolves server-side runtime for chat when org uses private AI and feature flag is on. */

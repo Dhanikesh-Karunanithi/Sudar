@@ -4,7 +4,7 @@
  * Body: { user_id: string, course_id?: string, module_id?: string }.
  * Returns { token, embed_url, expires_in }.
  */
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { ALP_EMBED_EXPIRY_SEC, createAlpEmbedToken } from '@/lib/alp/embedToken'
 import { validateAlpKey, getAlpKeyFromRequest, getEmbedSigningSecretConfigured, rejectAlpUserOutsideOrg } from '@/lib/alp-auth'
 import { NextRequest, NextResponse } from 'next/server'
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'user_id required' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const orgError = await rejectAlpUserOutsideOrg(admin, auth, user_id)
   if (orgError) return orgError
 

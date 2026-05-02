@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
@@ -30,7 +30,7 @@ export async function POST(
   }
 
   const { id: targetId } = await params
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const { data: membership } = await admin
     .from('org_members')

@@ -4,7 +4,7 @@
  * Fallback: sudar-intelligence Edge-TTS (free, no API key — requires Intelligence service running).
  * Attaches audioDataURL to each scene/segment and saves to course settings.
  */
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import type { VideoScene, DialogueSegment } from '@/types/content'
 import type { Json } from '@/types/database'
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'courseId and type (video|podcast) required' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const {
     data: { session },
   } = await supabase.auth.getSession()

@@ -9,7 +9,7 @@
  *  - The SCORM API shim's postMessage reaches the parent without CORS issues
  */
 
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
 import { canLearnerAccessScormPath, normalizeStoragePath } from '@/lib/security/scormAccess'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -53,7 +53,7 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return new NextResponse('Unauthorized', { status: 401 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const allowed = await canLearnerAccessScormPath(admin, user.id, storagePath)
   if (!allowed) return new NextResponse('Forbidden', { status: 403 })
 

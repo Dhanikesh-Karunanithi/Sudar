@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 const BUCKET = 'avatars'
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   const path = `${user.id}/avatar.${ext}`
   const buffer = Buffer.from(await file.arrayBuffer())
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const { data: listed } = await admin.storage.from(BUCKET).list(user.id)
   if (listed?.length) {
@@ -80,7 +80,7 @@ export async function DELETE() {
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: listed } = await admin.storage.from(BUCKET).list(user.id)
   if (listed?.length) {
     const toRemove = listed.map((f) => `${user.id}/${f.name}`)

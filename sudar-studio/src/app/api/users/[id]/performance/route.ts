@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { NextResponse } from 'next/server'
 import { createPerformanceRecordSchema } from '@/types/performance'
@@ -23,7 +23,7 @@ export async function GET(
 
   const { id: userId } = await params
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: membership } = await admin
     .from('org_members')
     .select('org_id')
@@ -75,7 +75,7 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid payload', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: membership } = await admin
     .from('org_members')
     .select('org_id')

@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
   const limit = Math.min(Math.max(Number(searchParams.get('limit') ?? 30), 1), 100)
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const [{ data: items, error: listError }, { count: unreadCount, error: countError }] =
     await Promise.all([
@@ -70,7 +70,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'Invalid body', issues: parsed.error.issues }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const now = new Date().toISOString()
 
   if (parsed.data.action === 'mark_all_read') {

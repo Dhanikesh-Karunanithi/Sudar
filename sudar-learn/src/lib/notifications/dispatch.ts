@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { dispatchNotification, type DispatchNotificationInput } from '../../../../shared/notifications/engine'
 import { sendWebPush } from '../../../../shared/notifications/channels/web_push'
 import { sendEmailNotification, buildUnsubscribeUrl } from '../../../../shared/notifications/channels/email'
@@ -21,7 +21,7 @@ function escapeHtml(value: string): string {
 }
 
 export async function dispatchUserNotification(input: DispatchNotificationInput) {
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const result = await dispatchNotification(admin, input, {
     in_app: async (payload) => {

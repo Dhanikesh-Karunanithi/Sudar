@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveChatConfigError } from '@/lib/ai/chat'
 import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   const { course_id } = await request.json()
   if (!course_id) return NextResponse.json({ error: 'course_id required' }, { status: 400 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const { data: course, error: courseErr } = await admin
     .from('courses')

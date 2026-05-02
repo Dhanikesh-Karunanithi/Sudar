@@ -21,6 +21,14 @@ def _get_service_secret() -> str | None:
     return os.environ.get("INTELLIGENCE_SERVICE_SECRET", "").strip() or None
 
 
+def _jwt_audience() -> str | None:
+    return (
+        os.environ.get("SUPABASE_JWT_AUD", "").strip()
+        or os.environ.get("SUPABASE_JWT_AUDIENCE", "").strip()
+        or None
+    )
+
+
 async def verify_supabase_jwt_or_service(
     request: Request,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(HTTPBearerOptional)] = None,
@@ -45,11 +53,17 @@ async def verify_supabase_jwt_or_service(
             # configuration error unless a valid service secret was already provided.
             raise HTTPException(status_code=503, detail="JWT validation not configured (SUPABASE_JWT_SECRET)")
         try:
+            aud = _jwt_audience()
+            decode_opts: dict[str, bool] = {"verify_aud": bool(aud)}
+            kw: dict = {}
+            if aud:
+                kw["audience"] = aud
             payload = jwt.decode(
                 credentials.credentials,
                 secret,
                 algorithms=["HS256"],
-                options={"verify_aud": False},
+                options=decode_opts,
+                **kw,
             )
             sub = payload.get("sub")
             if not sub:

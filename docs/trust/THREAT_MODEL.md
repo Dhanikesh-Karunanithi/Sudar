@@ -20,3 +20,8 @@ Living document; extend when adding routes that accept URLs or HTML.
 | Email link abuse | Unsubscribe and notification tracking links use dedicated HMAC secrets; learner email CTA links are restricted to same-site relative paths |
 | CSRF on cookie APIs | Destructive or expensive cookie-authenticated POST routes use same-origin checks (`Origin` / `Sec-Fetch-Site`) before continuing |
 | Supply chain | Lockfiles, monitor CVEs, upgrade cadence |
+| Service-role Supabase misuse | Prefer `createServiceRoleSupabaseClient()` with explicit naming; ESLint restricts ad-hoc `createClient` from `@supabase/supabase-js` outside `server.ts` |
+| Admin accountability | Sensitive Studio actions (`admin.purge_users.*`, etc.) log to `audit_events` via service-role with PII-safe JSON payloads |
+| Malicious uploads | Studio `course-media` uploads use magic-byte MIME verification; SCORM ZIP import rejects path traversal, huge entry counts, and excessive declared uncompressed totals |
+| Multi-instance Intelligence | Rate limits use in-process storage by default; `RATE_LIMIT_STORAGE_URI` Redis for distributed limits |
+| Privacy (access / erasure) | Learn exposes `/api/me/data-export` under RLS; org/account deletion flows still product-owned — extend before GDPR claims |

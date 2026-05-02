@@ -2,7 +2,7 @@
  * Integration API keys (ALP) — create and list. Admin/Manager only.
  * Keys are hashed; raw key is returned only on create.
  */
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { createHash, randomBytes } from 'crypto'
@@ -27,7 +27,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: keys, error } = await admin
     .from('integration_api_keys')
     .select('id, name, key_prefix, created_at, last_used_at')
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
   const keyHash = hashKey(rawKey)
   const keyPrefix = rawKey.slice(0, PREFIX_DISPLAY_LEN)
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: row, error } = await admin
     .from('integration_api_keys')
     .insert({ org_id: orgId, name, key_hash: keyHash, key_prefix: keyPrefix })

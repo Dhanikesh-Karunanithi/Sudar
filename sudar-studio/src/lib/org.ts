@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 
 /**
  * Returns the user's first org, or auto-creates a "Personal Workspace"
@@ -8,7 +8,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
  */
 export async function getOrCreateOrg(userId: string): Promise<string> {
   const supabase = await createClient()
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   // Check for existing membership (anon client — reads user's own memberships)
   const { data: membership } = await supabase

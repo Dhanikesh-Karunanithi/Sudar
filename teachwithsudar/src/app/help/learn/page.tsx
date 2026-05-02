@@ -1,46 +1,43 @@
-import { ProseSection } from "@/components/ProseSection";
 import Link from "next/link";
+import { ProseSection } from "@/components/ProseSection";
+import { loadAllPublicMarketingMetas } from "@/lib/helpCenterPublic";
 
 export const metadata = {
-  title: "Learn Help",
+  title: "Sudar Learn Help",
 };
 
 export default function LearnHelpPage() {
+  const articles = loadAllPublicMarketingMetas("learner");
+
   return (
     <ProseSection title="Sudar Learn Help">
       <p className="text-lg text-foreground">
-        Sudar Learn is the learner-facing app: dashboard, courses, modalities, and the AI tutor Sudar.
+        Sudar Learn is the learner app: dashboards, modalities, tutor Sudar, paths, certificates, and memory. Featured
+        articles below are synced from the open-source{" "}
+        <code className="rounded bg-background-muted px-1.5 py-0.5 text-sm text-foreground">help-center/</code> corpus.
       </p>
-      <h2 className="mt-10 text-xl font-semibold text-foreground">Dashboard</h2>
+
+      <h2 className="mt-10 text-xl font-semibold text-foreground">Guides — marketing-safe excerpts</h2>
+      <ul className="mt-4 space-y-3 list-none pl-0">
+        {articles.map((a) => (
+          <li key={a.slug}>
+            <Link href={`/help/article/${a.slug}`} className="text-accent font-semibold hover:underline">
+              {a.title}
+            </Link>
+            {a.description ? (
+              <p className="text-foreground-muted text-base mt-1 mb-1 max-w-prose">{a.description}</p>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+
+      <h2 className="mt-10 text-xl font-semibold text-foreground">Quick reminders</h2>
       <p className="mt-2 text-foreground">
-        After signing in you see your personalized dashboard: streak, time spent, engagement summary, and Sudar
-        recommends (next best action). Enrolled learning paths and courses are listed; click to continue or start.
+        Use the Sudar tutor for course questions, highlight text for quick prompts, switch modalities from the viewer
+        tabs, and open <strong>In-product Help Center</strong> from the Learn sidebar for the full searchable library
+        (may include tenant-specific articles admins publish).
       </p>
-      <h2 className="mt-10 text-xl font-semibold text-foreground">Taking a course</h2>
-      <p className="mt-2 text-foreground">
-        Open a course to see modules. Each module can be viewed in multiple modalities: Read (text), Listen (audio
-        TTS), Watch (video when available), Map (mindmap), Cards (flashcards). Switch tabs to choose. Progress and
-        completion rules (e.g. minimum time) apply across modalities.
-      </p>
-      <h2 className="mt-10 text-xl font-semibold text-foreground">Sudar the tutor</h2>
-      <p className="mt-2 text-foreground">
-        Use the floating Sudar chat (global) to ask questions. Sudar has RAG over your course content and
-        longitudinal memory: it remembers your goals, struggles, and preferences. You can select text and ask
-        &quot;Explain this&quot; for contextual help. Responses can suggest enrolling in a course, continuing a
-        module, or reviewing material. Use My Memory to see what Sudar knows about you and adjust preferences (e.g.
-        response length).
-      </p>
-      <h2 className="mt-10 text-xl font-semibold text-foreground">Learning paths & certificates</h2>
-      <p className="mt-2 text-foreground">
-        If you’re assigned to a path, complete courses in order (mandatory first; optional can be reordered by Sudar
-        if adaptive mode is on). When you complete a path you may receive a certificate; certificates can be
-        shared or verified via the platform.
-      </p>
-      <h2 className="mt-10 text-xl font-semibold text-foreground">SCORM courses</h2>
-      <p className="mt-2 text-foreground">
-        Some modules are delivered as SCORM packages. They open in an iframe; progress and score are reported back
-        to Sudar so your profile stays up to date.
-      </p>
+
       <div className="mt-10 flex flex-wrap gap-4">
         <Link href="/help/studio" className="text-accent hover:underline">
           Studio Help →

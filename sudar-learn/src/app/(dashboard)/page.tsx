@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -56,7 +56,7 @@ function computeStreak(dayKeys: string[]): number {
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   // Auto-create learner profile if it doesn't exist
   const { data: existingProfile } = await admin

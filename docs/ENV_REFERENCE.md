@@ -146,12 +146,14 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 
 ## Intelligence (Python) — summary
 
-Same Supabase and AI provider keys as above. See `sudar-intelligence/.env.example`. Key vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `AI_CHAT_PROVIDER`, `TOGETHER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AI_CHAT_BASE_URL`, `AI_CHAT_API_KEY`, `AI_CHAT_DEFAULT_MODEL`, `PORT`, `ENV`.
+Same Supabase and AI provider keys as above. See `sudar-intelligence/.env.example`. Local files **`sudar-intelligence/.env.local`** and **`sudar-intelligence/.env`** are **auto-loaded** when the API starts (no manual `export` needed for uvicorn).
+
+Key vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, **`SUPABASE_JWT_SECRET` (required for Bearer JWT from Studio/Learn — Sudar Agents, tutor, etc.)**, `AI_CHAT_PROVIDER`, `TOGETHER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AI_CHAT_BASE_URL`, `AI_CHAT_API_KEY`, `AI_CHAT_DEFAULT_MODEL`, `PORT`, `ENV`.
 
 Security hardening vars:
 
 - `CORS_ORIGINS` (Intelligence): comma-separated browser origins allowed to call Intelligence (e.g. `http://localhost:3001,http://localhost:3000`). **Required in production:** if `ENV`/`ENVIRONMENT` is `production` and this is unset/empty, the Intelligence process exits at startup.
-- `SUPABASE_JWT_SECRET` (Intelligence): validates Supabase JWTs from Learn/Studio.
+- `SUPABASE_JWT_SECRET` (Intelligence): **HS256 secret from Supabase** (Dashboard → Project Settings → API → JWT Secret). Without it, routes that verify `Authorization: Bearer <access_token>` return **503** with message `JWT validation not configured (SUPABASE_JWT_SECRET)`.
 - `INTELLIGENCE_SERVICE_SECRET` (Intelligence + Learn + Studio): optional shared secret used for ALP, Studio TTS server-to-server proxy calls, Sudar Agents **internal** Learn helpers (`POST /api/internal/agent-tools/*`), and similar paths via `X-Intelligence-Service-Secret`. **Must match** on Intelligence and Learn when those routes are enabled.
 - `LEARN_INTERNAL_URL` (Intelligence): base URL of the **Sudar Learn** deployment (server-only). Used by the agents orchestrator when calling **`/api/internal/agent-tools/next-best-action`** so Intelligence reuses Learn’s canonical next-best-action implementation. Omit in local setups that do not wire agents → NBA tooling.
 

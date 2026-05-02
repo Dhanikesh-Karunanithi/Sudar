@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 
 export async function GET() {
@@ -11,7 +11,7 @@ export async function GET() {
   const orgId = await requireOrgAdmin(user.id).catch(() => null)
   if (!orgId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data, error } = await admin
     .from('notification_campaigns')
     .select('*, notification_templates(slug, title_mustache, category_slug)')
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
   if (!body.template_id) return NextResponse.json({ error: 'template_id required' }, { status: 400 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   // Supabase generated types do not always model dynamic insert payloads for nested JSON.
   // Keep the runtime correct, while avoiding type-checker false positives.
   const unsafeAdmin = admin as unknown as {

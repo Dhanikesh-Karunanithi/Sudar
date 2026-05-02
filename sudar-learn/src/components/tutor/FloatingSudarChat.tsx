@@ -33,6 +33,14 @@ interface Message {
   blocks?: TutorBlock[]
 }
 
+type RoutingMeta = {
+  decision: 'local' | 'cloud'
+  provider_id: string
+  model: string
+  fallback_used?: boolean
+  fallback_reason?: string | null
+}
+
 const STARTUP_CHIPS: ProactivePromptChoice[] = [
   { id: 'courses', label: 'Courses I can take', follow_up_message: 'Are there any courses I can take?' },
   { id: 'next', label: 'What should I learn next?', follow_up_message: 'What should I learn next?' },
@@ -54,6 +62,7 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
   const [pastedText, setPastedText] = useState('')
   const [thinking, setThinking] = useState(false)
   const [syncStatus, setSyncStatus] = useState<'idle' | 'synced' | 'reconnecting'>('idle')
+  const [lastRouting, setLastRouting] = useState<RoutingMeta | null>(null)
   const [prefs, setPrefs] = useState<MascotPreferences | null>(null)
   const [openTracked, setOpenTracked] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
@@ -161,6 +170,7 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
         },
       ]
       setMessages(mergedMessages)
+      setLastRouting((data.routing as RoutingMeta | undefined) ?? null)
       if (isLocalTutorCacheEnabled()) {
         setSyncStatus('reconnecting')
         void putCachedConversation(
@@ -243,6 +253,15 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
             <div className="p-5 border-b border-border flex items-center justify-between gap-2 shrink-0 bg-card/80">
               <div className="flex items-center gap-3 min-w-0">
                 <MascotModeBadge mascotId={activeMascot} />
+                {lastRouting && (
+                  <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-pill">
+                    {lastRouting.decision === 'local'
+                      ? 'Local model active'
+                      : lastRouting.fallback_used
+                        ? 'Cloud fallback used'
+                        : 'Cloud model active'}
+                  </span>
+                )}
                 {isLocalTutorCacheEnabled() && (
                   <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-pill">
                     {syncStatus === 'reconnecting' ? 'Reconnecting…' : syncStatus === 'synced' ? 'Synced with Sudar' : 'Local cache ready'}
@@ -433,9 +452,14 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
                   rows={2}
                 />
               </div>
-              <p className="text-[10px] text-muted-foreground mt-2 leading-relaxed">
-                Sudar is for learning. Do not paste passwords, card numbers, or private keys.
-              </p>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mt-2">
+                <Link href="/help" className="text-[10px] font-medium text-primary hover:underline shrink-0">
+                  Sudar Help Center
+                </Link>
+                <p className="text-[10px] text-muted-foreground leading-relaxed sm:text-right">
+                  Sudar is for learning. Do not paste passwords, card numbers, or private keys.
+                </p>
+              </div>
             </div>
           </motion.div>
         )}

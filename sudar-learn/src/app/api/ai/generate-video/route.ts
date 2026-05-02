@@ -3,7 +3,7 @@
  * Proxies to the SudarVid FastAPI service (`SUDARVID_URL`, repo folder `sudar_vid`).
  * Maps Sudar module data to SudarVid GenerateRequest curriculum fields.
  */
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 import { getSudarVidBaseUrl, getSudarVidDefaultEngineMode, isSudarVidGenerateFallbackEnabled } from '@/lib/sudarvid'
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'module_id and course_id are required' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const canGenerate = await canUserAccessCourseModule(admin, user.id, courseId, moduleId)
   if (!canGenerate) {

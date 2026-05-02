@@ -6,7 +6,7 @@
  * Forwards to Intelligence /api/tutor/query; logs to ai_interactions; returns response.
  * See docs/ALP_API.md.
  */
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { validateAlpKey, getAlpKeyFromRequest, validateEmbedToken, isUserInOrg } from '@/lib/alp-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { scanSensitiveUserText } from '@/lib/security/sensitiveInputGuard'
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   if (orgId) {
     const inOrg = await isUserInOrg(admin, user_id, orgId)
     if (!inOrg) return NextResponse.json({ error: 'Forbidden: user not in key organisation' }, { status: 403 })

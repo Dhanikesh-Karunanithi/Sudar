@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { getOrCreateOrg } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import AdmZip from 'adm-zip'
@@ -94,6 +94,42 @@ function collectItems(node: XmlNode, out: ScormItem[] = []): ScormItem[] {
 }
 
 // ---------------------------------------------------------------------------
+// ZIP safety — zip-bomb and path traversal mitigation
+// ---------------------------------------------------------------------------
+const MAX_SCORM_ZIP_BYTES = 120 * 1024 * 1024
+const MAX_SCORM_ENTRIES = 2500
+/** Declared uncompressed total (ZIP central directory) — rejects obvious zip bombs early */
+const MAX_SCORM_UNCOMPRESSED_TOTAL = 450 * 1024 * 1024
+const MAX_SCORM_SINGLE_ENTRY = 90 * 1024 * 1024
+
+function assertSafeZipEntries(
+  entries: ReturnType<InstanceType<typeof AdmZip>['getEntries']>
+): { ok: true; fileCount: number; uncompressedTotal: number } | { ok: false; error: string } {
+  if (entries.length > MAX_SCORM_ENTRIES) {
+    return { ok: false, error: 'ZIP contains too many entries' }
+  }
+  let uncompressedTotal = 0
+  let fileCount = 0
+  for (const entry of entries) {
+    const name = entry.entryName.replace(/\\/g, '/')
+    if (!name || name.startsWith('/') || name.split('/').some((p) => p === '..')) {
+      return { ok: false as const, error: 'ZIP contains unsafe paths' }
+    }
+    if (entry.isDirectory) continue
+    fileCount += 1
+    const sz = Number((entry as { header?: { size?: number } }).header?.size ?? 0)
+    if (sz > MAX_SCORM_SINGLE_ENTRY) {
+      return { ok: false as const, error: 'ZIP contains an entry larger than the allowed limit' }
+    }
+    uncompressedTotal += sz
+  }
+  if (uncompressedTotal > MAX_SCORM_UNCOMPRESSED_TOTAL) {
+    return { ok: false as const, error: 'ZIP uncompressed size exceeds safety limit' }
+  }
+  return { ok: true as const, fileCount, uncompressedTotal }
+}
+
+// ---------------------------------------------------------------------------
 // POST /api/courses/import-scorm
 // ---------------------------------------------------------------------------
 export async function POST(request: NextRequest) {
@@ -101,7 +137,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const orgId = await getOrCreateOrg(user.id)
 
   const contentType = request.headers.get('content-type') ?? ''
@@ -114,6 +150,12 @@ export async function POST(request: NextRequest) {
   if (!file) return NextResponse.json({ error: 'file required' }, { status: 400 })
 
   const buffer = Buffer.from(await file.arrayBuffer())
+  if (buffer.length > MAX_SCORM_ZIP_BYTES) {
+    return NextResponse.json({ error: 'SCORM package is too large' }, { status: 400 })
+  }
+  if (buffer.length < 4 || buffer[0] !== 0x50 || buffer[1] !== 0x4b) {
+    return NextResponse.json({ error: 'Not a valid ZIP file' }, { status: 400 })
+  }
   let zip: AdmZip
   try {
     zip = new AdmZip(buffer)
@@ -122,6 +164,10 @@ export async function POST(request: NextRequest) {
   }
 
   const entries = zip.getEntries()
+  const zipCheck = assertSafeZipEntries(entries)
+  if (!zipCheck.ok) {
+    return NextResponse.json({ error: zipCheck.error }, { status: 400 })
+  }
 
   // ── Find imsmanifest.xml ──────────────────────────────────────────────────
   let manifestXml: string | null = null

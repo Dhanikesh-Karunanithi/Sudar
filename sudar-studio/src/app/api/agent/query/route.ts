@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { getOrgIdAndRole } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     const message = typeof body.message === 'string' ? body.message.trim() : ''
     if (!message) return NextResponse.json({ error: 'message required' }, { status: 400 })
 
-    const admin = createAdminClient()
+    const admin = createServiceRoleSupabaseClient()
     const { data: orgRowStudio } = await admin.from('organisations').select('settings').eq('id', orgId).maybeSingle()
     const { orgSettings, privateRuntime } = orgSettingsToAiChatContext(orgRowStudio?.settings)
     const configError = resolveChatConfigError(orgSettings, privateRuntime)

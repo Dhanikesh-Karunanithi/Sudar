@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
 
 function normalizeDate(input: string | null): string {
   if (!input) return new Date().toISOString().slice(0, 10)
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({} as Record<string, unknown>))
   const eventDate = normalizeDate(typeof body.date === 'string' ? body.date : null)
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const [{ error: rollupError }, { error: riskError }] = await Promise.all([
     admin.rpc('refresh_analytics_rollups', { p_date: eventDate }),
     admin.rpc('refresh_analytics_risk_signals', { p_date: eventDate }),

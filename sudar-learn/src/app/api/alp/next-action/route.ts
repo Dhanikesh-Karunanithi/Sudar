@@ -5,7 +5,7 @@
  * When using an org-scoped key (integration_api_keys), user_id must be a member of that org.
  * See docs/ALP_API.md.
  */
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { validateAlpKey, getAlpKeyFromRequest, validateEmbedToken, isUserInOrg } from '@/lib/alp-auth'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
   if (!user_id) user_id = body.user_id ?? null
   if (!user_id) return NextResponse.json({ error: 'user_id required' }, { status: 400 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   if (orgId) {
     const inOrg = await isUserInOrg(admin, user_id, orgId)
     if (!inOrg) return NextResponse.json({ error: 'Forbidden: user not in key organisation' }, { status: 403 })

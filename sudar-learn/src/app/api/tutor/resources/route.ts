@@ -2,7 +2,7 @@
  * Authenticated web + image search for tutor resource previews (used by dev tools or future UI).
  * Gated by org ai_compliance + TUTOR_WEB_ENRICHMENT_ENABLED. Rate-limited with generic AI bucket.
  */
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { checkAndIncrementUsage } from '@/lib/usage-limits'
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'q required (2–200 chars)' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: prof } = await admin.from('profiles').select('org_id').eq('id', user.id).maybeSingle()
   if (prof?.org_id) {
     const { data: orgRow } = await admin.from('organisations').select('settings').eq('id', prof.org_id).maybeSingle()

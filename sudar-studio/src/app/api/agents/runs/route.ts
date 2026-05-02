@@ -1,7 +1,7 @@
 /**
  * Studio BFF: admin_team Sudar Agent runs → Intelligence gateway.
  */
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { resolveSudarAgentsFromOrgSettings } from '../../../../../../shared/sudarAgentsOrgSettings'
 import { sudarIntelligenceBaseUrl } from '@/lib/intelligence/baseUrl'
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: orgRow } = await admin.from('organisations').select('settings').eq('id', orgId).maybeSingle()
   const agentsResolved = resolveSudarAgentsFromOrgSettings(
     (orgRow?.settings as Record<string, unknown>) ?? {},

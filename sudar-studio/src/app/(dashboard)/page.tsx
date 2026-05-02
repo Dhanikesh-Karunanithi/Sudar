@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import type { Metadata } from 'next'
 import { getOrCreateOrg } from '@/lib/org'
 import { BookOpen, Users, BarChart2, Plus, ArrowRight, Sparkles, Globe } from 'lucide-react'
@@ -51,7 +51,7 @@ export default async function DashboardPage() {
     supabase.from('profiles').select('full_name').eq('id', user!.id).single(),
     getOrCreateOrg(user!.id),
   ])
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const { data: orgCourseIds } = await admin
     .from('courses')

@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireSuperAdmin } from '@/lib/org'
 import { NextResponse } from 'next/server'
 
@@ -18,7 +18,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   // List all auth users (single page; OK for current scale)
   const { data: authList, error: listError } = await admin.auth.admin.listUsers()
@@ -104,7 +104,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'user_ids array required' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   // Clean up relational data first
   await admin.from('org_members').delete().in('user_id', userIds)

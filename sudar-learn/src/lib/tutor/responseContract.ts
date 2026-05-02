@@ -23,6 +23,15 @@ const tutorQueryResponseSchema = z.object({
   blocks: z.array(tutorBlockSchema).optional(),
   guardrail_refused: z.boolean().optional(),
   guardrail_code: z.string().optional(),
+  routing: z
+    .object({
+      decision: z.enum(['local', 'cloud']),
+      provider_id: z.string(),
+      model: z.string(),
+      fallback_used: z.boolean().optional(),
+      fallback_reason: z.string().nullable().optional(),
+    })
+    .optional(),
 })
 
 type RawTutorAction = z.infer<typeof rawTutorActionSchema>

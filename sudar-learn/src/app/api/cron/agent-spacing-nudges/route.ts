@@ -2,7 +2,7 @@
  * Scheduled retrieval / spacing reminders (policy-driven heuristics).
  * Auth: CRON_SECRET via Authorization Bearer or ?secret=
  */
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { rejectInvalidCronRequest } from '@/lib/security/cronAuth'
 import { defaultSpacingCronConfig } from '@/lib/agents/defaultPolicyPack'
 import {
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   if (invalid) return invalid
 
   const cfg = defaultSpacingCronConfig()
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const since = new Date()
   since.setDate(since.getDate() - 7)

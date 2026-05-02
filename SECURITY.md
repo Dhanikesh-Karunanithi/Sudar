@@ -32,6 +32,12 @@ Current hardening highlights:
 - SCORM and SudarVid asset proxies enforce object-level authorization before service-role access.
 - Studio document URL ingestion blocks local/private network targets to reduce SSRF risk.
 - Destructive purge tooling is disabled by default and requires super-admin access plus same-origin confirmation.
+- `audit_events` records high-risk admin actions (e.g. purge runs) with **no PII** in stored JSON payloads.
+- Studio media uploads verify **magic bytes** against allowed image/audio types; SCORM import caps ZIP size, entry count, and declared uncompressed totals and rejects traversal paths.
+- Distributed rate limiting for Intelligence optional via `RATE_LIMIT_STORAGE_URI` (Redis); expensive content routes enforce request size and per-IP quotas.
+- Learners can download a coarse **JSON data export** at `/api/me/data-export` (RLS-scoped scaffold — extend before legal reliance).
+
+Operators should plan **MFA for `ORG_ADMIN`/`SUPER_ADMIN`**, idle session timeouts, and documented **retention/deletion** for `learning_events` / `ai_interactions` volumes.
 
 See `docs/trust/` for the technical trust pack and `docs/ENV_REFERENCE.md` for required production secrets.
 

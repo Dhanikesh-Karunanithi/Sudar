@@ -80,7 +80,7 @@ async def post_agent_run_stream(
 @router.get("/skills")
 @limiter.limit("120/minute")
 async def list_skills(
-    _request: Request,
+    request: Request,
     _auth: Annotated[str | None, Depends(verify_supabase_jwt_or_service)] = None,
 ):
     return AgentSkillsResponse(

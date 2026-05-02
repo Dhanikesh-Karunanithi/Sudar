@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { NextResponse } from 'next/server'
 import { buildPrivateOpenAiRuntime, isOrgPrivateAiFeatureEnabled } from '@/types/orgAiInference'
@@ -22,7 +22,7 @@ export async function POST() {
     return NextResponse.json({ error: 'Private organisation AI is not enabled on this deployment.' }, { status: 403 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: org } = await admin.from('organisations').select('settings').eq('id', orgId).single()
   const runtime = buildPrivateOpenAiRuntime(org?.settings)
   if (!runtime) {

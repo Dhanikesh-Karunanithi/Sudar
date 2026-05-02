@@ -4,7 +4,7 @@
  * Uses learner's preferred TTS voice from preferences (or request body override).
  * When Intelligence is unavailable, returns use_browser_tts so client can show "unavailable" (no browser fallback).
  */
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 import { normalizeTtsVoiceId, TTS_VOICE_OPTIONS_BY_ID } from '@/lib/audio/voices'
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   const text = typeof body.text === 'string' ? body.text.trim() : ''
   if (!text) return NextResponse.json({ error: 'text required' }, { status: 400 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const blockedAudio = await rejectSensitiveLearnerAiInput(admin, user.id, [text])
   if (blockedAudio) return blockedAudio
 

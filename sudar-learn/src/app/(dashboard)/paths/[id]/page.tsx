@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Route, BookOpen, Lock, Zap, Award, CheckCircle2, LockKeyhole } from 'lucide-react'
@@ -21,7 +21,7 @@ export default async function LearnPathDetailPage({ params }: { params: Promise<
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const { data: path } = await admin
     .from('learning_paths')

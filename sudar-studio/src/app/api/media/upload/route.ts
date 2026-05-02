@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { getOrCreateOrg } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -24,12 +24,32 @@ export async function POST(request: NextRequest) {
   const file = formData.get('file') as File | null
   if (!file || !(file instanceof File)) return NextResponse.json({ error: 'file required' }, { status: 400 })
 
-  const type = file.type?.toLowerCase()
-  if (!type || !ALLOWED_TYPES.includes(type)) {
-    return NextResponse.json({
-      error: 'Invalid file type. Use images (JPEG, PNG, GIF, WebP) or audio (MP3, WAV, OGG, M4A).',
-    }, { status: 400 })
+  if (file.size > MAX_SIZE_BYTES_AUDIO) {
+    return NextResponse.json({ error: 'File too large. Max 15MB.' }, { status: 400 })
   }
+
+  const clientType = file.type?.toLowerCase() || null
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const { fileTypeFromBuffer } = await import('file-type')
+  const detected = await fileTypeFromBuffer(buffer)
+  const mime = detected?.mime?.toLowerCase() ?? null
+  if (!mime || !ALLOWED_TYPES.includes(mime)) {
+    return NextResponse.json(
+      {
+        error:
+          'Invalid file content. Bytes must match an allowed image or audio format (magic-byte verified).',
+      },
+      { status: 400 }
+    )
+  }
+  if (clientType && ALLOWED_TYPES.includes(clientType) && clientType !== mime) {
+    return NextResponse.json(
+      { error: 'Declared file type does not match actual file contents.' },
+      { status: 400 }
+    )
+  }
+
+  const type = mime
   const isAudio = ALLOWED_AUDIO_TYPES.includes(type)
   const maxSize = isAudio ? MAX_SIZE_BYTES_AUDIO : MAX_SIZE_BYTES
   if (file.size > maxSize) {
@@ -53,8 +73,7 @@ export async function POST(request: NextRequest) {
   const name = `${crypto.randomUUID()}.${ext}`
   const path = `${orgId}/${courseId}/${name}`
 
-  const admin = createAdminClient()
-  const buffer = Buffer.from(await file.arrayBuffer())
+  const admin = createServiceRoleSupabaseClient()
 
   const { data, error } = await admin.storage.from(BUCKET).upload(path, buffer, {
     contentType: type,

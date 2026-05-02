@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { TopNav } from '@/components/layout/TopNav'
 import { PageTransition } from '@/components/ui/PageTransition'
 import { FloatingSudarChatClient } from '@/components/tutor/FloatingSudarChatClient'
@@ -22,7 +22,7 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const [{ data: profile }, { data: learnerProfile }] = await Promise.all([
     supabase.from('profiles').select('full_name, avatar_url, require_password_change').eq('id', user.id).single(),

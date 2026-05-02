@@ -1,8 +1,9 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
+import { capabilitySupported, parseOrgAiRuntimePolicy } from '@/types/orgAiInference'
 
 export interface FlashcardPair {
   front: string
@@ -16,8 +17,19 @@ export async function POST(request: NextRequest) {
 
   const { content, module_title } = await request.json()
   const text = (content ?? '').trim().slice(0, 4000)
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, { userId: user.id })
+  const runtimePolicy = parseOrgAiRuntimePolicy(orgSettings)
+  if (
+    runtimePolicy.mode === 'local' &&
+    runtimePolicy.strict_local &&
+    !capabilitySupported(runtimePolicy, 'flashcards')
+  ) {
+    return NextResponse.json(
+      { error: 'Local BYOM is required by your organisation, but flashcard generation is not supported by the configured local model.' },
+      { status: 503 }
+    )
+  }
   const configError = resolveChatConfigError(orgSettings, privateRuntime)
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })
   const blocked = await rejectSensitiveLearnerAiInput(admin, user.id, [text, module_title])

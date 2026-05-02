@@ -3,7 +3,7 @@
  * Requires pgvector and content_chunks table (see supabase/migrations).
  */
 
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { embedText, EMBED_DIMENSIONS } from '@/lib/embed'
 
 export interface ContentChunk {
@@ -35,7 +35,7 @@ export async function retrieveChunks(
   const embedding = await embedText(queryText)
   if (embedding.length !== EMBED_DIMENSIONS) return []
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   try {
     const { data, error } = await (admin as { rpc: (name: string, params: object) => Promise<{ data: unknown; error: unknown }> }).rpc('match_content_chunks', {
       query_embedding: embedding,

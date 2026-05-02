@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { evaluateGamification } from '@/lib/gamification/engine'
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { eventType, courseId, moduleId, payload, modality, durationSecs } = parsed.data
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   await admin.from('learning_events').insert({
     user_id: user.id,

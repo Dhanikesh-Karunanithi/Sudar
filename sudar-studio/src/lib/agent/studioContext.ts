@@ -197,6 +197,11 @@ ${activeModules.map((m) => `- [${m.id}] ${m.title}`).join('\n') || '(none)'}
 `.trim()
   }
 
+  const agentsPageHint =
+    typeof route === 'string' && /\/agents(\/|$)/.test(route)
+      ? '\n**Page hint:** The user is on **Sudar Agents** (/agents). Use the platform knowledge section **Sudar Agents (product feature)** for how it works, cohort pulse, Org settings toggles, and Intelligence URL requirements.\n'
+      : ''
+
   const contextPrompt = `
 ${SUDAR_STUDIO_PLATFORM_KNOWLEDGE}
 
@@ -204,6 +209,7 @@ ${SUDAR_STUDIO_PLATFORM_KNOWLEDGE}
 ## Current session context
 
 Current route: ${route || '(dashboard or unknown)'}
+${agentsPageHint}
 ${focusUserText}
 ${activeCourseText ? `\n${activeCourseText}\n` : ''}
 

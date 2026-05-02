@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
 import { NOTIFICATION_CATEGORIES } from '../../../../../../shared/notifications/categories'
 
 export async function GET() {
@@ -9,7 +9,7 @@ export async function GET() {
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const [{ data: settings }, { data: preferences }, { data: channels }, { data: log }, { data: profile }] = await Promise.all([
     admin.from('user_notification_settings').select('*').eq('user_id', user.id).maybeSingle(),
     admin.from('notification_preferences').select('category_slug, channel, enabled').eq('user_id', user.id),
@@ -50,7 +50,7 @@ export async function PATCH(request: NextRequest) {
     settings?: Record<string, unknown>
     preferences?: Array<{ category_slug: string; channel: string; enabled: boolean }>
   }
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   if (body.settings && typeof body.settings === 'object') {
     await admin.from('user_notification_settings').upsert({

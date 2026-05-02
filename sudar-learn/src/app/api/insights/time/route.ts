@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
 import { computeFocusRatio } from '@/types/analytics'
 import { z } from 'zod'
 
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   if (!parsed.success) return NextResponse.json({ success: false, error: 'Invalid query' }, { status: 400 })
 
   const { days } = parsed.data
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const since = new Date(Date.now() - days * 86400000).toISOString()
 
   const { data: events } = await admin

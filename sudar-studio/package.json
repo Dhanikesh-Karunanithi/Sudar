@@ -12,7 +12,7 @@
     "dev:3003": "node ./scripts/run-next.mjs dev -p 3003",
     "dev:fresh": "node ./scripts/rm-next-cache.mjs && node ./scripts/run-next.mjs dev",
     "dev:3003:fresh": "node ./scripts/rm-next-cache.mjs && node ./scripts/run-next.mjs dev -p 3003",
-    "build": "node ./scripts/run-next.mjs build",
+    "build": "node ../scripts/sync-help-center-ai.mjs && node ./scripts/run-next.mjs build",
     "start": "node ./scripts/run-next.mjs start",
     "lint": "node ./scripts/run-next.mjs lint"
   },
@@ -31,7 +31,10 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "fast-xml-parser": "^4.3.2",
+    "file-type": "^19.6.0",
     "framer-motion": "^12.34.3",
+    "fuse.js": "^7.3.0",
+    "gray-matter": "^4.0.3",
     "lucide-react": "^0.575.0",
     "mammoth": "^1.11.0",
     "next": "^15.1.0",
@@ -39,6 +42,8 @@
     "prisma": "^6.19.2",
     "react": "^18",
     "react-dom": "^18",
+    "react-markdown": "^9.1.0",
+    "remark-gfm": "^3.0.1",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"

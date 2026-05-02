@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { requireOrgAdmin } from '@/lib/org'
 import Link from 'next/link'
@@ -21,7 +21,7 @@ export default async function GovernancePage() {
     redirect('/')
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: org } = await admin.from('organisations').select('settings').eq('id', orgId).single()
   const settings = (org?.settings as Record<string, unknown>) ?? {}
   const ac = (settings.ai_compliance as Record<string, unknown>) ?? {}

@@ -3,7 +3,7 @@
  * DELETE — Revoke active link (soft revoke via revoked_at).
  * Auth: x-alp-api-key or Authorization: Bearer (org-scoped integration key).
  */
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createHash } from 'crypto'
 
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const keyHash = hashKey(key)
   const { data: keyRow, error: keyError } = await admin
     .from('integration_api_keys')
@@ -158,7 +158,7 @@ export async function DELETE(request: NextRequest) {
     )
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const keyHash = hashKey(key)
   const { data: keyRow, error: keyError } = await admin
     .from('integration_api_keys')

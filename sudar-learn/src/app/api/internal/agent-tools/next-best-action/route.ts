@@ -2,7 +2,7 @@
  * Service-to-service NBA recompute for Sudar Intelligence agent tools.
  * Auth: INTELLIGENCE_SERVICE_SECRET (header or Bearer).
  */
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { verifyIntelligenceServiceRequest } from '@/lib/security/agentServiceAuth'
 import { computeNextBestActionForUser } from '@/lib/intelligence/nextBestActionEngine'
 import { NextRequest, NextResponse } from 'next/server'
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const result = await computeNextBestActionForUser(admin, body.user_id, {
     force: body.force === true,
   })

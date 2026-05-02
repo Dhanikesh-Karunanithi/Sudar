@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { proactiveReplyBodySchema } from '@/lib/tutor/proactivePromptSchema'
 
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { trigger, choice_id, choice_label, follow_up_message, course_id, module_id } = parsed.data
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   await admin.from('learning_events').insert({
     user_id: user.id,

@@ -35,6 +35,10 @@ export async function middleware(request: NextRequest) {
   const isPublicPath = isLearnPublicPath(pathname)
 
   if (!user && !isPublicPath) {
+    // API callers (fetch, integrations) expect JSON errors — not HTML login redirects.
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
+    }
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

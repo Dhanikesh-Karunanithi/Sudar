@@ -1,9 +1,11 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { NextResponse } from 'next/server'
 import { performanceConfigSchema } from '@/types/performance'
 import { orgAiCompliancePatchSchema } from '@/types/orgCompliance'
 import {
+  orgAiRuntimePolicySchema,
+  parseOrgAiRuntimePolicy,
   getPrivateLlmBearerToken,
   isOrgPrivateAiFeatureEnabled,
   orgAiInferencePatchSchema,
@@ -31,7 +33,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: org } = await admin
     .from('organisations')
     .select('settings')
@@ -47,6 +49,7 @@ export async function GET() {
   const notification_policy = (settings.notification_policy as Record<string, unknown> | undefined) ?? {}
   const notification_branding = (settings.notification_branding as Record<string, unknown> | undefined) ?? {}
   const ai_inference = parseOrgAiInference(settings)
+  const ai_runtime = parseOrgAiRuntimePolicy(settings)
   const sudar_agents = resolveSudarAgentsFromOrgSettings(settings)
 
   return NextResponse.json({
@@ -114,6 +117,11 @@ export async function GET() {
       feature_available: isOrgPrivateAiFeatureEnabled(),
       bearer_configured: Boolean(getPrivateLlmBearerToken()),
     },
+    ai_runtime: {
+      ...ai_runtime,
+      feature_available: isOrgPrivateAiFeatureEnabled(),
+      bearer_configured: Boolean(getPrivateLlmBearerToken()),
+    },
     sudar_agents,
   })
 }
@@ -134,7 +142,7 @@ export async function PATCH(request: Request) {
   }
 
   const body = await request.json()
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: org } = await admin
     .from('organisations')
     .select('settings')
@@ -278,6 +286,41 @@ export async function PATCH(request: Request) {
       }
     }
     updatedSettings.ai_inference = mergedInference
+  }
+
+  if (body.ai_runtime !== undefined) {
+    if (!isOrgPrivateAiFeatureEnabled()) {
+      return NextResponse.json(
+        { error: 'Local BYOM mode is not enabled on this deployment (ALLOW_ORG_PRIVATE_AI_SERVER).' },
+        { status: 403 }
+      )
+    }
+    if (typeof body.ai_runtime !== 'object' || body.ai_runtime === null || Array.isArray(body.ai_runtime)) {
+      return NextResponse.json({ error: 'Invalid ai_runtime' }, { status: 400 })
+    }
+    const parsed = orgAiRuntimePolicySchema.safeParse(body.ai_runtime)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid ai_runtime', details: parsed.error.flatten() },
+        { status: 400 }
+      )
+    }
+    for (const provider of parsed.data.providers) {
+      const urlCheck = validateOrgPrivateServerUrl(provider.base_url)
+      if (!urlCheck.ok) {
+        return NextResponse.json({ error: `Provider "${provider.id}": ${urlCheck.error}` }, { status: 400 })
+      }
+      if (provider.auth_mode === 'bearer' && !getPrivateLlmBearerToken()) {
+        return NextResponse.json(
+          {
+            error:
+              'Bearer local provider requires LOCAL_LLM_BEARER_TOKEN or AI_CHAT_API_KEY on the deployment.',
+          },
+          { status: 400 }
+        )
+      }
+    }
+    updatedSettings.ai_runtime = parsed.data
   }
 
   if (body.sudar_agents !== undefined) {

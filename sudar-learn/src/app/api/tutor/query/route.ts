@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import type { TutorAction, TutorActionType, TutorBlock } from '@/types/tutor'
@@ -14,6 +14,7 @@ import {
 } from '@/lib/ai/chat'
 import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import type { PrivateOpenAiRuntime } from '@/types/orgAiInference'
+import { capabilitySupported, parseOrgAiRuntimePolicy } from '@/types/orgAiInference'
 import { checkAndIncrementUsage } from '@/lib/usage-limits'
 import { logAiError } from '@/lib/logger'
 import {
@@ -61,33 +62,32 @@ type TutorAiDeps = {
   chatCtx: ChatCompletionContext
 }
 
-// Static, factual description of the Sudar Learn UI — injected into every prompt so Sudar
-// can guide navigation accurately instead of hallucinating steps.
-const SUDAR_PLATFORM_KNOWLEDGE = `
-## Sudar Learn — Platform Navigation Guide (use this when learners ask how to find or access anything)
+function resolveRoutingMeta(orgSettings: unknown, privateRuntime: PrivateOpenAiRuntime | null) {
+  const policy = parseOrgAiRuntimePolicy(orgSettings)
+  const hasLocalCapability = capabilitySupported(policy, 'chat')
+  const localChosen = Boolean(privateRuntime) && hasLocalCapability
+  if (localChosen) {
+    return {
+      decision: 'local' as const,
+      provider_id: 'local-main',
+      model: privateRuntime?.defaultModel ?? '',
+      fallback_used: false,
+      fallback_reason: null,
+    }
+  }
+  const fallbackReason =
+    policy.mode !== 'cloud' && !hasLocalCapability ? 'LOCAL_CAPABILITY_UNSUPPORTED' : null
+  return {
+    decision: 'cloud' as const,
+    provider_id: 'cloud:default',
+    model: process.env.AI_CHAT_DEFAULT_MODEL?.trim() || 'default',
+    fallback_used: Boolean(fallbackReason),
+    fallback_reason: fallbackReason,
+  }
+}
 
-### Course Viewer Layout
-When inside a course, the screen has three areas:
-1. **Left sidebar** — collapsible list of all modules with a progress bar. Click any module title to jump to it.
-2. **Center content area** — the current module displayed in the chosen modality.
-3. **Right panel** — this Sudar chat, opened by clicking the "Ask Sudar" button in the top bar.
-
-### Modality Switcher (icon tabs in the top bar of the course viewer)
-The top bar has tabs to switch how content is presented. Each tab has a label and icon:
-- **Read** (document icon) — default text/markdown view. Always available immediately.
-- **Listen** (headphones icon) — AI-generated audio narration. Click it and it generates in 5–15 seconds on first use; subsequent opens are instant (cached).
-- **Map** (network icon) — AI-generated mind map. Generates in a few seconds on first click; cached after that. Has a "Module" vs "Course" scope toggle inside.
-- **Cards** (layers icon) — AI-generated flashcards. Always available; click to view.
-- **Watch** (video icon) — pre-recorded video. Only active when video was generated in Sudar Studio; otherwise shows "Coming soon" and cannot be clicked.
-- **Podcast** (mic icon) — AI dialogue format. Only shown if configured for the course in Studio.
-
-### Key Navigation
-- Switch modules: click the module name in the **left sidebar**.
-- Open/close Sudar chat: **"Ask Sudar" button** in the top-right of the top bar (or press the chat icon).
-- Go to course list: click **"My Courses"** in the left navigation sidebar of the dashboard.
-- Highlight any text in the content → a popup appears with quick actions (Explain this, Give me an example, etc.) that auto-send to Sudar.
-
-CRITICAL: When a learner asks how to access a modality, navigate to a module, or use any UI feature, use ONLY the accurate steps above. Do NOT invent navigation steps, menu names, or UI elements that are not described here.`
+/** Navigation truth for learner tutor prompts — regenerated from help-center/_ai/learn-navigation.md */
+const SUDAR_PLATFORM_KNOWLEDGE = SUDAR_LEARN_PLATFORM_KNOWLEDGE
 
 // Regex patterns that indicate the learner wants an interactive quiz.
 const QUIZ_INTENT_PATTERNS = [
@@ -411,7 +411,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const admin = createAdminClient()
+    const admin = createServiceRoleSupabaseClient()
 
     let body: z.infer<typeof tutorQueryBodySchema>
     try {
@@ -439,6 +439,41 @@ export async function POST(request: NextRequest) {
       orgSettings,
       privateRuntime,
       chatCtx: { privateOpenAi: privateRuntime },
+    }
+    const runtimePolicy = parseOrgAiRuntimePolicy(orgSettings)
+    const routing = resolveRoutingMeta(orgSettings, privateRuntime)
+    if (
+      runtimePolicy.mode === 'local' &&
+      runtimePolicy.strict_local &&
+      routing.decision === 'cloud'
+    ) {
+      if (course_id) {
+        try {
+          await admin.from('learning_events').insert({
+            user_id: user.id,
+            course_id,
+            module_id: module_id ?? null,
+            event_type: 'ai_runtime_failure',
+            modality: 'text',
+            payload: {
+              reason: 'STRICT_LOCAL_NO_FALLBACK',
+              provider_id: routing.provider_id,
+            },
+          })
+        } catch {
+          // non-blocking telemetry
+        }
+      }
+      return NextResponse.json(
+        {
+          response:
+            'Your organisation requires Local AI, but no compatible local provider is currently available. Ask your admin to reconnect Local BYOM.',
+          guardrail_refused: true,
+          guardrail_code: 'strict_local_unavailable',
+          routing: { ...routing, fallback_reason: 'STRICT_LOCAL_NO_FALLBACK' },
+        },
+        { status: 200 }
+      )
     }
 
     const usage = await checkAndIncrementUsage(admin, user.id, 'tutor')
@@ -536,6 +571,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           response: wf.result ?? wf.summary ?? 'Done.',
           blocks,
+        routing,
         })
       } catch {
         return NextResponse.json({
@@ -921,6 +957,23 @@ How to personalize:
     } catch (e) {
       console.error('[tutor] learning_events insert error:', e)
     }
+    try {
+      await admin.from('learning_events').insert({
+        user_id: user.id,
+        course_id,
+        module_id: module_id ?? null,
+        event_type: routing.fallback_used ? 'ai_runtime_fallback' : 'ai_runtime_route',
+        modality: 'text',
+        payload: {
+          decision: routing.decision,
+          provider_id: routing.provider_id,
+          model: routing.model,
+          fallback_reason: routing.fallback_reason ?? null,
+        },
+      })
+    } catch (e) {
+      console.error('[tutor] runtime event insert error:', e)
+    }
   }
 
   // ── 6. Async memory update (fire and forget) ───────────────────────────
@@ -957,6 +1010,7 @@ How to personalize:
     response: responseText,
     ...(actions.length > 0 ? { actions } : {}),
     blocks,
+    routing,
   })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)

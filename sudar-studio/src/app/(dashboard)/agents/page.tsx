@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { requireOrgAdmin } from '@/lib/org'
 import { resolveSudarAgentsFromOrgSettings } from '../../../../../shared/sudarAgentsOrgSettings'
@@ -18,7 +18,7 @@ export default async function SudarAgentsObservabilityPage() {
     redirect('/')
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const [{ data: runs }, { data: orgRow }] = await Promise.all([
     admin
       .from('agent_runs')

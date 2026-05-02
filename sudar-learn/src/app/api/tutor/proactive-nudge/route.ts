@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
   const { course_id, module_id, reason } = parsed.data
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
     userId: user.id,
     courseId: course_id,

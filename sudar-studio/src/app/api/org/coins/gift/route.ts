@@ -4,7 +4,7 @@
  * Requires MANAGER or ORG_ADMIN role.
  */
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
 
   const { recipientUserId, amount, message } = parsed.data
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   // Verify sender role
   const { data: senderProfile } = await admin

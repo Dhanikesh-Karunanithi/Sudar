@@ -1,7 +1,7 @@
 /**
  * BFF: Sudar Agents runs — forwards to Intelligence with learner JWT.
  */
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { sudarIntelligenceBaseUrl } from '@/lib/intelligence/baseUrl'
 import { loadLearnerAgentsAccess, learnerRunBlockedReason } from '@/lib/org/sudarAgentsAccess'
 import { NextRequest, NextResponse } from 'next/server'
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const access = await loadLearnerAgentsAccess(admin, session.user.id)
   if (!access) {
     return NextResponse.json(

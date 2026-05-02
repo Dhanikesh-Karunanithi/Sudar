@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -17,7 +17,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: groups, error } = await admin
     .from('learner_groups')
     .select('id, name, description, created_at')
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
   if (!name) return NextResponse.json({ error: 'name required' }, { status: 400 })
   const description = typeof body.description === 'string' ? body.description.trim() || null : null
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data, error } = await admin
     .from('learner_groups')
     .insert({

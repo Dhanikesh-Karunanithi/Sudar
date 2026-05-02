@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Award, CheckCircle2, Calendar, Building2, BadgeCheck, Route } from 'lucide-react'
 import Link from 'next/link'
@@ -6,7 +6,7 @@ import { CertActions } from './CertActions'
 
 export default async function CertificatePage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const { data: cert } = await admin
     .from('certifications')

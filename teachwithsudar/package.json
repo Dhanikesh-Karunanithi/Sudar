@@ -10,10 +10,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.19",
     "framer-motion": "^12.37.0",
+    "gray-matter": "^4.0.3",
     "next": "^15.1.0",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "react-markdown": "^9.1.0"
   },
   "devDependencies": {
     "@types/node": "^20",

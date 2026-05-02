@@ -2,6 +2,7 @@
  * organisations.settings.ai_inference — same contract as Studio (sudar-studio/src/types/orgAiInference.ts).
  * Bearer token is never stored in JSON; use LOCAL_LLM_BEARER_TOKEN or AI_CHAT_API_KEY on the server.
  */
+import { z } from 'zod'
 
 export type OrgAiInferenceStored = {
   use_private_server: boolean
@@ -14,6 +15,32 @@ export type PrivateOpenAiRuntime = {
   apiKey: string
   defaultModel: string
 }
+
+const runtimeModeSchema = z.enum(['cloud', 'local', 'hybrid'])
+const runtimeCapabilitySchema = z.enum(['chat', 'summarize', 'rewrite', 'flashcards', 'quiz_explain'])
+const runtimeProviderSchema = z.object({
+  id: z.string().trim().min(1).max(128),
+  type: z.literal('openai_compatible_local').default('openai_compatible_local'),
+  base_url: z.string().trim().min(1),
+  model: z.string().trim().min(1).max(256),
+  auth_mode: z.enum(['none', 'bearer']).default('none'),
+  timeout_ms: z.number().int().min(1000).max(120000).default(30000),
+  max_tokens_default: z.number().int().min(32).max(8192).default(512),
+  capabilities: z.array(runtimeCapabilitySchema).default(['chat', 'summarize', 'rewrite']),
+  active: z.boolean().default(true),
+  encrypted_secret_ref: z.string().trim().max(256).nullable().optional(),
+})
+const orgAiRuntimePolicySchema = z.object({
+  mode: runtimeModeSchema.default('cloud'),
+  strict_local: z.boolean().default(false),
+  fallback_enabled: z.boolean().default(true),
+  providers: z.array(runtimeProviderSchema).default([]),
+})
+
+export type RuntimeMode = z.infer<typeof runtimeModeSchema>
+export type RuntimeCapability = z.infer<typeof runtimeCapabilitySchema>
+export type RuntimeProviderStored = z.infer<typeof runtimeProviderSchema>
+export type OrgAiRuntimePolicy = z.infer<typeof orgAiRuntimePolicySchema>
 
 export function isOrgPrivateAiFeatureEnabled(): boolean {
   return process.env.ALLOW_ORG_PRIVATE_AI_SERVER?.trim().toLowerCase() === 'true'
@@ -81,6 +108,21 @@ export function parseOrgAiInference(settings: unknown): OrgAiInferenceStored {
     private_server_url: typeof ai.private_server_url === 'string' ? ai.private_server_url.trim() : '',
     private_server_model: typeof ai.private_server_model === 'string' ? ai.private_server_model.trim() : '',
   }
+}
+
+export function parseOrgAiRuntimePolicy(settings: unknown): OrgAiRuntimePolicy {
+  const s = settings as Record<string, unknown> | null | undefined
+  const runtime = (s?.ai_runtime as Record<string, unknown> | undefined) ?? {}
+  const parsed = orgAiRuntimePolicySchema.safeParse(runtime)
+  if (!parsed.success) {
+    return { mode: 'cloud', strict_local: false, fallback_enabled: true, providers: [] }
+  }
+  return parsed.data
+}
+
+export function capabilitySupported(policy: OrgAiRuntimePolicy, capability: RuntimeCapability): boolean {
+  if (policy.mode === 'cloud') return true
+  return policy.providers.some((p) => p.active && p.capabilities.includes(capability))
 }
 
 export function buildPrivateOpenAiRuntime(settings: unknown): PrivateOpenAiRuntime | null {

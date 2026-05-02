@@ -3,7 +3,7 @@
  * Trigger daily (recommended) with CRON_SECRET.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { rejectInvalidCronRequest } from '@/lib/security/cronAuth'
 
 function normalizeDate(input: string | null): string {
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     typeof body.date === 'string' ? body.date : request.nextUrl.searchParams.get('date')
   )
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const [{ error: rollupError }, { error: riskError }] = await Promise.all([
     admin.rpc('refresh_analytics_rollups', { p_date: targetDate }),
     admin.rpc('refresh_analytics_risk_signals', { p_date: targetDate }),

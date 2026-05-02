@@ -1,7 +1,7 @@
 /**
  * DELETE /api/integrations/keys/[id] — Revoke an integration key. Admin/Manager only.
  */
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -23,7 +23,7 @@ export async function DELETE(
   const { id } = await params
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { error } = await admin
     .from('integration_api_keys')
     .delete()

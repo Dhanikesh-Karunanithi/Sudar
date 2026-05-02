@@ -4,7 +4,7 @@ Sudar uses Supabase service-role clients in server-only routes for operations th
 
 ## Invariant
 
-Every `createAdminClient()` use must satisfy one of these patterns before touching tenant data:
+Every `createServiceRoleSupabaseClient()` use must satisfy one of these patterns before touching tenant data:
 
 - Authenticated learner owns the target row (`user.id === user_id`) or is enrolled in the target course.
 - Authenticated Studio user is a super admin, org admin/manager, content editor, or creator of the target course.
@@ -45,7 +45,7 @@ The script exits non-zero while unclassified callsites remain. That is intention
 
 ### Recommended guardrail
 
-Add a custom ESLint rule or CI script that flags any new `createAdminClient()` call unless the file also imports one of the approved authorization helpers (`requireOrgAdmin`, `requireOrgContentEditor`, `requireSuperAdmin`, `rejectInvalidCronRequest`, `rejectAlpUserOutsideOrg`, `canLearnerAccessScormPath`, `canStudioUserAccessScormPath`, `canUserAccessSudarVidJob`, or a reviewed equivalent).
+ESLint now blocks importing `createClient` from `@supabase/supabase-js` outside `src/lib/supabase/server.ts`. Naming was standardized to **`createServiceRoleSupabaseClient()`** so reviewers can grep it. Optionally add CI that fails if those callsites omit approved helpers (`requireOrgAdmin`, `requireOrgContentEditor`, `requireSuperAdmin`, `rejectInvalidCronRequest`, `rejectAlpUserOutsideOrg`, `canLearnerAccessScormPath`, `canStudioUserAccessScormPath`, `canUserAccessSudarVidJob`, or equivalents).
 
 ## Residual risk
 

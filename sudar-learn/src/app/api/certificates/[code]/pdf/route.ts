@@ -2,7 +2,7 @@
  * Server-generated certificate PDF.
  * GET /api/certificates/[code]/pdf returns application/pdf for download.
  */
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import React from 'react'
 import ReactPDF from '@react-pdf/renderer'
@@ -15,7 +15,7 @@ export async function GET(
   const { code } = await context.params
   if (!code) return NextResponse.json({ error: 'Missing code' }, { status: 400 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: cert } = await admin
     .from('certifications')
     .select('*, path:learning_paths(title, courses)')

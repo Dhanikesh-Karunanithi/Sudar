@@ -4,7 +4,7 @@
  * Auth: x-alp-api-key or Authorization: Bearer (env ALP_API_KEY or org key from integration_api_keys).
  * See docs/ALP_API.md for the contract.
  */
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { validateAlpKey, getAlpKeyFromRequest, rejectAlpUserOutsideOrg } from '@/lib/alp-auth'
 import type { Json } from '@/types/database'
 import { NextRequest, NextResponse } from 'next/server'
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'user_id and non-empty events array required' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const orgError = await rejectAlpUserOutsideOrg(admin, auth, user_id)
   if (orgError) return orgError
 

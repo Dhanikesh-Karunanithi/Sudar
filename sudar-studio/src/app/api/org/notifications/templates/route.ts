@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import type { Database, Json } from '@/types/database'
 
@@ -22,7 +22,7 @@ export async function GET() {
   const orgId = await requireOrgAdmin(user.id).catch(() => null)
   if (!orgId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data, error } = await admin
     .from('notification_templates')
     .select('*')
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'slug, category_slug, and title_mustache are required' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const templateInsert: NotificationTemplateInsert = {
     org_id: orgId,
     slug: String(body.slug),

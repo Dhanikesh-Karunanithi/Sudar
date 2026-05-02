@@ -3,7 +3,7 @@
  * resolves Sudar user via custom claim `sudar_user_id` and/or lms_identity_links (provider `lti`),
  * then redirects browser to /alp/embed with a fresh signed embed token.
  */
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { createAlpEmbedToken } from '@/lib/alp/embedToken'
 import { getEmbedSigningSecretConfigured, isUserInOrg } from '@/lib/alp-auth'
 import { NextRequest, NextResponse } from 'next/server'
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     return htmlError('id_token missing iss, aud, deployment_id, or sub', 400)
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const { data: deployments, error: depErr } = await admin
     .from('lti_platform_deployments')

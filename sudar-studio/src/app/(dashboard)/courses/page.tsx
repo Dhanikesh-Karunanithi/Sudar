@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import type { Metadata } from 'next'
 import { getOrCreateOrg } from '@/lib/org'
 import Link from 'next/link'
@@ -11,7 +11,7 @@ export default async function CoursesPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const orgId = await getOrCreateOrg(user!.id)
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const { data: rawCourses } = await admin
     .from('courses')

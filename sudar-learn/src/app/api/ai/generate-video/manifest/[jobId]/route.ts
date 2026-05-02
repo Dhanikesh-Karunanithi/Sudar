@@ -1,4 +1,4 @@
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { getSudarVidBaseUrl } from '@/lib/sudarvid'
 import { canUserAccessSudarVidJob } from '@/lib/security/sudarVidAccess'
@@ -15,7 +15,7 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const allowed = await canUserAccessSudarVidJob(admin, user.id, jobId)
   if (!allowed) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 

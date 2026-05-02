@@ -3,7 +3,7 @@
  * Call via cron (e.g. daily) with CRON_SECRET to send reminder emails to learners.
  * Requires RESEND_API_KEY and optional RESEND_FROM (defaults to Resend sandbox).
  */
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { rejectInvalidCronRequest } from '@/lib/security/cronAuth'
 import { NextRequest, NextResponse } from 'next/server'
 import { sendEmailNotification } from '../../../../../../shared/notifications/channels/email'
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   // Path enrollments with due dates (only path-based for compliance)
   const { data: enrollments } = await admin

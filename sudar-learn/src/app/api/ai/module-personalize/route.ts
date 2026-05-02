@@ -3,7 +3,7 @@
  * Modes: role_explain | brief_3min — stored on enrollments.personalization_overlays[moduleId].
  */
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
@@ -13,6 +13,7 @@ import { checkAndIncrementUsage } from '@/lib/usage-limits'
 import { moduleContentToPlainText } from '@/lib/learn/modulePlainText'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 import type { Json } from '@/types/database'
+import { capabilitySupported, parseOrgAiRuntimePolicy } from '@/types/orgAiInference'
 
 const MODES = ['role_explain', 'brief_3min'] as const
 type Mode = (typeof MODES)[number]
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const usage = await checkAndIncrementUsage(admin, user.id, 'module_personalize')
   if (!usage.allowed) {
     return NextResponse.json(
@@ -117,6 +118,17 @@ export async function POST(request: NextRequest) {
     courseId: course_id,
     userId: user.id,
   })
+  const runtimePolicy = parseOrgAiRuntimePolicy(orgSettings)
+  if (
+    runtimePolicy.mode === 'local' &&
+    runtimePolicy.strict_local &&
+    !capabilitySupported(runtimePolicy, 'rewrite')
+  ) {
+    return NextResponse.json(
+      { ok: false, error: 'Local BYOM strict mode is enabled, but rewrite capability is unavailable on the configured local model.' },
+      { status: 503 }
+    )
+  }
   const aiCfg = resolveChatConfigError(orgSettings, privateRuntime)
   if (aiCfg) {
     return NextResponse.json(

@@ -6,7 +6,7 @@
  * POST /api/quests/progress — (handled in /api/quests/progress/route.ts)
  */
 
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 const DAILY_QUEST_SLUGS = [
@@ -22,7 +22,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const todayStart = new Date()
   todayStart.setHours(0, 0, 0, 0)
 

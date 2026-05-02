@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { verifyNotificationTrackingToken } from '../../../../../../shared/notifications/trackingToken'
 
 export async function POST(request: NextRequest) {
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
 
   const { notificationId, event } = verification
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const now = new Date().toISOString()
   const patch: Record<string, string> = {}
   if (event === 'open') patch.opened_at = now

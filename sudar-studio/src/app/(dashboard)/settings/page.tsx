@@ -55,6 +55,15 @@ export default function SettingsPage() {
   const [privateAiBearerConfigured, setPrivateAiBearerConfigured] = useState(false)
   const [privateAiTestStatus, setPrivateAiTestStatus] = useState<string | null>(null)
   const [privateAiTesting, setPrivateAiTesting] = useState(false)
+  const [runtimeMode, setRuntimeMode] = useState<'cloud' | 'local' | 'hybrid'>('cloud')
+  const [runtimeStrictLocal, setRuntimeStrictLocal] = useState(false)
+  const [runtimeFallbackEnabled, setRuntimeFallbackEnabled] = useState(true)
+  const [runtimeMetrics, setRuntimeMetrics] = useState<{
+    ai_runtime_route: number
+    ai_runtime_fallback: number
+    ai_runtime_failure: number
+    fallback_ratio?: number
+  } | null>(null)
   const [voiceProviderStatuses, setVoiceProviderStatuses] = useState<VoiceLibraryProviderStatus[]>([])
   const [agentsEnabled, setAgentsEnabled] = useState(true)
   const [agentsCohortPulse, setAgentsCohortPulse] = useState(true)
@@ -120,6 +129,21 @@ export default function SettingsPage() {
       setPrivateAiFeatureAvailable(data.ai_inference.feature_available === true)
       setPrivateAiBearerConfigured(data.ai_inference.bearer_configured === true)
     }
+    if (data.ai_runtime) {
+      setRuntimeMode(
+        data.ai_runtime.mode === 'local' || data.ai_runtime.mode === 'hybrid' ? data.ai_runtime.mode : 'cloud'
+      )
+      setRuntimeStrictLocal(data.ai_runtime.strict_local === true)
+      setRuntimeFallbackEnabled(data.ai_runtime.fallback_enabled !== false)
+      const provider = Array.isArray(data.ai_runtime.providers)
+        ? data.ai_runtime.providers.find((p: { active?: boolean }) => p?.active !== false)
+        : null
+      if (provider && typeof provider === 'object') {
+        setUsePrivateServer(true)
+        setPrivateServerUrl(typeof provider.base_url === 'string' ? provider.base_url : '')
+        setPrivateServerModel(typeof provider.model === 'string' ? provider.model : '')
+      }
+    }
     const keysRes = await fetch('/api/settings/keys-status')
     if (keysRes.ok) {
       const keysData = await keysRes.json()
@@ -150,6 +174,18 @@ export default function SettingsPage() {
           description: 'Cloud TTS/chat provider available for generation paths.',
         },
       ])
+    }
+    const runtimeMetricsRes = await fetch('/api/org/ai-runtime-metrics')
+    if (runtimeMetricsRes.ok) {
+      const runtimeData = await runtimeMetricsRes.json().catch(() => null)
+      if (runtimeData?.success && runtimeData?.data?.totals) {
+        setRuntimeMetrics({
+          ai_runtime_route: Number(runtimeData.data.totals.ai_runtime_route ?? 0),
+          ai_runtime_fallback: Number(runtimeData.data.totals.ai_runtime_fallback ?? 0),
+          ai_runtime_failure: Number(runtimeData.data.totals.ai_runtime_failure ?? 0),
+          fallback_ratio: Number(runtimeData.data.fallback_ratio ?? 0),
+        })
+      }
     }
     setLoading(false)
   }, [])
@@ -194,6 +230,26 @@ export default function SettingsPage() {
             use_private_server: usePrivateServer,
             private_server_url: privateServerUrl,
             private_server_model: privateServerModel,
+          },
+          ai_runtime: {
+            mode: runtimeMode,
+            strict_local: runtimeStrictLocal,
+            fallback_enabled: runtimeFallbackEnabled,
+            providers: usePrivateServer
+              ? [
+                  {
+                    id: 'local-main',
+                    type: 'openai_compatible_local',
+                    base_url: privateServerUrl,
+                    model: privateServerModel,
+                    auth_mode: 'bearer',
+                    timeout_ms: 30000,
+                    max_tokens_default: 512,
+                    capabilities: ['chat', 'summarize', 'rewrite', 'flashcards', 'quiz_explain'],
+                    active: true,
+                  },
+                ]
+              : [],
           },
         }),
         sudar_agents: {
@@ -686,6 +742,40 @@ export default function SettingsPage() {
         )}
         {privateAiFeatureAvailable && (
           <>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="text-xs text-slate-400">
+                Runtime mode
+                <select
+                  value={runtimeMode}
+                  onChange={(e) => setRuntimeMode(e.target.value as 'cloud' | 'local' | 'hybrid')}
+                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-2 py-2 text-sm text-white"
+                >
+                  <option value="cloud">Cloud only</option>
+                  <option value="local">Local only</option>
+                  <option value="hybrid">Hybrid (prefer local)</option>
+                </select>
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer sm:pt-6">
+                <input
+                  type="checkbox"
+                  checked={runtimeStrictLocal}
+                  onChange={(e) => setRuntimeStrictLocal(e.target.checked)}
+                  className="rounded border-slate-600"
+                  disabled={runtimeMode === 'cloud'}
+                />
+                Strict local (no cloud fallback)
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer sm:pt-6">
+                <input
+                  type="checkbox"
+                  checked={runtimeFallbackEnabled}
+                  onChange={(e) => setRuntimeFallbackEnabled(e.target.checked)}
+                  className="rounded border-slate-600"
+                  disabled={runtimeMode === 'cloud' || runtimeStrictLocal}
+                />
+                Enable cloud fallback
+              </label>
+            </div>
             <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
               <input
                 type="checkbox"
@@ -743,27 +833,25 @@ export default function SettingsPage() {
                   onClick={async () => {
                     setPrivateAiTesting(true)
                     setPrivateAiTestStatus(null)
-                    const saveFirst = await fetch('/api/org/settings', {
-                      method: 'PATCH',
+                    const tr = await fetch('/api/ai/runtime/providers/test', {
+                      method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
-                        ai_inference: {
-                          use_private_server: usePrivateServer,
-                          private_server_url: privateServerUrl,
-                          private_server_model: privateServerModel,
-                        },
+                        type: 'openai_compatible_local',
+                        base_url: privateServerUrl,
+                        model: privateServerModel,
+                        auth_mode: 'bearer',
+                        timeout_ms: 12000,
                       }),
                     })
-                    if (!saveFirst.ok) {
-                      const err = await saveFirst.json().catch(() => ({}))
-                      setPrivateAiTestStatus(typeof err.error === 'string' ? err.error : 'Could not save settings.')
-                      setPrivateAiTesting(false)
-                      return
-                    }
-                    const tr = await fetch('/api/org/settings/test-private-ai', { method: 'POST' })
                     const td = await tr.json().catch(() => ({}))
-                    if (td.ok) setPrivateAiTestStatus(`Success: ${td.sample_reply ? `"${td.sample_reply.slice(0, 80)}"` : 'connected'}`)
-                    else setPrivateAiTestStatus(typeof td.error === 'string' ? td.error : 'Test failed.')
+                    if (td.success) {
+                      setPrivateAiTestStatus(
+                        `Success (${td.data?.latencyMs ?? 'n/a'}ms): ${td.data?.sample ? `"${String(td.data.sample).slice(0, 80)}"` : 'connected'}`
+                      )
+                    } else {
+                      setPrivateAiTestStatus(typeof td.error === 'string' ? td.error : 'Test failed.')
+                    }
                     setPrivateAiTesting(false)
                   }}
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-200 text-sm"
@@ -775,6 +863,12 @@ export default function SettingsPage() {
                   <span className="text-xs text-slate-400 max-w-md">{privateAiTestStatus}</span>
                 )}
               </div>
+              {runtimeMetrics && (
+                <div className="rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2 text-xs text-slate-400">
+                  Last 7 days: {runtimeMetrics.ai_runtime_route} routed, {runtimeMetrics.ai_runtime_fallback} fallbacks,{' '}
+                  {runtimeMetrics.ai_runtime_failure} strict-local failures (fallback ratio {Math.round((runtimeMetrics.fallback_ratio ?? 0) * 100)}%).
+                </div>
+              )}
             </div>
           </>
         )}

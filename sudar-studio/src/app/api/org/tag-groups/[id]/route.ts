@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireOrgContentEditor } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -28,7 +28,7 @@ export async function PATCH(
   const parsed = patchSchema.safeParse(json)
   if (!parsed.success) return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const updates: Record<string, unknown> = {}
   if (parsed.data.name !== undefined) updates.name = parsed.data.name.trim()
   if (parsed.data.sort_order !== undefined) updates.sort_order = parsed.data.sort_order
@@ -61,7 +61,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { error } = await admin.from('tag_groups').delete().eq('id', id).eq('org_id', orgId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

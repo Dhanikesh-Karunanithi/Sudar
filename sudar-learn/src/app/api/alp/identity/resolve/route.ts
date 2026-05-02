@@ -3,7 +3,7 @@
  * Auth: org-scoped integration key only (prevents cross-tenant enumeration with env master key).
  * Body: { provider?: string, external_user_id: string }
  */
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { validateAlpKey, getAlpKeyFromRequest } from '@/lib/alp-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   }
 
   const provider = parsed.provider?.trim() || 'moodle'
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const { data: row, error } = await admin
     .from('lms_identity_links')

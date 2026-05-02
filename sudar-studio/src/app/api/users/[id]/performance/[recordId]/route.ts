@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { NextResponse } from 'next/server'
 import { updatePerformanceRecordSchema } from '@/types/performance'
@@ -28,7 +28,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid payload', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: existing } = await admin
     .from('learner_performance_records')
     .select('id')
@@ -81,7 +81,7 @@ export async function DELETE(
   }
 
   const { id: userId, recordId } = await params
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const { error } = await admin
     .from('learner_performance_records')

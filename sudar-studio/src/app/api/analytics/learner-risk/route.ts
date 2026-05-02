@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
 import { getOrCreateOrg } from '@/lib/org'
 
 export async function GET() {
@@ -12,7 +12,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
 
   const orgId = await getOrCreateOrg(user.id)
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const today = new Date().toISOString().slice(0, 10)
 
   const { data: riskRows, error } = await admin

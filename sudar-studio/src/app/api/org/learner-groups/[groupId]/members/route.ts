@@ -1,9 +1,9 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 
 async function assertGroupInOrg(
-  admin: ReturnType<typeof createAdminClient>,
+  admin: ReturnType<typeof createServiceRoleSupabaseClient>,
   orgId: string,
   groupId: string
 ) {
@@ -17,7 +17,7 @@ async function assertGroupInOrg(
 }
 
 async function assertUserInOrg(
-  admin: ReturnType<typeof createAdminClient>,
+  admin: ReturnType<typeof createServiceRoleSupabaseClient>,
   orgId: string,
   targetUserId: string
 ) {
@@ -49,7 +49,7 @@ export async function GET(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const ok = await assertGroupInOrg(admin, orgId, groupId)
   if (!ok) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
@@ -81,7 +81,7 @@ export async function POST(
   const targetUserId = typeof body.user_id === 'string' ? body.user_id : ''
   if (!targetUserId) return NextResponse.json({ error: 'user_id required' }, { status: 400 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const ok = await assertGroupInOrg(admin, orgId, groupId)
   if (!ok) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
@@ -118,7 +118,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const ok = await assertGroupInOrg(admin, orgId, groupId)
   if (!ok) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 

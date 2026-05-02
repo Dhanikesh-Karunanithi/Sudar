@@ -1,4 +1,5 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { logAuditEvent } from '@/lib/audit/logAuditEvent'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireSuperAdmin } from '@/lib/org'
 import { rejectCrossSiteRequest } from '@/lib/security/sameOrigin'
 import { NextRequest, NextResponse } from 'next/server'
@@ -104,7 +105,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: `Type ${CONFIRMATION} to confirm` }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
+
+  await logAuditEvent(admin, {
+    actorUserId: user.id,
+    orgId: null,
+    action: 'admin.purge_users.started',
+    payload: {
+      keeper_configured: true,
+    },
+  })
 
   const allUsers: User[] = []
   for (let page = 1; ; page += 1) {
@@ -148,6 +158,18 @@ export async function POST(request: NextRequest) {
       failures.push({ id: u.id, email: u.email ?? null, error: error.message })
     }
   }
+
+  await logAuditEvent(admin, {
+    actorUserId: user.id,
+    orgId: null,
+    action: 'admin.purge_users.completed',
+    payload: {
+      total_users: allUsers.length,
+      planned_deletes: toDelete.length,
+      deleted_ok: toDelete.length - failures.length,
+      failure_count: failures.length,
+    },
+  })
 
   return NextResponse.json({
     success: failures.length === 0,

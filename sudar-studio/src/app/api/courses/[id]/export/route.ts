@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { buildScorm12ExportZip, type ModuleRow } from '@/lib/export/buildScorm12ExportZip'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const { data: courseRow, error } = await admin
     .from('courses')
     .select('id, title, modules(title, order_index, content)')

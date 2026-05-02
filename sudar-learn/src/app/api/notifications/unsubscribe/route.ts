@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { verifyUnsubscribeToken } from '../../../../../../shared/notifications/unsubscribeToken'
 
 export async function GET(request: NextRequest) {
@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const verification = verifyUnsubscribeToken(token)
   if (!verification.valid) return NextResponse.json({ error: `invalid token: ${verification.reason}` }, { status: 400 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   await admin.from('user_notification_settings').upsert({
     user_id: verification.userId,
     daily_digest_email: false,

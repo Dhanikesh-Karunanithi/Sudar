@@ -158,6 +158,13 @@ export interface TutorQueryResponse {
   blocks?: TutorBlock[]
   guardrail_refused?: boolean
   guardrail_code?: string
+  routing?: {
+    decision: 'local' | 'cloud'
+    provider_id: string
+    model: string
+    fallback_used?: boolean
+    fallback_reason?: string | null
+  }
 }
 
 export interface TutorQueryErrorResponse {

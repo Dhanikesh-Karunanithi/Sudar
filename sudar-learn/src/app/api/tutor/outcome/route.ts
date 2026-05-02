@@ -2,7 +2,7 @@
  * Log when the learner takes an action from a Sudar suggestion (e.g. Enroll, Continue, Review).
  * Used so the agent can learn from outcomes and adapt future suggestions.
  */
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
     const { course_id, path_id, action_label } = body
 
-    const admin = createAdminClient()
+    const admin = createServiceRoleSupabaseClient()
     await admin.from('learning_events').insert({
       user_id: user.id,
       course_id: course_id ?? null,

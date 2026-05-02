@@ -5,7 +5,7 @@
  */
 import { createHash, createHmac } from 'crypto'
 import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 
 function hashKey(key: string): string {
   return createHash('sha256').update(key, 'utf8').digest('hex')
@@ -25,7 +25,7 @@ export async function validateAlpKey(key: string | null): Promise<AlpKeyResult> 
   if (envKey && key === envKey) return { valid: true }
 
   const keyHash = hashKey(key)
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   // integration_api_keys lives in shared Supabase; table not in Learn's generated types
   type IntegrationDb = {

@@ -3,11 +3,12 @@
  * Returns a tree structure { root: { label, children: MindMapNode[] } }.
  * Scope: 'module' = current section; 'course' = full course overview.
  */
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
+import { capabilitySupported, parseOrgAiRuntimePolicy } from '@/types/orgAiInference'
 
 const MODULE_CONTENT_CAP = 6000
 const COURSE_TOTAL_CAP = 15000
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
 
   const body = await request.json().catch(() => ({} as Record<string, unknown>))
   const courseId = typeof body.course_id === 'string' ? body.course_id : null
@@ -60,6 +61,17 @@ export async function POST(request: NextRequest) {
     courseId,
     userId: user.id,
   })
+  const runtimePolicy = parseOrgAiRuntimePolicy(orgSettings)
+  if (
+    runtimePolicy.mode === 'local' &&
+    runtimePolicy.strict_local &&
+    !capabilitySupported(runtimePolicy, 'summarize')
+  ) {
+    return NextResponse.json(
+      { error: 'Local BYOM strict mode is enabled, but the active local model does not support mindmap generation.' },
+      { status: 503 }
+    )
+  }
   const configError = resolveChatConfigError(orgSettings, privateRuntime)
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })
 

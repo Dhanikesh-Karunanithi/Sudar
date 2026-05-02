@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { getOrCreateOrg } from '@/lib/org'
 
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const courseId = request.nextUrl.searchParams.get('course_id')
   if (!courseId) return NextResponse.json({ error: 'course_id required' }, { status: 400 })
 
-  const admin = createAdminClient()
+  const admin = createServiceRoleSupabaseClient()
   const orgId = await getOrCreateOrg(user.id)
 
   const { data: course } = await admin
