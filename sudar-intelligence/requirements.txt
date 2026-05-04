@@ -1,5 +1,5 @@
 # ByteOS Intelligence — Python Dependencies
-fastapi==0.115.0
+fastapi==0.136.1
 uvicorn[standard]==0.30.0
 pydantic==2.8.0
 pydantic-settings==2.4.0
