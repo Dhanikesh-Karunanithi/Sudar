@@ -1,0 +1,176 @@
+{
+  "generatedAt": "2026-05-02T18:53:09.731Z",
+  "articles": [
+    {
+      "slug": "admins/integrations-overview",
+      "title": "Integrations and ALP (overview)",
+      "description": "High-level map of Authenticated Learning Plane patterns—without duplicating secrets.",
+      "audience": "admin",
+      "category": "admins",
+      "order": 2,
+      "marketing": true
+    },
+    {
+      "slug": "admins/provisioning-checklist",
+      "title": "Enterprise provisioning checklist",
+      "description": "SSO, roster sync, LMS, AI keys, and telemetry—anchors for integrations deep links.",
+      "audience": "admin",
+      "category": "admins",
+      "order": 3,
+      "marketing": false
+    },
+    {
+      "slug": "admins/studio-overview",
+      "title": "Sudar Studio overview",
+      "description": "What Studio is for, how it pairs with Learn, and where to find major areas in the sidebar.",
+      "audience": "admin",
+      "category": "admins",
+      "order": 1,
+      "marketing": true
+    },
+    {
+      "slug": "ai-literacy/cloud-vs-your-server",
+      "title": "Cloud vs your own server",
+      "description": "Where the AI runs and who can see prompts at a high level.",
+      "audience": "admin",
+      "category": "ai-literacy",
+      "order": 2,
+      "marketing": true
+    },
+    {
+      "slug": "ai-literacy/connecting-a-private-server",
+      "title": "Connecting a private server",
+      "description": "Mental model—install an app, pull a model, paste an address.",
+      "audience": "admin",
+      "category": "ai-literacy",
+      "order": 4,
+      "marketing": false
+    },
+    {
+      "slug": "ai-literacy/gemma-and-local-models",
+      "title": "Gemma and local models (plain language)",
+      "description": "What “open model” means and where to learn more.",
+      "audience": "admin",
+      "category": "ai-literacy",
+      "order": 3,
+      "marketing": true
+    },
+    {
+      "slug": "ai-literacy/governance-and-privacy",
+      "title": "Governance and privacy",
+      "description": "Policies, retention, and trust docs for admins.",
+      "audience": "admin",
+      "category": "ai-literacy",
+      "order": 8,
+      "marketing": true
+    },
+    {
+      "slug": "ai-literacy/org-settings-walkthrough",
+      "title": "Org settings walkthrough",
+      "description": "Where to click in Sudar Studio for AI routing.",
+      "audience": "admin",
+      "category": "ai-literacy",
+      "order": 5,
+      "marketing": false
+    },
+    {
+      "slug": "ai-literacy/sudar-agents-for-admins",
+      "title": "Sudar Agents (for admins)",
+      "description": "Bounded automation with an audit trail—not “extra chatbots”.",
+      "audience": "admin",
+      "category": "ai-literacy",
+      "order": 6,
+      "marketing": true
+    },
+    {
+      "slug": "ai-literacy/troubleshooting-ai-connectivity",
+      "title": "Troubleshooting AI connectivity",
+      "description": "When Sudar says it cannot reach the AI.",
+      "audience": "admin",
+      "category": "ai-literacy",
+      "order": 7,
+      "marketing": false
+    },
+    {
+      "slug": "ai-literacy/what-sudar-uses-ai-for",
+      "title": "What Sudar uses AI for",
+      "description": "A quick map of where AI shows up in Studio and Learn.",
+      "audience": "admin",
+      "category": "ai-literacy",
+      "order": 1,
+      "marketing": true
+    },
+    {
+      "slug": "learners/dashboard-and-navigation",
+      "title": "Dashboard and navigation",
+      "description": "How the learner home screen is organised — courses, paths, streak, and Sudar prompts.",
+      "audience": "learner",
+      "category": "learners",
+      "order": 1,
+      "marketing": true
+    },
+    {
+      "slug": "learners/modalities",
+      "title": "Learning modalities (Read, Listen, Map, Cards, Watch, Podcast)",
+      "description": "What each modality does in the course viewer and when it is available.",
+      "audience": "learner",
+      "category": "learners",
+      "order": 2,
+      "marketing": true
+    },
+    {
+      "slug": "learners/paths-and-certificates",
+      "title": "Paths and certificates",
+      "description": "Mandatory vs optional sequences, completions, and where certificates surface.",
+      "audience": "learner",
+      "category": "learners",
+      "order": 4,
+      "marketing": true
+    },
+    {
+      "slug": "learners/scorm-modules",
+      "title": "SCORM modules",
+      "description": "How packaged e-learning modules behave inside Sudar Learn.",
+      "audience": "learner",
+      "category": "learners",
+      "order": 5,
+      "marketing": true
+    },
+    {
+      "slug": "learners/tutor-and-memory",
+      "title": "Sudar tutor and Memory",
+      "description": "How the floating tutor works, what it remembers, and safe use tips.",
+      "audience": "learner",
+      "category": "learners",
+      "order": 3,
+      "marketing": true
+    },
+    {
+      "slug": "start-here/getting-started",
+      "title": "Getting started with Sudar",
+      "description": "First-time setup for organisations using Studio and Learn — high level order of operations before env details.",
+      "audience": "admin",
+      "category": "start-here",
+      "order": 1,
+      "marketing": true
+    },
+    {
+      "slug": "success/pilot-checklist",
+      "title": "Pilot success checklist",
+      "description": "Lightweight CS framing before wide rollout—content, metrics, champions, and feedback loops.",
+      "audience": "admin",
+      "category": "success",
+      "order": 1,
+      "marketing": true
+    },
+    {
+      "slug": "trust/overview",
+      "title": "Trust, privacy, and governance (short briefing)",
+      "description": "Where to audit Sudar responsibly—organisation toggles vs open-source posture pack.",
+      "audience": "both",
+      "category": "trust",
+      "order": 1,
+      "marketing": true
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+import { NOTIFICATION_ICON_PATH } from '../notificationIconPath'
+
 export interface ForegroundNotificationPayload {
   title: string
   body?: string | null
@@ -17,7 +19,7 @@ export async function requestForegroundNotificationPermission(): Promise<Notific
 
 export function showForegroundNotification(payload: ForegroundNotificationPayload): boolean {
   if (!canUseForegroundNotifications() || Notification.permission !== 'granted') return false
-  const icon = new URL('/sudar-logo.png', window.location.origin).href
+  const icon = new URL(NOTIFICATION_ICON_PATH, window.location.origin).href
   const notification = new Notification(payload.title, {
     body: payload.body ?? '',
     tag: payload.tag,

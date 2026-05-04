@@ -17,7 +17,10 @@ export function useReveal(ref: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
     if (!ref.current || !revealObserver) return;
     revealObserver.observe(ref.current);
-    return () => ref.current && revealObserver.unobserve(ref.current);
+    const el = ref.current
+    return () => {
+      if (el && revealObserver) revealObserver.unobserve(el)
+    }
   }, [ref]);
 }
 

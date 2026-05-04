@@ -2,10 +2,9 @@
 
 import { useCallback, useState } from 'react'
 
-const STORAGE_KEY = 'studio_notify_when_course_ready'
+import { NOTIFICATION_ICON_PATH } from '../../../shared/notifications/notificationIconPath'
 
-/** Same-origin PNG so Windows / macOS notification centers show Sudar branding (SVG is often ignored). */
-const NOTIFICATION_ICON_PATH = '/sudar-logo.png'
+const STORAGE_KEY = 'studio_notify_when_course_ready'
 
 function notificationIconAbsoluteUrl(): string | undefined {
   if (typeof window === 'undefined') return undefined

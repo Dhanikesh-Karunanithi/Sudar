@@ -1,6 +1,7 @@
 import webpush from 'web-push'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { asNotificationDb } from '../dbTypes'
+import { NOTIFICATION_ICON_PATH } from '../notificationIconPath'
 
 let configured = false
 function configureWebPush() {
@@ -30,8 +31,8 @@ export async function sendWebPush(
   const payload = JSON.stringify({
     title: input.title,
     body: input.body ?? '',
-    icon: '/sudar-logo.png',
-    badge: '/sudar-logo.png',
+    icon: NOTIFICATION_ICON_PATH,
+    badge: NOTIFICATION_ICON_PATH,
     data: { url: input.linkUrl ?? '/notifications', notificationId: input.notificationId ?? null },
   })
 

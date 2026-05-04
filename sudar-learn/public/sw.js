@@ -2,8 +2,8 @@ self.addEventListener('push', (event) => {
   const payload = event.data ? event.data.json() : {}
   const title = payload.title || 'Sudar'
   const body = payload.body || ''
-  const icon = payload.icon || '/sudar-logo.png'
-  const badge = payload.badge || '/sudar-logo.png'
+  const icon = payload.icon || '/brand/sudar-notification-icon.png'
+  const badge = payload.badge || '/brand/sudar-notification-icon.png'
   const data = payload.data || {}
 
   event.waitUntil(

@@ -31,6 +31,7 @@ import {
   searchImagesForTutor,
   searchWebForTutor,
 } from '@/lib/tutor/webResources'
+import { SUDAR_LEARN_PLATFORM_KNOWLEDGE } from '@/content/learnPlatformKnowledge.generated'
 const GUARDRAIL_REFUSAL_MESSAGE = "I'm here to help with your courses and learning. I can't help with that. What would you like to learn today?"
 const SENSITIVE_DATA_REFUSAL_MESSAGE = (
   "I'm here to help with learning. I can't process payment card numbers, government ID numbers, bank details, or private keys in chat. Remove sensitive details and ask again."
