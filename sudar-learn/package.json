@@ -20,7 +20,7 @@
     "@radix-ui/react-toast": "^1.2.15",
     "@react-pdf/renderer": "^4.3.2",
     "@supabase/ssr": "^0.8.0",
-    "@supabase/supabase-js": "^2.97.0",
+    "@supabase/supabase-js": "^2.105.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.34.3",
