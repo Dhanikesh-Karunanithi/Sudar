@@ -26,6 +26,7 @@ import { parseOrgAiCompliance, type OrgAiCompliance } from '@/types/personalizat
 import { loadSkillGapSummary, recordMasteredTopics, recordStruggleTopics } from '@/lib/learner/syncTopicSkills'
 import { parseTutorModelOutput } from '@/lib/tutor/responseContract'
 import { sanitizeTutorBlocks } from '@/lib/tutor/tutorBlockSanitize'
+import { tutorMessageMatchesIdentityBypass } from '@/lib/tutor/tutorIdentityBypassPatterns'
 import {
   detectsTutorResourceIntent,
   searchImagesForTutor,
@@ -117,19 +118,6 @@ const INPUT_BLOCKLIST_PATTERNS = [
   /\bexfiltrat|send\s+(me\s+)?(the\s+)?(api\s+key|password|secret|env|\.env)\b/i,
 ]
 
-// Questions about Sudar's own identity always pass — no LLM call needed.
-const IDENTITY_BYPASS_PATTERNS = [
-  /\b(what|who)\s+(is|are)\s+(your|u r|ur)\s+(name|you)\b/i,
-  /\bwho\s+are\s+you\b/i,
-  /\bwhat('?s|\s+is)\s+your\s+name\b/i,
-  /\bintroduce\s+yourself\b/i,
-  /\btell\s+me\s+about\s+yourself\b/i,
-  /\bwhat\s+can\s+you\s+do\b/i,
-  /\bwhat\s+are\s+you\b/i,
-  /\byour\s+name\b/i,
-  /\bsudar\b/i,
-]
-
 // Short conversational follow-ups that are always valid in a learning context.
 // These are frequently misclassified by the guardrail LLM because they have no
 // standalone learning keywords, yet they are clearly continuations of study sessions.
@@ -168,10 +156,8 @@ async function runInputGuardrail(
     if (pattern.test(trimmed)) return { pass: false }
   }
 
-  // Identity questions about Sudar always pass — no LLM check needed
-  for (const pattern of IDENTITY_BYPASS_PATTERNS) {
-    if (pattern.test(trimmed)) return { pass: true }
-  }
+  // Identity / platform-intro questions always pass — no LLM check needed
+  if (tutorMessageMatchesIdentityBypass(trimmed)) return { pass: true }
 
   // Conversational follow-ups always pass — they're context-free by nature but
   // are clearly part of an ongoing learning session
