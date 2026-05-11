@@ -428,6 +428,18 @@ export async function POST(request: NextRequest) {
 
     const { message: rawMessage, course_id, module_id, conversation_history = [], pasted_text, selected_text, active_modality, available_modalities, route: routeParam } = body
 
+    if (course_id) {
+      const { data: enrollmentForCourse } = await admin
+        .from('enrollments')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('course_id', course_id)
+        .maybeSingle()
+      if (!enrollmentForCourse) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
+
     const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
       courseId: course_id ?? null,
       userId: user.id,
@@ -592,42 +604,45 @@ export async function POST(request: NextRequest) {
       .from('courses')
       .select('title, modules(id, title, content, order_index)')
       .eq('id', course_id)
+      .eq('status', 'published')
       .order('order_index', { referencedTable: 'modules', ascending: true })
-      .single()
+      .maybeSingle()
 
-    if (course) {
-      courseTitle = course.title
-      const modules = (course.modules as Array<{
-        id: string
-        title: string
-        content: { type?: string; body?: string; scorm_text_content?: string } | null
-        order_index: number
-      }>) ?? []
-
-      // Build full course context, marking current module prominently.
-      // For SCORM modules, use the extracted scorm_text_content as the knowledge base.
-      // Give the active module up to 4 000 chars; others up to 400 chars each.
-      courseContext = modules.map((m) => {
-        const isActive = m.id === module_id
-        const limit = isActive ? 4000 : 400
-
-        let body = ''
-        if (m.content?.type === 'scorm') {
-          body = (m.content.scorm_text_content ?? '').slice(0, limit)
-          if (!body) body = '[SCORM interactive module — learner is currently interacting with the content]'
-        } else {
-          body = (m.content?.body ?? '').slice(0, limit)
-        }
-
-        const prefix = isActive ? '>>> CURRENT MODULE (learner is here now) <<<\n' : ''
-        const typeTag = m.content?.type === 'scorm' ? ' [SCORM]' : ''
-        return `${prefix}[Module ${m.order_index + 1}: ${m.title}${typeTag}]\n${body}`
-      }).join('\n\n---\n\n')
-
-      // Cap total context at 8 000 chars (SCORM modules need more headroom)
-      if (courseContext.length > 8000) courseContext = courseContext.slice(0, 8000) + '...[truncated]'
-      currentModuleTitle = modules.find((m) => m.id === module_id)?.title ?? ''
+    if (!course) {
+      return NextResponse.json({ error: 'Course not available.' }, { status: 404 })
     }
+
+    courseTitle = course.title
+    const modules = (course.modules as Array<{
+      id: string
+      title: string
+      content: { type?: string; body?: string; scorm_text_content?: string } | null
+      order_index: number
+    }>) ?? []
+
+    // Build full course context, marking current module prominently.
+    // For SCORM modules, use the extracted scorm_text_content as the knowledge base.
+    // Give the active module up to 4 000 chars; others up to 400 chars each.
+    courseContext = modules.map((m) => {
+      const isActive = m.id === module_id
+      const limit = isActive ? 4000 : 400
+
+      let body = ''
+      if (m.content?.type === 'scorm') {
+        body = (m.content.scorm_text_content ?? '').slice(0, limit)
+        if (!body) body = '[SCORM interactive module — learner is currently interacting with the content]'
+      } else {
+        body = (m.content?.body ?? '').slice(0, limit)
+      }
+
+      const prefix = isActive ? '>>> CURRENT MODULE (learner is here now) <<<\n' : ''
+      const typeTag = m.content?.type === 'scorm' ? ' [SCORM]' : ''
+      return `${prefix}[Module ${m.order_index + 1}: ${m.title}${typeTag}]\n${body}`
+    }).join('\n\n---\n\n')
+
+    // Cap total context at 8 000 chars (SCORM modules need more headroom)
+    if (courseContext.length > 8000) courseContext = courseContext.slice(0, 8000) + '...[truncated]'
+    currentModuleTitle = modules.find((m) => m.id === module_id)?.title ?? ''
   }
 
   // ── 2. Load learner memory + cross-course history ─────────────────────
