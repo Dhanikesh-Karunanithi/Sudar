@@ -26,6 +26,7 @@ import { parseOrgAiCompliance, type OrgAiCompliance } from '@/types/personalizat
 import { loadSkillGapSummary, recordMasteredTopics, recordStruggleTopics } from '@/lib/learner/syncTopicSkills'
 import { parseTutorModelOutput } from '@/lib/tutor/responseContract'
 import { sanitizeTutorBlocks } from '@/lib/tutor/tutorBlockSanitize'
+import { buildTutorActionAllowlists } from '@/lib/tutor/tutorActionAllowlists'
 import { tutorMessageMatchesIdentityBypass } from '@/lib/tutor/tutorIdentityBypassPatterns'
 import {
   detectsTutorResourceIntent,
@@ -665,29 +666,23 @@ export async function POST(request: NextRequest) {
       loadSkillGapSummary(admin, user.id),
     ])
 
-  // ── 2b. When no course_id (e.g. floating chat): load platform context for catalog search & actions ──
+  // ── 2b. Action allowlists (always) + platform catalog text (floating chat only) ──
   let platformContextText = ''
-  const allowedCourseIds = new Set<string>()
-  const allowedPathIds = new Set<string>()
-  const enrollmentByCourseId = new Map<string, { status: string; progress_pct: number }>()
+  const [allCourses, pathList, enrollmentsRes, ragChunks] = await Promise.all([
+    getCachedPublishedCourses(),
+    getCachedPublishedPaths(),
+    admin.from('enrollments').select('course_id, status, progress_pct').eq('user_id', user.id),
+    course_id ? Promise.resolve([] as Awaited<ReturnType<typeof retrieveChunks>>) : retrieveChunks(message, { limit: 10 }),
+  ])
+  const catalogCourses = allCourses.slice(0, PLATFORM_CONTEXT_CATALOG_LIMIT)
+  const { allowedCourseIds, allowedPathIds, enrollmentByCourseId } = buildTutorActionAllowlists({
+    catalogCourseIds: catalogCourses.map((c) => c.id),
+    pathIds: pathList.map((p) => p.id),
+    enrollments: enrollmentsRes.data ?? [],
+    activeCourseId: course_id ?? null,
+  })
 
   if (!course_id) {
-    const [allCourses, pathList, enrollmentsRes, ragChunks] = await Promise.all([
-      getCachedPublishedCourses(),
-      getCachedPublishedPaths(),
-      admin.from('enrollments').select('course_id, status, progress_pct').eq('user_id', user.id),
-      retrieveChunks(message, { limit: 10 }),
-    ])
-    const catalogCourses = allCourses.slice(0, PLATFORM_CONTEXT_CATALOG_LIMIT)
-    const paths = pathList.map((p) => ({ id: p.id }))
-    const allEnrollments = enrollmentsRes.data
-
-    catalogCourses?.forEach((c) => allowedCourseIds.add(c.id))
-    paths?.forEach((p) => allowedPathIds.add(p.id))
-    allEnrollments?.forEach((e) => {
-      if (e.course_id) enrollmentByCourseId.set(e.course_id, { status: e.status, progress_pct: e.progress_pct ?? 0 })
-    })
-
     const catalogLines =
       catalogCourses?.map(
         (c) =>
