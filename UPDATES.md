@@ -22,7 +22,11 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
   - `GET /api/learn/module-bridge` now requires an **enrollment** row for `course_id` and loads only **published** courses (closes an IDOR / draft metadata leak vs arbitrary UUIDs).
   - `POST /api/events` returns **500** when the `learning_events` insert fails instead of reporting success and running downstream side effects without the event row.
   - `consolidate-learner-memory` cron treats failed `learner_profiles` digest updates as failures (HTTP **500** for batch or single-user runs when persistence fails).
+  - Tutor **input guardrail** no longer skips scope checks based on client-supplied `conversation_history`; extracted to `runInputGuardrail.ts`.
+  - Tutor **quick actions** restored in-course via `buildTutorActionAllowlists` (active `course_id` always allowed for Continue/Review buttons).
+- **Intelligence — BYOM SSRF**: `RuntimeProviderConfig` rejects unsafe local LLM base URLs before health checks (private hosts blocked unless `INTELLIGENCE_ALLOW_PRIVATE_LLM_URLS` is set).
 - **Dependencies (Learn + Studio)**: bumped **Next.js** to `15.5.18` and **PostCSS** to `8.5.10` to clear high-severity `npm audit` findings in CI.
+- **Studio lint**: typed SudarVid job access helper (fixes stricter ESLint on Next 15.5).
 
 ### 2026-05-13 — Localization + tutor memory LLM cadence
 
