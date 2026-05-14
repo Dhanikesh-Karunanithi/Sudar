@@ -12,6 +12,9 @@ Thank you for your interest in Sudar. We aim to keep the project aligned with **
 2. **Check the roadmap**
    - [docs/STRATEGIC_PATH.md](./docs/STRATEGIC_PATH.md) and [docs/ACTION_PLANS.md](./docs/ACTION_PLANS.md) describe priorities and in-progress work.
 
+3. **Ship memory (when your change is user-visible or operator-facing)**
+   - Read [docs/SHIP_MEMORY_PLAYBOOK.md](./docs/SHIP_MEMORY_PLAYBOOK.md) and update [UPDATES.md](./UPDATES.md) and/or [docs/SHIPPED_FEATURES.md](./docs/SHIPPED_FEATURES.md) as described there. Pull requests include [`.github/pull_request_template.md`](./.github/pull_request_template.md) — use the doc checkboxes so reviewers can see what was updated.
+
 ## How to Contribute
 
 - **Bug reports and feature ideas** — Open a [GitHub Issue](https://github.com/Dhanikesh-Karunanithi/Sudar/issues).

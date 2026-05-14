@@ -30,11 +30,23 @@ interface Props {
   onSkip: () => void
   quizMode?: QuizMode
   peerWrongPercent?: number
+  /** When false, hides AI follow-up chips for wrong topics (learner preference). */
+  supplementalPracticeOffers?: boolean
 }
 
 const CONFIDENCE_LABELS = ['Not sure', 'Somewhat', 'Very sure'] as const
 
-export function QuizCard({ quiz, moduleTitle, learnerName, onComplete, onAskByte, onSkip, quizMode = 'standard', peerWrongPercent }: Props) {
+export function QuizCard({
+  quiz,
+  moduleTitle,
+  learnerName,
+  onComplete,
+  onAskByte,
+  onSkip,
+  quizMode = 'standard',
+  peerWrongPercent,
+  supplementalPracticeOffers = true,
+}: Props) {
   const [currentQ, setCurrentQ] = useState(0)
   const [answers, setAnswers] = useState<Record<number, number>>({})
   const [submitted, setSubmitted] = useState(false)
@@ -141,7 +153,7 @@ export function QuizCard({ quiz, moduleTitle, learnerName, onComplete, onAskByte
         </div>
 
         {/* Struggled topics → Ask Sudar */}
-        {wrongTopics.length > 0 && (
+        {supplementalPracticeOffers && wrongTopics.length > 0 && (
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 space-y-3">
             <div className="flex items-center gap-2">
               <SudarLogoMark className="h-4 w-auto shrink-0 text-primary" starFill="var(--card)" />

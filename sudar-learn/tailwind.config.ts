@@ -62,6 +62,17 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-body)", "Inter", "Segoe UI", "Arial", "sans-serif"],
         display: ["var(--font-display)", "Manrope", "Inter", "Segoe UI", "Arial", "sans-serif"],
+        /** Arabic, Indic, Cyrillic, Hebrew, Thai, etc. */
+        "noto-intl": [
+          "var(--font-noto-intl)",
+          "var(--font-body)",
+          "Segoe UI",
+          "Arial",
+          "sans-serif",
+        ],
+        "noto-sc": ["var(--font-noto-sc)", "var(--font-body)", "PingFang SC", "Microsoft YaHei", "sans-serif"],
+        "noto-jp": ["var(--font-noto-jp)", "var(--font-body)", "Hiragino Sans", "Meiryo", "sans-serif"],
+        "noto-kr": ["var(--font-noto-kr)", "var(--font-body)", "Malgun Gothic", "Apple SD Gothic Neo", "sans-serif"],
       },
       keyframes: {
         "sudar-logo-pulse": {

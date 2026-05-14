@@ -45,6 +45,21 @@ export interface OrgAiCompliance {
    * Default false if omitted; also gated by TUTOR_WEB_ENRICHMENT_ENABLED on the host.
    */
   tutor_web_enrichment_enabled?: boolean
+  /**
+   * When `disabled_org_wide`, Learn skips LLM tutor memory extraction and digest summarisation for org members.
+   * Default `learner_controlled` if omitted.
+   */
+  tutor_llm_memory_extraction_policy?: 'learner_controlled' | 'disabled_org_wide'
+  /**
+   * Minimum hours between post-message LLM memory extractions (floor on learner cadence).
+   * Omitted = no org floor.
+   */
+  tutor_llm_memory_min_interval_hours?: number | null
+  /**
+   * Minimum days between long-range digest LLM runs (floor on learner digest cadence).
+   * Omitted = no org floor.
+   */
+  memory_digest_min_interval_days_org?: number | null
 }
 
 export function defaultPersonalizationSettings(): CoursePersonalizationSettings {

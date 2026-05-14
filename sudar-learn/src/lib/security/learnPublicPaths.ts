@@ -24,3 +24,11 @@ export function isLearnPublicPath(pathname: string): boolean {
   if (pathname === '/alp/embed' || pathname.startsWith('/alp/embed/')) return true
   return false
 }
+
+/**
+ * API routes that skip the middleware session gate; handlers must enforce auth
+ * (e.g. HttpOnly cookie + HMAC) because iframe navigations may not send Supabase cookies.
+ */
+export function isLearnApiDelegatedAuthPath(pathname: string): boolean {
+  return pathname.startsWith('/api/ai/generate-video/render/')
+}

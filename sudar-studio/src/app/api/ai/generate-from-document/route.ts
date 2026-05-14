@@ -8,7 +8,11 @@ import { chatCompletion, resolveChatConfigError, type ChatCompletionContext } fr
 import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
 import { mergeBlueprintAnswersIntoSettings } from '@/lib/ai/courseGeneration/blueprintMerge'
 import type { AiGenerationCourseSettings, BlueprintQuestionAnswer, CourseBlueprintQuestion } from '@/lib/ai/courseGeneration/types'
-import { generateCourseMetadata, suggestCourseCoverImages } from '@/lib/ai/courseGeneration/courseMetadata'
+import { generateCourseMetadata } from '@/lib/ai/courseGeneration/courseMetadata'
+import {
+  getOrgDefaultUiLocale,
+  suggestCourseCoverImagesFromIntelligence,
+} from '@/lib/intelligence/courseCoverFromTogether'
 import {
   fetchOrgTagCatalog,
   resolveOrCreateOrgTagsForLabels,
@@ -202,7 +206,8 @@ Reply with ONLY the course title, no quotes or extra text.`
     tagLabels = []
   }
 
-  const cover = await suggestCourseCoverImages(title, tagLabels)
+  const orgUi = await getOrgDefaultUiLocale(admin, orgId)
+  const cover = await suggestCourseCoverImagesFromIntelligence(admin, orgId, title, tagLabels, orgUi)
 
   const outlinePrompt = `Using the document below, create a course outline of exactly ${numModules} module titles that teach this content in order.
 

@@ -14,6 +14,7 @@ Every file under `articles/**/*.md`:
 | `category` | yes | Stable slug used for grouping (`start-here`, `learners`, `admins`, `ai-literacy`, `trust`, `success`). |
 | `order` | yes | Sort order within category (integer). |
 | `marketing` | optional | `true` = safe for public marketing site (full article on teachwithsudar). Omit or `false` for internal-only ops/env detail. |
+| `canonical_slug` | optional | Stable public slug if you ever remap file paths (defaults to path-based slug). |
 
 ## When to update
 

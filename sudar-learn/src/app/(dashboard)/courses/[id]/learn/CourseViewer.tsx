@@ -32,6 +32,8 @@ import { idleNudgeFallbackChoices } from '@/lib/tutor/proactiveTemplates'
 import { InactiveHibernationOverlay } from '@/components/features/activity/InactiveHibernationOverlay'
 import { useInactivityHibernation, type ActivityTrackingState } from '@/components/features/activity/useInactivityHibernation'
 import { validateTutorQueryResponsePayload } from '@/lib/tutor/responseContract'
+import { inferContentIntentFromModality } from '@/lib/learner/modalityContentIntent'
+import type { ResolvedLearnerPreferences } from '@/lib/learner/learnerPreferences'
 
 // --- Types ------------------------------------------------------------------
 
@@ -501,10 +503,44 @@ export function CourseViewer({
   const prevCourseIdRef = useRef<string>(course.id)
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastProactiveNudgeAtRef = useRef(0)
+  const [learnerPrefs, setLearnerPrefs] = useState<ResolvedLearnerPreferences | null>(null)
+  const learnerPrefsRef = useRef<ResolvedLearnerPreferences | null>(null)
+  const [moduleBridgeText, setModuleBridgeText] = useState<string | null>(null)
 
   // Text selection popup
   const [selectionPopup, setSelectionPopup] = useState<SelectionPopup | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    learnerPrefsRef.current = learnerPrefs
+  }, [learnerPrefs])
+
+  useEffect(() => {
+    void fetch('/api/learner/preferences')
+      .then((r) => r.json())
+      .then((d: { preferences?: ResolvedLearnerPreferences }) => {
+        if (d.preferences) setLearnerPrefs(d.preferences)
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    setModuleBridgeText(null)
+    if (!course.id || !currentModuleId) return
+    let cancelled = false
+    void fetch(
+      `/api/learn/module-bridge?course_id=${encodeURIComponent(course.id)}&module_id=${encodeURIComponent(currentModuleId)}`
+    )
+      .then((r) => r.json())
+      .then((data: { show?: boolean; body?: string }) => {
+        if (cancelled || !data.show || !data.body) return
+        setModuleBridgeText(data.body)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [course.id, currentModuleId])
 
   const modules = course.modules
   const currentModule = modules.find((m) => m.id === currentModuleId) ?? modules[0]
@@ -543,6 +579,13 @@ export function CourseViewer({
 
   const resetIdleProactiveTimer = useCallback(() => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+    const p = learnerPrefsRef.current
+    if (
+      p &&
+      (!p.proactive_nudges_enabled || !p.idle_nudges || !p.stuck_detection_nudges)
+    ) {
+      return
+    }
     idleTimerRef.current = setTimeout(() => {
       if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
       if (tutorOpen) return
@@ -573,7 +616,7 @@ export function CourseViewer({
         })
         .catch(() => {})
     }, 90000)
-  }, [tutorOpen, course.id, currentModuleId])
+  }, [tutorOpen, course.id, currentModuleId, learnerPrefs])
 
   const runModulePersonalize = useCallback(
     async (mode: 'role_explain' | 'brief_3min') => {
@@ -670,7 +713,11 @@ export function CourseViewer({
       course_id: course.id,
       module_id: currentModuleId,
       modality: activeModality,
-      payload: { from_modality: prev, to_modality: activeModality },
+      payload: {
+        from_modality: prev,
+        to_modality: activeModality,
+        content_intent: inferContentIntentFromModality(activeModality),
+      },
     })
   }, [activeModality, course.id, currentModuleId])
 
@@ -882,9 +929,26 @@ export function CourseViewer({
     fetch('/api/ai/generate-audio', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ text: body.slice(0, 15000) }),
     })
       .then(async (res) => {
+        if (!res.ok) {
+          const contentType = (res.headers.get('content-type') || '').toLowerCase()
+          if (contentType.includes('application/json')) {
+            try {
+              const data = await res.json()
+              if (data.use_browser_tts) {
+                setListeningUnavailableByModule((prev) => ({ ...prev, [currentModuleId]: true }))
+                return
+              }
+            } catch {
+              /* fall through */
+            }
+          }
+          setListeningUnavailableByModule((prev) => ({ ...prev, [currentModuleId]: true }))
+          return
+        }
         const contentType = (res.headers.get('content-type') || '').toLowerCase()
         if (contentType.includes('application/json')) {
           const data = await res.json()
@@ -1114,6 +1178,7 @@ export function CourseViewer({
           route: pathname ?? undefined,
           selected_text: selectedText,
           active_modality: activeModality,
+          pedagogy_mode: learnerPrefs?.tutor_pedagogy_default,
           available_modalities: {
             video: (course.settings?.video_scenes?.length ?? 0) > 0,
             podcast: (course.settings?.podcast_dialogue?.length ?? 0) > 0,
@@ -1465,6 +1530,25 @@ export function CourseViewer({
             />
           </div>
         )}
+        {moduleBridgeText && (
+          <div
+            role="note"
+            className="shrink-0 px-4 py-2.5 bg-muted/60 border-b border-border flex items-start gap-3 text-xs"
+          >
+            <MessageSquarePlus className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <p className="flex-1 text-card-foreground leading-snug prose prose-sm dark:prose-invert max-w-none [&_strong]:font-semibold">
+              {renderCourseMarkdown(moduleBridgeText)}
+            </p>
+            <button
+              type="button"
+              className="text-muted-foreground hover:text-card-foreground shrink-0"
+              onClick={() => setModuleBridgeText(null)}
+              aria-label="Dismiss module link"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
         {/* Top bar */}
         <div className="flex items-center gap-3 px-6 py-3 border-b border-border bg-background shrink-0 flex-wrap">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-1.5 rounded-md hover:bg-muted transition-colors">
@@ -1791,20 +1875,24 @@ export function CourseViewer({
 
                 {/* Module content — text, rich, audio, video, podcast, mindmap, or flashcards */}
                 {activeModality === 'video' ? (
-                  (course.settings?.video_scenes?.length ?? 0) > 0 ? (
-                    <CourseVideoCard
-                      scenes={course.settings!.video_scenes!}
-                      courseTitle={course.title}
-                      telemetry={{ courseId: course.id, moduleId: currentModuleId }}
-                    />
-                  ) : (
+                  <div className="flex flex-col gap-10">
                     <SudarVidCard
                       moduleId={currentModuleId}
                       moduleTitle={currentModule?.title ?? ''}
                       contentBody={getContentBodyForFlashcards(currentModule?.content ?? null)}
                       courseId={course.id}
                     />
-                  )
+                    {(course.settings?.video_scenes?.length ?? 0) > 0 && (
+                      <section className="space-y-3 border-t border-border pt-8" aria-label="Course overview video">
+                        <p className="text-xs font-medium text-muted-foreground">Course overview video</p>
+                        <CourseVideoCard
+                          scenes={course.settings!.video_scenes!}
+                          courseTitle={course.title}
+                          telemetry={{ courseId: course.id, moduleId: currentModuleId }}
+                        />
+                      </section>
+                    )}
+                  </div>
                 ) : activeModality === 'podcast' ? (
                   (course.settings?.podcast_dialogue?.length ?? 0) > 0 ? (
                     <CoursePodcastCard dialogue={course.settings!.podcast_dialogue!} courseTitle={course.title} />
@@ -1923,9 +2011,26 @@ export function CourseViewer({
                       fetch('/api/ai/generate-audio', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
                         body: JSON.stringify({ text: body.slice(0, 15000) }),
                       })
                         .then(async (res) => {
+                          if (!res.ok) {
+                            const contentType = (res.headers.get('content-type') || '').toLowerCase()
+                            if (contentType.includes('application/json')) {
+                              try {
+                                const data = await res.json()
+                                if (data.use_browser_tts) {
+                                  setListeningUnavailableByModule((prev) => ({ ...prev, [currentModuleId]: true }))
+                                  return
+                                }
+                              } catch {
+                                /* fall through */
+                              }
+                            }
+                            setListeningUnavailableByModule((prev) => ({ ...prev, [currentModuleId]: true }))
+                            return
+                          }
                           const contentType = (res.headers.get('content-type') || '').toLowerCase()
                           if (contentType.includes('application/json')) {
                             const data = await res.json()
@@ -1981,6 +2086,7 @@ export function CourseViewer({
                       onComplete={handleQuizComplete}
                       onAskByte={handleQuizAskByte}
                       onSkip={() => { setShowQuiz(false); if (nextModule) setTimeout(() => navigateTo(nextModule.id), 300) } }
+                      supplementalPracticeOffers={learnerPrefs?.supplemental_practice_offers !== false}
                     />
                   </div>
                 )}

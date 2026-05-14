@@ -127,7 +127,7 @@ function PlatformArchitecture() {
       tagline: "The AI brain shared by Studio and Learn.",
       description:
         "A FastAPI microservice that powers adaptive learning at scale. Maintains the Digital Learner Twin — a persistent, evolving model of every learner. Computes modality preferences, skill gaps, and next-best-action recommendations on every event.",
-      features: ["Digital Learner Twin (persistent learner model)", "Adaptive content sequencing engine", "AI tutor with longitudinal session memory", "Real-time next-best-action inference"],
+      features: ["Digital Learner Twin (persistent learner model)", "Adaptive content sequencing engine", "AI tutor with governed longitudinal memory (learner + org cadence)", "Real-time next-best-action inference"],
       href: "/features",
       external: false,
       accent: false,

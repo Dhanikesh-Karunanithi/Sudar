@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-import { isLearnPublicPath } from '@/lib/security/learnPublicPaths'
+import { isLearnApiDelegatedAuthPath, isLearnPublicPath } from '@/lib/security/learnPublicPaths'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -33,8 +33,9 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
   const isPublicPath = isLearnPublicPath(pathname)
+  const delegatesAuth = isLearnApiDelegatedAuthPath(pathname)
 
-  if (!user && !isPublicPath) {
+  if (!user && !isPublicPath && !delegatesAuth) {
     // API callers (fetch, integrations) expect JSON errors — not HTML login redirects.
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })

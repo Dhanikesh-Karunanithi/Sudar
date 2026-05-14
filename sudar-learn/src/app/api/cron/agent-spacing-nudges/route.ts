@@ -100,3 +100,8 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ ok: true, candidates: candidates.length, inserted })
 }
+
+/** Vercel Cron uses GET; external schedulers may use POST. */
+export async function GET(request: NextRequest) {
+  return POST(request)
+}

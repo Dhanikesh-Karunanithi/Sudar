@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { Settings, Save, Zap } from 'lucide-react'
 import { SudarInlineLoader, SudarLoadingFrost } from '@/components/branding/SudarBrandLoader'
 import { VoiceCharacterStage } from '@/components/features/audio/VoiceCharacterStage'
@@ -9,6 +10,7 @@ import { ProfilePhotoSettingsCard } from '@/components/features/profile/ProfileP
 import type { MascotId, MascotIntensity, MascotMode, MascotSupportStyle } from '@/types/mascot'
 import type { VoiceLibraryProviderStatus } from '@/lib/audio/voices'
 import { normalizeTtsVoiceId, TTS_VOICE_OPTIONS } from '@/lib/audio/voices'
+import type { SudarPetCorner, SudarPetMode } from '@/lib/learner/learnerPreferences'
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
@@ -20,6 +22,8 @@ export default function SettingsPage() {
   const [mascotIntensity, setMascotIntensity] = useState<MascotIntensity>('high')
   const [mascotCompanions, setMascotCompanions] = useState<MascotId[]>(['focus', 'memory', 'confidence'])
   const [voiceProviderStatuses, setVoiceProviderStatuses] = useState<VoiceLibraryProviderStatus[]>([])
+  const [contentLanguage, setContentLanguage] = useState<string>('en')
+  const [showAllVoices, setShowAllVoices] = useState(false)
   const [orgSudarAgents, setOrgSudarAgents] = useState<{
     enabled: boolean
     learner_week_plan: boolean
@@ -27,6 +31,9 @@ export default function SettingsPage() {
   } | null>(null)
   const [weekPlanSurfaces, setWeekPlanSurfaces] = useState(true)
   const [spacingNudgesPref, setSpacingNudgesPref] = useState(true)
+  const [sudarPetEnabled, setSudarPetEnabled] = useState(false)
+  const [sudarPetMode, setSudarPetMode] = useState<SudarPetMode>('off')
+  const [sudarPetCorner, setSudarPetCorner] = useState<SudarPetCorner>('bottom-right')
 
   const fetchPreferences = useCallback(async () => {
     const res = await fetch('/api/learner/preferences')
@@ -52,6 +59,15 @@ export default function SettingsPage() {
     if (sa && typeof sa === 'object') {
       if (typeof sa.week_plan_surfaces === 'boolean') setWeekPlanSurfaces(sa.week_plan_surfaces)
       if (typeof sa.spacing_nudges === 'boolean') setSpacingNudgesPref(sa.spacing_nudges)
+    }
+    const resolved = data.preferences as Record<string, unknown> | undefined
+    setSudarPetEnabled(resolved?.sudar_pet_enabled === true)
+    if (typeof resolved?.content_language === 'string') setContentLanguage(resolved.content_language)
+    const mode = resolved?.sudar_pet_mode
+    if (mode === 'off' || mode === 'follow' || mode === 'float' || mode === 'corner') setSudarPetMode(mode)
+    const corner = resolved?.sudar_pet_corner
+    if (corner === 'bottom-right' || corner === 'bottom-left' || corner === 'top-right' || corner === 'top-left') {
+      setSudarPetCorner(corner)
     }
     const providerRes = await fetch('/api/ai/voice-provider-status')
     if (providerRes.ok) {
@@ -81,6 +97,9 @@ export default function SettingsPage() {
           week_plan_surfaces: weekPlanSurfaces,
           spacing_nudges: spacingNudgesPref,
         },
+        sudar_pet_enabled: sudarPetEnabled,
+        sudar_pet_mode: sudarPetEnabled ? sudarPetMode : 'off',
+        sudar_pet_corner: sudarPetCorner,
       }),
     })
     setSaving(false)
@@ -94,6 +113,9 @@ export default function SettingsPage() {
           mascot_style: mascotStyle,
           mascot_intensity: mascotIntensity,
           mascot_companions: mascotCompanions,
+          sudar_pet_enabled: sudarPetEnabled,
+          sudar_pet_mode: sudarPetEnabled ? sudarPetMode : 'off',
+          sudar_pet_corner: sudarPetCorner,
         },
       })
       setSaved(true)
@@ -154,6 +176,9 @@ export default function SettingsPage() {
           value={ttsVoice}
           onChange={(id) => setTtsVoice(id)}
           providerStatuses={voiceProviderStatuses}
+          contentLanguageCode={contentLanguage}
+          showAllLanguages={showAllVoices}
+          onShowAllLanguagesChange={setShowAllVoices}
         />
       </div>
 
@@ -274,6 +299,66 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-6 space-y-6">
+        <h2 className="font-semibold text-card-foreground">Sudar pet (beta)</h2>
+        <p className="text-muted-foreground text-sm">
+          Bring Sudar to life as an optional on-screen companion. It can follow your cursor, float gently, or rest in a corner.
+        </p>
+        <label className="flex items-center gap-2 text-sm text-card-foreground cursor-pointer">
+          <input
+            type="checkbox"
+            checked={sudarPetEnabled}
+            onChange={(e) => setSudarPetEnabled(e.target.checked)}
+            className="rounded border-border"
+          />
+          Enable Sudar pet
+        </label>
+
+        {sudarPetEnabled && (
+          <>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-card-foreground">Pet behavior</p>
+              <div className="flex flex-wrap gap-2">
+                {(['follow', 'float', 'corner'] as SudarPetMode[]).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setSudarPetMode(mode)}
+                    className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
+                      sudarPetMode === mode ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-card-foreground'
+                    }`}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-card-foreground">Home corner</p>
+              <div className="flex flex-wrap gap-2">
+                {(['bottom-right', 'bottom-left', 'top-right', 'top-left'] as SudarPetCorner[]).map((corner) => (
+                  <button
+                    key={corner}
+                    type="button"
+                    onClick={() => setSudarPetCorner(corner)}
+                    className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
+                      sudarPetCorner === corner ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-card-foreground'
+                    }`}
+                  >
+                    {corner}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        <p className="text-xs text-muted-foreground">
+          Want deeper personalization signals? Visit the <Link href="/memory" className="text-primary hover:underline">Memory panel</Link>.
+        </p>
       </div>
     </div>
   )

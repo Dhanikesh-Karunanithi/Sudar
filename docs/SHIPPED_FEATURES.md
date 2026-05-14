@@ -140,4 +140,23 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
-*Last updated: April 2026 (gamification pass + paper/doc sync). For roadmap and next priorities, see [STRATEGIC_PATH.md](STRATEGIC_PATH.md) and [ACTION_PLANS.md](ACTION_PLANS.md).*
+## Localization and multilingual delivery (Learn + Studio + Intelligence)
+
+- **Where**: Sudar Learn — root layout + Memory preferences + tutor/audio APIs; Sudar Studio — root layout + **Org settings** → Localization; Sudar Intelligence — audio/content/image routes.
+- **What**: Cookie-driven UI locale (`NEXT_LOCALE`) with 30+ message catalogs; learner prefs `ui_language`, `content_language`, `auto_detect_language` (JSONB) and column `preferred_language`; org-level **default UI locale** for learners who have not customised (`organisations.settings.localization`); multilingual TTS (Edge voices + Sarvam language code); tutor/proactive prompts respect content language; optional **Together** image generation for catalog-style course art (Studio AI create + Learn proxy).
+- **Key files**: `shared/i18nLocales.ts`; `sudar-learn/src/i18n/*`, `sudar-learn/src/messages/*.json`, `sudar-learn/src/components/settings/LanguageSelector.tsx`, `sudar-learn/src/app/api/learner/preferences/route.ts`, `sudar-learn/src/app/api/ai/generate-audio/route.ts`, `sudar-learn/src/app/api/ai/generate-image/route.ts`; `sudar-studio/src/i18n/*`, `sudar-studio/src/components/settings/StudioLocalizationCard.tsx`, `sudar-studio/src/app/api/org/settings/route.ts`, `sudar-studio/src/lib/intelligence/courseCoverFromTogether.ts`; `sudar-intelligence/src/api/routes/audio.py`, `content.py`, `image.py`.
+- **Env**: `TOGETHER_API_KEY` on Intelligence for `/api/image/generate` (optional); existing `SUDAR_INTELLIGENCE_URL` / `INTELLIGENCE_SERVICE_SECRET` for proxies.
+- **Flow**: Learner sets languages on Memory → cookie + prefs persist → UI strings and tutor/TTS follow; admin sets org learner default in Studio → Learn preferences API merges org default when learner UI unset; AI course creation may upload generated cover to `course-media` when Together returns `b64_json`.
+
+---
+
+## Tutor memory LLM cadence (Learn + Studio)
+
+- **Where**: Sudar Learn — **My Memory** → Learning preferences (`memory_digest_*`, `tutor_memory_llm_cadence`, `memory_digest_cadence_days` in `learner_profiles.learner_preferences`); Sudar Studio — **Org settings** → *AI personalization & privacy* → *Tutor memory — LLM learning cadence* (`organisations.settings.ai_compliance`: `tutor_llm_memory_extraction_policy`, `tutor_llm_memory_min_interval_hours`, `memory_digest_min_interval_days_org`).
+- **What**: Learners throttle or turn off LLM-driven profile inference from tutor chat; orgs can disable LLM memory updates entirely or set minimum-interval floors. Digest cron honours learner digest-day spacing and org floors.
+- **Key files**: `sudar-learn/src/lib/learner/tutorMemoryCadence.ts`, `sudar-learn/src/lib/learner/learnerPreferences.ts`, `sudar-learn/src/app/api/tutor/query/route.ts`, `sudar-learn/src/app/api/cron/consolidate-learner-memory/route.ts`, `sudar-learn/src/app/(dashboard)/memory/LearningPreferencesPanel.tsx`, `sudar-studio/src/app/(dashboard)/settings/page.tsx`, `sudar-studio/src/types/orgCompliance.ts`.
+- **Flow**: Learner sets cadence on Memory page → each tutor completion evaluates policy → optional `updateLearnerMemory` → nightly digest cron evaluates digest eligibility per user.
+
+---
+
+*Last updated: May 2026 (localization + tutor memory cadence governance). For roadmap and next priorities, see [STRATEGIC_PATH.md](STRATEGIC_PATH.md) and [ACTION_PLANS.md](ACTION_PLANS.md).*

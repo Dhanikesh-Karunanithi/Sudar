@@ -1,0 +1,29 @@
+---
+description: Mandatory ship memory — UPDATES.md and SHIPPED_FEATURES.md when work is user- or operator-facing
+alwaysApply: true
+---
+
+# Sudar — Ship memory (always on)
+
+Treat this as a **completion gate**, not optional polish.
+
+## When this applies
+
+If the change is **user-visible** or **operator-facing**, including:
+
+- Learn or Studio UI, copy, or flows learners/admins see
+- New or changed `app/api/**` routes, cron routes, or webhooks people deploy
+- New or changed env vars, feature flags, or Supabase migrations operators must apply
+- Anything a contributor would need to discover from the repo without reading the PR chat
+
+## What you must do before stopping
+
+1. Open **`docs/SHIP_MEMORY_PLAYBOOK.md`** and follow the decision table.
+2. Update **`UPDATES.md`** (dated Latest entry) and/or **`docs/SHIPPED_FEATURES.md`** (catalog section with Where / What / Key files / Flow) **in the same branch/PR as the code** unless the user explicitly says to defer docs.
+3. If you opened a PR description, align it with **`.github/pull_request_template.md`** (impact, paths, telemetry, doc checkboxes).
+
+## When you may skip
+
+- Pure refactors, tests-only, typo fixes, or internal-only changes with no contract or UX change — playbook decision table still applies; often no `SHIPPED_FEATURES` update.
+
+Full contract: **`AGENTS.md`** → *Project memory (shipped features)* and **`docs/SHIP_MEMORY_PLAYBOOK.md`**.

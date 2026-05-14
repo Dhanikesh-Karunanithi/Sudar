@@ -6,6 +6,7 @@ import { FloatingSudarChatClient } from '@/components/tutor/FloatingSudarChatCli
 import { ProactiveSudarHost } from '@/components/tutor/ProactiveSudarHost'
 import { CheckinFloatingCard } from '@/components/features/gamification/CheckinFloatingCard'
 import { GamificationToasts } from '@/components/features/gamification/GamificationToasts'
+import { SudarPetHost } from '@/components/mascot/SudarPetHost'
 
 export default async function DashboardLayout({
   children,
@@ -57,6 +58,7 @@ export default async function DashboardLayout({
           <PageTransition>{children}</PageTransition>
         </main>
         <FloatingSudarChatClient userId={user.id} />
+        <SudarPetHost userId={user.id} />
         <ProactiveSudarHost />
         <CheckinFloatingCard />
         <GamificationToasts />

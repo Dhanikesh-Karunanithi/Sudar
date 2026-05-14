@@ -8,7 +8,11 @@ import { chatCompletion, resolveChatConfigError, type ChatCompletionContext } fr
 import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
 import { mergeBlueprintAnswersIntoSettings } from '@/lib/ai/courseGeneration/blueprintMerge'
 import type { AiGenerationCourseSettings, CourseBlueprintQuestion } from '@/lib/ai/courseGeneration/types'
-import { generateCourseMetadata, suggestCourseCoverImages } from '@/lib/ai/courseGeneration/courseMetadata'
+import { generateCourseMetadata } from '@/lib/ai/courseGeneration/courseMetadata'
+import {
+  getOrgDefaultUiLocale,
+  suggestCourseCoverImagesFromIntelligence,
+} from '@/lib/intelligence/courseCoverFromTogether'
 import {
   fetchOrgTagCatalog,
   resolveOrCreateOrgTagsForLabels,
@@ -169,7 +173,8 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const cover = await suggestCourseCoverImages(title, tagLabels)
+  const orgUi = await getOrgDefaultUiLocale(admin, orgId)
+  const cover = await suggestCourseCoverImagesFromIntelligence(admin, orgId, title, tagLabels, orgUi)
 
   const suggestedPack = suggestExperiencePackFromText(title, tagLabels)
   const settingsPayload: Record<string, unknown> = { ai_generation: aiGeneration }

@@ -166,6 +166,7 @@ export type Database = {
           next_best_action: Json | null
           ai_tutor_context: Json | null
           generative_ai_consent_at: string | null
+          learner_preferences: Json | null
           updated_at: string
           // Gamification fields
           coin_balance: number
@@ -192,6 +193,7 @@ export type Database = {
           next_best_action?: Json | null
           ai_tutor_context?: Json | null
           generative_ai_consent_at?: string | null
+          learner_preferences?: Json | null
           updated_at?: string
           coin_balance?: number
           xp_total?: number
@@ -208,6 +210,7 @@ export type Database = {
           next_best_action?: Json | null
           ai_tutor_context?: Json | null
           generative_ai_consent_at?: string | null
+          learner_preferences?: Json | null
           updated_at?: string
           coin_balance?: number
           xp_total?: number

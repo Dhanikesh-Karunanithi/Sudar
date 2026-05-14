@@ -16,6 +16,20 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-13 — Localization + tutor memory LLM cadence
+
+- **Localization (Learn + Studio + Intelligence)**:
+  - **Learn**: `next-intl` (cookie `NEXT_LOCALE`), 30+ locale catalogs under `sudar-learn/src/messages/`, dynamic `lang`/`dir`, Noto font stacks + RTL; **Memory** → language (UI / content / auto-detect) via `learner_preferences` + sync to `learner_profiles.preferred_language`; multilingual Edge + Sarvam TTS maps; tutor + proactive routes inject `content_language`; `POST /api/ai/generate-image` proxies Intelligence.
+  - **Studio**: `next-intl` + org **Localization** card (Studio UI cookie + org default UI locale for learners in `organisations.settings.localization.default_ui_locale`); `GET`/`PATCH` `/api/org/settings` exposes `localization`; optional **AI course covers** on AI course creation when Intelligence + `TOGETHER_API_KEY` return image bytes → `course-media` (`sudar-studio/src/lib/intelligence/courseCoverFromTogether.ts`).
+  - **Intelligence**: Sarvam `target_language_code` from request; `ContentGenerateRequest.language`; `POST /api/image/generate` (Together FLUX).
+  - **DB**: optional index migration `supabase/migrations/20260513120000_learner_preferred_language_index.sql` on `learner_profiles(preferred_language)`.
+  - **Shared**: `shared/i18nLocales.ts` — canonical locale list + `LOCALE_OPTIONS`.
+- **Tutor memory LLM cadence (learner + org)**:
+  - **Learn**: My Memory → Learning preferences — learners set **how often** an LLM may infer profile updates from tutor chat (`off` / per message / daily / weekly) and **minimum days** between long-range digest summaries (1 / 7 / 30). Tutor route gates `updateLearnerMemory`; `ai_tutor_context.tutor_memory_llm_last_extraction_at` tracks last extraction.
+  - **Learn cron**: `consolidate-learner-memory` respects digest cadence and org policy (skip digest when org disables LLM memory updates).
+  - **Studio**: Org settings → AI personalization — **Tutor memory — LLM learning cadence**: org-wide disable, optional minimum hours between profile-inference LLM runs, optional minimum days between digests (floors on learner choices).
+  - **Docs**: `docs/sudar-memory.md`, `docs/LAMP-Updated-Draft.md` (abstract + twin/tutor sections), `teachwithsudar` papers blurb; `docs/SHIPPED_FEATURES.md` catalog entry.
+
 ### 2026-04-26 — GitHub homepage: professional README and documentation pointers
 
 - **Web presence (repo)**: Reworked the root **README** into a product-focused GitHub landing page: clear value proposition, comparison vs typical LMSs, capability sections for **Sudar Studio**, **Sudar Learn**, and **Sudar Intelligence**, architecture diagram, trust/governance and ALP callouts, and links to **Supabase** single data layer, deployment docs, and deeper specs — without foregrounding internal folder renames.

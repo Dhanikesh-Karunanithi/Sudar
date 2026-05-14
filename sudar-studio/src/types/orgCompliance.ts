@@ -18,6 +18,9 @@ export const orgAiCompliancePatchSchema = z
     block_high_risk_pii_in_tutor: z.boolean().optional(),
     tutor_redact_echoed_secrets: z.boolean().optional(),
     tutor_output_moderation_strict: z.boolean().optional(),
+    tutor_llm_memory_extraction_policy: z.enum(['learner_controlled', 'disabled_org_wide']).optional(),
+    tutor_llm_memory_min_interval_hours: z.number().int().min(1).max(8760).nullable().optional(),
+    memory_digest_min_interval_days_org: z.number().int().min(1).max(365).nullable().optional(),
   })
   .strict()
 

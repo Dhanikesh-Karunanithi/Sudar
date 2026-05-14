@@ -6,6 +6,8 @@ Before making any changes, read ECOSYSTEM.md and AGENTS.md in the Sudar root dir
 These files contain the authoritative architecture, naming conventions, and build decisions.
 Before adding features, check **docs/STRATEGIC_PATH.md** for current state and prioritized next steps. For the current "Next 3" outcomes, read **PROGRESS.md**.
 
+Before marking **user-visible** or **operator-facing** work complete, apply **docs/SHIP_MEMORY_PLAYBOOK.md** and update **UPDATES.md** / **docs/SHIPPED_FEATURES.md** (see **.cursor/rules/sudar-ship-memory.mdc** and **AGENTS.md**).
+
 ---
 
 ## Project Identity
@@ -138,6 +140,13 @@ constants/         — app constants and copy strings
 5. Ensure `learning_events` is written to if learner-facing
 6. Test mobile layout if learner-facing
 7. Update ECOSYSTEM.md Phase checklist if it completes a milestone
+8. If user-visible or operator-facing: update **UPDATES.md** / **docs/SHIPPED_FEATURES.md** per **docs/SHIP_MEMORY_PLAYBOOK.md** (same PR unless user defers)
+
+---
+
+## Ship memory (user-facing or operator-facing work)
+
+When a feature is merge-ready and affects learners, admins, deployers, or public APIs, follow **docs/SHIP_MEMORY_PLAYBOOK.md** and update **UPDATES.md** / **docs/SHIPPED_FEATURES.md** as described there before considering the task complete. Rule: **.cursor/rules/sudar-ship-memory.mdc** (`alwaysApply: true`).
 
 ---
 

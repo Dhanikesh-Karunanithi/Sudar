@@ -52,6 +52,10 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-body)", "Inter", "Segoe UI", "Arial", "sans-serif"],
         display: ["var(--font-heading)", "Manrope", "Inter", "Segoe UI", "Arial", "sans-serif"],
+        "noto-intl": ["var(--font-noto-intl)", "Noto Sans", "Inter", "Segoe UI", "sans-serif"],
+        "noto-sc": ["var(--font-noto-sc)", "Noto Sans SC", "Inter", "sans-serif"],
+        "noto-jp": ["var(--font-noto-jp)", "Noto Sans JP", "Inter", "sans-serif"],
+        "noto-kr": ["var(--font-noto-kr)", "Noto Sans KR", "Inter", "sans-serif"],
       },
       keyframes: {
         "sudar-logo-pulse": {

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Sudar fire placeholder">
+  <defs>
+    <radialGradient id="core" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#fff2b8" />
+      <stop offset="45%" stop-color="#ffcf4d" />
+      <stop offset="75%" stop-color="#ff9f1a" />
+      <stop offset="100%" stop-color="#ff6b1a" />
+    </radialGradient>
+  </defs>
+  <ellipse cx="48" cy="82" rx="18" ry="6" fill="#16171d" opacity="0.25" />
+  <path d="M48 8c7 10 16 13 16 27 0 11-7 23-16 23s-16-12-16-23c0-9 4-14 9-19-1 8 4 12 7 13 4-6 2-13 0-21z" fill="url(#core)" />
+  <circle cx="41" cy="41" r="3" fill="#2f210f" />
+  <circle cx="55" cy="41" r="3" fill="#2f210f" />
+  <path d="M41 49c3 3 11 3 14 0" stroke="#2f210f" stroke-width="2.5" stroke-linecap="round" fill="none" />
+  <rect x="30" y="60" width="36" height="20" rx="8" fill="#ffb13b" />
+  <text x="48" y="73" font-family="Arial, sans-serif" font-size="9" text-anchor="middle" fill="#5d2f07">Sudar</text>
+</svg>

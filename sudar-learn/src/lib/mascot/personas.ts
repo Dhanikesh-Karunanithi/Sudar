@@ -14,7 +14,7 @@ export const MASCOT_PERSONAS: Record<MascotId, MascotPersona> = {
     domain: 'hero',
     colorToken: 'text-primary',
     icon: 'sparkles',
-    summary: 'Always-on guide that helps learners stay oriented and encouraged.',
+    summary: 'Warm fire spirit guide who lights the next step with calm, kind, and concise support.',
   },
   focus: {
     id: 'focus',

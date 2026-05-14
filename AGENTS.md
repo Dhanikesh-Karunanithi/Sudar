@@ -8,6 +8,8 @@
 
 > **Naming:** This **`AGENTS.md`** is for **coding agents** (Cursor, Copilot, etc.). The **product** feature **Sudar Agents** (bounded AI orchestration, audit trail, Intelligence gateway) is documented in **`docs/AGENTS_PLATFORM.md`**.
 
+> **Ship memory (coding agents):** If the work is **user-visible** or **operator-facing** (Learn/Studio surfaces, public or cron APIs, env vars, migrations deployers run), do **not** consider the task finished until you have applied **[docs/SHIP_MEMORY_PLAYBOOK.md](docs/SHIP_MEMORY_PLAYBOOK.md)** — update **[UPDATES.md](UPDATES.md)** and/or **[docs/SHIPPED_FEATURES.md](docs/SHIPPED_FEATURES.md)** in the **same PR as the code** unless the user explicitly defers documentation. In Cursor, the always-on rule lives at `.cursor/rules/sudar-ship-memory.mdc`.
+
 ---
 
 ## Cursor: Agent mode vs Plan mode
@@ -210,6 +212,19 @@ Instead, it silently powers ALL personalization decisions behind the scenes.
 4. Does this update the `learner_profiles` Digital Learner Twin?
 5. Is there a modality-agnostic version of this feature? (content should work across all modalities)
 6. Does this work on mobile? (learner surface is mobile-first)
+7. If this is user-visible or operator-facing: have I updated **ship memory** per **[docs/SHIP_MEMORY_PLAYBOOK.md](docs/SHIP_MEMORY_PLAYBOOK.md)** (**[UPDATES.md](UPDATES.md)** / **[docs/SHIPPED_FEATURES.md](docs/SHIPPED_FEATURES.md)**) in the same PR?
+
+---
+
+## Project memory (shipped features)
+
+After shipping **user-visible** or **operator-facing** work (new surfaces, APIs, env, migrations), keep the repo’s story accurate. **Coding agents:** treat this as mandatory unless the user explicitly skips docs for this task.
+
+1. Follow **[docs/SHIP_MEMORY_PLAYBOOK.md](docs/SHIP_MEMORY_PLAYBOOK.md)** — when to update **[UPDATES.md](UPDATES.md)** vs **[docs/SHIPPED_FEATURES.md](docs/SHIPPED_FEATURES.md)**.
+2. Prefer updating those docs **in the same PR** as the code; use a tiny follow-up PR if necessary.
+3. Keep **Current Build Status** below aligned with reality: either refresh the short “Recent ship” bullets or point readers to the newest **Latest** entry in `UPDATES.md`.
+
+Pull requests use **[.github/pull_request_template.md](.github/pull_request_template.md)** so impact, paths, and doc checkboxes stay structured for humans and agents.
 
 ---
 
@@ -218,7 +233,7 @@ Instead, it silently powers ALL personalization decisions behind the scenes.
 **Phase**: Phases 1–4 complete; Phase 5 (Engagement & Scale) partially in motion (modalities and learner engagement work continues).
 **Priority**: Visibility (demo, screenshots); harden personalization and governance in production; document/SCORM import and further modalities per **docs/STRATEGIC_PATH.md**.
 
-**Recent ship (April 2026)**: Personalization v2 (enrollment overlays, consent, org policy, learner groups), Sudar brand/logo and mascot system in Learn, trust documentation pack and Studio Governance page, Learn search and learner-flow polish, sensitive-input guardrails. See **UPDATES.md** (2026-04-11) and **docs/SHIPPED_FEATURES.md**.
+**Recent ship (April–May 2026)**: Personalization v2 (enrollment overlays, consent, org policy, learner groups), Sudar brand/logo and mascot system in Learn, trust documentation pack and Studio Governance page, Learn search and learner-flow polish, sensitive-input guardrails, **tutor memory LLM cadence** (learner + org governance), **full-stack localization** (next-intl, 30+ locales, RTL/fonts, learner + org language prefs, multilingual TTS/tutor, optional Together image covers). See **UPDATES.md** (Latest) and **docs/SHIPPED_FEATURES.md**.
 
 For up-to-date state and next priorities, see **docs/STRATEGIC_PATH.md** and **docs/ACTION_PLANS.md**.
 See `ECOSYSTEM.md` Section 8 for the full build roadmap with checkboxes.
@@ -229,4 +244,4 @@ See `ECOSYSTEM.md` Section 8 for the full build roadmap with checkboxes.
 
 *Sudar — Learns with you, for you.*
 *This agent context file is maintained by the project owner.*
-*Last updated: 11 April 2026*
+*Last updated: 13 May 2026*

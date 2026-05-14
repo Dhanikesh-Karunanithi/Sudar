@@ -1,11 +1,15 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { fetchResolvedLearnerPreferences } from '@/lib/learner/learnerPreferences'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import type { PrivateOpenAiRuntime } from '@/types/orgAiInference'
 import { idleNudgeFallbackChoices } from '@/lib/tutor/proactiveTemplates'
 import { parseProactiveNudgeJson } from '@/lib/tutor/proactivePromptSchema'
+import { createTranslator } from 'next-intl/server'
+import { loadMessagesSync } from '@/i18n/loadMessages'
+import { buildTutorContentLanguageBlock } from '@/lib/i18n/contentLanguagePrompt'
 
 const bodySchema = z.object({
   course_id: z.string().uuid(),
@@ -25,9 +29,13 @@ Rules: no guilt, do not mention timers. Labels must be short. follow_up_message 
 
 async function buildNudgeFromLlm(
   reason: string | undefined,
-  privateRuntime: PrivateOpenAiRuntime | null
+  privateRuntime: PrivateOpenAiRuntime | null,
+  languageBlock: string,
+  tr: (key: string) => string,
 ): Promise<{ message: string; choices: ReturnType<typeof idleNudgeFallbackChoices> }> {
-  const prompt = `The learner has been quiet on their lesson (${reason ?? 'idle'}). ${JSON_INSTRUCTION}`
+  const prompt = `${languageBlock}
+
+The learner has been quiet on their lesson (${reason ?? 'idle'}). ${JSON_INSTRUCTION}`
   const { content } = await chatCompletion(
     {
       messages: [{ role: 'user', content: prompt }],
@@ -40,7 +48,7 @@ async function buildNudgeFromLlm(
   if (parsed) {
     return { message: parsed.message, choices: parsed.choices }
   }
-  return { message: IDLE_FALLBACK_MESSAGE, choices: idleNudgeFallbackChoices() }
+  return { message: IDLE_FALLBACK_MESSAGE, choices: idleNudgeFallbackChoices(tr) }
 }
 
 export async function POST(request: NextRequest) {
@@ -55,6 +63,18 @@ export async function POST(request: NextRequest) {
   const { course_id, module_id, reason } = parsed.data
 
   const admin = createServiceRoleSupabaseClient()
+  const prefs = await fetchResolvedLearnerPreferences(admin, user.id)
+  const messages = loadMessagesSync(prefs.ui_language)
+  const tr = createTranslator({ locale: prefs.ui_language, messages })
+  const t = (key: string) => tr(key)
+  const languageBlock = buildTutorContentLanguageBlock(prefs)
+  if (!prefs.proactive_nudges_enabled || !prefs.idle_nudges) {
+    return NextResponse.json({ ok: true, message: '', choices: [], skipped: 'preferences' })
+  }
+  if (!prefs.stuck_detection_nudges && (reason === 'idle_90s' || reason === 'replay_pattern')) {
+    return NextResponse.json({ ok: true, message: '', choices: [], skipped: 'preferences' })
+  }
+
   const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
     userId: user.id,
     courseId: course_id,
@@ -62,19 +82,19 @@ export async function POST(request: NextRequest) {
   const chatCfgErr = resolveChatConfigError(orgSettings, privateRuntime as PrivateOpenAiRuntime | null)
 
   let message = IDLE_FALLBACK_MESSAGE
-  let choices = idleNudgeFallbackChoices()
+  let choices = idleNudgeFallbackChoices(t)
   let skipped: 'chat_config' | undefined
 
   if (chatCfgErr) {
     skipped = 'chat_config'
   } else {
     try {
-      const out = await buildNudgeFromLlm(reason, privateRuntime as PrivateOpenAiRuntime | null)
+      const out = await buildNudgeFromLlm(reason, privateRuntime as PrivateOpenAiRuntime | null, languageBlock, t)
       message = out.message
       choices = out.choices
     } catch {
       message = IDLE_FALLBACK_MESSAGE
-      choices = idleNudgeFallbackChoices()
+      choices = idleNudgeFallbackChoices(t)
     }
   }
 

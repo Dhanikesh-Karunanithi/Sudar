@@ -58,7 +58,10 @@ This guide walks you through connecting the Sudar repo to Vercel and hosting **S
    - `NEXT_PUBLIC_APP_URL` → same as NEXTAUTH_URL for Learn
    - `INTELLIGENCE_SERVICE_SECRET` → optional, must match Railway `INTELLIGENCE_SERVICE_SECRET` for ALP tutor proxy
    - `ENABLE_ANALYTICS_ENGINE=true` → enables learner insights APIs
+   - **`CRON_SECRET`** → random string (e.g. `openssl rand -base64 32`); **required** for Learn cron route handlers to run. Vercel [Cron Jobs](https://vercel.com/docs/cron-jobs) send `Authorization: Bearer <CRON_SECRET>` when this env var is set on the project.
 5. Click **Deploy**.
+
+**Learn — scheduled crons (Vercel):** `sudar-learn/vercel.json` defines a daily job (**04:30 UTC**) for **`GET /api/cron/consolidate-learner-memory`** (merges recent tutor exchanges into `ai_tutor_context` for learners who keep memory digest enabled). Ensure **`CRON_SECRET`** is set on the Learn Vercel project so the route accepts the invocation. Other cron routes (`notification-monthly-bonus`, `agent-spacing-nudges`) support **GET** for the same auth pattern; add them to `vercel.json` if you want them on a schedule.
 
 ---
 
@@ -105,5 +108,6 @@ Then set **BYTEOS_INTELLIGENCE_URL** in both Vercel projects to that URL (e.g. `
 - [ ] Sudar Intelligence deployed (Railway/Render/Fly) and URL set in both Vercel projects
 - [ ] `NEXTAUTH_URL` / `NEXT_PUBLIC_LEARN_APP_URL` / `NEXT_PUBLIC_APP_URL` updated to production URLs
 - [ ] Analytics scheduler configured to call `POST /api/cron/analytics-rollups` daily with `Authorization: Bearer <CRON_SECRET>`
+- [ ] **Learn:** `CRON_SECRET` set on the Learn Vercel project (required for cron routes); verify `sudar-learn/vercel.json` crons (memory consolidation) or equivalent external scheduler
 
 For full env reference, see **docs/ENV_REFERENCE.md**.

@@ -17,6 +17,7 @@ import type { Json } from '@/types/database'
 import { normalizeTtsVoiceId, TTS_VOICE_OPTIONS_BY_ID } from '@/lib/audio/voices'
 import { orgSudarAgentsPatchSchema } from '@/types/orgSudarAgents'
 import { resolveSudarAgentsFromOrgSettings } from '../../../../../../shared/sudarAgentsOrgSettings'
+import { isAppLocale } from '../../../../../../shared/i18nLocales'
 
 /**
  * GET /api/org/settings — Return current org settings (performance_config, etc.). Admin/Manager only.
@@ -52,6 +53,12 @@ export async function GET() {
   const ai_runtime = parseOrgAiRuntimePolicy(settings)
   const sudar_agents = resolveSudarAgentsFromOrgSettings(settings)
 
+  const localizationRaw = (settings.localization as Record<string, unknown> | undefined) ?? {}
+  const default_ui_locale =
+    typeof localizationRaw.default_ui_locale === 'string' && isAppLocale(localizationRaw.default_ui_locale)
+      ? localizationRaw.default_ui_locale
+      : null
+
   return NextResponse.json({
     performance_config,
     institution_type: (performance_config as Record<string, unknown>)?.institution_type ?? null,
@@ -82,6 +89,18 @@ export async function GET() {
       block_high_risk_pii_in_tutor: ai_compliance.block_high_risk_pii_in_tutor !== false,
       tutor_redact_echoed_secrets: ai_compliance.tutor_redact_echoed_secrets !== false,
       tutor_output_moderation_strict: ai_compliance.tutor_output_moderation_strict === true,
+      tutor_llm_memory_extraction_policy:
+        ai_compliance.tutor_llm_memory_extraction_policy === 'disabled_org_wide'
+          ? 'disabled_org_wide'
+          : 'learner_controlled',
+      tutor_llm_memory_min_interval_hours:
+        typeof ai_compliance.tutor_llm_memory_min_interval_hours === 'number'
+          ? ai_compliance.tutor_llm_memory_min_interval_hours
+          : null,
+      memory_digest_min_interval_days_org:
+        typeof ai_compliance.memory_digest_min_interval_days_org === 'number'
+          ? ai_compliance.memory_digest_min_interval_days_org
+          : null,
     },
     notification_policy: {
       mandatory_categories: Array.isArray(notification_policy.mandatory_categories) ? notification_policy.mandatory_categories : [],
@@ -123,6 +142,9 @@ export async function GET() {
       bearer_configured: Boolean(getPrivateLlmBearerToken()),
     },
     sudar_agents,
+    localization: {
+      default_ui_locale,
+    },
   })
 }
 
@@ -183,6 +205,27 @@ export async function PATCH(request: Request) {
     if (raw === null || (typeof raw === 'object' && !Array.isArray(raw))) {
       updatedSettings.sso_config = raw as Record<string, unknown> | null
     }
+  }
+
+  if (body.localization !== undefined) {
+    if (typeof body.localization !== 'object' || body.localization === null || Array.isArray(body.localization)) {
+      return NextResponse.json({ error: 'Invalid localization' }, { status: 400 })
+    }
+    const incoming = body.localization as Record<string, unknown>
+    const prev =
+      typeof currentSettings.localization === 'object' && currentSettings.localization !== null && !Array.isArray(currentSettings.localization)
+        ? (currentSettings.localization as Record<string, unknown>)
+        : {}
+    const next: Record<string, unknown> = { ...prev }
+    if ('default_ui_locale' in incoming) {
+      const v = incoming.default_ui_locale
+      if (v === null || v === '') {
+        delete next.default_ui_locale
+      } else if (typeof v === 'string' && isAppLocale(v)) {
+        next.default_ui_locale = v
+      }
+    }
+    updatedSettings.localization = next
   }
 
   if (body.ai_compliance !== undefined) {

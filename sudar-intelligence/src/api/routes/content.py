@@ -27,6 +27,8 @@ class ContentGenerateRequest(BaseModel):
     include_quiz: bool = True
     provider: str = "together"  # 'together' | 'openai' | 'anthropic'
     org_settings: dict[str, Any] | None = None
+    /** BCP-47 / ISO-style language for generated titles and module copy (e.g. en, es, hi-IN). */
+    language: str = "en"
 
 
 class ContentGenerateResponse(BaseModel):
@@ -54,13 +56,14 @@ async def generate_content(
     router = ModelRouter(policy)
     resolved = await router.resolve("rewrite")
     provider_used = _get_provider()
+    lang = (_body.language or "en").strip() or "en"
     if resolved.routing.decision == "local" and resolved.provider:
         try:
             sample = await resolved.provider.chat(
                 messages=[
                     {
                         "role": "user",
-                        "content": f"Create a concise course title for topic '{_body.topic}' and audience '{_body.audience}'.",
+                        "content": f"Create a concise course title for topic '{_body.topic}' and audience '{_body.audience}'. Write in language/locale: {lang}.",
                     }
                 ],
                 max_tokens=48,
@@ -72,7 +75,12 @@ async def generate_content(
     else:
         try:
             chat = await chat_completion(
-                messages=[{"role": "user", "content": f"Generate a short course title for: {_body.topic}"}],
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"Generate a short course title for: {_body.topic}. Use language/locale: {lang}.",
+                    }
+                ],
                 max_tokens=32,
                 temperature=0.2,
             )

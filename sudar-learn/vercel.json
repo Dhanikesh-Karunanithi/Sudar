@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/consolidate-learner-memory",
+      "schedule": "30 4 * * *"
+    }
+  ]
+}

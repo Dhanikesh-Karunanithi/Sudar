@@ -240,6 +240,7 @@ model LearnerProfile {
   nextBestAction        Json?    @map("next_best_action")
   aiTutorContext           Json?     @map("ai_tutor_context")
   generativeAiConsentAt    DateTime? @map("generative_ai_consent_at")
+  learnerPreferences       Json?     @map("learner_preferences")
   updatedAt                DateTime  @updatedAt @map("updated_at")
 
   profile Profile @relation(fields: [userId], references: [id])

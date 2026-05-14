@@ -5,13 +5,39 @@
  */
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
-import { getSudarVidBaseUrl, getSudarVidDefaultEngineMode, isSudarVidGenerateFallbackEnabled } from '@/lib/sudarvid'
+import { getSudarVidBaseUrl, isSudarVidGenerateFallbackEnabled } from '@/lib/sudarvid'
 import { canUserAccessCourseModule } from '@/lib/security/sudarVidAccess'
 import { rejectCrossSiteRequest } from '@/lib/security/sameOrigin'
-import { normalizeEngineMode, parseGenerateMeta } from '@/lib/sudarvidContracts'
+import { normalizeEngineMode, parseGenerateMeta, type SudarVidEngineMode } from '@/lib/sudarvidContracts'
+import {
+  buildGenerateFieldsForPreset,
+  downgradePremiumPresetToStandard,
+  getDefaultVideoPresetFromEnv,
+  normalizeVideoPreset,
+  presetToEngineMode,
+  type SudarVidVideoPreset,
+} from '@/lib/sudarvidPresets'
 
 const SUDARVID_URL = getSudarVidBaseUrl()
+
+const VideoPresetSchema = z.enum(['standard', 'rich', 'standard_mp4', 'rich_mp4'])
+
+const GenerateVideoBodySchema = z.object({
+  module_id: z.string().min(1),
+  course_id: z.string().min(1),
+  video_preset: VideoPresetSchema.optional(),
+  /** @deprecated Prefer `video_preset`; used when preset omitted. */
+  engine_mode: z.enum(['classic', 'premium']).optional(),
+  regenerate: z
+    .object({
+      reason: z.string().optional(),
+      goals: z.array(z.string()).optional(),
+      notes: z.string().optional(),
+    })
+    .optional(),
+})
 
 function extractPlainText(content: unknown): string {
   if (!content || typeof content !== 'object') return ''
@@ -32,6 +58,15 @@ function extractPlainText(content: unknown): string {
   return parts.join('\n\n')
 }
 
+function resolveVideoPreset(input: z.infer<typeof GenerateVideoBodySchema>): SudarVidVideoPreset {
+  if (input.video_preset) return normalizeVideoPreset(input.video_preset)
+  if (input.engine_mode) {
+    const em = normalizeEngineMode(input.engine_mode)
+    return em === 'premium' ? 'rich' : 'standard'
+  }
+  return getDefaultVideoPresetFromEnv()
+}
+
 export async function POST(request: NextRequest) {
   const originError = rejectCrossSiteRequest(request)
   if (originError) return originError
@@ -40,20 +75,25 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json().catch(() => ({}))
-  const moduleId = typeof body.module_id === 'string' ? body.module_id.trim() : ''
-  const courseId = typeof body.course_id === 'string' ? body.course_id.trim() : ''
-  const regenerate = (body && typeof body.regenerate === 'object' && body.regenerate !== null)
-    ? body.regenerate as {
-      reason?: string
-      goals?: string[]
-      notes?: string
-    }
-    : null
-  const requestedEngineMode = normalizeEngineMode(body.engine_mode ?? getSudarVidDefaultEngineMode())
-  if (!moduleId || !courseId) {
-    return NextResponse.json({ error: 'module_id and course_id are required' }, { status: 400 })
+  const raw = await request.json().catch(() => null)
+  const parsed = GenerateVideoBodySchema.safeParse(raw)
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? 'Invalid request body' },
+      { status: 400 },
+    )
   }
+
+  const { module_id: moduleId, course_id: courseId, regenerate: regenRaw } = parsed.data
+  const videoPreset = resolveVideoPreset(parsed.data)
+  const requestedEngineMode: SudarVidEngineMode = presetToEngineMode(videoPreset)
+
+  const regenerate = regenRaw ?? null
+  const regenerateReason = typeof regenerate?.reason === 'string' ? regenerate.reason.trim() : ''
+  const regenerateGoals = Array.isArray(regenerate?.goals)
+    ? regenerate.goals.filter((g): g is string => typeof g === 'string').map((g) => g.trim()).filter(Boolean)
+    : []
+  const regenerateNotes = typeof regenerate?.notes === 'string' ? regenerate.notes.trim() : ''
 
   const admin = createServiceRoleSupabaseClient()
 
@@ -74,11 +114,6 @@ export async function POST(request: NextRequest) {
   }
 
   const contentText = extractPlainText(module.content)
-  const regenerateReason = typeof regenerate?.reason === 'string' ? regenerate.reason.trim() : ''
-  const regenerateGoals = Array.isArray(regenerate?.goals)
-    ? regenerate.goals.filter((g): g is string => typeof g === 'string').map((g) => g.trim()).filter(Boolean)
-    : []
-  const regenerateNotes = typeof regenerate?.notes === 'string' ? regenerate.notes.trim() : ''
 
   if (regenerate) {
     const { count } = await admin
@@ -92,7 +127,7 @@ export async function POST(request: NextRequest) {
     if ((count ?? 0) >= 2) {
       return NextResponse.json(
         { error: 'Regenerate limit reached for this video. You can regenerate up to 2 times.' },
-        { status: 429 }
+        { status: 429 },
       )
     }
   }
@@ -102,31 +137,32 @@ export async function POST(request: NextRequest) {
 
   const regenerateInstruction = regenerate
     ? [
-      'Regenerate guidance from learner:',
-      regenerateReason ? `Reason: ${regenerateReason}` : null,
-      regenerateGoals.length ? `Requested improvements: ${regenerateGoals.join(', ')}` : null,
-      regenerateNotes ? `Additional notes: ${regenerateNotes}` : null,
-      'Keep timing and captions tightly aligned with spoken narration.',
-    ].filter(Boolean).join('\n')
+        'Regenerate guidance from learner:',
+        regenerateReason ? `Reason: ${regenerateReason}` : null,
+        regenerateGoals.length ? `Requested improvements: ${regenerateGoals.join(', ')}` : null,
+        regenerateNotes ? `Additional notes: ${regenerateNotes}` : null,
+        'Keep timing and captions tightly aligned with spoken narration.',
+      ].filter(Boolean).join('\n')
     : ''
 
+  const presetFields = buildGenerateFieldsForPreset(videoPreset)
   const generateBodyBase = {
     topic: module.title,
     audience: 'professional learner',
     language: 'en',
-    theme: 'seminar_minimal',
-    slide_count: 6,
-    video_size: { width: 1920, height: 1080 },
-    animation_level: 'medium',
-    include_tts: true,
-    include_music: false,
-    output_html: true,
-    output_mp4: false,
+    theme: presetFields.theme,
+    slide_count: presetFields.slide_count,
+    video_size: presetFields.video_size,
+    animation_level: presetFields.animation_level,
+    include_tts: presetFields.include_tts,
+    include_music: presetFields.include_music,
+    output_html: presetFields.output_html,
+    output_mp4: presetFields.output_mp4,
     source_notes: [contentText.slice(0, 11000), regenerateInstruction].filter(Boolean).join('\n\n') || undefined,
   }
 
   try {
-    async function startJob(engineMode: 'classic' | 'premium') {
+    async function startSudarVidJob(engineMode: SudarVidEngineMode) {
       const generateBody = { ...generateBodyBase, engine_mode: engineMode }
       const res = await fetch(`${SUDARVID_URL}/generate`, {
         method: 'POST',
@@ -143,11 +179,11 @@ export async function POST(request: NextRequest) {
 
     let fallbackUsed = false
     let effectiveEngineMode = requestedEngineMode
-    let startResult = await startJob(requestedEngineMode)
+    let startResult = await startSudarVidJob(requestedEngineMode)
     if (!startResult.ok && requestedEngineMode === 'premium' && isSudarVidGenerateFallbackEnabled()) {
       fallbackUsed = true
       effectiveEngineMode = 'classic'
-      startResult = await startJob('classic')
+      startResult = await startSudarVidJob('classic')
     }
 
     if (!startResult.ok) {
@@ -155,9 +191,16 @@ export async function POST(request: NextRequest) {
     }
 
     const data = startResult.data
-    const jobId: string = data.job_id
+    const jobId = data.job_id
+    if (!jobId) {
+      return NextResponse.json({ error: 'SudarVid did not return a job id' }, { status: 502 })
+    }
     const meta = parseGenerateMeta(data.meta)
     const persistedEngineMode = normalizeEngineMode(meta.engine_mode ?? effectiveEngineMode)
+    const effectivePreset: SudarVidVideoPreset =
+      fallbackUsed && requestedEngineMode === 'premium'
+        ? downgradePremiumPresetToStandard(videoPreset)
+        : videoPreset
 
     if (regenerate) {
       try {
@@ -191,7 +234,10 @@ export async function POST(request: NextRequest) {
         transport: 'http',
         fallback_used: fallbackUsed,
         requested_engine_mode: requestedEngineMode,
+        requested_video_preset: videoPreset,
+        video_preset: effectivePreset,
         engine_mode: persistedEngineMode,
+        output_mp4: generateBodyBase.output_mp4,
         meta,
       },
     })
@@ -200,13 +246,14 @@ export async function POST(request: NextRequest) {
       job_id: jobId,
       status: data.status ?? 'queued',
       engine_mode: persistedEngineMode,
+      video_preset: effectivePreset,
       fallback_used: fallbackUsed,
       meta,
     })
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Failed to reach video generation service' },
-      { status: 502 }
+      { status: 502 },
     )
   }
 }

@@ -20,6 +20,9 @@ import { ProactiveSudarChoiceChips } from '@/components/tutor/ProactiveSudarChoi
 import { PROACTIVE_FOLLOW_UP_EVENT, type ProactiveFollowUpDetail } from '@/lib/tutor/proactiveEvents'
 import type { ProactivePromptChoice } from '@/types/tutor'
 import { validateTutorQueryResponsePayload } from '@/lib/tutor/responseContract'
+import { CHAT_OPEN_PET_EVENT } from '@/lib/mascot/petSpriteManifest'
+import { SUDAR_PERSONA_VOICE } from '@/lib/mascot/sudarPersonaVoice'
+import { SudarPetSprite } from '@/components/mascot/SudarPetSprite'
 import {
   getCachedConversation,
   isLocalTutorCacheEnabled,
@@ -64,6 +67,7 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'synced' | 'reconnecting'>('idle')
   const [lastRouting, setLastRouting] = useState<RoutingMeta | null>(null)
   const [prefs, setPrefs] = useState<MascotPreferences | null>(null)
+  const [pedagogyMode, setPedagogyMode] = useState<'explain' | 'guide' | 'exam_focus'>('explain')
   const [openTracked, setOpenTracked] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const handleSendWithMessageRef = useRef<(msg: string) => Promise<void>>(async () => {})
@@ -103,6 +107,10 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
           mascot_intensity: data.mascot_intensity,
           mascot_companions: data.mascot_companions,
         }))
+        const d = data.preferences?.tutor_pedagogy_default
+        if (d === 'explain' || d === 'guide' || d === 'exam_focus') {
+          setPedagogyMode(d)
+        }
       })
       .catch(() => {})
   }, [])
@@ -110,6 +118,7 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
   useEffect(() => {
     if (!isOpen || openTracked) return
     setOpenTracked(true)
+    window.dispatchEvent(new Event(CHAT_OPEN_PET_EVENT))
     void trackMascotEvent({
       eventType: 'mascot_impression',
       mascotId: activeMascot,
@@ -140,6 +149,7 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
           message: trimmed,
           conversation_history: newMessages.slice(0, -1),
           route: pathname ?? undefined,
+          pedagogy_mode: pedagogyMode,
           ...(pastedText.trim() ? { pasted_text: pastedText.trim().slice(0, 15000) } : {}),
         }),
       })
@@ -230,6 +240,7 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
             })
           } else {
             setOpenTracked(false)
+            window.dispatchEvent(new Event(CHAT_OPEN_PET_EVENT))
           }
           setIsOpen(!isOpen)
         }}
@@ -295,6 +306,12 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
                   <X className="w-5 h-5" />
                 </button>
               </div>
+            </div>
+            <div className="px-5 py-2 border-b border-border/70 bg-muted/30 flex items-center gap-3">
+              <SudarPetSprite state="idle" size={34} />
+              <p className="text-xs text-muted-foreground">
+                {SUDAR_PERSONA_VOICE.signatureLines[0]}
+              </p>
             </div>
 
             <div

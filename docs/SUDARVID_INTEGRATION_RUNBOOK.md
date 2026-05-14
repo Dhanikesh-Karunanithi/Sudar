@@ -23,10 +23,10 @@ Contract-level SudarVid behavior for **Sudar Learn** (proxied) and the **standal
 - Status comes from `GET /api/ai/generate-video/status/:jobId` (proxy to `/status/:jobId`).
 - Manifest comes from `GET /api/ai/generate-video/manifest/:jobId` (proxy to `/api/jobs/:jobId/slides`).
 - Learn persists:
-  - `video_generate_start` with `requested_engine_mode`, effective `engine_mode`, `meta`, and fallback usage.
+  - `video_generate_start` with `requested_engine_mode`, `requested_video_preset` / `video_preset`, effective `engine_mode`, `meta`, and fallback usage.
   - `video_generate_complete` on terminal state with `engine_mode`, `meta`, output files, and normalized interaction summary.
 
-Both surfaces send `engine_mode` on `POST /generate` where applicable; the server returns `meta.engine_mode` on the generate response and on `GET /status/{job_id}`. The standalone UI shows an **Engine** badge on the progress line after a successful start using that `meta`.
+The browser/clients can send `video_preset` (Standard/Rich) to Learn/Studio; the Learn/Studio proxy maps it to `engine_mode` for the upstream SudarVid `POST /generate`. SudarVid returns `meta.engine_mode` on both the generate response and on `GET /status/{job_id}`. The UI shows an **Engine** badge after a successful start based on that `meta`.
 
 ## 3) Premium schema compatibility
 
@@ -81,7 +81,12 @@ Pass criteria:
 
 - Both jobs reach `done` (or expected `error` with valid `meta` contract).
 - `status.meta.engine_mode` matches requested mode (or documented fallback).
+- If the generation ends in `error` due to upstream provider/network issues, `meta.engine_mode` should still match so downstream UI/analytics remain consistent.
 - Output includes `slides.html` and `slides_manifest.json`.
+
+**Learn UI**: Log in to Sudar Learn, open an enrolled course module, and generate a video twice:
+1) choose **Standard** and confirm the **Engine** badge shows `classic`
+2) choose **Rich lesson** and confirm the **Engine** badge shows `premium`
 
 **Standalone UI**: open `http://localhost:8000/`, expand **Advanced**, set **Generation engine** to Premium then Classic and generate once each; confirm the progress line shows the **Engine** badge matching `meta.engine_mode` after job start.
 

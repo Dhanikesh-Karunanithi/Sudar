@@ -5,6 +5,7 @@ import { Video, RotateCcw, Sparkles, AlertCircle, Maximize2, Minimize2 } from 'l
 import { cn } from '@/lib/utils'
 import { SudarContentCreatingMark, SudarLoadingFrost } from '@/components/branding/SudarPremiumLoader'
 import { postLearningEvent } from '@/lib/learn/postLearningEvent'
+import type { SudarVidVideoPreset } from '@/lib/sudarvidPresets'
 
 type Phase = 'idle' | 'checking' | 'generating' | 'done' | 'error'
 
@@ -28,6 +29,7 @@ type CachedVideoJob = {
   job_id: string
   engine_mode?: 'classic' | 'premium'
   fallback_used?: boolean
+  video_preset?: 'standard' | 'rich'
 }
 
 function readCachedJob(moduleId: string): CachedVideoJob | null {
@@ -86,19 +88,34 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
   const [fullscreen, setFullscreen] = useState(false)
   const [regenerateOpen, setRegenerateOpen] = useState(false)
   const [engineMode, setEngineMode] = useState<'classic' | 'premium'>('classic')
+  const [videoPreset, setVideoPreset] = useState<'standard' | 'rich'>('standard')
   const [regenerateReason, setRegenerateReason] = useState('timing-sync')
   const [regenerateGoals, setRegenerateGoals] = useState<string[]>(['audio_caption_match'])
   const [regenerateNotes, setRegenerateNotes] = useState('')
   const [regenerateCount, setRegenerateCount] = useState(0)
   const esRef = useRef<EventSource | null>(null)
   const iframeRef = useRef<HTMLIFrameElement | null>(null)
+  const presetFromCacheRef = useRef(false)
+  /** Iframe document loads often omit Supabase cookies; we mint an HttpOnly render grant first. */
+  const [renderGrantReady, setRenderGrantReady] = useState(false)
+  const [renderGrantError, setRenderGrantError] = useState(false)
+
+  function presetToEngineMode(preset: SudarVidVideoPreset): 'classic' | 'premium' {
+    return preset === 'rich' || preset === 'rich_mp4' ? 'premium' : 'classic'
+  }
 
   // On mount, check localStorage for a previously generated job for this module
   useEffect(() => {
+    presetFromCacheRef.current = false
     const attempts = Number(localStorage.getItem(regenerateCountKey(moduleId)) ?? '0')
     setRegenerateCount(Number.isFinite(attempts) ? attempts : 0)
     const cached = readCachedJob(moduleId)
     if (!cached) return
+
+    if (cached.video_preset === 'standard' || cached.video_preset === 'rich') {
+      presetFromCacheRef.current = true
+      setVideoPreset(cached.video_preset)
+    }
     setPhase('checking')
     fetch(`/api/ai/generate-video/status/${cached.job_id}`)
       .then((r) => r.json())
@@ -106,10 +123,12 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
         if (data.status === 'done') {
           setJobId(cached.job_id)
           if (data.engine_mode) setEngineMode(data.engine_mode)
+          if (!presetFromCacheRef.current && data.engine_mode) setVideoPreset(data.engine_mode === 'premium' ? 'rich' : 'standard')
           setPhase('done')
         } else if (data.status === 'running' || data.status === 'queued') {
           setJobId(cached.job_id)
           if (data.engine_mode) setEngineMode(data.engine_mode)
+          if (!presetFromCacheRef.current && data.engine_mode) setVideoPreset(data.engine_mode === 'premium' ? 'rich' : 'standard')
           setPhase('generating')
           setProgressStep('Resuming…')
           openStream(cached.job_id)
@@ -126,12 +145,59 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moduleId])
 
+  // Load defaults for learner preset selection.
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/ai/generate-video/options')
+      .then((r) => r.json())
+      .then((data: { default_video_preset?: string }) => {
+        if (cancelled) return
+        if (presetFromCacheRef.current) return
+        const p = data?.default_video_preset
+        if (p === 'standard' || p === 'rich') setVideoPreset(p)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [moduleId])
+
   // Cleanup SSE on unmount
   useEffect(() => {
     return () => {
       esRef.current?.close()
     }
   }, [])
+
+  useEffect(() => {
+    if (phase !== 'done' || !jobId) {
+      setRenderGrantReady(false)
+      setRenderGrantError(false)
+      return
+    }
+    let cancelled = false
+    setRenderGrantReady(false)
+    setRenderGrantError(false)
+    fetch('/api/ai/generate-video/render-grant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ job_id: jobId }),
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(String(r.status))
+        return r.json()
+      })
+      .then(() => {
+        if (!cancelled) setRenderGrantReady(true)
+      })
+      .catch(() => {
+        if (!cancelled) setRenderGrantError(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [phase, jobId])
 
   useEffect(() => {
     function handleSudarVidMessage(event: MessageEvent) {
@@ -276,6 +342,7 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
         body: JSON.stringify({
           module_id: moduleId,
           course_id: courseId,
+          video_preset: videoPreset,
           regenerate,
         }),
       })
@@ -283,6 +350,7 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
         job_id?: string
         error?: string
         engine_mode?: 'classic' | 'premium'
+        video_preset?: SudarVidVideoPreset
         fallback_used?: boolean
       }
       if (!res.ok || !data.job_id) {
@@ -293,9 +361,12 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
       localStorage.setItem(storageKey(moduleId), JSON.stringify({
         job_id: data.job_id,
         engine_mode: data.engine_mode ?? 'classic',
+        video_preset: (data.video_preset === 'rich' || data.video_preset === 'standard') ? data.video_preset : videoPreset,
         fallback_used: Boolean(data.fallback_used),
       }))
-      setEngineMode(data.engine_mode ?? 'classic')
+      const nextEngineMode = data.engine_mode ?? presetToEngineMode(videoPreset)
+      setEngineMode(nextEngineMode)
+      if (data.video_preset === 'rich' || data.video_preset === 'standard') setVideoPreset(data.video_preset)
       if (regenerate) {
         const nextCount = Math.min(REGEN_LIMIT, regenerateCount + 1)
         localStorage.setItem(regenerateCountKey(moduleId), String(nextCount))
@@ -357,6 +428,36 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
             This takes about 30–60 seconds.
           </p>
         </div>
+
+        <div className="w-full max-w-md">
+          <p className="text-[11px] text-muted-foreground mb-2 text-left">Video format</p>
+          <div className="grid grid-cols-2 rounded-xl border border-border overflow-hidden bg-background">
+            <button
+              type="button"
+              onClick={() => setVideoPreset('standard')}
+              className={cn(
+                'px-3 py-2.5 text-xs font-semibold transition-colors',
+                videoPreset === 'standard' ? 'bg-primary text-white' : 'bg-background text-card-foreground hover:bg-muted/30',
+              )}
+            >
+              Standard
+            </button>
+            <button
+              type="button"
+              onClick={() => setVideoPreset('rich')}
+              className={cn(
+                'px-3 py-2.5 text-xs font-semibold transition-colors',
+                videoPreset === 'rich' ? 'bg-primary text-white' : 'bg-background text-card-foreground hover:bg-muted/30',
+              )}
+            >
+              Rich lesson
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-2 text-left">
+            Standard is faster. Rich lesson includes a more structured mini-course flow with interactions where appropriate.
+          </p>
+        </div>
+
         <button
           type="button"
           onClick={() => {
@@ -461,17 +562,57 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
           </button>
         </div>
       </div>
-      <iframe
-        ref={iframeRef}
-        src={`/api/ai/generate-video/render/${jobId}/slides.html`}
-        className={cn(
-          'w-full rounded-xl border border-border bg-black',
-          fullscreen ? 'flex-1' : 'h-[580px]'
-        )}
-        title={`Video: ${moduleTitle}`}
-        allow="autoplay"
-        sandbox="allow-scripts allow-same-origin"
-      />
+
+      <div className="w-full max-w-md mx-auto">
+        <p className="text-[11px] text-muted-foreground mb-2 text-left">Video format</p>
+        <div className="grid grid-cols-2 rounded-xl border border-border overflow-hidden bg-background">
+          <button
+            type="button"
+            onClick={() => setVideoPreset('standard')}
+            className={cn(
+              'px-3 py-2 text-xs font-semibold transition-colors',
+              videoPreset === 'standard' ? 'bg-primary text-white' : 'bg-background text-card-foreground hover:bg-muted/30',
+            )}
+          >
+            Standard
+          </button>
+          <button
+            type="button"
+            onClick={() => setVideoPreset('rich')}
+            className={cn(
+              'px-3 py-2 text-xs font-semibold transition-colors',
+              videoPreset === 'rich' ? 'bg-primary text-white' : 'bg-background text-card-foreground hover:bg-muted/30',
+            )}
+          >
+            Rich lesson
+          </button>
+        </div>
+      </div>
+
+      {renderGrantError && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-center text-xs text-destructive">
+          Could not authorize the video player for this session. Try refreshing the page, or sign out and back in.
+        </div>
+      )}
+      {!renderGrantError && !renderGrantReady && (
+        <div className="relative w-full rounded-xl border border-border bg-black min-h-[200px]">
+          <SudarLoadingFrost layout="block" label="Preparing video player…" className="min-h-[200px]" />
+        </div>
+      )}
+      {!renderGrantError && renderGrantReady && jobId && (
+        <iframe
+          key={jobId}
+          ref={iframeRef}
+          src={`/api/ai/generate-video/render/${jobId}/slides.html`}
+          className={cn(
+            'w-full rounded-xl border border-border bg-black',
+            fullscreen ? 'flex-1' : 'h-[580px]'
+          )}
+          title={`Video: ${moduleTitle}`}
+          allow="autoplay"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+        />
+      )}
       <p className="text-[11px] text-muted-foreground">
         Regenerate attempts used: {regenerateCount}/{REGEN_LIMIT}
       </p>

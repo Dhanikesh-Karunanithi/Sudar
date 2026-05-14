@@ -1,7 +1,9 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import createNextIntlPlugin from 'next-intl/plugin'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 
 // Windows: `.next/trace` under Desktop/OneDrive often throws EPERM; %TEMP%\sudar-studio-next can also EPERM when
 // Defender locks Temp. Use node_modules/.cache (stable relative path for tsconfig; usually fewer locks than Temp).
@@ -70,4 +72,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

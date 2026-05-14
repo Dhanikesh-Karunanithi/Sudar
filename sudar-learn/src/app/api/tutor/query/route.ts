@@ -23,6 +23,14 @@ import {
   scanSensitiveUserText,
 } from '@/lib/security/sensitiveInputGuard'
 import { parseOrgAiCompliance, type OrgAiCompliance } from '@/types/personalization'
+import { effectivePedagogy, resolveLearnerPreferences } from '@/lib/learner/learnerPreferences'
+import { buildTutorContentLanguageBlock } from '@/lib/i18n/contentLanguagePrompt'
+import {
+  clampOrgTutorMemoryMinIntervalHours,
+  clampTutorLlmMemoryExtractionPolicy,
+  shouldRunTutorMemoryLlmExtraction,
+} from '@/lib/learner/tutorMemoryCadence'
+import { buildStruggleSignalsSummary } from '@/lib/learner/struggleSignals'
 import { loadSkillGapSummary, recordMasteredTopics, recordStruggleTopics } from '@/lib/learner/syncTopicSkills'
 import { parseTutorModelOutput } from '@/lib/tutor/responseContract'
 import { sanitizeTutorBlocks } from '@/lib/tutor/tutorBlockSanitize'
@@ -56,6 +64,7 @@ const tutorQueryBodySchema = z.object({
     })
     .optional(),
   route: z.string().optional(),
+  pedagogy_mode: z.enum(['explain', 'guide', 'exam_focus']).optional(),
 })
 
 type TutorAiDeps = {
@@ -412,7 +421,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
 
-    const { message: rawMessage, course_id, module_id, conversation_history = [], pasted_text, selected_text, active_modality, available_modalities, route: routeParam } = body
+    const {
+      message: rawMessage,
+      course_id,
+      module_id,
+      conversation_history = [],
+      pasted_text,
+      selected_text,
+      active_modality,
+      available_modalities,
+      route: routeParam,
+      pedagogy_mode: pedagogyParam,
+    } = body
 
     if (course_id) {
       const { data: enrollmentForCourse } = await admin
@@ -651,7 +671,7 @@ export async function POST(request: NextRequest) {
     await Promise.all([
       admin
         .from('learner_profiles')
-        .select('ai_tutor_context, learning_pace, difficulty_comfort, cognitive_style')
+        .select('ai_tutor_context, learning_pace, difficulty_comfort, cognitive_style, learner_preferences')
         .eq('user_id', user.id)
         .maybeSingle(),
       admin
@@ -728,7 +748,9 @@ When suggesting a learning path, append: ACTIONS: [{"type":"open_path","path_id"
   // Fetch prior course titles for context
   let priorCoursesText = ''
   if (priorEnrollments && priorEnrollments.length > 0) {
-    const priorIds = priorEnrollments.map((e) => e.course_id).filter(Boolean)
+    const priorIds = priorEnrollments
+      .map((e) => e.course_id)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0)
     const { data: priorCourses } = await admin.from('courses').select('id, title').in('id', priorIds)
     priorCoursesText = priorEnrollments.map((e) => {
       const c = priorCourses?.find((x) => x.id === e.course_id)
@@ -753,6 +775,24 @@ When suggesting a learning path, append: ACTIONS: [{"type":"open_path","path_id"
   const outcomesText = outcomeLines.length > 0 ? `\nLast tutor actions taken:\n${outcomeLines.join('\n')}` : ''
 
   const memory = learnerProfile?.ai_tutor_context as Record<string, unknown> | null
+  const resolvedPrefs = resolveLearnerPreferences(learnerProfile?.learner_preferences ?? null)
+  const contentLanguageBlock = buildTutorContentLanguageBlock(resolvedPrefs)
+  const effectiveMode = effectivePedagogy(resolvedPrefs, pedagogyParam)
+
+  let struggleSummaryText = ''
+  if (resolvedPrefs.stuck_detection_tutor) {
+    struggleSummaryText = await buildStruggleSignalsSummary(admin, user.id, { courseId: course_id ?? undefined })
+  }
+
+  const consolidatedDigest =
+    resolvedPrefs.memory_digest_enabled && memory?.consolidated_interaction_digest
+      ? String(memory.consolidated_interaction_digest).slice(0, 1800)
+      : ''
+  const modalityMatrixHint =
+    resolvedPrefs.infer_modality_matrix && memory?.modality_context_matrix
+      ? JSON.stringify(memory.modality_context_matrix).slice(0, 1000)
+      : ''
+
   const storedResponseLength = (memory?.preferred_response_length as string) || 'concise'
 
   // If the learner explicitly asks for detail in this message, override the stored preference.
@@ -787,7 +827,19 @@ Learner Memory (use this to personalize every response):
 - Preferred explanation style: ${memory?.preferred_explanation_style || 'not set'}
 - Preferred response length: ${preferredResponseLength}
 - Total interactions with Sudar: ${memory?.interaction_count || 0}
-${priorCoursesText ? `\nPrior courses on this platform:\n${priorCoursesText}` : ''}${outcomesText}${skillGapBlock}${recentTutorTurnsText}${misconceptionsText}`
+${priorCoursesText ? `\nPrior courses on this platform:\n${priorCoursesText}` : ''}${outcomesText}${skillGapBlock}${recentTutorTurnsText}${misconceptionsText}${
+    consolidatedDigest
+      ? `\n\nLonger-range conversation summary (secondary to course text — do not invent facts):\n${consolidatedDigest}`
+      : ''
+  }${
+    modalityMatrixHint
+      ? `\n\nModality×intent preferences (for suggesting formats only):\n${modalityMatrixHint}`
+      : ''
+  }${
+    struggleSummaryText
+      ? `\n\nFormative signals (learner may need extra care — be supportive, not judgmental):\n${struggleSummaryText}`
+      : ''
+  }`
 
   // ── 3. Build system prompt ─────────────────────────────────────────────
   const responseLengthRule =
@@ -846,23 +898,34 @@ When the learner asks how to switch modality or where to find one, refer to the 
 When asked "who are you?", "what is your name?", "what are you?", or any similar identity question, always respond: "I'm **Sudar**, your AI learning tutor on Sudar Learn. I'm here to help you learn, recommend courses, track your progress, and answer any questions about your studies."
 Never say you don't have a name. Never refuse to introduce yourself. Identity questions are always welcome.
 
+${contentLanguageBlock}
+
 You only assist with learning and platform use. If the user asks for something off-topic, illegal, or unethical, politely decline and redirect to learning.
 
 Personality: warm, enthusiastic, encouraging. You love the subject matter and make it feel alive. You celebrate progress and meet people where they are.
 ${responseLengthRule}
+
+Teaching mode for this learner (honour strictly):
+${
+  effectiveMode === 'guide'
+    ? `- **Guide mode**: Prefer a short hint or clarifying question before revealing full answers. If they ask directly for the answer or seem frustrated, give a clear, complete answer.`
+    : effectiveMode === 'exam_focus'
+      ? `- **Exam / quick recall mode**: Be dense and minimal. Lead with the facts. Avoid long narrative and optional interactive BLOCKS unless the learner asks for depth.`
+      : `- **Explain mode**: When they ask a concrete question, start with the direct answer, then explain with structure and examples.`
+}
 
 Formatting & Engagement (always apply):
 - Use **bold** for key terms, *italic* for emphasis or analogies, and \`code\` for technical snippets.
 - Use ### headings to break up longer answers into scannable sections.
 - Use bullet lists (- item) or numbered lists for steps, comparisons, or multiple points.
 - Use relatable real-world analogies and concrete examples — make abstract ideas tangible.
-- For longer explanations, end with a short follow-up nudge like "Want me to go deeper on any part?" or a quick question to check understanding.
-- When the question is vague, offers multiple valid angles, or you want to match the learner's style, you may add tap-to-continue **choice_group** options via the BLOCKS line below. Keep labels short. Do not repeat your full answer inside BLOCKS.
+- ${effectiveMode === 'exam_focus' ? 'Skip lengthy follow-up nudges unless the learner asks for more.' : 'For longer explanations, end with a short follow-up nudge like "Want me to go deeper on any part?" or a quick question to check understanding.'}
+- When the question is vague, offers multiple valid angles, or you want to match the learner's style, you may add tap-to-continue **choice_group** options via the BLOCKS line below. Keep labels short. Do not repeat your full answer inside BLOCKS.${effectiveMode === 'exam_focus' ? ' Omit choice_group in this mode unless clearly useful.' : ''}
 - Optional **BLOCKS** (place after your answer; before ACTIONS when you use both). One line: BLOCKS: followed by a JSON array of objects with "id", "type", "payload". Valid types: **choice_group** (payload: question optional, choices: [{id, label, follow_up_message}]), **concept_card** (title, key_idea, analogy?, misconception?), **diagram** (title?, nodes: [{id, label}], edges?: [{from, to, label?}]), **timeline** (title?, items: [{id, title, description?}]), **media_card** (title, snippet?, image_url?, link_url?, only use URLs you are confident are safe https links), **interactive_demo** (component_id: molecule_viewer|cell_model|physics_demo|placeholder, label?, params object). Do not invent file URLs. Example:
 BLOCKS: [{"id":"c1","type":"choice_group","payload":{"question":"How should we continue?","choices":[{"id":"a","label":"Use a simple analogy","follow_up_message":"Explain using a simple analogy."},{"id":"b","label":"Step-by-step","follow_up_message":"Walk me through step by step."}]}}]
 - Never dump a wall of prose. Even short answers should be well-structured and easy to skim.
 
-Reasoning: When answering, think step by step (what did they ask → what context is relevant → best answer/action), then give your direct answer. Use the course content and learner context below to personalize every response.
+Reasoning: When answering, think step by step (what did they ask → what context is relevant → best answer/action). Use the course content and learner context below to personalize every response.
 ${SUDAR_PLATFORM_KNOWLEDGE}
 
 Current route (where the learner is in the app): ${typeof routeParam === 'string' && routeParam ? routeParam : course_id ? '/courses/[id]/learn' : '/dashboard'}
@@ -884,8 +947,7 @@ How to personalize:
 - If they've completed prior courses, connect concepts across courses when helpful
 - If they've struggled with something before, give that topic extra care
 - Celebrate when they understand something they've previously found hard
-- Never skip foundational content — personalize HOW you explain it, not WHETHER
-- Start with the direct answer, then explain`
+- Never skip foundational content — personalize HOW you explain it, not WHETHER`
 
   // ── 4. Build message history ───────────────────────────────────────────
   // Future: multi-turn tool loop — LLM returns tool_calls (e.g. search_courses, get_learner_context);
@@ -978,8 +1040,22 @@ How to personalize:
     }
   }
 
-  // ── 6. Async memory update (fire and forget) ───────────────────────────
-  updateLearnerMemory(user.id, message, responseText, admin, aiDeps).catch(() => {})
+  // ── 6. Async memory update (fire and forget; cadence + org policy) ─────
+  const memPolicy = clampTutorLlmMemoryExtractionPolicy(orgAiCompliance.tutor_llm_memory_extraction_policy)
+  const orgMemHours = clampOrgTutorMemoryMinIntervalHours(orgAiCompliance.tutor_llm_memory_min_interval_hours)
+  const lastMemLlmAt =
+    typeof memory?.tutor_memory_llm_last_extraction_at === 'string'
+      ? (memory.tutor_memory_llm_last_extraction_at as string)
+      : undefined
+  const runMemLlm = shouldRunTutorMemoryLlmExtraction({
+    learnerCadence: resolvedPrefs.tutor_memory_llm_cadence,
+    orgMinIntervalHours: orgMemHours,
+    orgPolicy: memPolicy,
+    lastExtractionAt: lastMemLlmAt,
+  })
+  if (runMemLlm) {
+    updateLearnerMemory(user.id, message, responseText, admin, aiDeps).catch(() => {})
+  }
 
   // ── 7. Optional web/image resource cards (org + env gated) ─────────────
   const resourceBlocks = await buildTutorResourceBlocks(orgAiCompliance, message, courseTitle, currentModuleTitle)
@@ -1102,6 +1178,7 @@ Return only the JSON, nothing else.`
       learning_style_notes: insights.style_note || existing.learning_style_notes || '',
       interaction_count: interactionCount,
       last_updated: new Date().toISOString(),
+      tutor_memory_llm_last_extraction_at: new Date().toISOString(),
     }
 
     await admin

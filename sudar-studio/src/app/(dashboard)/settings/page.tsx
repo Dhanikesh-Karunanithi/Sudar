@@ -22,6 +22,7 @@ import { ProfilePhotoSettingsCard } from '@/components/features/profile/ProfileP
 import { VoiceCharacterStage } from '@/components/features/audio/VoiceCharacterStage'
 import type { VoiceLibraryProviderStatus } from '@/lib/audio/voices'
 import { normalizeTtsVoiceId, TTS_VOICE_OPTIONS } from '@/lib/audio/voices'
+import { StudioLocalizationCard } from '@/components/settings/StudioLocalizationCard'
 
 const CONTENT_GENERATION_MODEL_OPTIONS: ModelPickerOption[] = [
   { id: 'default', name: 'Default', description: 'Great for most course generation tasks' },
@@ -48,6 +49,11 @@ export default function SettingsPage() {
   const [blockHighRiskPiiInTutor, setBlockHighRiskPiiInTutor] = useState(true)
   const [tutorRedactEchoedSecrets, setTutorRedactEchoedSecrets] = useState(true)
   const [tutorOutputModerationStrict, setTutorOutputModerationStrict] = useState(false)
+  const [tutorLlmMemoryExtractionPolicy, setTutorLlmMemoryExtractionPolicy] = useState<
+    'learner_controlled' | 'disabled_org_wide'
+  >('learner_controlled')
+  const [tutorLlmMemoryMinIntervalHours, setTutorLlmMemoryMinIntervalHours] = useState<string>('')
+  const [memoryDigestMinIntervalDaysOrg, setMemoryDigestMinIntervalDaysOrg] = useState<string>('')
   const [usePrivateServer, setUsePrivateServer] = useState(false)
   const [privateServerUrl, setPrivateServerUrl] = useState('')
   const [privateServerModel, setPrivateServerModel] = useState('')
@@ -72,6 +78,7 @@ export default function SettingsPage() {
   const [agentsPolicyPackId, setAgentsPolicyPackId] = useState('default')
   const [agentsExplanationLevel, setAgentsExplanationLevel] = useState<'simple' | 'advanced'>('simple')
   const [showAgentsFieldDetails, setShowAgentsFieldDetails] = useState(false)
+  const [orgDefaultLearnerUi, setOrgDefaultLearnerUi] = useState('')
 
   const fetchSettings = useCallback(async () => {
     const res = await fetch('/api/org/settings')
@@ -105,6 +112,20 @@ export default function SettingsPage() {
       setBlockHighRiskPiiInTutor(data.ai_compliance.block_high_risk_pii_in_tutor !== false)
       setTutorRedactEchoedSecrets(data.ai_compliance.tutor_redact_echoed_secrets !== false)
       setTutorOutputModerationStrict(data.ai_compliance.tutor_output_moderation_strict === true)
+      const pol = data.ai_compliance.tutor_llm_memory_extraction_policy
+      setTutorLlmMemoryExtractionPolicy(pol === 'disabled_org_wide' ? 'disabled_org_wide' : 'learner_controlled')
+      const memH = data.ai_compliance.tutor_llm_memory_min_interval_hours
+      setTutorLlmMemoryMinIntervalHours(
+        typeof memH === 'number' && !Number.isNaN(memH) ? String(memH) : '',
+      )
+      const dOrg = data.ai_compliance.memory_digest_min_interval_days_org
+      setMemoryDigestMinIntervalDaysOrg(
+        typeof dOrg === 'number' && !Number.isNaN(dOrg) ? String(dOrg) : '',
+      )
+    }
+    if (data.localization) {
+      const loc = data.localization as { default_ui_locale?: string | null }
+      setOrgDefaultLearnerUi(typeof loc.default_ui_locale === 'string' ? loc.default_ui_locale : '')
     }
     if (data.sudar_agents) {
       const sa = data.sudar_agents as Record<string, unknown>
@@ -215,6 +236,11 @@ export default function SettingsPage() {
           block_high_risk_pii_in_tutor: blockHighRiskPiiInTutor,
           tutor_redact_echoed_secrets: tutorRedactEchoedSecrets,
           tutor_output_moderation_strict: tutorOutputModerationStrict,
+          tutor_llm_memory_extraction_policy: tutorLlmMemoryExtractionPolicy,
+          tutor_llm_memory_min_interval_hours:
+            tutorLlmMemoryMinIntervalHours.trim() === '' ? null : Number(tutorLlmMemoryMinIntervalHours),
+          memory_digest_min_interval_days_org:
+            memoryDigestMinIntervalDaysOrg.trim() === '' ? null : Number(memoryDigestMinIntervalDaysOrg),
           ...(personalizationRetentionDays.trim() !== '' && {
             personalization_data_retention_days: Number(personalizationRetentionDays),
           }),
@@ -261,6 +287,9 @@ export default function SettingsPage() {
           },
           policy_pack_id: agentsPolicyPackId.trim() || 'default',
           admin_explanation_level: agentsExplanationLevel,
+        },
+        localization: {
+          default_ui_locale: orgDefaultLearnerUi.trim() === '' ? null : orgDefaultLearnerUi,
         },
       }),
     })
@@ -335,6 +364,10 @@ export default function SettingsPage() {
   return (
     <div className="p-8 max-w-3xl mx-auto space-y-6">
       <ProfilePhotoSettingsCard />
+      <StudioLocalizationCard
+        orgDefaultLearnerUi={orgDefaultLearnerUi}
+        onOrgDefaultLearnerUiChange={setOrgDefaultLearnerUi}
+      />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center">
@@ -579,6 +612,55 @@ export default function SettingsPage() {
             onChange={(e) => setAiInteractionsRetentionDays(e.target.value)}
             className="w-full max-w-sm rounded-lg border border-slate-700 bg-slate-800 text-white px-3 py-2 text-sm"
           />
+        </div>
+        <div className="pt-4 border-t border-slate-800 space-y-3">
+          <h3 className="font-medium text-white text-sm">Tutor memory — LLM learning cadence</h3>
+          <p className="text-slate-500 text-xs">
+            Learners choose their own pace on the Memory page; these settings cap or disable LLM-driven updates from tutor chat for your organisation (data minimisation).
+          </p>
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">Organisation policy</label>
+            <select
+              value={tutorLlmMemoryExtractionPolicy}
+              onChange={(e) =>
+                setTutorLlmMemoryExtractionPolicy(
+                  e.target.value === 'disabled_org_wide' ? 'disabled_org_wide' : 'learner_controlled',
+                )
+              }
+              className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-800 text-white px-3 py-2 text-sm"
+            >
+              <option value="learner_controlled">Learner-controlled (apply optional floors below)</option>
+              <option value="disabled_org_wide">Disable LLM tutor memory updates for all members</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">
+              Minimum hours between profile-inference LLM runs (optional floor)
+            </label>
+            <select
+              value={tutorLlmMemoryMinIntervalHours}
+              onChange={(e) => setTutorLlmMemoryMinIntervalHours(e.target.value)}
+              className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-800 text-white px-3 py-2 text-sm"
+            >
+              <option value="">No floor — follow each learner&apos;s setting</option>
+              <option value="24">At least 24 hours apart</option>
+              <option value="168">At least 7 days apart</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500 mb-1">
+              Minimum days between long-range digest summaries (optional floor)
+            </label>
+            <select
+              value={memoryDigestMinIntervalDaysOrg}
+              onChange={(e) => setMemoryDigestMinIntervalDaysOrg(e.target.value)}
+              className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-800 text-white px-3 py-2 text-sm"
+            >
+              <option value="">No floor — follow each learner&apos;s setting</option>
+              <option value="7">At least 7 days apart</option>
+              <option value="30">At least 30 days apart</option>
+            </select>
+          </div>
         </div>
         <div className="pt-4 border-t border-slate-800 space-y-3">
           <div className="flex items-center gap-2">

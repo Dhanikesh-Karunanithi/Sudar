@@ -106,14 +106,3 @@ Rules:
 
   return { description, tag_labels }
 }
-
-/**
- * Sudar uses in-app CSS art for default thumbnails and banners (see SudarCourseDefaultArt).
- * No stock-image fetch — keeps catalog cohesive and avoids brittle remote URLs.
- */
-export async function suggestCourseCoverImages(
-  _courseTitle: string,
-  _tagLabels: string[]
-): Promise<{ thumbnail_url: string | null; banner_url: string | null }> {
-  return { thumbnail_url: null, banner_url: null }
-}

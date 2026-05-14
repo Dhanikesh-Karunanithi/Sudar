@@ -4,7 +4,13 @@
  */
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { computeTwinRollup, type LearningEventRow } from '@/lib/learner/twinRollup'
+import { resolveLearnerPreferences } from '@/lib/learner/learnerPreferences'
+import {
+  computeModalityContextMatrix,
+  computeTwinRollup,
+  type LearningEventRow,
+  type ModalityContextMatrix,
+} from '@/lib/learner/twinRollup'
 
 const ROLLUP_COOLDOWN_MS = 8 * 60 * 1000
 const EVENT_WINDOW_DAYS = 90
@@ -21,7 +27,7 @@ export async function POST(request: NextRequest) {
 
   const { data: profile } = await admin
     .from('learner_profiles')
-    .select('modality_scores, ai_tutor_context')
+    .select('modality_scores, ai_tutor_context, learner_preferences')
     .eq('user_id', user.id)
     .single()
 
@@ -47,9 +53,15 @@ export async function POST(request: NextRequest) {
 
   const rollup = computeTwinRollup((events ?? []) as LearningEventRow[], profile.modality_scores as Record<string, number>)
 
-  const nextCtx = {
+  const prefs = resolveLearnerPreferences(profile.learner_preferences)
+  let nextCtx: Record<string, unknown> = {
     ...ctx,
     last_twin_rollup_at: new Date().toISOString(),
+  }
+  if (prefs.infer_modality_matrix) {
+    const prevMatrix = ctx.modality_context_matrix as ModalityContextMatrix | undefined
+    const matrix = computeModalityContextMatrix((events ?? []) as LearningEventRow[], prevMatrix)
+    nextCtx = { ...nextCtx, modality_context_matrix: matrix }
   }
 
   await admin

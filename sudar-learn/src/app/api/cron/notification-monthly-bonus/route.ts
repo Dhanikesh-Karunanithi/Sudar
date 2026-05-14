@@ -11,3 +11,8 @@ export async function POST(request: NextRequest) {
   await runMonthlyNotificationBonuses(admin)
   return NextResponse.json({ ok: true })
 }
+
+/** Vercel Cron uses GET; external schedulers may use POST. */
+export async function GET(request: NextRequest) {
+  return POST(request)
+}

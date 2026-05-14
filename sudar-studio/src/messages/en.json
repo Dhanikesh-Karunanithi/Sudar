@@ -1,0 +1,12 @@
+{
+  "StudioLocalization": {
+    "cardTitle": "Localization",
+    "studioUiTitle": "Studio interface language",
+    "studioUiHint": "Applies in this browser only (cookie). Does not change learner-facing defaults.",
+    "orgDefaultTitle": "Default UI language for learners (Sudar Learn)",
+    "orgDefaultHint": "Used when a learner has not set a UI language. They can override in Learn → Memory.",
+    "orgDefaultNone": "No org default (English / browser)",
+    "searchPlaceholder": "Search languages…",
+    "saveHint": "Click Save at the top to persist the learner default for your organization."
+  }
+}

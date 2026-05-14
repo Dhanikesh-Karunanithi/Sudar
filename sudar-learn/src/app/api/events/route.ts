@@ -1,6 +1,7 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import type { Json } from '@/types/database'
 import { recordStruggleTopics } from '@/lib/learner/syncTopicSkills'
 import { evaluateGamification } from '@/lib/gamification/engine'
 
@@ -32,7 +33,7 @@ const eventBodySchema = z.object({
   event_type: eventTypeEnum,
   course_id: z.string().uuid().optional().nullable(),
   module_id: z.string().uuid().optional().nullable(),
-  payload: z.record(z.unknown()).optional().nullable(),
+  payload: z.record(z.string(), z.unknown()).optional().nullable(),
   modality: z.enum(['text', 'video', 'audio', 'mindmap', 'flashcards', 'game', 'feed', 'podcast', 'reading', 'listening']).optional().default('text'),
   duration_secs: z.number().int().min(0).optional().nullable(),
 })
@@ -94,6 +95,16 @@ function validateEventSemantics(
     if (typeof fromModality !== 'string' || typeof toModality !== 'string') {
       return 'modality_switch requires payload.from_modality and payload.to_modality'
     }
+    const ci = data.content_intent
+    if (ci !== undefined && ci !== null && typeof ci !== 'string') {
+      return 'modality_switch payload.content_intent must be a string when set'
+    }
+    if (
+      typeof ci === 'string' &&
+      !['conceptual', 'procedural', 'review', 'assessment'].includes(ci)
+    ) {
+      return 'modality_switch content_intent must be conceptual, procedural, review, or assessment'
+    }
   }
 
   return null
@@ -128,7 +139,7 @@ export async function POST(request: NextRequest) {
     course_id: course_id ?? null,
     module_id: module_id ?? null,
     event_type,
-    payload: payload ?? null,
+    payload: (payload ?? null) as Json,
     modality: modality ?? 'text',
     duration_secs: duration_secs ?? null,
   })
@@ -193,7 +204,10 @@ export async function POST(request: NextRequest) {
   }
 
   // On quiz_attempt — feed wrong topics into learner memory as struggles
-  if (event_type === 'quiz_attempt' && payload?.wrong_topics?.length > 0) {
+  const quizPayload = payload as Record<string, unknown> | null | undefined
+  const wrongTopics =
+    Array.isArray(quizPayload?.wrong_topics) ? (quizPayload.wrong_topics as unknown[]).filter((t): t is string => typeof t === 'string') : []
+  if (event_type === 'quiz_attempt' && wrongTopics.length > 0) {
     const { data: profile } = await admin
       .from('learner_profiles')
       .select('ai_tutor_context')
@@ -202,7 +216,7 @@ export async function POST(request: NextRequest) {
 
     const existing = (profile?.ai_tutor_context as Record<string, unknown>) ?? {}
     const currentStruggles = (existing.struggles_with as string[]) ?? []
-    const newTopics = (payload.wrong_topics as string[]).filter((t: string) => !currentStruggles.includes(t))
+    const newTopics = wrongTopics.filter((t: string) => !currentStruggles.includes(t))
 
     if (newTopics.length > 0) {
       const updated = {
@@ -216,10 +230,10 @@ export async function POST(request: NextRequest) {
         .eq('user_id', user.id)
     }
 
-    if (course_id && Array.isArray(payload?.wrong_topics) && payload.wrong_topics.length > 0) {
+    if (course_id && wrongTopics.length > 0) {
       const { data: courseRow } = await admin.from('courses').select('org_id').eq('id', course_id).maybeSingle()
       if (courseRow?.org_id) {
-        void recordStruggleTopics(admin, user.id, courseRow.org_id, payload.wrong_topics as string[])
+        void recordStruggleTopics(admin, user.id, courseRow.org_id, wrongTopics)
       }
     }
   }
@@ -286,6 +300,8 @@ export async function POST(request: NextRequest) {
         .neq('status', 'completed')
 
       for (const pe of pathEnrollments ?? []) {
+        if (!pe.path_id) continue
+        const pathId = pe.path_id
         const seq = (pe.personalized_sequence as Array<{ course_id: string; is_mandatory: boolean }>) ?? []
         const mandatoryCourseIds = seq.filter((c) => c.is_mandatory).map((c) => c.course_id)
         if (mandatoryCourseIds.length === 0) continue
@@ -322,7 +338,7 @@ export async function POST(request: NextRequest) {
         const { data: pathData } = await admin
           .from('learning_paths')
           .select('issues_certificate')
-          .eq('id', pe.path_id)
+          .eq('id', pathId)
           .single()
 
         if (pathData?.issues_certificate) {
@@ -330,7 +346,7 @@ export async function POST(request: NextRequest) {
           fetch(`${baseUrl}/api/certificates/issue`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Cookie: request.headers.get('cookie') ?? '' },
-            body: JSON.stringify({ path_id: pe.path_id }),
+            body: JSON.stringify({ path_id: pathId }),
           }).catch(() => {})
         }
       }

@@ -1,8 +1,9 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { Bot, Lock, Pencil, Brain, BookOpen, AlertTriangle } from 'lucide-react'
 import { MemoryEditor } from './MemoryEditor'
+import { LearningPreferencesPanel } from './LearningPreferencesPanel'
 import { BentoCard } from '@/components/ui/BentoCard'
-import { buildInsights } from '@/lib/memory/insights'
+import { buildInsights, type LearnerProfileInput } from '@/lib/memory/insights'
 import { InsightsCarousel } from '@/components/memory/InsightsCarousel'
 
 export default async function MemoryPage() {
@@ -53,9 +54,41 @@ export default async function MemoryPage() {
     courseTitles = Object.fromEntries((courses ?? []).map((c) => [c.id, c.title]))
   }
 
+  const profileForInsights: LearnerProfileInput | null = profile
+    ? {
+        ai_tutor_context:
+          profile.ai_tutor_context &&
+          typeof profile.ai_tutor_context === 'object' &&
+          !Array.isArray(profile.ai_tutor_context)
+            ? (profile.ai_tutor_context as Record<string, unknown>)
+            : null,
+        next_best_action:
+          profile.next_best_action &&
+          typeof profile.next_best_action === 'object' &&
+          !Array.isArray(profile.next_best_action)
+            ? (profile.next_best_action as Record<string, unknown>)
+            : null,
+        modality_scores:
+          profile.modality_scores &&
+          typeof profile.modality_scores === 'object' &&
+          !Array.isArray(profile.modality_scores)
+            ? (profile.modality_scores as Record<string, number>)
+            : null,
+        streak_days: profile.streak_days ?? undefined,
+      }
+    : null
+
+  const eventsForInsights = (events ?? []).map((e) => ({
+    ...e,
+    payload:
+      e.payload !== null && typeof e.payload === 'object' && !Array.isArray(e.payload)
+        ? (e.payload as Record<string, unknown>)
+        : null,
+  }))
+
   const insights = buildInsights(
-    profile ?? null,
-    events ?? [],
+    profileForInsights,
+    eventsForInsights,
     enrollments ?? [],
     interactions ?? [],
     { courseTitles }
@@ -169,6 +202,8 @@ export default async function MemoryPage() {
           )}
         </BentoCard>
       </div>
+
+      <LearningPreferencesPanel />
 
       {/* User-editable */}
       <div className="space-y-4">

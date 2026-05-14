@@ -1,5 +1,7 @@
 /** Aggregates learning_events into learner_profiles twin fields (modality affinity, engagement). */
 
+import type { ContentIntent } from '@/lib/learner/modalityContentIntent'
+
 export const CANONICAL_MODALITY_KEYS = [
   'text',
   'video',
@@ -201,4 +203,44 @@ export function computeTwinRollup(
     avg_completion_rate: Math.round(completionRatio * 1000) / 1000,
     last_active_at: new Date().toISOString(),
   }
+}
+
+const INTENT_KEYS: ContentIntent[] = ['conceptual', 'procedural', 'review', 'assessment']
+
+export type ModalityContextMatrix = Record<
+  ContentIntent,
+  Partial<Record<CanonicalModality, number>>
+>
+
+function emptyMatrix(): ModalityContextMatrix {
+  return {
+    conceptual: {},
+    procedural: {},
+    review: {},
+    assessment: {},
+  }
+}
+
+/**
+ * Update 2D modality×intent affinity from modality_switch events (requires payload.content_intent).
+ */
+export function computeModalityContextMatrix(
+  events: LearningEventRow[],
+  existing: ModalityContextMatrix | null | undefined,
+): ModalityContextMatrix {
+  const matrix = existing ? (JSON.parse(JSON.stringify(existing)) as ModalityContextMatrix) : emptyMatrix()
+
+  for (const ev of events) {
+    if (ev.event_type !== 'modality_switch') continue
+    const payload = (ev.payload ?? {}) as Record<string, unknown>
+    const intent = (payload.content_intent as ContentIntent) ?? 'conceptual'
+    if (!INTENT_KEYS.includes(intent)) continue
+    const bucket = canonicalModality(ev.modality)
+    const row = { ...(matrix[intent] ?? {}) }
+    const prev = typeof row[bucket] === 'number' ? (row[bucket] as number) : 0.5
+    row[bucket] = clamp(prev * 0.85 + 0.15, 0.12, 0.98)
+    matrix[intent] = row
+  }
+
+  return matrix
 }

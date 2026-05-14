@@ -52,8 +52,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const publicPaths = ['/login', '/signup', '/auth/callback']
   const isPublicPath = publicPaths.some((p) => pathname.startsWith(p))
+  /** SudarVid render proxy sets auth via HttpOnly cookie (iframe loads often omit session cookies). */
+  const delegatesAuth = pathname.startsWith('/api/studio/ai/generate-video/render/')
 
-  if (!user && !isPublicPath) {
+  if (!user && !isPublicPath && !delegatesAuth) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
     }

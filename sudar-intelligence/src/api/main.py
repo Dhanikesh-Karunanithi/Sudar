@@ -20,7 +20,7 @@ from contextlib import asynccontextmanager
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from src.api.routes import tutor, learner, content, modality, health, audio, agents, runtime
+from src.api.routes import tutor, learner, content, modality, health, audio, agents, runtime, image
 from src.api.logging_middleware import LoggingMiddleware
 from src.sudarplay.router import router as sudarplay_router
 
@@ -97,6 +97,7 @@ def root():
         "docs": _docs_url,
         "health": "/api/health",
         "audio": "POST /api/audio/generate",
+        "image": "POST /api/image/generate",
     }
 
 app.include_router(health.router, prefix="/api", tags=["health"])
@@ -106,5 +107,6 @@ app.include_router(content.router, prefix="/api/content", tags=["Content Generat
 app.include_router(runtime.router, prefix="/api/runtime", tags=["Runtime"])
 app.include_router(modality.router, prefix="/api/modality", tags=["Modality"])
 app.include_router(audio.router, prefix="/api/audio", tags=["Audio TTS"])
+app.include_router(image.router, prefix="/api/image", tags=["Image Generation"])
 app.include_router(agents.router, prefix="/api/agents", tags=["Sudar Agents"])
 app.include_router(sudarplay_router, prefix="/api/sudarplay", tags=["sudarplay"])

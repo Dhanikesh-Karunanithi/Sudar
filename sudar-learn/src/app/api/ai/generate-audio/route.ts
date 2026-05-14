@@ -8,6 +8,9 @@ import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/se
 import { NextRequest, NextResponse } from 'next/server'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 import { normalizeTtsVoiceId, TTS_VOICE_OPTIONS_BY_ID } from '@/lib/audio/voices'
+import { defaultVoiceIdForContentLocale } from '@/lib/audio/ttsContentLocale'
+import { sarvamTargetLanguageFromContentLocale } from '@/lib/audio/sarvamLanguageCode'
+import { resolveLearnerPreferences } from '@/lib/learner/learnerPreferences'
 
 const INTELLIGENCE_URL = (process.env.SUDAR_INTELLIGENCE_URL ?? process.env.BYTEOS_INTELLIGENCE_URL)?.replace(/\/$/, '')
 const INTELLIGENCE_SERVICE_SECRET = process.env.INTELLIGENCE_SERVICE_SECRET?.trim()
@@ -28,18 +31,39 @@ export async function POST(request: NextRequest) {
   let voice: string | undefined = typeof body.voice === 'string'
     ? normalizeTtsVoiceId(body.voice.trim()) ?? undefined
     : undefined
+
+  const { data: profile } = await admin
+    .from('learner_profiles')
+    .select('ai_tutor_context, learner_preferences')
+    .eq('user_id', user.id)
+    .single()
+
+  const learningPrefs = resolveLearnerPreferences(profile?.learner_preferences ?? null)
+
   if (!voice) {
-    const { data: profile } = await admin
-      .from('learner_profiles')
-      .select('ai_tutor_context')
-      .eq('user_id', user.id)
-      .single()
     const ctx = (profile?.ai_tutor_context as Record<string, unknown>) ?? {}
     const prefs = (ctx.preferences as Record<string, string>) ?? {}
     if (prefs.tts_voice) voice = normalizeTtsVoiceId(prefs.tts_voice) ?? undefined
   }
+  if (!voice) {
+    const fromLocale = defaultVoiceIdForContentLocale(learningPrefs.content_language)
+    if (fromLocale && TTS_VOICE_OPTIONS_BY_ID[fromLocale]) voice = fromLocale
+  }
   if (!voice || !TTS_VOICE_OPTIONS_BY_ID[voice]) {
     voice = 'en-US-JennyNeural'
+  }
+
+  const intelPayload: Record<string, unknown> = {
+    text: text.slice(0, 15000),
+    voice,
+    rate: typeof body.rate === 'number' ? body.rate : undefined,
+    expression: typeof body.expression === 'string' ? body.expression : undefined,
+  }
+  if (voice.toLowerCase().startsWith('sarvam_')) {
+    intelPayload.target_language_code =
+      typeof body.target_language_code === 'string' && body.target_language_code.trim()
+        ? body.target_language_code.trim()
+        : sarvamTargetLanguageFromContentLocale(learningPrefs.content_language)
   }
 
   if (!INTELLIGENCE_URL) {
@@ -58,12 +82,7 @@ export async function POST(request: NextRequest) {
     const res = await fetch(`${INTELLIGENCE_URL}/api/audio/generate`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        text: text.slice(0, 15000),
-        voice: voice ?? undefined,
-        rate: typeof body.rate === 'number' ? body.rate : undefined,
-        expression: typeof body.expression === 'string' ? body.expression : undefined,
-      }),
+      body: JSON.stringify(intelPayload),
     })
 
     if (!res.ok) {

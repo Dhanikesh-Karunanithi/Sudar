@@ -66,7 +66,7 @@ export default function FeaturesPage() {
       <ul className="mt-4 list-disc space-y-1 pl-6 text-foreground">
         <li>Personalized learner dashboard (streak, time, engagement, Sudar recommends)</li>
         <li>Modality switching: Text, Video, Audio (Listen), MindMap, Flashcards, SudarFeed, SudarPlay</li>
-        <li>AI Tutor Sudar: RAG over course content, longitudinal memory, floating chat</li>
+        <li>AI Tutor Sudar: RAG over course content, longitudinal memory (learner + org cadence), floating chat</li>
         <li>Structured tutor responses (enroll, continue, review), quick memory preferences</li>
         <li>My Memory page with insights carousel</li>
         <li>Skills graph and knowledge gap visualization</li>

@@ -111,6 +111,9 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 | `GOOGLE_SEARCH_API_KEY` | Studio, Learn | Google Custom Search (images + web for research; Learn uses same keys for optional tutor `media_card` enrichment). | [Google Cloud Console](https://console.cloud.google.com/) → APIs → Custom Search API |
 | `GOOGLE_SEARCH_ENGINE_ID` | Studio, Learn | Custom Search Engine ID (create at [programmablesearchengine.google.com](https://programmablesearchengine.google.com/)). | Same |
 | `TUTOR_WEB_ENRICHMENT_ENABLED` | Learn | When `true`, enables server-side web/image search helper for course tutor when the org also allows it (`settings.ai_compliance.tutor_web_enrichment_enabled` not `false`). Default off if unset. | — |
+| *(Org JSON)* `ai_compliance.tutor_llm_memory_extraction_policy` | Studio / Learn | `learner_controlled` (default) or `disabled_org_wide` — when `disabled_org_wide`, Learn skips LLM post-message tutor memory extraction and digest summarisation for org members. | Persisted in `organisations.settings` |
+| *(Org JSON)* `ai_compliance.tutor_llm_memory_min_interval_hours` | Studio / Learn | Optional positive integer (hours). Minimum spacing between LLM profile-inference runs from tutor chat; learner cadence cannot be faster than this floor. | Same |
+| *(Org JSON)* `ai_compliance.memory_digest_min_interval_days_org` | Studio / Learn | Optional positive integer (days). Minimum spacing between long-range digest LLM runs; learner digest-day choice cannot be faster than this floor. | Same |
 | `PEXELS_API_KEY` | Studio | [Pexels](https://www.pexels.com/api/) — stock photos/videos. | pexels.com/api |
 | `UNSPLASH_ACCESS_KEY` | Studio | [Unsplash](https://unsplash.com/developers) — stock photos. | unsplash.com/developers |
 | `GIPHY_API_KEY` | Studio | [Giphy](https://developers.giphy.com/) — animated GIFs. | developers.giphy.com |
@@ -138,7 +141,7 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 | Variable | App | Description |
 |----------|-----|-------------|
 | `SUDARVID_URL` | Learn, Studio (optional), Intelligence (optional) | SudarVid microservice base URL for the Watch modality (e.g. `http://localhost:8000`). Code and docs use this name only; run the service from repo folder `sudar_vid`. |
-| `SUDARVID_ENGINE_MODE` | Learn | Default Watch generation engine mode for contract requests (`classic` default, optional `premium`). |
+| `SUDARVID_ENGINE_MODE` | Learn | Default Watch generation engine mode used when the client omits a video format (maps Standard → classic, Rich → premium). |
 | `SUDARVID_HTTP_FALLBACK_ENABLED` | Learn | Contract fallback switch. When `true`, premium start failures retry once with classic mode. Defaults to `false` (strict HTTP contract mode). |
 | `REMOTION_SERVER_URL` | Studio, Intelligence | Remotion render server (e.g. `http://localhost:3040`). |
 
@@ -148,7 +151,7 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 
 Same Supabase and AI provider keys as above. See `sudar-intelligence/.env.example`. Local files **`sudar-intelligence/.env.local`** and **`sudar-intelligence/.env`** are **auto-loaded** when the API starts (no manual `export` needed for uvicorn).
 
-Key vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, **`SUPABASE_JWT_SECRET` (required for Bearer JWT from Studio/Learn — Sudar Agents, tutor, etc.)**, `AI_CHAT_PROVIDER`, `TOGETHER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AI_CHAT_BASE_URL`, `AI_CHAT_API_KEY`, `AI_CHAT_DEFAULT_MODEL`, `PORT`, `ENV`.
+Key vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, **`SUPABASE_JWT_SECRET` (required for Bearer JWT from Studio/Learn — Sudar Agents, tutor, etc.)**, `AI_CHAT_PROVIDER`, `TOGETHER_API_KEY` (chat/embeddings and optional **`POST /api/image/generate`** FLUX covers when set on Intelligence), `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `AI_CHAT_BASE_URL`, `AI_CHAT_API_KEY`, `AI_CHAT_DEFAULT_MODEL`, `PORT`, `ENV`.
 
 Security hardening vars:
 
@@ -165,7 +168,8 @@ Sudar Agents org-level behaviour is stored in Postgres (`organisations.settings.
 
 | Variable | App | Description |
 |----------|-----|-------------|
-| `CRON_SECRET` | Studio, Learn | Required secret for cron endpoints; cron routes fail closed when this is missing. |
+| `CRON_SECRET` | Studio, Learn | Required secret for cron endpoints; cron routes fail closed when this is missing. On **Learn**, Vercel Cron sends `Authorization: Bearer <CRON_SECRET>` when this is set in the Vercel project (see `sudar-learn/vercel.json`). |
+| `LEARN_CRON_SECRET` | Learn (optional) | If set and `CRON_SECRET` is unset, Learn’s `rejectInvalidCronRequest` accepts this value instead (dedicated secret name for Learn-only deploys). Prefer `CRON_SECRET` when Studio and Learn share ops. |
 | `RESEND_API_KEY` | Studio | [Resend](https://resend.com) — email for reminders. |
 | `RESEND_FROM` | Studio | From address (e.g. `Sudar <onboarding@resend.dev>`). |
 | `DOCUMENT_URL_HOST_ALLOWLIST` | Studio | Optional comma-separated host allowlist for document URL ingestion; local/private network targets are blocked even when unset. |

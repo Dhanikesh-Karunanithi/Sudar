@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Pause, Volume2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import type { TtsVoiceOption, VoiceLibraryProviderStatus } from '@/lib/audio/voices'
 import { cn } from '@/lib/utils'
 
@@ -10,6 +11,10 @@ interface VoiceCharacterStageProps {
   value: string | null
   onChange: (voiceId: string) => void
   providerStatuses?: VoiceLibraryProviderStatus[]
+  /** When set and `showAllLanguages` is false, only voices matching this BCP-style prefix are listed. */
+  contentLanguageCode?: string | null
+  showAllLanguages?: boolean
+  onShowAllLanguagesChange?: (value: boolean) => void
 }
 
 const paletteClasses: Record<NonNullable<TtsVoiceOption['paletteKey']>, string> = {
@@ -20,7 +25,26 @@ const paletteClasses: Record<NonNullable<TtsVoiceOption['paletteKey']>, string> 
   emerald: 'from-emerald-500/20 to-emerald-500/5 border-emerald-400/30',
 }
 
-export function VoiceCharacterStage({ voices, value, onChange, providerStatuses = [] }: VoiceCharacterStageProps) {
+export function VoiceCharacterStage({
+  voices,
+  value,
+  onChange,
+  providerStatuses = [],
+  contentLanguageCode,
+  showAllLanguages,
+  onShowAllLanguagesChange,
+}: VoiceCharacterStageProps) {
+  const tv = useTranslations('VoiceCast')
+
+  const displayedVoices = useMemo(() => {
+    if (!contentLanguageCode || showAllLanguages) return voices
+    const code = contentLanguageCode.toLowerCase()
+    const filtered = voices.filter((v) => {
+      const lc = v.languageCode.toLowerCase()
+      return lc === code || lc.startsWith(`${code}-`) || lc.split('-')[0] === code
+    })
+    return filtered.length > 0 ? filtered : voices
+  }, [voices, contentLanguageCode, showAllLanguages])
   const [activeVoiceId, setActiveVoiceId] = useState<string>(value ?? voices[0]?.id ?? '')
   const [isPlaying, setIsPlaying] = useState(false)
   const [reduceMotion, setReduceMotion] = useState(false)
@@ -28,16 +52,23 @@ export function VoiceCharacterStage({ voices, value, onChange, providerStatuses 
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({})
 
   useEffect(() => {
-    if (!value && voices[0]?.id) {
-      onChange(voices[0].id)
+    if (!value && displayedVoices[0]?.id) {
+      onChange(displayedVoices[0].id)
     }
-  }, [onChange, value, voices])
+  }, [onChange, value, displayedVoices])
 
   useEffect(() => {
     if (value) {
       setActiveVoiceId(value)
     }
   }, [value])
+
+  useEffect(() => {
+    if (value && !displayedVoices.some((v) => v.id === value) && displayedVoices[0]?.id) {
+      setActiveVoiceId(displayedVoices[0].id)
+      onChange(displayedVoices[0].id)
+    }
+  }, [displayedVoices, onChange, value])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -48,8 +79,8 @@ export function VoiceCharacterStage({ voices, value, onChange, providerStatuses 
   }, [])
 
   const activeVoice = useMemo(
-    () => voices.find((voice) => voice.id === activeVoiceId) ?? voices[0],
-    [activeVoiceId, voices]
+    () => displayedVoices.find((voice) => voice.id === activeVoiceId) ?? displayedVoices[0],
+    [activeVoiceId, displayedVoices]
   )
 
   const pauseAll = (exceptVoiceId?: string) => {
@@ -82,10 +113,10 @@ export function VoiceCharacterStage({ voices, value, onChange, providerStatuses 
 
   const getNeighborIndex = (currentIndex: number, key: string) => {
     if (key === 'ArrowRight' || key === 'ArrowDown') {
-      return (currentIndex + 1) % voices.length
+      return (currentIndex + 1) % displayedVoices.length
     }
     if (key === 'ArrowLeft' || key === 'ArrowUp') {
-      return (currentIndex - 1 + voices.length) % voices.length
+      return (currentIndex - 1 + displayedVoices.length) % displayedVoices.length
     }
     return currentIndex
   }
@@ -93,44 +124,50 @@ export function VoiceCharacterStage({ voices, value, onChange, providerStatuses 
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-semibold text-card-foreground">Voice cast</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Click a character name to hear it instantly and explore its personality.
-        </p>
+        <h3 className="text-sm font-semibold text-card-foreground">{tv('title')}</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">{tv('hint')}</p>
+        {contentLanguageCode && onShowAllLanguagesChange ? (
+          <label className="mt-3 flex items-center gap-2 text-xs text-card-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={Boolean(showAllLanguages)}
+              onChange={(e) => onShowAllLanguagesChange(e.target.checked)}
+            />
+            {tv('allLanguages')}
+          </label>
+        ) : null}
       </div>
 
       {providerStatuses.length > 0 ? (
-        <div className="rounded-xl border border-slate-700 bg-slate-900/50 p-4">
-          <p className="text-xs font-semibold text-slate-200">Connected provider libraries</p>
-          <p className="text-[11px] text-slate-400 mt-1">
-            Provider voice libraries appear here when fully enabled. Built-in Edge-TTS voices above are always available.
-          </p>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs font-semibold text-card-foreground">{tv('providerTitle')}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">{tv('providerHint')}</p>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
             {providerStatuses.map((provider) => (
-              <div key={provider.id} className="rounded-lg border border-slate-700 bg-slate-800/40 px-3 py-2">
+              <div key={provider.id} className="rounded-lg border border-border/80 bg-muted/20 px-3 py-2">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-medium text-white">{provider.name}</p>
+                  <p className="text-xs font-medium text-card-foreground">{provider.name}</p>
                   <span
                     className={cn(
                       'text-[10px] px-2 py-0.5 rounded-full border',
                       provider.status === 'configured'
-                        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                        : 'border-slate-600 bg-slate-700/60 text-slate-400'
+                        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600'
+                        : 'border-border bg-background text-muted-foreground'
                     )}
                   >
-                    {provider.status === 'configured' ? 'Connected' : 'Not configured'}
+                    {provider.status === 'configured' ? tv('configured') : tv('notSet')}
                   </span>
                 </div>
-                <p className="mt-1 text-[11px] text-slate-400">{provider.description}</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">{provider.description}</p>
               </div>
             ))}
           </div>
         </div>
       ) : null}
 
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+      <div className="rounded-xl border border-border bg-card p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {voices.map((voice, index) => {
+          {displayedVoices.map((voice, index) => {
             const isSelected = voice.id === activeVoiceId
             return (
               <button
@@ -149,21 +186,21 @@ export function VoiceCharacterStage({ voices, value, onChange, providerStatuses 
                   if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
                     event.preventDefault()
                     const nextIndex = getNeighborIndex(index, event.key)
-                    const nextVoice = voices[nextIndex]
+                    const nextVoice = displayedVoices[nextIndex]
                     if (nextVoice) {
                       buttonRefs.current[nextVoice.id]?.focus()
                     }
                   }
                 }}
                 className={cn(
-                  'relative rounded-xl border px-4 py-3 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70',
-                  'bg-slate-900 hover:bg-slate-800/80',
-                  isSelected ? 'border-indigo-400/50 shadow-[0_0_0_1px_rgba(129,140,248,0.3)]' : 'border-slate-700'
+                  'relative rounded-xl border px-4 py-3 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/70',
+                  'bg-card hover:bg-muted/50',
+                  isSelected ? 'border-primary/50 shadow-[0_0_0_1px_rgba(59,130,246,0.25)]' : 'border-border'
                 )}
                 aria-pressed={isSelected}
               >
-                <p className="text-sm font-semibold text-white">{voice.name}</p>
-                <p className="text-[11px] text-slate-400 mt-1">{voice.characterArchetype ?? voice.description}</p>
+                <p className="text-sm font-semibold text-card-foreground">{voice.name}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">{voice.characterArchetype ?? voice.description}</p>
               </button>
             )
           })}
@@ -178,22 +215,22 @@ export function VoiceCharacterStage({ voices, value, onChange, providerStatuses 
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-2">
-                <p className="text-base font-semibold text-white">{activeVoice.name}</p>
+                <p className="text-base font-semibold text-foreground">{activeVoice.name}</p>
                 <div className="flex flex-wrap gap-2 text-xs">
                   {activeVoice.gender ? (
-                    <span className="rounded-full border border-white/20 bg-white/10 px-2 py-1 text-slate-100">
+                    <span className="rounded-full border border-border/70 bg-background/40 px-2 py-1 text-foreground">
                       {activeVoice.gender}
                     </span>
                   ) : null}
                   {activeVoice.accent ? (
-                    <span className="rounded-full border border-white/20 bg-white/10 px-2 py-1 text-slate-100">
+                    <span className="rounded-full border border-border/70 bg-background/40 px-2 py-1 text-foreground">
                       {activeVoice.accent}
                     </span>
                   ) : null}
                   {(activeVoice.toneTags ?? []).map((toneTag) => (
                     <span
                       key={toneTag}
-                      className="rounded-full border border-white/20 bg-white/10 px-2 py-1 text-slate-100"
+                      className="rounded-full border border-border/70 bg-background/40 px-2 py-1 text-foreground"
                     >
                       {toneTag}
                     </span>
@@ -212,7 +249,7 @@ export function VoiceCharacterStage({ voices, value, onChange, providerStatuses 
                   audio.pause()
                   setIsPlaying(false)
                 }}
-                className="inline-flex items-center gap-2 rounded-lg border border-white/30 bg-white/10 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                className="inline-flex items-center gap-2 rounded-lg border border-border bg-background/50 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-background/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                 aria-label={isPlaying ? 'Pause preview' : 'Play preview'}
               >
                 {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
@@ -226,7 +263,7 @@ export function VoiceCharacterStage({ voices, value, onChange, providerStatuses 
                   <span
                     key={`${activeVoice.id}-${barIndex}`}
                     className={cn(
-                      'w-1 rounded-full bg-white/80',
+                      'w-1 rounded-full bg-foreground/80',
                       isPlaying && !reduceMotion
                         ? 'animate-[voicePulse_0.9s_ease-in-out_infinite]'
                         : 'h-2 opacity-60'
@@ -242,16 +279,16 @@ export function VoiceCharacterStage({ voices, value, onChange, providerStatuses 
             </div>
 
             <details className="mt-4 group">
-              <summary className="cursor-pointer text-xs text-slate-100/85 hover:text-white">
+              <summary className="cursor-pointer text-xs text-foreground/85 hover:text-foreground">
                 See line
               </summary>
-              <p className="mt-2 text-xs text-slate-100/80">“{activeVoice.sampleText}”</p>
+              <p className="mt-2 text-xs text-foreground/80">“{activeVoice.sampleText}”</p>
             </details>
           </div>
         ) : null}
       </div>
 
-      {voices.map((voice) => (
+      {displayedVoices.map((voice) => (
         <audio
           key={voice.id}
           ref={(node) => {

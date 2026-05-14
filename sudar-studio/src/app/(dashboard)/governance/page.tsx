@@ -35,6 +35,9 @@ export default async function GovernancePage() {
   const persDays = ac.personalization_data_retention_days
   const leDays = ac.learning_events_retention_days
   const aiDays = ac.ai_interactions_retention_days
+  const memPol = ac.tutor_llm_memory_extraction_policy === 'disabled_org_wide'
+  const memHours = ac.tutor_llm_memory_min_interval_hours
+  const digestDaysOrg = ac.memory_digest_min_interval_days_org
 
   const rows: { label: string; on: boolean; note?: string }[] = [
     { label: 'Block high-risk patterns in tutor and Studio chat (cards, SSN-style, keys)', on: blockPii },
@@ -46,6 +49,24 @@ export default async function GovernancePage() {
     },
     { label: 'Generative personalization allowed', on: allowGenPers },
     { label: 'Learner consent required before personalization', on: requireConsent },
+    {
+      label: 'LLM tutor memory updates (profile inference + digest)',
+      on: !memPol,
+      note: memPol
+        ? 'Organisation has disabled LLM-driven tutor memory updates for all members.'
+        : typeof memHours === 'number'
+          ? `Minimum ${memHours}h between profile-inference LLM runs (org floor).`
+          : 'Learner-controlled cadence (no org minimum-hour floor).',
+    },
+    ...(typeof digestDaysOrg === 'number'
+      ? [
+          {
+            label: 'Long-range digest minimum spacing (org)',
+            on: true,
+            note: `At least ${digestDaysOrg} day(s) between digest LLM runs.`,
+          } as const,
+        ]
+      : []),
   ]
 
   return (

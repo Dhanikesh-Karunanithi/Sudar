@@ -39,9 +39,11 @@ class AudioGenerateRequest(BaseModel):
     voice: str | None = None
     rate: float | None = None  # 0.5–2.0; 1.0 = normal
     expression: str | None = None  # calm | energetic | empathetic | serious
+    # BCP-47 for Sarvam target_language_code (e.g. hi-IN, en-IN). Ignored for Edge-TTS.
+    target_language_code: str | None = None
 
 
-def _generate_sarvam_sync(text: str, speaker: str) -> bytes:
+def _generate_sarvam_sync(text: str, speaker: str, target_language_code: str) -> bytes:
     """Call Sarvam TTS API (sync). Returns MP3 bytes. Requires SARVAM_API_KEY."""
     import httpx
     key = os.environ.get("SARVAM_API_KEY", "").strip()
@@ -62,7 +64,7 @@ def _generate_sarvam_sync(text: str, speaker: str) -> bytes:
                 },
                 json={
                     "text": chunk,
-                    "target_language_code": "en-IN",
+                    "target_language_code": target_language_code or "en-IN",
                     "speaker": speaker.lower(),
                     "model": "bulbul:v3",
                 },
@@ -154,10 +156,11 @@ async def generate_audio(
     # Optional: Sarvam AI (Indian languages, high quality). Voice id e.g. sarvam_shreya, sarvam_shubh.
     if voice.lower().startswith(SARVAM_VOICE_PREFIX) and os.environ.get("SARVAM_API_KEY"):
         speaker = voice[len(SARVAM_VOICE_PREFIX):].strip() or "shubh"
+        lang = (request.target_language_code or "en-IN").strip() or "en-IN"
         loop = asyncio.get_event_loop()
         try:
             audio_bytes = await asyncio.wait_for(
-                loop.run_in_executor(None, lambda: _generate_sarvam_sync(text, speaker)),
+                loop.run_in_executor(None, lambda: _generate_sarvam_sync(text, speaker, lang)),
                 timeout=180.0,
             )
         except asyncio.TimeoutError:
@@ -193,32 +196,23 @@ async def generate_audio(
         await comm.save(out_path)
 
     async def _generate_all() -> bytes:
-        if len(chunks) == 1:
+        """
+        Edge-TTS writes per-chunk MP3 files. Prefer byte concatenation so we do not
+        require ffmpeg/ffprobe (pydub) on dev machines — missing binaries caused 502s
+        on Windows and left temp files locked during failed pydub cleanup.
+        """
+        parts: list[bytes] = []
+        for chunk in chunks:
             with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
                 path = f.name
             try:
-                await _generate_one(chunks[0], path)
-                return Path(path).read_bytes()
+                await _generate_one(chunk, path)
+                parts.append(Path(path).read_bytes())
             finally:
                 Path(path).unlink(missing_ok=True)
-
-        temp_paths: list[str] = []
-        try:
-            for i, chunk in enumerate(chunks):
-                with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
-                    path = f.name
-                temp_paths.append(path)
-                await _generate_one(chunk, path)
-
-            from pydub import AudioSegment
-            combined = AudioSegment.empty()
-            for p in temp_paths:
-                combined += AudioSegment.from_file(p, format="mp3")
-            buf = combined.export(format="mp3")
-            return buf.read()
-        finally:
-            for p in temp_paths:
-                Path(p).unlink(missing_ok=True)
+        if len(parts) == 1:
+            return parts[0]
+        return b"".join(parts)
 
     try:
         audio_bytes = await asyncio.wait_for(_generate_all(), timeout=180.0)
