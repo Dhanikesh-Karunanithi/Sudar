@@ -16,6 +16,10 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-15 — Learn API hardening
+
+- **Security**: `GET /api/learn/module-bridge` now requires an enrollment for `course_id`, restricts the course query to **published** rows, and validates UUID query params (`sudar-learn/src/app/api/learn/module-bridge/route.ts`, `sudar-learn/src/lib/learn/moduleBridgeQuery.ts`). Previously the service-role client could expose module titles/order for arbitrary courses (including drafts) to any signed-in learner.
+
 ### 2026-05-13 — Localization + tutor memory LLM cadence
 
 - **Localization (Learn + Studio + Intelligence)**:
