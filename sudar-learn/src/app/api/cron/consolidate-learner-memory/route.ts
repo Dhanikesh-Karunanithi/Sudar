@@ -36,7 +36,7 @@ async function orgMemoryPolicyForUser(
 async function consolidateOneUser(
   admin: ReturnType<typeof createServiceRoleSupabaseClient>,
   userId: string,
-): Promise<{ ok: boolean; skipped?: string }> {
+): Promise<{ ok: boolean; skipped?: string; error?: string }> {
   const orgMem = await orgMemoryPolicyForUser(admin, userId)
   if (orgMem.extractionPolicy === 'disabled_org_wide') {
     return { ok: true, skipped: 'org_disabled' }
@@ -126,7 +126,11 @@ async function consolidateOneUser(
     consolidated_interaction_at: new Date().toISOString(),
   }
 
-  await admin.from('learner_profiles').update({ ai_tutor_context: nextCtx }).eq('user_id', userId)
+  const { error: upErr } = await admin
+    .from('learner_profiles')
+    .update({ ai_tutor_context: nextCtx })
+    .eq('user_id', userId)
+  if (upErr) return { ok: false, error: upErr.message }
   return { ok: true }
 }
 
@@ -147,7 +151,7 @@ async function handleCron(request: NextRequest): Promise<NextResponse> {
 
   if (singleUserId) {
     const r = await consolidateOneUser(admin, singleUserId)
-    return NextResponse.json(r)
+    return NextResponse.json(r, { status: r.ok ? 200 : 500 })
   }
 
   const { data: recent } = await admin
@@ -162,7 +166,7 @@ async function handleCron(request: NextRequest): Promise<NextResponse> {
 
   for (const uid of ids.slice(0, 50)) {
     const r = await consolidateOneUser(admin, uid)
-    results[uid] = r.skipped ?? 'done'
+    results[uid] = r.ok ? (r.skipped ?? 'done') : `error:${r.error ?? 'unknown'}`
   }
 
   return NextResponse.json({ ok: true, processed: results })

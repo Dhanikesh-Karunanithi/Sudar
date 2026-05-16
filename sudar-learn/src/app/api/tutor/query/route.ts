@@ -155,8 +155,7 @@ const FOLLOWUP_BYPASS_PATTERNS = [
 /** Returns true if the message passes the input guardrail (learning/platform scope). */
 async function runInputGuardrail(
   message: string,
-  hasConversationHistory: boolean,
-  aiDeps: TutorAiDeps
+  aiDeps: TutorAiDeps,
 ): Promise<{ pass: boolean }> {
   const trimmed = message.trim()
   if (!trimmed) return { pass: false }
@@ -173,11 +172,6 @@ async function runInputGuardrail(
   for (const pattern of FOLLOWUP_BYPASS_PATTERNS) {
     if (pattern.test(trimmed)) return { pass: true }
   }
-
-  // If there's an active conversation, skip the LLM guardrail entirely.
-  // The user is already in a learning session; a follow-up message is inherently
-  // learning-related regardless of whether it sounds like it in isolation.
-  if (hasConversationHistory) return { pass: true }
 
   if (resolveChatConfigError(aiDeps.orgSettings, aiDeps.privateRuntime)) return { pass: true } // no API → skip LLM check
 
@@ -528,8 +522,7 @@ export async function POST(request: NextRequest) {
       .slice(0, MAX_TUTOR_MESSAGE_LENGTH)
 
     // ── Input guardrail: refuse off-topic / harmful requests ─────────────────
-    const hasConversationHistory = Array.isArray(conversation_history) && conversation_history.length > 0
-    const guardrail = await runInputGuardrail(message, hasConversationHistory, aiDeps)
+    const guardrail = await runInputGuardrail(message, aiDeps)
     if (!guardrail.pass) {
       return NextResponse.json(
         { response: GUARDRAIL_REFUSAL_MESSAGE, guardrail_refused: true },
