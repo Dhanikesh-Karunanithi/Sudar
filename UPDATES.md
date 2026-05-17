@@ -16,6 +16,10 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-17 — Learn API: module-bridge authorization
+
+- **Security**: `GET /api/learn/module-bridge` used the Supabase service-role client without verifying the caller was enrolled in the requested course, so any authenticated learner could read module ordering/titles for arbitrary course UUIDs (including unpublished drafts). Fixed by requiring an enrollment row, published course scope, and UUID validation on query params (`sudar-learn/src/app/api/learn/module-bridge/route.ts`).
+
 ### 2026-05-13 — Localization + tutor memory LLM cadence
 
 - **Localization (Learn + Studio + Intelligence)**:
