@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import type { Json } from '@/types/database'
 import { recordStruggleTopics } from '@/lib/learner/syncTopicSkills'
+import { distinctModuleCompleteCount } from '@/lib/learner/moduleCompletionProgress'
 import { evaluateGamification } from '@/lib/gamification/engine'
 
 const eventTypeEnum = z.enum([
@@ -146,20 +147,25 @@ export async function POST(request: NextRequest) {
 
   // On module_complete — update enrollment progress
   if (event_type === 'module_complete' && course_id) {
-    const { count: totalModules } = await admin
-      .from('modules')
-      .select('id', { count: 'exact', head: true })
-      .eq('course_id', course_id)
+    const [{ data: moduleRows }, { data: completionRows }] = await Promise.all([
+      admin.from('modules').select('id').eq('course_id', course_id),
+      admin
+        .from('learning_events')
+        .select('module_id')
+        .eq('user_id', user.id)
+        .eq('course_id', course_id)
+        .eq('event_type', 'module_complete')
+        .not('module_id', 'is', null),
+    ])
+    const courseModuleIds = (moduleRows ?? []).map((m) => m.id)
+    const totalModules = courseModuleIds.length
+    const completedDistinct = distinctModuleCompleteCount({
+      courseModuleIds,
+      completedModuleIds: (completionRows ?? []).map((r) => r.module_id),
+    })
 
-    const { count: completedModules } = await admin
-      .from('learning_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('course_id', course_id)
-      .eq('event_type', 'module_complete')
-
-    if (totalModules && completedModules !== null) {
-      const progress = Math.min(100, Math.round((completedModules / totalModules) * 100))
+    if (totalModules > 0) {
+      const progress = Math.min(100, Math.round((completedDistinct / totalModules) * 100))
       const status = progress >= 100 ? 'completed' : 'in_progress'
 
       await admin

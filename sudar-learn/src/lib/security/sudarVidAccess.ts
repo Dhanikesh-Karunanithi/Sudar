@@ -34,9 +34,9 @@ export async function canUserAccessSudarVidJob(
     .eq('user_id', userId)
     .eq('event_type', 'video_generate_start')
     .contains('payload', { job_id: jobId })
-    .maybeSingle()
+    .limit(1)
 
-  return !!data
+  return Array.isArray(data) && data.length > 0
 }
 
 export async function canUserAccessCourseModule(

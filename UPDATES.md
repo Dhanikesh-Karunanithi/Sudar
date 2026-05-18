@@ -16,6 +16,11 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-18 — Learn: enrollment progress + SudarVid job access correctness
+
+- **Enrollment progress (`POST /api/events`, ALP `POST /api/alp/events`)**: Course `progress_pct` now uses **distinct** `module_id` values on `module_complete` events that belong to the course, instead of counting raw event rows. Duplicate completions (e.g. SCORM finish retries or double-posted events) could previously inflate progress to 100% without every module being completed.
+- **SudarVid render access**: `canUserAccessSudarVidJob` no longer uses `.maybeSingle()` on `learning_events` (multiple `video_generate_start` rows for the same `job_id` caused PostgREST “multiple rows” errors and **403** on legitimate iframe asset loads). Uses `.limit(1)` and treats any matching row as proof of ownership.
+
 ### 2026-05-13 — Localization + tutor memory LLM cadence
 
 - **Localization (Learn + Studio + Intelligence)**:
