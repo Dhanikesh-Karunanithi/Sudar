@@ -24,6 +24,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ show: false, reason: 'disabled' })
   }
 
+  const { data: enrollment } = await admin
+    .from('enrollments')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('course_id', courseId)
+    .maybeSingle()
+
+  if (!enrollment) {
+    return NextResponse.json({ show: false, reason: 'not_enrolled' })
+  }
+
   const { data: course } = await admin
     .from('courses')
     .select('id, title, modules(id, title, order_index)')

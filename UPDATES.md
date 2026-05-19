@@ -16,6 +16,10 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-19 — Learn API hardening (module bridge)
+
+- **Security**: `GET /api/learn/module-bridge` now requires an active enrollment for `course_id` before loading course/module metadata (closes an IDOR where any signed-in learner could read module titles and ordering for arbitrary courses). Unenrolled callers receive `{ show: false, reason: 'not_enrolled' }`.
+
 ### 2026-05-13 — Localization + tutor memory LLM cadence
 
 - **Localization (Learn + Studio + Intelligence)**:
