@@ -126,7 +126,13 @@ async function consolidateOneUser(
     consolidated_interaction_at: new Date().toISOString(),
   }
 
-  await admin.from('learner_profiles').update({ ai_tutor_context: nextCtx }).eq('user_id', userId)
+  const { error: updateErr } = await admin
+    .from('learner_profiles')
+    .update({ ai_tutor_context: nextCtx })
+    .eq('user_id', userId)
+  if (updateErr) {
+    return { ok: false, skipped: `update_failed:${updateErr.message}` }
+  }
   return { ok: true }
 }
 
@@ -147,7 +153,7 @@ async function handleCron(request: NextRequest): Promise<NextResponse> {
 
   if (singleUserId) {
     const r = await consolidateOneUser(admin, singleUserId)
-    return NextResponse.json(r)
+    return NextResponse.json(r, { status: r.ok ? 200 : 500 })
   }
 
   const { data: recent } = await admin
@@ -159,13 +165,18 @@ async function handleCron(request: NextRequest): Promise<NextResponse> {
 
   const ids = [...new Set((recent ?? []).map((r) => r.user_id))]
   const results: Record<string, string> = {}
+  let anyFailed = false
 
   for (const uid of ids.slice(0, 50)) {
     const r = await consolidateOneUser(admin, uid)
-    results[uid] = r.skipped ?? 'done'
+    results[uid] = r.ok ? (r.skipped ?? 'done') : (r.skipped ?? 'error')
+    if (!r.ok) anyFailed = true
   }
 
-  return NextResponse.json({ ok: true, processed: results })
+  return NextResponse.json(
+    { ok: !anyFailed, processed: results },
+    { status: anyFailed ? 500 : 200 },
+  )
 }
 
 export async function GET(request: NextRequest) {
