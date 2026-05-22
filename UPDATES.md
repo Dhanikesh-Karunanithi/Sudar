@@ -26,6 +26,7 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
   - Tutor **quick actions** restored in-course via `buildTutorActionAllowlists` (active `course_id` always allowed for Continue/Review buttons).
 - **Intelligence — BYOM SSRF**: `RuntimeProviderConfig` rejects unsafe local LLM base URLs before health checks (private hosts blocked unless `INTELLIGENCE_ALLOW_PRIVATE_LLM_URLS` is set).
 - **Dependencies (Learn + Studio)**: bumped **Next.js** to `15.5.18` and **PostCSS** to `8.5.10` to clear high-severity `npm audit` findings in CI.
+- **Localization**: fixed malformed `src/messages/*.json` catalogs (missing `Memory` section close) so Learn builds pass stricter JSON parsing on Next 15.5.
 - **Studio lint**: typed SudarVid job access helper (fixes stricter ESLint on Next 15.5).
 
 ### 2026-05-13 — Localization + tutor memory LLM cadence
