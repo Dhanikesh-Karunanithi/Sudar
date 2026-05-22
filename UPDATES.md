@@ -16,6 +16,14 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-22 — Learn API correctness + dependency security patches
+
+- **Learn — security / correctness**:
+  - `GET /api/learn/module-bridge` now requires an **enrollment** row for `course_id` and loads only **published** courses (closes an IDOR / draft metadata leak vs arbitrary UUIDs).
+  - `POST /api/events` returns **500** when the `learning_events` insert fails instead of reporting success and running downstream side effects without the event row.
+  - `consolidate-learner-memory` cron treats failed `learner_profiles` digest updates as failures (HTTP **500** for batch or single-user runs when persistence fails).
+- **Dependencies (Learn + Studio)**: bumped **Next.js** to `15.5.18` and **PostCSS** to `8.5.10` to clear high-severity `npm audit` findings in CI.
+
 ### 2026-05-13 — Localization + tutor memory LLM cadence
 
 - **Localization (Learn + Studio + Intelligence)**:

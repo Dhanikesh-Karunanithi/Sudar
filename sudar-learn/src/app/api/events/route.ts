@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
 
   const admin = createServiceRoleSupabaseClient()
 
-  await admin.from('learning_events').insert({
+  const { error: insertError } = await admin.from('learning_events').insert({
     user_id: user.id,
     course_id: course_id ?? null,
     module_id: module_id ?? null,
@@ -143,6 +143,9 @@ export async function POST(request: NextRequest) {
     modality: modality ?? 'text',
     duration_secs: duration_secs ?? null,
   })
+  if (insertError) {
+    return NextResponse.json({ ok: false, error: insertError.message }, { status: 500 })
+  }
 
   // On module_complete — update enrollment progress
   if (event_type === 'module_complete' && course_id) {
