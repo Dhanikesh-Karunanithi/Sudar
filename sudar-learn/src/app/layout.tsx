@@ -20,7 +20,7 @@ const manrope = Manrope({
 })
 
 const notoSansIntl = Noto_Sans({
-  subsets: ['latin', 'latin-ext', 'arabic', 'devanagari', 'bengali', 'tamil', 'telugu', 'cyrillic', 'cyrillic-ext', 'vietnamese'],
+  subsets: ['latin', 'latin-ext', 'devanagari', 'cyrillic', 'cyrillic-ext', 'vietnamese'],
   variable: '--font-noto-intl',
   display: 'swap',
 })
