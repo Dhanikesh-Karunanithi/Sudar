@@ -16,6 +16,10 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-23 — Learn: module-bridge enrollment gate
+
+- **Security**: `GET /api/learn/module-bridge` now validates `course_id` / `module_id` as UUIDs and requires an `enrollments` row for the authenticated user and that course (same gate as tutor course context), closing an IDOR that could expose module titles and ordering for courses the caller was not enrolled in.
+
 ### 2026-05-13 — Localization + tutor memory LLM cadence
 
 - **Localization (Learn + Studio + Intelligence)**:

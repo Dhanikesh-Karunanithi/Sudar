@@ -1,5 +1,6 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { fetchResolvedLearnerPreferences } from '@/lib/learner/learnerPreferences'
 
 /**
@@ -18,7 +19,25 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'course_id and module_id required' }, { status: 400 })
   }
 
+  const courseUuid = z.string().uuid().safeParse(courseId)
+  const moduleUuid = z.string().uuid().safeParse(moduleId)
+  if (!courseUuid.success || !moduleUuid.success) {
+    return NextResponse.json({ error: 'Invalid course_id or module_id' }, { status: 400 })
+  }
+
   const admin = createServiceRoleSupabaseClient()
+
+  const { data: enrollment } = await admin
+    .from('enrollments')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('course_id', courseId)
+    .maybeSingle()
+
+  if (!enrollment) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const prefs = await fetchResolvedLearnerPreferences(admin, user.id)
   if (!prefs.module_bridge_prompts) {
     return NextResponse.json({ show: false, reason: 'disabled' })
