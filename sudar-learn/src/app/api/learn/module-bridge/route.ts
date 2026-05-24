@@ -1,6 +1,7 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchResolvedLearnerPreferences } from '@/lib/learner/learnerPreferences'
+import { moduleBridgeQuerySchema } from '@/lib/learn/moduleBridgeQuerySchema'
 
 /**
  * Lightweight "connect prior module → current module" prompt (no blocking; learner can dismiss).
@@ -12,13 +13,29 @@ export async function GET(request: NextRequest) {
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const courseId = request.nextUrl.searchParams.get('course_id')
-  const moduleId = request.nextUrl.searchParams.get('module_id')
-  if (!courseId || !moduleId) {
-    return NextResponse.json({ error: 'course_id and module_id required' }, { status: 400 })
+  const rawCourseId = request.nextUrl.searchParams.get('course_id')
+  const rawModuleId = request.nextUrl.searchParams.get('module_id')
+  const parsedIds = moduleBridgeQuerySchema.safeParse({
+    course_id: rawCourseId ?? '',
+    module_id: rawModuleId ?? '',
+  })
+  if (!parsedIds.success) {
+    return NextResponse.json({ error: 'course_id and module_id must be valid UUIDs' }, { status: 400 })
   }
+  const { course_id: courseId, module_id: moduleId } = parsedIds.data
 
   const admin = createServiceRoleSupabaseClient()
+
+  const { data: enrollment } = await admin
+    .from('enrollments')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('course_id', courseId)
+    .maybeSingle()
+  if (!enrollment) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const prefs = await fetchResolvedLearnerPreferences(admin, user.id)
   if (!prefs.module_bridge_prompts) {
     return NextResponse.json({ show: false, reason: 'disabled' })
@@ -28,9 +45,14 @@ export async function GET(request: NextRequest) {
     .from('courses')
     .select('id, title, modules(id, title, order_index)')
     .eq('id', courseId)
-    .single()
+    .eq('status', 'published')
+    .maybeSingle()
 
-  const modules = (course?.modules as Array<{ id: string; title: string; order_index: number }>) ?? []
+  if (!course) {
+    return NextResponse.json({ error: 'Course not available.' }, { status: 404 })
+  }
+
+  const modules = (course.modules as Array<{ id: string; title: string; order_index: number }>) ?? []
   const ordered = [...modules].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
   const idx = ordered.findIndex((m) => m.id === moduleId)
   const prev = idx > 0 ? ordered[idx - 1] : null
