@@ -150,6 +150,15 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## Module bridge API (Learn — course viewer)
+
+- **Where**: Sudar Learn — course viewer calls `GET /api/learn/module-bridge` with `course_id` and `module_id` query params.
+- **What**: Optional “connect prior module → current module” copy for learners who enabled **module bridge prompts** in Memory preferences. Access is gated on an **enrollment** row for the learner and course and on **`courses.status = 'published'`** (service-role reads do not expose arbitrary course metadata).
+- **Key files**: `sudar-learn/src/app/api/learn/module-bridge/route.ts`, `sudar-learn/src/lib/learn/moduleBridgeQuerySchema.ts`.
+- **Flow**: Authenticated request → 403 without enrollment → 404 if course is not published → otherwise same JSON `show` / `body` contract as before.
+
+---
+
 ## Tutor memory LLM cadence (Learn + Studio)
 
 - **Where**: Sudar Learn — **My Memory** → Learning preferences (`memory_digest_*`, `tutor_memory_llm_cadence`, `memory_digest_cadence_days` in `learner_profiles.learner_preferences`); Sudar Studio — **Org settings** → *AI personalization & privacy* → *Tutor memory — LLM learning cadence* (`organisations.settings.ai_compliance`: `tutor_llm_memory_extraction_policy`, `tutor_llm_memory_min_interval_hours`, `memory_digest_min_interval_days_org`).
@@ -159,4 +168,4 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
-*Last updated: May 2026 (localization + tutor memory cadence governance). For roadmap and next priorities, see [STRATEGIC_PATH.md](STRATEGIC_PATH.md) and [ACTION_PLANS.md](ACTION_PLANS.md).*
+*Last updated: May 2026 (module-bridge API access control; localization + tutor memory cadence governance). For roadmap and next priorities, see [STRATEGIC_PATH.md](STRATEGIC_PATH.md) and [ACTION_PLANS.md](ACTION_PLANS.md).*

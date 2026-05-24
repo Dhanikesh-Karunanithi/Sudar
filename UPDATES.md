@@ -16,6 +16,11 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-24 — Learn API — module-bridge access control
+
+- **Security**: `GET /api/learn/module-bridge` used the service-role Supabase client without an enrollment check or published-course filter, so any signed-in learner could pass arbitrary `course_id` values and read module titles/order (including unpublished courses). The route now requires an `enrollments` row for the learner and course, restricts reads to `courses.status = 'published'`, validates UUID query params, and returns **403** / **404** consistent with `/api/tutor/query`.
+- **Key files**: `sudar-learn/src/app/api/learn/module-bridge/route.ts`, `sudar-learn/src/lib/learn/moduleBridgeQuerySchema.ts` (+ Vitest for the query schema).
+
 ### 2026-05-13 — Localization + tutor memory LLM cadence
 
 - **Localization (Learn + Studio + Intelligence)**:
