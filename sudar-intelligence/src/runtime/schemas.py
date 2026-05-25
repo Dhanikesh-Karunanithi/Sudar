@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from src.runtime.url_safety import validate_llm_base_url
 
 
 RuntimeMode = Literal["cloud", "local", "hybrid"]
@@ -20,6 +22,11 @@ class RuntimeProviderConfig(BaseModel):
     max_tokens_default: int = Field(default=512, ge=32, le=8192)
     capabilities: list[RuntimeCapability] = Field(default_factory=lambda: ["chat", "summarize", "rewrite"])
     active: bool = True
+
+    @field_validator("base_url")
+    @classmethod
+    def base_url_ssrf_guard(cls, v: str) -> str:
+        return validate_llm_base_url(v)
 
 
 class RuntimePolicy(BaseModel):

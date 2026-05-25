@@ -1,7 +1,8 @@
 /**
  * BFF: Sudar Agents runs — forwards to Intelligence with learner JWT.
  */
-import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { getRequestSession } from '@/lib/auth/requestSession'
 import { sudarIntelligenceBaseUrl } from '@/lib/intelligence/baseUrl'
 import { loadLearnerAgentsAccess, learnerRunBlockedReason } from '@/lib/org/sudarAgentsAccess'
 import { NextRequest, NextResponse } from 'next/server'
@@ -15,11 +16,8 @@ const bodySchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  if (!session?.access_token || !session.user?.id) {
+  const session = await getRequestSession(request)
+  if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -48,7 +46,7 @@ export async function POST(request: NextRequest) {
   }
 
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${session.access_token}`,
+    Authorization: `Bearer ${session.accessToken}`,
     'Content-Type': 'application/json',
   }
 

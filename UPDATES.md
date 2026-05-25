@@ -16,6 +16,130 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-26 — Teach with Sudar: research foundation refresh
+
+- **Homepage**: Research Foundation section now uses six citations in three tiers (Foundation, Modern validation, AI era) — classics (Ebbinghaus, Mayer 2009) plus Roediger & Karpicke (2006), VanLehn (2011), Learn Your Way (2025), and AgentTutor (2026), each mapped to a Sudar feature.
+- **Research page**: Aligned evidence list and LAMP paper pointer with the homepage cards.
+- **Key files**: `teachwithsudar/src/app/page.tsx`, `teachwithsudar/src/app/research/page.tsx`.
+
+### 2026-05-26 — Teach with Sudar: custom blog illustration banners
+
+- **Assets**: Five Sudar-branded flat vector banners (dark #111 + orange #FF4500) in `teachwithsudar/public/blog/` — one per blog post.
+- **Blog**: All hero images switched from Unsplash to local `/blog/*.png`; redundant inline stock photos removed.
+- **Key files**: `teachwithsudar/public/blog/`, `teachwithsudar/src/data/blogPosts.ts`.
+
+### 2026-05-26 — Teach with Sudar: blog expansion + layout fixes
+
+- **New posts**: Added multimodal learning design and AI tutor memory articles with arXiv/peer-reviewed citations.
+- **Layout**: Fixed blog card hero images overlapping date/read-time (prose `img` styles vs. Next.js `fill`); blog index and post pages now use `not-prose` wrappers with isolated image containers.
+- **Formatting**: BlogArticle renders `**bold**` inline markdown, consistent typography (leading-7), and internal/external CTA links.
+- **Key files**: `teachwithsudar/src/data/blogPosts.ts`, `teachwithsudar/src/components/BlogArticle.tsx`, `teachwithsudar/src/app/blog/**`.
+
+### 2026-05-26 — Teach with Sudar: blog articles rewritten for SEO
+
+- **Blog content**: Replaced checklist-style posts with research-backed articles (arXiv citations, peer-reviewed meta-analyses, MOOC completion data). Each post includes hero images, reading time, tags, further-reading sections, and a Sudar pitch at the bottom.
+- **Rendering**: New `BlogArticle` component supports paragraphs, lists, quotes, images, references, steps, and pitch callouts; blog index and post pages add Open Graph metadata and JSON-LD.
+- **Key files**: `teachwithsudar/src/data/blogPosts.ts`, `teachwithsudar/src/components/BlogArticle.tsx`, `teachwithsudar/src/app/blog/**`, `teachwithsudar/next.config.ts` (Unsplash images).
+
+### 2026-05-25 — Teach with Sudar: hero logo scroll animation
+
+- Homepage hero: **Sudar.** logo starts centered at the top of the hero and scroll-travels into the nav slot (180px range); nav compacts after the animation completes. Respects `prefers-reduced-motion`.
+- **Key files**: `teachwithsudar/src/components/home/HeroScrollLogo.tsx`, `teachwithsudar/src/hooks/useHeroLogoScroll.ts`, `teachwithsudar/src/components/Header.tsx`, `teachwithsudar/src/components/home/HeroSection.tsx`.
+
+### 2026-05-25 — Teach with Sudar: infrastructure-agnostic copy
+
+- Generalized Supabase-specific marketing across FAQ, Privacy, Self-host, Story, Compare, Terms, homepage, guides data, help hub, and help-center getting-started articles — data lives in **your Postgres tenant** (managed or self-operated), not a single vendor.
+- **Key files**: `teachwithsudar/src/app/**`, `teachwithsudar/src/data/*`, `help-center/articles/start-here/getting-started.md`, `help-center/articles/admins/studio-overview.md`.
+
+### 2026-05-25 — Teach with Sudar: trust section on homepage
+
+- **Digital Learner Twin callout**: Replaced Supabase-specific copy with infrastructure-agnostic data sovereignty messaging (your DB, region, retention).
+- **Trust & guardrails** (homepage): New section covering Safety, Privacy, Security, Compliance & rights, plus long-term alignment that learner data serves learners — links to Privacy Policy, Studio governance, FAQ, and `docs/trust`.
+- **Key files**: `teachwithsudar/src/app/page.tsx`.
+
+### 2026-05-25 — Demo: Marcus mobile + 1.5× speed
+
+- **Marcus beats** (`launchDemo.ts`): Learn wireframes in **phone frame** (`MobileDeviceFrame`, bottom tab nav) from personal context through memory — matches “Lagos · phone · between shifts.”
+- **Playback** (`cinematicPlayback.ts`): Autoplay runs at **1.5×** (~3 min total); in-scene typing/progress animations scaled to match.
+
+### 2026-05-25 — Ecosystem demo v3 (cinematic rework)
+
+- **Narrative** (`launchDemo.ts`): Marketing-first script (~4:30) — Ebbinghaus gap, Bloom 2σ, $0.02/learner stat, Sarah→Marcus story; no UI-component names in overlays; consolidated block beats (no per-block title spam).
+- **Camera** (`Scene3DStage.tsx`): Per-frame `cameraEffect` — zoom-in/out, push-left/right (Ken Burns) wired from `launchDemo.ts`.
+- **Screens**: Fixed cinematic canvas height (`h-[min(58vh,520px)]`) so wireframes stay full-size, not small rectangles; wider stage max-width.
+- **In-scene motion**: Typing prompt, module stagger, generating spinner, spring block slides, animated video playhead, tutor typing dots + streamed reply, KPI count-up, ecosystem layer stagger.
+- **Key files**: `launchDemo.ts`, `demoMotion.ts`, `DemoScenesExtended.tsx`, `TutorConversationPanel.tsx`, `WireframePrimitives.tsx`, `Scene3DStage.tsx`.
+
+### 2026-05-25 — Ecosystem demo review pass
+
+- **Cinematic** (`launchDemo.ts`): Removed redundant `act6-1`; overlay copy refresh (Ebbinghaus stat, Bloom headline, tutor/memory lines); `act8-0` integrations title; `act5-tutor-proactive` extended to 11s; close card CTA `teachwithsudar.com`.
+- **Wireframes**: Richer `AlpFlowScene` (events + Twin affinity bars), `AnalyticsComplianceScene` (KPIs, Certified chip, Live pulse), ecosystem Learn→Twin feedback loop, Studio dashboard COHORT/LEARNER chips, Bloom strip legibility, Learn dashboard streak pill.
+- **Docs**: [docs/DEMO_AI_REVIEW_PACKET.md](docs/DEMO_AI_REVIEW_PACKET.md) updated for applied review.
+
+### 2026-05-25 — Ecosystem demo narrative v2 (~5 min)
+
+- **Launch story** (`sudar-ecosystem-demo/` `/`): Expanded to **~5 minutes** — content generation from idea, business need, document, cohort, and learner context; instructional-design blueprint (Bloom, archetypes); live Studio block build (text, video, audio, accordion, flipcard, quiz); personalization act; Marcus stuck on video with **contextual Sudar chat** and typed reply.
+- **Course theme**: Sarah prompts *fun office management* → **Somehow I manage** (Michael Scott); `public/characters/prison-mike.png` in video preview.
+- **UI fidelity**: Learn wireframes use light/purple chrome; Studio stays dark; new scenes `studio-create-sources`, `studio-id-blueprint`, `studio-live-editor`, `learn-course-rich`, `learn-tutor-contextual`, `learn-memory-rich`.
+- **Interactive tour** (`/interactive`): Chapters rewritten — Content generation, Live editor blocks, Tutor, Memory.
+- **Key files**: `launchDemo.ts`, `ecosystemDemo.ts`, `sceneState.ts`, `DemoScenesExtended.tsx`, `CourseBlockCanvas.tsx`, `TutorConversationPanel.tsx`, `LearnNavChrome.tsx`.
+
+### 2026-05-25 — Cinematic product launch demo
+
+- **Launch experience** (`sudar-ecosystem-demo/` `/`): Full-screen cinematic player — 28 frames, title cards, animated typography overlays on wireframes, play/pause only (auto-hide controls), ~3 min narrative.
+- **How-to tour** (`/interactive`): Previous step-by-step player retained for teachwithsudar guides and help how-tos.
+- **Key files**: `launchDemo.ts`, `CinematicPlayer.tsx`, `TitleCard.tsx`, `TextOverlay.tsx`, `VideoControls.tsx`.
+
+### 2026-05-25 — Ecosystem wireframe demo app
+
+- **Standalone demo** (`sudar-ecosystem-demo/`): Next.js app on port 3003 — wireframe scenes, cursor animation; interactive mode at `/interactive`.
+- **Docs**: [docs/demo.md](docs/demo.md), teachwithsudar `/demo`; root script `npm run demo:ecosystem`.
+
+### 2026-05-24 — teachwithsudar.com platform upgrade
+
+- **Marketing site** (`teachwithsudar/`): Capability catalog (`platformCapabilities.ts`), 10 animated wireframe guides (`/guides/[slug]`), expanded Features/Updates/Best Practices/Help hubs, FAQ refresh (MCP, sounds, i18n), homepage “What ships today” section. Copy pass: no em-dashes; plainer voice.
+
+### 2026-05-24 — teachwithsudar.com copy pass
+
+- **Marketing site** (`teachwithsudar/`): Removed em-dashes sitewide; rewrote homepage hero, problem, platform, Digital Learner Twin, research, manifesto, and CTA copy for a plainer voice. Metadata titles use `|` instead of em-dash. `WEBSITE_CONTENT.md` aligned for editors.
+
+### 2026-05-24 — ChatGPT-ready MCP (thesudar.app)
+
+- **Creator MCP tools**: `sudar_generate_outline`, `sudar_generate_course`, `sudar_generate_quiz`, `sudar_generate_from_document`, `sudar_create_course`, `sudar_list_courses` — proxy Studio routes with Bearer JWT.
+- **Studio**: Bearer auth on creator API routes; `POST /api/mcp/audit`; Integrations **ChatGPT connector** URL + [MCP_CHATGPT_LAUNCH.md](docs/MCP_CHATGPT_LAUNCH.md).
+- **Cloudflare Worker**: [workers/sudar-mcp-cloudflare](workers/sudar-mcp-cloudflare) — OAuth metadata, Supabase token exchange, Streamable HTTP `/mcp` for ChatGPT/Claude.
+- **Deploy docs**: [DNS_THESUDAR_APP.md](docs/DNS_THESUDAR_APP.md), [DEPLOY_THESUDAR_APP.md](docs/DEPLOY_THESUDAR_APP.md), [openapi/sudar-creator-v1.json](openapi/sudar-creator-v1.json) (Custom GPT Actions fallback).
+- **npm**: `@sudar/mcp-server` v0.2.0 — [NPM_PUBLISH.md](docs/NPM_PUBLISH.md).
+
+### 2026-05-22 — Sudar MCP servers (ALP + Agents for AI clients)
+
+- **MCP package**: `packages/sudar-mcp` (`@sudar/mcp-server`) — stdio server with integrator, admin, and learner toolsets proxying Learn ALP and BFF routes.
+- **Remote worker**: `workers/sudar-mcp-remote` — `POST /token` (API-key exchange) + SSE `/sse` for hosted MCP partners.
+- **Learn/Studio**: `getRequestSession` Bearer JWT support on agents, tutor, next-action, proactive-nudge; `POST /api/mcp/audit` for optional MCP telemetry.
+- **Studio UI**: Integrations page — Cursor `mcp.json` snippet and MCP docs link.
+- **Docs**: `docs/MCP_SERVERS.md`, `docs/ENV_REFERENCE.md`, `docs/SHIPPED_FEATURES.md`, `docs/ALP_API.md` cross-link.
+
+### 2026-05-22 — Chime-style notification sounds (Learn + Studio)
+
+- **Learn — in-app chimes**: Optional subtle completion sounds when AI content generation finishes, Sudar tutor replies, realtime notification toasts, and gamification celebrations. Master toggle + volume + per-event groups on **Settings → Notification controls**; respects quiet hours and `prefers-reduced-motion`.
+- **Learn — implementation**: `shared/notifications/sound.ts`, `NotificationSoundProvider`, hooks in `SudarVidCard`, `CourseViewer`, tutor chat, `NotificationToasts`, `GamificationToasts`; assets under `sudar-learn/public/audio/notifications/`.
+- **Studio — course generation**: “Play a chime when the course is ready” (localStorage) alongside existing browser notifications on **New course**; `useBrowserCompletionNotification` plays `task_complete` chime on success.
+- **Database**: `supabase/migrations/20260522120000_notification_sound_settings.sql` — `user_notification_settings` sound columns.
+- **Docs**: `docs/SHIPPED_FEATURES.md` catalog entry.
+
+### 2026-05-22 — Learn API correctness + dependency security patches
+
+- **Learn — security / correctness**:
+  - `GET /api/learn/module-bridge` now requires an **enrollment** row for `course_id` and loads only **published** courses (closes an IDOR / draft metadata leak vs arbitrary UUIDs).
+  - `POST /api/events` returns **500** when the `learning_events` insert fails instead of reporting success and running downstream side effects without the event row.
+  - `consolidate-learner-memory` cron treats failed `learner_profiles` digest updates as failures (HTTP **500** for batch or single-user runs when persistence fails).
+  - Tutor **input guardrail** no longer skips scope checks based on client-supplied `conversation_history`; extracted to `runInputGuardrail.ts`.
+  - Tutor **quick actions** restored in-course via `buildTutorActionAllowlists` (active `course_id` always allowed for Continue/Review buttons).
+- **Intelligence — BYOM SSRF**: `RuntimeProviderConfig` rejects unsafe local LLM base URLs before health checks (private hosts blocked unless `INTELLIGENCE_ALLOW_PRIVATE_LLM_URLS` is set).
+- **Dependencies (Learn + Studio)**: bumped **Next.js** to `15.5.18` and **PostCSS** to `8.5.10` to clear high-severity `npm audit` findings in CI.
+- **Localization**: fixed malformed `src/messages/*.json` catalogs (missing `Memory` section close) so Learn builds pass stricter JSON parsing on Next 15.5.
+- **Studio lint**: typed SudarVid job access helper (fixes stricter ESLint on Next 15.5).
+
 ### 2026-05-13 — Localization + tutor memory LLM cadence
 
 - **Localization (Learn + Studio + Intelligence)**:

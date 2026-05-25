@@ -6,6 +6,7 @@ import { FloatingSudarChatClient } from '@/components/tutor/FloatingSudarChatCli
 import { ProactiveSudarHost } from '@/components/tutor/ProactiveSudarHost'
 import { CheckinFloatingCard } from '@/components/features/gamification/CheckinFloatingCard'
 import { GamificationToasts } from '@/components/features/gamification/GamificationToasts'
+import { NotificationSoundShell } from '@/components/features/notifications/NotificationSoundShell'
 import { SudarPetHost } from '@/components/mascot/SudarPetHost'
 
 export default async function DashboardLayout({
@@ -47,22 +48,24 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-shell">
-      <div className="max-w-[1600px] mx-auto min-h-screen flex flex-col rounded-shell overflow-hidden shadow-xl bg-background border border-border md:my-4 md:min-h-[calc(100vh-2rem)]">
-        <TopNav
-          user={userProps}
-          showOnboardingNudge={!onboardingDone}
-          coinBalance={coinBalance}
-        />
-        <main className="flex-1 overflow-y-auto px-4 md:px-8 py-6 md:py-8">
-          <PageTransition>{children}</PageTransition>
-        </main>
-        <FloatingSudarChatClient userId={user.id} />
-        <SudarPetHost userId={user.id} />
-        <ProactiveSudarHost />
-        <CheckinFloatingCard />
-        <GamificationToasts />
+    <NotificationSoundShell>
+      <div className="min-h-screen bg-shell">
+        <div className="max-w-[1600px] mx-auto min-h-screen flex flex-col rounded-shell overflow-hidden shadow-xl bg-background border border-border md:my-4 md:min-h-[calc(100vh-2rem)]">
+          <TopNav
+            user={userProps}
+            showOnboardingNudge={!onboardingDone}
+            coinBalance={coinBalance}
+          />
+          <main className="flex-1 overflow-y-auto px-4 md:px-8 py-6 md:py-8">
+            <PageTransition>{children}</PageTransition>
+          </main>
+          <FloatingSudarChatClient userId={user.id} />
+          <SudarPetHost userId={user.id} />
+          <ProactiveSudarHost />
+          <CheckinFloatingCard />
+          <GamificationToasts />
+        </div>
       </div>
-    </div>
+    </NotificationSoundShell>
   )
 }

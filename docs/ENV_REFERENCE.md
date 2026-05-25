@@ -134,6 +134,26 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 | `NOTIFICATION_UNSUBSCRIBE_SECRET` | Learn, Studio | Dedicated HMAC secret for unsubscribe tokens. Required anywhere notification emails are sent. | Generate a random secret |
 | `NOTIFICATION_LINK_SIGNING_SECRET` | Learn | Dedicated HMAC secret for notification tracking links. | Generate a random secret |
 
+### MCP (`@sudar/mcp-server` and `workers/sudar-mcp-remote`)
+
+| Variable | App | Description |
+|----------|-----|-------------|
+| `SUDAR_LEARN_URL` | MCP package / remote worker | Learn base URL for ALP tools |
+| `SUDAR_ALP_API_KEY` | MCP package | Org integration key (Studio → Integrations) |
+| `SUDAR_STUDIO_URL` | MCP package | Studio base URL for admin agent tools |
+| `SUDAR_INTELLIGENCE_URL` | MCP package | Intelligence URL for `sudar_list_agent_skills` |
+| `SUDAR_ACCESS_TOKEN` | MCP package | Supabase JWT for admin/learner tools |
+| `SUDAR_TOOLSET` | MCP package | `integrator` \| `admin` \| `learner` \| `all` |
+| `SUDAR_MCP_AUDIT` | MCP package | `false` to skip `POST /api/mcp/audit` telemetry |
+| `MCP_REMOTE_PORT` | Remote worker | HTTP port (default `8787`) |
+| `MCP_TOKEN_SECRET` | Remote worker | HMAC secret for `/token` issued bearer tokens (required in production) |
+| `MCP_TOKEN_TTL_SEC` | Remote worker | Token lifetime seconds (default `3600`) |
+| `NEXT_PUBLIC_MCP_URL` | Studio | MCP connector URL shown on Integrations (e.g. `https://mcp.thesudar.app`) |
+| `SUPABASE_URL` / `SUPABASE_ANON_KEY` | `workers/sudar-mcp-cloudflare` | Wrangler secrets for OAuth token validation |
+| `MCP_PUBLIC_URL` | Cloudflare worker | Public base URL (e.g. `https://mcp.thesudar.app`) |
+
+See [MCP_SERVERS.md](MCP_SERVERS.md) and [MCP_CHATGPT_LAUNCH.md](MCP_CHATGPT_LAUNCH.md).
+
 ---
 
 ## Video & microservices

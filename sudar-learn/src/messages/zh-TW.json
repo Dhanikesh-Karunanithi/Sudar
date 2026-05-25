@@ -64,7 +64,8 @@
     "petEnabledTitle": "Sudar pet",
     "petModeTitle": "Pet mode",
     "petCornerTitle": "Pet corner",
-    "loadingPrefs": "Loading learning preferences…",
+    "loadingPrefs": "Loading learning preferences…"
+  },
   "Language": {
     "sectionTitle": "Language & region",
     "sectionHint": "Control the interface language, how Sudar replies, and optional auto-detection. Audio voice can be filtered to match your reply language on the Settings page.",

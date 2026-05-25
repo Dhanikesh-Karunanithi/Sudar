@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { NOTIFICATION_CATEGORY_CONFIG, type NotificationCategorySlug, type NotificationChannel } from './categories'
 import { asNotificationDb, type Json } from './dbTypes'
+import { isWithinQuietHours } from './quietHours'
 
 export interface DispatchNotificationInput {
   userId: string
@@ -17,19 +18,6 @@ export interface NotificationDispatchResult {
   channels: NotificationChannel[]
   suppressed: Array<{ channel: NotificationChannel; reason: string }>
   notificationId?: string
-}
-
-function isWithinQuietHours(now: Date, timezone: string, start?: string | null, end?: string | null): boolean {
-  if (!start || !end) return false
-  const localeNow = new Date(now.toLocaleString('en-US', { timeZone: timezone }))
-  const [sh, sm] = start.split(':').map((v) => Number(v))
-  const [eh, em] = end.split(':').map((v) => Number(v))
-  const minutes = localeNow.getHours() * 60 + localeNow.getMinutes()
-  const startMinutes = sh * 60 + sm
-  const endMinutes = eh * 60 + em
-  if (startMinutes === endMinutes) return false
-  if (startMinutes < endMinutes) return minutes >= startMinutes && minutes < endMinutes
-  return minutes >= startMinutes || minutes < endMinutes
 }
 
 async function resolveChannels(

@@ -40,7 +40,7 @@ export default function CollaboratePage() {
         </a>{" "}
         for pilot discussions, partnership ideas, or technical collaboration. Repository:{" "}
         <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
-          GitHub — Sudar
+          GitHub: Sudar
         </a>
         .
       </p>

@@ -1,4 +1,5 @@
-import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { getRequestSession } from '@/lib/auth/requestSession'
 import { getOrCreateOrg } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchOrgTagCatalog, resolveOrCreateOrgTagsForLabels, setCourseOrgTagIds } from '@/lib/courseTags'
@@ -8,10 +9,10 @@ import type { Database } from '@/types/database'
 type CourseInsert = Database['public']['Tables']['courses']['Insert']
 type ModuleInsert = Database['public']['Tables']['modules']['Insert']
 
-export async function GET() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export async function GET(request: NextRequest) {
+  const session = await getRequestSession(request)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { user } = session
 
   const admin = createServiceRoleSupabaseClient()
   const orgId = await getOrCreateOrg(user.id)
@@ -27,9 +28,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await getRequestSession(request)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { user } = session
 
   const admin = createServiceRoleSupabaseClient()
   const orgId = await getOrCreateOrg(user.id)

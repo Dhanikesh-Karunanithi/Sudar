@@ -34,6 +34,7 @@ import { useInactivityHibernation, type ActivityTrackingState } from '@/componen
 import { validateTutorQueryResponsePayload } from '@/lib/tutor/responseContract'
 import { inferContentIntentFromModality } from '@/lib/learner/modalityContentIntent'
 import type { ResolvedLearnerPreferences } from '@/lib/learner/learnerPreferences'
+import { useNotificationSound } from '@/components/features/notifications/NotificationSoundProvider'
 
 // --- Types ------------------------------------------------------------------
 
@@ -328,6 +329,7 @@ export function CourseViewer({
   personalizationAccess = DEFAULT_PERSONALIZATION_ACCESS,
   personalizationOverlays = null,
 }: Props) {
+  const { playChime } = useNotificationSound()
   const router = useRouter()
   const pathname = usePathname()
   const [currentModuleId, setCurrentModuleId] = useState(activeModuleId)
@@ -855,10 +857,11 @@ export function CourseViewer({
       .then((data) => {
         const cards = Array.isArray(data.data?.cards) ? data.data.cards : []
         setFlashcardsByModule((prev) => ({ ...prev, [currentModuleId]: cards }))
+        if (data.ok && cards.length > 0) playChime('task_complete')
       })
       .catch(() => setFlashcardsByModule((prev) => ({ ...prev, [currentModuleId]: [] })))
       .finally(() => setFlashcardsLoading(false))
-  }, [activeModality, currentModuleId, currentModule?.content, currentModule?.title])
+  }, [activeModality, currentModuleId, currentModule?.content, currentModule?.title, playChime])
 
   // Fetch mindmap when switching to mindmap modality (module scope)
   useEffect(() => {
@@ -880,13 +883,14 @@ export function CourseViewer({
         const root = data?.root
         if (root && typeof root === 'object' && Array.isArray((root as { children?: unknown }).children) && (root as { children: unknown[] }).children.length > 0) {
           setMindmapByModule((prev) => ({ ...prev, [currentModuleId]: root as MindMapNode }))
+          playChime('task_complete')
         } else {
           setMindmapByModule((prev) => ({ ...prev, [currentModuleId]: null }))
         }
       })
       .catch(() => {})
       .finally(() => setMindmapLoading(false))
-  }, [activeModality, mindmapScope, currentModuleId, currentModule?.content, currentModule?.title])
+  }, [activeModality, mindmapScope, currentModuleId, currentModule?.content, currentModule?.title, playChime])
 
   // Fetch course mindmap when switching to mindmap modality (course scope)
   useEffect(() => {
@@ -911,13 +915,14 @@ export function CourseViewer({
         const root = data?.root
         if (root && typeof root === 'object' && Array.isArray((root as { children?: unknown }).children) && (root as { children: unknown[] }).children.length > 0) {
           setMindmapCourse(root as MindMapNode)
+          playChime('task_complete')
         } else {
           setMindmapCourse(null)
         }
       })
       .catch(() => {})
       .finally(() => setMindmapCourseLoading(false))
-  }, [activeModality, mindmapScope, mindmapCourse, course.id, course.title, course.modules])
+  }, [activeModality, mindmapScope, mindmapCourse, course.id, course.title, course.modules, playChime])
 
   // Fetch audio for Listen modality when switching to listening and we don't have it for this module
   useEffect(() => {
@@ -965,11 +970,12 @@ export function CourseViewer({
         if (blob && blob instanceof Blob) {
           const url = URL.createObjectURL(blob)
           setListeningAudioByModule((prev) => ({ ...prev, [currentModuleId]: url }))
+          playChime('task_complete')
         }
       })
       .catch(() => setListeningUnavailableByModule((prev) => ({ ...prev, [currentModuleId]: true })))
       .finally(() => setListeningLoading(false))
-  }, [activeModality, currentModuleId, currentModule?.content, listeningAudioByModule, listeningUnavailableByModule])
+  }, [activeModality, currentModuleId, currentModule?.content, listeningAudioByModule, listeningUnavailableByModule, playChime])
 
   // Fetch learner context when tutor panel opens (for "What Sudar knows" summary)
   useEffect(() => {
@@ -1165,6 +1171,7 @@ export function CourseViewer({
     ]
     setMessages(newMessages)
     setThinking(true)
+    let tutorSucceeded = false
 
     try {
       const res = await fetch('/api/tutor/query', {
@@ -1208,6 +1215,7 @@ export function CourseViewer({
         actions: data.actions?.length ? data.actions : undefined,
         blocks: data.blocks,
       }])
+      tutorSucceeded = true
     } catch {
       setMessages([...newMessages, {
         role: 'assistant',
@@ -1215,6 +1223,7 @@ export function CourseViewer({
       }])
     } finally {
       setThinking(false)
+      if (tutorSucceeded) playChime('sudar_reply')
     }
   }
 
@@ -1931,6 +1940,7 @@ export function CourseViewer({
                             const root = data?.root
                             if (root && typeof root === 'object') {
                               setMindmapCourse(root as MindMapNode)
+                              playChime('task_complete')
                             }
                           })
                           .finally(() => setMindmapCourseLoading(false))
@@ -1956,6 +1966,7 @@ export function CourseViewer({
                             const root = data?.root
                             if (root && typeof root === 'object') {
                               setMindmapByModule((prev) => ({ ...prev, [currentModuleId]: root as MindMapNode }))
+                              playChime('task_complete')
                             }
                           })
                           .finally(() => setMindmapLoading(false))
@@ -1984,6 +1995,7 @@ export function CourseViewer({
                         .then((data) => {
                           const cards = Array.isArray(data.cards) ? data.cards : []
                           setFlashcardsByModule((prev) => ({ ...prev, [currentModuleId]: cards }))
+                          if (cards.length > 0) playChime('task_complete')
                         })
                         .finally(() => setFlashcardsLoading(false))
                     } }
@@ -2047,6 +2059,7 @@ export function CourseViewer({
                           if (blob && blob instanceof Blob) {
                             const url = URL.createObjectURL(blob)
                             setListeningAudioByModule((prev) => ({ ...prev, [currentModuleId]: url }))
+                            playChime('task_complete')
                           }
                         })
                         .catch(() => setListeningUnavailableByModule((prev) => ({ ...prev, [currentModuleId]: true })))

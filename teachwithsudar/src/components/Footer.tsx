@@ -17,7 +17,7 @@ export function Footer() {
         <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-10 md:gap-12">
           <div className="min-w-0">
             <h2 className="text-[clamp(2.5rem,10vw,6rem)] leading-[0.85] tracking-tighter text-white/10 font-bold select-none pointer-events-none font-serif">
-              SUDAR.
+              Sudar.
             </h2>
           </div>
 

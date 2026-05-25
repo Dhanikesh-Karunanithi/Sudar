@@ -126,6 +126,22 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## Notification sounds — Chime-style in-app chimes (Learn + Studio)
+
+- **Where**: Sudar Learn — **Settings → Notification controls** (`/settings/notifications`); in-tab chimes across course learn, tutor chat, notification toasts, and gamification toasts. Sudar Studio — **New course** generation UI (AI / document / SCORM paths).
+- **What**: Optional subtle WAV chimes when tasks complete (AI generation, Sudar tutor reply, notification toast, level-up/achievement). Master toggle off by default; volume slider; four event-group toggles; respects learner quiet hours and `prefers-reduced-motion`. Studio stores sound prefs in `localStorage` for course-ready chime (independent of OS browser notifications).
+- **Key files**:
+  - `shared/notifications/sound.ts` — `playSudarChime`, `shouldPlaySound`, category → sound group mapping.
+  - `shared/notifications/quietHours.ts` — shared quiet-hours helper (also used by notification engine).
+  - `sudar-learn/src/components/features/notifications/NotificationSoundProvider.tsx` — loads prefs, exposes `playChime`.
+  - `sudar-learn/src/app/api/learner/notification-settings/route.ts` — GET/PATCH sound fields.
+  - `sudar-learn/public/audio/notifications/*.wav` — generated via `scripts/generate-notification-sounds.mjs`.
+  - `sudar-studio/src/hooks/useBrowserCompletionNotification.ts` — Studio chime + browser notification on course ready.
+- **Database**: `supabase/migrations/20260522120000_notification_sound_settings.sql` — columns on `user_notification_settings` (`sound_enabled`, `sound_volume`, `sound_task_complete`, `sound_sudar_reply`, `sound_notifications`, `sound_celebration`).
+- **Flow**: Learner enables sounds on notification settings → preview chimes → generation/tutor/notification events call `playChime` when prefs allow → Studio creator enables “Play a chime when the course is ready” on new-course flow → chime on successful generation (optional OS notification unchanged).
+
+---
+
 ## Global search (Learn)
 
 - **Where**: Learner dashboard app — `/search`.  
@@ -159,4 +175,41 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
-*Last updated: May 2026 (localization + tutor memory cadence governance). For roadmap and next priorities, see [STRATEGIC_PATH.md](STRATEGIC_PATH.md) and [ACTION_PLANS.md](ACTION_PLANS.md).*
+## Sudar MCP servers (Integrations + Learn + Studio + ChatGPT)
+
+- **Where**: Sudar Studio → **Integrations** → *Connect via MCP* / *ChatGPT*; `https://mcp.thesudar.app/mcp` (production); repo `packages/sudar-mcp` (`@sudar/mcp-server` v0.2+).
+- **What**: MCP adapter for **Cursor** (stdio), **ChatGPT/Claude** (Cloudflare remote OAuth + Streamable HTTP), and LMS integrators (ALP). Toolsets: **integrator** (ALP), **creator** (Studio course AI), **admin** (cohort pulse), **learner** (tutor, NBA, agents).
+- **Key files**:
+  - `docs/MCP_SERVERS.md`, `docs/MCP_CHATGPT_LAUNCH.md`, `docs/DEPLOY_THESUDAR_APP.md`, `docs/DNS_THESUDAR_APP.md`
+  - `packages/sudar-mcp/src/tools/creator.ts` — Studio generation tools
+  - `workers/sudar-mcp-cloudflare/` — production remote MCP (OAuth + `/mcp`)
+  - `workers/sudar-mcp-remote/` — dev Express remote (API-key token)
+  - `sudar-studio/src/lib/auth/requestSession.ts` — Bearer on Studio creator routes
+  - `sudar-studio/src/app/api/mcp/audit/route.ts`, `sudar-learn/.../mcp/audit/route.ts`
+  - `openapi/sudar-creator-v1.json` — Custom GPT Actions fallback
+- **Env**: `NEXT_PUBLIC_MCP_URL`, `SUDAR_*`, Wrangler secrets — [ENV_REFERENCE.md](ENV_REFERENCE.md).
+- **Flow**: Deploy thesudar.app → deploy Cloudflare MCP worker → register ChatGPT connector → user signs in with Sudar → ChatGPT calls `sudar_generate_outline` etc. on Studio.
+
+---
+
+## Cinematic product launch demo (standalone app)
+
+- **Where**: [`sudar-ecosystem-demo/`](../sudar-ecosystem-demo/) — `/` on port **3003**; teachwithsudar **Demo** page and [docs/demo.md](demo.md).
+- **What**: Full-screen video-like launch story (**~5 min**): title cards, typography overlays, animated cursor. Narrative covers **content generation** (document, idea/prompt, business need, cohort, learner context), **instructional design** (Bloom, objectives, archetypes), **live block authoring** (video, audio, accordion, flipcards, quiz), **cohort + individual personalization**, and **contextual tutor** (screen-aware proactive message + learner typed reply). Demo course: **Somehow I manage** (Office-themed prompt). Learn wireframes use purple/light chrome; Studio uses dark editor chrome.
+- **Key files**:
+  - `sudar-ecosystem-demo/src/data/launchDemo.ts` — `CinematicFrame` sequence (title-card + scene patches).
+  - `sudar-ecosystem-demo/src/components/wireframes/DemoScenesExtended.tsx`, `CourseBlockCanvas.tsx`, `TutorConversationPanel.tsx`, `LearnNavChrome.tsx`, `BloomBlueprintStrip.tsx`.
+  - `sudar-ecosystem-demo/public/characters/prison-mike.png` — course video placeholder.
+  - `sudar-ecosystem-demo/src/components/cinematic/CinematicPlayer.tsx` — player shell.
+- **Flow**: Problem → Sudar vision → Sarah (sources → blueprint → block build → publish) → personalization → Marcus (Watch → stuck → interact → tutor → memory) → certification → ALP/MCP → tagline.
+
+## Interactive ecosystem how-to tour (same app)
+
+- **Where**: `sudar-ecosystem-demo/interactive` — for teachwithsudar **Guides** and help how-tos.
+- **What**: Step-by-step wireframe tour with scrub, chapter jump, and speed — chapters aligned with launch story (Content generation, Live editor blocks, Tutor, Memory, etc.).
+- **Key files**: `ecosystemDemo.ts`, `EcosystemDemoPlayer.tsx`, `TransportBar.tsx`.
+- **Env**: `NEXT_PUBLIC_ECOSYSTEM_DEMO_URL` on teachwithsudar when deployed (e.g. `https://demo.thesudar.app`).
+
+---
+
+*Last updated: May 2026 (ecosystem wireframe demo + MCP + localization). For roadmap and next priorities, see [STRATEGIC_PATH.md](STRATEGIC_PATH.md) and [ACTION_PLANS.md](ACTION_PLANS.md).*

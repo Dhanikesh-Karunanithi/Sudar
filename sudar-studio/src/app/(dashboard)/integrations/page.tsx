@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Plug, Key, Code, Copy, Check, ExternalLink, MessageSquare, LayoutDashboard, Plus, Trash2, Building2, Users, Database, Shield, ListOrdered } from 'lucide-react'
+import { Plug, Key, Code, Copy, Check, ExternalLink, MessageSquare, LayoutDashboard, Plus, Trash2, Building2, Users, Database, Shield, ListOrdered, Bot } from 'lucide-react'
 import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { IntegrationVisualGuide } from '@/components/integrations/IntegrationVisualGuide'
 
@@ -10,6 +10,11 @@ const LEARN_BASE_URL =
   typeof process.env.NEXT_PUBLIC_LEARN_APP_URL === 'string' && process.env.NEXT_PUBLIC_LEARN_APP_URL
     ? process.env.NEXT_PUBLIC_LEARN_APP_URL.replace(/\/$/, '')
     : ''
+
+const MCP_PUBLIC_URL =
+  typeof process.env.NEXT_PUBLIC_MCP_URL === 'string' && process.env.NEXT_PUBLIC_MCP_URL
+    ? process.env.NEXT_PUBLIC_MCP_URL.replace(/\/$/, '')
+    : 'https://mcp.thesudar.app'
 
 type ApiKeyRow = { id: string; name: string; key_prefix: string; created_at: string; last_used_at: string | null }
 
@@ -305,6 +310,114 @@ export default function IntegrationsPage() {
               ALP API documentation
             </a>
             <span className="text-slate-500 text-sm ml-1">(docs/ALP_API.md in repo — endpoints, request bodies, event ingestion)</span>
+          </div>
+        </div>
+      </section>
+
+      {/* MCP (Model Context Protocol) */}
+      <section id="mcp" className="mb-10">
+        <h2 className="flex items-center gap-2 text-base font-medium text-slate-200 mb-4">
+          <Bot className="w-4 h-4 text-indigo-400" />
+          Connect via MCP (AI agents)
+        </h2>
+        <p className="text-sm text-slate-400 mb-4">
+          Use Sudar from <strong className="text-slate-300">Cursor</strong>, Claude Desktop, or other MCP clients. The{' '}
+          <code className="px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 text-xs">@sudar/mcp-server</code> package wraps the same ALP APIs as above — no duplicate logic.
+          See <code className="px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 text-xs">docs/MCP_SERVERS.md</code> in the repo.
+        </p>
+        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">
+              Cursor — example mcp.json (integrator tools)
+            </label>
+            <p className="text-xs text-slate-500 mb-2">
+              Build once: <code className="text-slate-400">cd packages/sudar-mcp &amp;&amp; npm install &amp;&amp; npm run build</code>. Replace paths and paste an integration API key from above.
+            </p>
+            <pre className="relative rounded-md bg-slate-900 border border-slate-700 p-3 text-xs text-slate-300 font-mono overflow-x-auto">
+{`{
+  "mcpServers": {
+    "sudar": {
+      "command": "node",
+      "args": ["<REPO>/packages/sudar-mcp/dist/index.js"],
+      "env": {
+        "SUDAR_LEARN_URL": "${LEARN_BASE_URL || 'http://localhost:3001'}",
+        "SUDAR_ALP_API_KEY": "<integration_key>",
+        "SUDAR_TOOLSET": "integrator"
+      }
+    }
+  }
+}`}
+            </pre>
+            <button
+              type="button"
+              onClick={() =>
+                copy(
+                  JSON.stringify(
+                    {
+                      mcpServers: {
+                        sudar: {
+                          command: 'node',
+                          args: ['<REPO>/packages/sudar-mcp/dist/index.js'],
+                          env: {
+                            SUDAR_LEARN_URL: LEARN_BASE_URL || 'http://localhost:3001',
+                            SUDAR_ALP_API_KEY: '<integration_key>',
+                            SUDAR_TOOLSET: 'integrator',
+                          },
+                        },
+                      },
+                    },
+                    null,
+                    2,
+                  ),
+                  'mcp-json',
+                )
+              }
+              className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-slate-600 text-slate-400 text-xs hover:bg-slate-700"
+            >
+              {copied === 'mcp-json' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              Copy mcp.json snippet
+            </button>
+          </div>
+          <div className="border-t border-slate-700 pt-4 space-y-3">
+            <p className="text-sm font-medium text-slate-300">ChatGPT and Claude (remote MCP)</p>
+            <p className="text-xs text-slate-500">
+              Production connector URL (after deploy): sign in with your Sudar account — no API key in ChatGPT settings.
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <code className="flex-1 min-w-0 px-3 py-2 rounded-md bg-slate-900 text-slate-300 text-xs font-mono border border-slate-700 break-all">
+                {MCP_PUBLIC_URL}/mcp
+              </code>
+              <button
+                type="button"
+                onClick={() => copy(`${MCP_PUBLIC_URL}/mcp`, 'mcp-url')}
+                className="p-2 rounded-md border border-slate-600 text-slate-400 hover:bg-slate-700"
+                title="Copy MCP URL"
+              >
+                {copied === 'mcp-url' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+            <p className="text-xs text-slate-500">
+              OAuth discovery:{' '}
+              <code className="text-slate-400">{MCP_PUBLIC_URL}/.well-known/oauth-authorization-server</code>
+            </p>
+            <a
+              href="https://github.com/Dhanikesh-Karunanithi/Sudar/blob/main/docs/MCP_CHATGPT_LAUNCH.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300"
+            >
+              <ExternalLink className="w-4 h-4" />
+              ChatGPT connector setup guide
+            </a>
+          </div>
+          <div className="border-t border-slate-700 pt-3">
+            <p className="text-xs text-slate-500">
+              <strong className="text-slate-400">Creator + admin + learner tools:</strong> remote worker uses{' '}
+              <code className="text-slate-400">SUDAR_TOOLSET=all</code> after OAuth. Local dev: set{' '}
+              <code className="text-slate-400">SUDAR_ACCESS_TOKEN</code> in Cursor. Deploy:{' '}
+              <code className="text-slate-400">workers/sudar-mcp-cloudflare</code> — see{' '}
+              <code className="text-slate-400">docs/DEPLOY_THESUDAR_APP.md</code>.
+            </p>
           </div>
         </div>
       </section>

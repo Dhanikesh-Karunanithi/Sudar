@@ -1123,6 +1123,12 @@ export type Database = {
           last_revoke_at: string | null
           never_prompt_push: boolean
           push_prompt_snooze_until: string | null
+          sound_enabled: boolean
+          sound_volume: number
+          sound_task_complete: boolean
+          sound_sudar_reply: boolean
+          sound_notifications: boolean
+          sound_celebration: boolean
           created_at: string
           updated_at: string
         }
@@ -1139,6 +1145,12 @@ export type Database = {
           last_revoke_at?: string | null
           never_prompt_push?: boolean
           push_prompt_snooze_until?: string | null
+          sound_enabled?: boolean
+          sound_volume?: number
+          sound_task_complete?: boolean
+          sound_sudar_reply?: boolean
+          sound_notifications?: boolean
+          sound_celebration?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -1154,6 +1166,12 @@ export type Database = {
           last_revoke_at?: string | null
           never_prompt_push?: boolean
           push_prompt_snooze_until?: string | null
+          sound_enabled?: boolean
+          sound_volume?: number
+          sound_task_complete?: boolean
+          sound_sudar_reply?: boolean
+          sound_notifications?: boolean
+          sound_celebration?: boolean
           updated_at?: string
         }
         Relationships: []

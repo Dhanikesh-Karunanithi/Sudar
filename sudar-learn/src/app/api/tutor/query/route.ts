@@ -1,4 +1,5 @@
-import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { getRequestSession } from '@/lib/auth/requestSession'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import type { TutorAction, TutorActionType, TutorBlock } from '@/types/tutor'
@@ -10,7 +11,6 @@ import {
   getDefaultTutorModel,
   getDefaultMemoryModel,
   resolveChatConfigError,
-  type ChatCompletionContext,
 } from '@/lib/ai/chat'
 import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import type { PrivateOpenAiRuntime } from '@/types/orgAiInference'
@@ -34,7 +34,8 @@ import { buildStruggleSignalsSummary } from '@/lib/learner/struggleSignals'
 import { loadSkillGapSummary, recordMasteredTopics, recordStruggleTopics } from '@/lib/learner/syncTopicSkills'
 import { parseTutorModelOutput } from '@/lib/tutor/responseContract'
 import { sanitizeTutorBlocks } from '@/lib/tutor/tutorBlockSanitize'
-import { tutorMessageMatchesIdentityBypass } from '@/lib/tutor/tutorIdentityBypassPatterns'
+import { runTutorInputGuardrail, type TutorGuardrailAiDeps } from '@/lib/tutor/runInputGuardrail'
+import { buildTutorActionAllowlists } from '@/lib/tutor/tutorActionAllowlists'
 import {
   detectsTutorResourceIntent,
   searchImagesForTutor,
@@ -67,11 +68,7 @@ const tutorQueryBodySchema = z.object({
   pedagogy_mode: z.enum(['explain', 'guide', 'exam_focus']).optional(),
 })
 
-type TutorAiDeps = {
-  orgSettings: unknown
-  privateRuntime: PrivateOpenAiRuntime | null
-  chatCtx: ChatCompletionContext
-}
+type TutorAiDeps = TutorGuardrailAiDeps
 
 function resolveRoutingMeta(orgSettings: unknown, privateRuntime: PrivateOpenAiRuntime | null) {
   const policy = parseOrgAiRuntimePolicy(orgSettings)
@@ -114,94 +111,6 @@ const QUIZ_INTENT_PATTERNS = [
 
 function detectsQuizIntent(message: string): boolean {
   return QUIZ_INTENT_PATTERNS.some((p) => p.test(message))
-}
-
-// Blocklist: messages containing these (case-insensitive) are refused before calling the model.
-const INPUT_BLOCKLIST_PATTERNS = [
-  /\bhow\s+to\s+(hack|exploit|cheat|steal|hurt|kill)\b/i,
-  /\bwrite\s+(me\s+)?(malware|virus|ransomware)\b/i,
-  /\bunethical\s+(request|ask)\b/i,
-  /\bignore\s+(all\s+)?(previous|instructions)\b/i,
-  /\b(jailbreak|bypass)\s+(safety|guardrails)\b/i,
-  /\b(reveal|print|dump|show)\s+(your\s+)?(system\s+prompt|hidden\s+instructions|developer\s+message)\b/i,
-  /\bexfiltrat|send\s+(me\s+)?(the\s+)?(api\s+key|password|secret|env|\.env)\b/i,
-]
-
-// Short conversational follow-ups that are always valid in a learning context.
-// These are frequently misclassified by the guardrail LLM because they have no
-// standalone learning keywords, yet they are clearly continuations of study sessions.
-const FOLLOWUP_BYPASS_PATTERNS = [
-  /^(simplif(y|ied)|simpler|simple version|make\s+it\s+simpler)/i,
-  /\bin\s+brief\b/i,
-  /\bin\s+short\b/i,
-  /\bbriefly\b/i,
-  /\bsummarise\b|\bsummarize\b/i,
-  /\bsummary\b/i,
-  /\bshorten\b|\bshorter\b/i,
-  /\brepeat\s+that\b|\bsay\s+that\s+again\b|\bonce\s+more\b/i,
-  /^(ok|okay|got\s+it|thanks|thank\s+you|great|nice|cool|makes\s+sense|understood)/i,
-  /\bexplain\s+(again|more|further|that|this|it)\b/i,
-  /\bgive\s+(me\s+)?(an?\s+)?(example|analogy|analogy|demo)\b/i,
-  /\bmore\s+(detail|context|depth|info|information|examples?)\b/i,
-  /^(what|why|how|when|where|who|which)\s/i,
-  /\bwhat\s+does\s+(that|this)\s+mean\b/i,
-  /\bi\s+(don'?t\s+)?(understand|get\s+it|follow)\b/i,
-  /\bcan\s+you\s+(re)?explain\b/i,
-  /\btoo\s+(long|complex|technical|advanced|complicated)\b/i,
-  /\beli5\b|\blayman'?s?\s+terms?\b/i,
-  /\bnext\b|\bcontinue\b|\bgo\s+on\b|\bproceed\b/i,
-]
-
-/** Returns true if the message passes the input guardrail (learning/platform scope). */
-async function runInputGuardrail(
-  message: string,
-  hasConversationHistory: boolean,
-  aiDeps: TutorAiDeps
-): Promise<{ pass: boolean }> {
-  const trimmed = message.trim()
-  if (!trimmed) return { pass: false }
-
-  for (const pattern of INPUT_BLOCKLIST_PATTERNS) {
-    if (pattern.test(trimmed)) return { pass: false }
-  }
-
-  // Identity / platform-intro questions always pass — no LLM check needed
-  if (tutorMessageMatchesIdentityBypass(trimmed)) return { pass: true }
-
-  // Conversational follow-ups always pass — they're context-free by nature but
-  // are clearly part of an ongoing learning session
-  for (const pattern of FOLLOWUP_BYPASS_PATTERNS) {
-    if (pattern.test(trimmed)) return { pass: true }
-  }
-
-  // If there's an active conversation, skip the LLM guardrail entirely.
-  // The user is already in a learning session; a follow-up message is inherently
-  // learning-related regardless of whether it sounds like it in isolation.
-  if (hasConversationHistory) return { pass: true }
-
-  if (resolveChatConfigError(aiDeps.orgSettings, aiDeps.privateRuntime)) return { pass: true } // no API → skip LLM check
-
-  try {
-    const { content } = await chatCompletion(
-      {
-        model: getDefaultMemoryModel(aiDeps.privateRuntime),
-        messages: [
-          {
-            role: 'user',
-            content: `Does this message ask for help with learning, courses, studying, questions about the AI tutor, or using this learning platform? Reply with exactly YES or NO.\n\nMessage: "${trimmed.slice(0, 500)}"`,
-          },
-        ],
-        max_tokens: 10,
-        temperature: 0,
-      },
-      aiDeps.chatCtx
-    )
-    const answer = (content ?? '').toUpperCase()
-    const pass = !answer.startsWith('NO')
-    return { pass }
-  } catch {
-    return { pass: true } // on error, allow through
-  }
 }
 
 /** Validate and convert raw actions to TutorAction[]; only allow whitelisted types and valid IDs. */
@@ -403,9 +312,9 @@ Rules:
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getRequestSession(request)
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { user } = session
 
     const admin = createServiceRoleSupabaseClient()
 
@@ -528,8 +437,7 @@ export async function POST(request: NextRequest) {
       .slice(0, MAX_TUTOR_MESSAGE_LENGTH)
 
     // ── Input guardrail: refuse off-topic / harmful requests ─────────────────
-    const hasConversationHistory = Array.isArray(conversation_history) && conversation_history.length > 0
-    const guardrail = await runInputGuardrail(message, hasConversationHistory, aiDeps)
+    const guardrail = await runTutorInputGuardrail(message, aiDeps)
     if (!guardrail.pass) {
       return NextResponse.json(
         { response: GUARDRAIL_REFUSAL_MESSAGE, guardrail_refused: true },
@@ -685,29 +593,23 @@ export async function POST(request: NextRequest) {
       loadSkillGapSummary(admin, user.id),
     ])
 
-  // ── 2b. When no course_id (e.g. floating chat): load platform context for catalog search & actions ──
+  // ── 2b. Action allowlists (always) + platform catalog text (floating chat only) ──
   let platformContextText = ''
-  const allowedCourseIds = new Set<string>()
-  const allowedPathIds = new Set<string>()
-  const enrollmentByCourseId = new Map<string, { status: string; progress_pct: number }>()
+  const [allCourses, pathList, enrollmentsRes, ragChunks] = await Promise.all([
+    getCachedPublishedCourses(),
+    getCachedPublishedPaths(),
+    admin.from('enrollments').select('course_id, status, progress_pct').eq('user_id', user.id),
+    course_id ? Promise.resolve([] as Awaited<ReturnType<typeof retrieveChunks>>) : retrieveChunks(message, { limit: 10 }),
+  ])
+  const catalogCourses = allCourses.slice(0, PLATFORM_CONTEXT_CATALOG_LIMIT)
+  const { allowedCourseIds, allowedPathIds, enrollmentByCourseId } = buildTutorActionAllowlists({
+    catalogCourseIds: catalogCourses.map((c) => c.id),
+    pathIds: pathList.map((p) => p.id),
+    enrollments: enrollmentsRes.data ?? [],
+    activeCourseId: course_id ?? null,
+  })
 
   if (!course_id) {
-    const [allCourses, pathList, enrollmentsRes, ragChunks] = await Promise.all([
-      getCachedPublishedCourses(),
-      getCachedPublishedPaths(),
-      admin.from('enrollments').select('course_id, status, progress_pct').eq('user_id', user.id),
-      retrieveChunks(message, { limit: 10 }),
-    ])
-    const catalogCourses = allCourses.slice(0, PLATFORM_CONTEXT_CATALOG_LIMIT)
-    const paths = pathList.map((p) => ({ id: p.id }))
-    const allEnrollments = enrollmentsRes.data
-
-    catalogCourses?.forEach((c) => allowedCourseIds.add(c.id))
-    paths?.forEach((p) => allowedPathIds.add(p.id))
-    allEnrollments?.forEach((e) => {
-      if (e.course_id) enrollmentByCourseId.set(e.course_id, { status: e.status, progress_pct: e.progress_pct ?? 0 })
-    })
-
     const catalogLines =
       catalogCourses?.map(
         (c) =>

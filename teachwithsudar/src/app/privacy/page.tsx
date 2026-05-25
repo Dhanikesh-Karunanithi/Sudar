@@ -13,17 +13,17 @@ export default function PrivacyPage() {
       <h2 className="mt-10 text-xl font-semibold text-foreground">Scope</h2>
       <p className="mt-2 text-foreground">
         This policy describes how data is handled when you use Sudar (the software) or the teachwithsudar.com
-        website. When you self-host Sudar, data is stored in your own Supabase project; you are the data controller.
+        website. When you self-host Sudar, data is stored in the database and infrastructure you deploy; you are the data controller.
         When you use a Sudar instance operated by a third party (e.g. an employer or institution), their privacy
         policy applies.
       </p>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Data collected by Sudar (when you deploy it)</h2>
       <p className="mt-2 text-foreground">
-        Sudar stores data in Supabase (or the database you configure). This includes: learner profiles (Digital
+        Sudar stores data in the Postgres-compatible database you configure. This includes: learner profiles (Digital
         Learner Twin: goals, struggles, preferences, interaction summary); learning_events (module starts/completions,
         quiz attempts, modality switches, tutor usage); ai_interactions (user messages and AI responses for
-        context); enrollments (paths, courses, progress, due dates); and course content. Auth is handled by Supabase
-        Auth; credentials are not stored in plain text.
+        context); enrollments (paths, courses, progress, due dates); and course content. Authentication is handled
+        by your configured identity layer; credentials are not stored in plain text.
       </p>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Tenancy and retention</h2>
       <p className="mt-2 text-foreground">
@@ -42,8 +42,8 @@ export default function PrivacyPage() {
       <p className="mt-2 text-foreground">
         For FERPA (US) and GDPR (EU/UK), the platform stores learner data under the control of the deploying
         institution or organisation. They are responsible for lawful basis, retention, and responding to access or
-        deletion requests. Sudar does not sell learner data; when you self-host, your Supabase project is the only
-        store.
+        deletion requests. Sudar does not sell learner data; when you self-host, your database deployment is the
+        primary store.
       </p>
       <h2 className="mt-10 text-xl font-semibold text-foreground">teachwithsudar.com</h2>
       <p className="mt-2 text-foreground">

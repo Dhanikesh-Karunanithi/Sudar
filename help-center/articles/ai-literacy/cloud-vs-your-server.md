@@ -19,4 +19,4 @@ If your policy requires models to stay on your network, you can run an open mode
 
 When enabled in Org settings, Sudar sends chat and generation requests to that address instead of the default cloud path.
 
-Embeddings for course search may still use a separate cloud or local setup—your operator documents that per deployment.
+Embeddings for course search may still use a separate cloud or local setup, your operator documents that per deployment.

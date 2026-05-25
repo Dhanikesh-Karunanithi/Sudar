@@ -76,7 +76,7 @@ export default function StoryPage() {
             <AccordionItem id="product" title="The product">
               <div className="space-y-4 text-foreground leading-relaxed">
                 <p>
-                  Sudar has three surfaces that share one source of truth in Supabase: auth, learner profiles,
+                  Sudar has three surfaces that share one source of truth in your database: auth, learner profiles,
                   content, events, and analytics. The AI tutor &quot;Sudar&quot; is the learner-facing face of that
                   intelligence.
                 </p>
@@ -98,7 +98,7 @@ export default function StoryPage() {
           </Accordion>
         </motion.div>
 
-        {/* Three surfaces — Journey steps */}
+        {/* Three surfaces: journey steps */}
         <div className="mt-16">
           <motion.h2
             className="text-xl font-semibold text-foreground sm:text-2xl"

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { categoryToSoundGroup } from '../../../../../shared/notifications/sound'
+import { useNotificationSound } from './NotificationSoundProvider'
 
 interface ToastItem {
   id: string
@@ -13,20 +15,22 @@ interface ToastItem {
 export function NotificationToasts() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const router = useRouter()
+  const { playChime } = useNotificationSound()
 
   useEffect(() => {
     const supabase = createClient()
     const channel = supabase
       .channel('notification-toasts')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_notifications' }, (payload) => {
-        const row = payload.new as { id: string; title: string; link_url: string | null }
+        const row = payload.new as { id: string; title: string; link_url: string | null; category?: string }
         setToasts((curr) => [{ id: row.id, title: row.title, linkUrl: row.link_url }, ...curr].slice(0, 3))
+        playChime(categoryToSoundGroup(row.category))
       })
       .subscribe()
     return () => {
       void supabase.removeChannel(channel)
     }
-  }, [])
+  }, [playChime])
 
   useEffect(() => {
     if (toasts.length === 0) return

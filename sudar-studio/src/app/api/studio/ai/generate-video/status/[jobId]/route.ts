@@ -14,19 +14,14 @@ function parseGenerateMeta(meta: unknown): Record<string, unknown> {
   return meta as Record<string, unknown>
 }
 
-async function canUserAccessSudarVidJob(adminClient: unknown, userId: string, jobId: string): Promise<boolean> {
+async function canUserAccessSudarVidJob(
+  adminClient: ReturnType<typeof createServiceRoleSupabaseClient>,
+  userId: string,
+  jobId: string,
+): Promise<boolean> {
   if (!JOB_ID_SAFE_RE.test(jobId)) return false
-  const admin = adminClient as {
-    from: (table: string) => {
-      select: (columns: string, options?: { count?: 'exact'; head?: boolean }) => {
-        eq: (column: string, value: string) => any
-        contains: (column: string, value: Record<string, unknown>) => any
-        maybeSingle: () => Promise<{ data: unknown }>
-      }
-    }
-  }
 
-  const { data } = await admin
+  const { data } = await adminClient
     .from('learning_events')
     .select('id')
     .eq('user_id', userId)

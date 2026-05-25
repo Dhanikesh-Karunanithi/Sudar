@@ -13,20 +13,20 @@ export default function MissionPage() {
       </p>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Mission</h2>
       <p className="mt-2 text-foreground">
-        Make high-quality, personalized learning available to every learner. Adaptive, intelligent education should
-        not be limited to those who can afford expensive eLearning tools (Rise360, Articulate, Captivate).
+        Put useful adaptive learning within reach of teams that cannot buy Rise360-scale authoring stacks or hire a
+        full production crew for every course.
       </p>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Vision</h2>
       <p className="mt-2 text-foreground">
-        Sudar is an AI-native learning platform that adapts modality, pace, difficulty, and content in real time.
-        One place to build courses, deliver them, and support every learner with a tutor that remembers.
+        One stack to author in Studio, deliver in Learn, and route decisions through Intelligence. Modality, pace,
+        and difficulty can change per person; the tutor keeps context instead of resetting each visit.
       </p>
       <h2 className="mt-10 text-xl font-semibold text-foreground">The Core Promise</h2>
       <div className="mt-4 grid gap-6 sm:grid-cols-3">
         <div className="rounded-xl border border-card-border bg-card-bg shadow-card p-5">
           <h3 className="font-semibold text-accent">For learners</h3>
           <p className="mt-2 text-sm text-foreground">
-            A personal AI tutor that remembers you, adapts to you, and never judges you.
+            A tutor that answers from your course material, notices when you are stuck, and does not talk down to you.
           </p>
         </div>
         <div className="rounded-xl border border-card-border bg-card-bg shadow-card p-5">

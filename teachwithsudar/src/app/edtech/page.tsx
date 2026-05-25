@@ -9,8 +9,8 @@ export default function EdTechPage() {
   return (
     <ProseSection title="EdTech & AI Updates">
       <p className="text-lg text-foreground">
-        Curated notes on EdTech and AI in education — research, tools, and trends that inform Sudar and the broader
-        mission to make learning adaptive and accessible.
+        Notes on EdTech and AI in education: research, tools, and trends that inform how Sudar is built and where we
+        think adaptive learning is heading.
       </p>
       <div className="mt-10 space-y-6">
         <div className="rounded-xl border border-white/10 bg-white/5 p-6">
@@ -33,8 +33,8 @@ export default function EdTechPage() {
           <h3 className="font-semibold text-accent">Cost collapse in AI inference</h3>
           <p className="mt-2 text-foreground">
             Open-weight models and zero-cost TTS (e.g. Edge-TTS) make AI-native learning economically viable at
-            pennies per learner per month — a radical reduction vs. traditional authoring tools and proprietary AI
-            stacks. Sudar’s reference implementation demonstrates this.
+            pennies per learner per month in our reference setup, compared with traditional authoring tools and
+            proprietary AI stacks.
           </p>
         </div>
       </div>

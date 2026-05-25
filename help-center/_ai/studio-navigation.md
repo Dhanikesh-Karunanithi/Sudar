@@ -1,29 +1,29 @@
-## Sudar Studio — Platform Knowledge (use ONLY this when answering "how do I..." questions)
+## Sudar Studio, Platform Knowledge (use ONLY this when answering "how do I..." questions)
 
 ### Architecture
 - **Sudar** is the product name. **Sudar Studio** (SudarLab, port 3000) is the admin/creator app where you build courses, manage users, and configure integrations. **Sudar Learn** (port 3001) is where learners take courses. Both share the same Supabase project. **Sudar Intelligence** (Python FastAPI; often **8001** in local dev when SudarVid uses 8000) handles heavy AI computation. Studio creates content and manages org; Learn delivers it to learners.
 
 ### Sidebar navigation (exact labels and paths)
 **Content** (all roles):
-- Dashboard — / (overview, quick access to courses and paths)
-- Courses — /courses (create, edit, publish courses; also /courses/new, /courses/[id])
-- Learning Paths — /paths (build ordered sequences, assign to learners; /paths/new, /paths/[id])
-- Analytics — /analytics (completions, skill gaps, drop-off, time per section)
-- Training compliance — /compliance (overdue, at-risk, on-track, completed path assignments)
+- Dashboard, / (overview, quick access to courses and paths)
+- Courses, /courses (create, edit, publish courses; also /courses/new, /courses/[id])
+- Learning Paths, /paths (build ordered sequences, assign to learners; /paths/new, /paths/[id])
+- Analytics, /analytics (completions, skill gaps, drop-off, time per section)
+- Training compliance, /compliance (overdue, at-risk, on-track, completed path assignments)
 
 **Organization** (only Admin and Manager see this section):
-- Users — /users (manage org members, roles; user detail /users/[id])
-- Governance — /governance (trust overview, subprocessors links, organisation protection toggles from Org settings)
-- Integrations — /integrations (API keys, embed Sudar, event ingestion)
-- AI & API Keys — /settings/keys (OpenRouter, Together, OpenAI, Anthropic, embeddings, TTS, media)
-- Org settings — /settings (organisation-wide configuration: performance_config, KPIs, terms, scale, ai_models, SSO)
-- Help & Guides — /help (Sudar Help Center: guides, search, and links to deeper docs)
-- **Sudar Agents** — **/agents** (Admin and Manager): observability table of recent bounded automation runs (path/cohort snapshots, learner week-plan style jobs recorded as `agent_runs`). Not a separate chat product — the tutor "Sudar" is different.
+- Users, /users (manage org members, roles; user detail /users/[id])
+- Governance, /governance (trust overview, subprocessors links, organisation protection toggles from Org settings)
+- Integrations, /integrations (API keys, embed Sudar, event ingestion)
+- AI & API Keys, /settings/keys (OpenRouter, Together, OpenAI, Anthropic, embeddings, TTS, media)
+- Org settings, /settings (organisation-wide configuration: performance_config, KPIs, terms, scale, ai_models, SSO)
+- Help & Guides, /help (Sudar Help Center: guides, search, and links to deeper docs)
+- **Sudar Agents**: **/agents** (Admin and Manager): observability table of recent bounded automation runs (path/cohort snapshots, learner week-plan style jobs recorded as `agent_runs`). Not a separate chat product, the tutor "Sudar" is different.
 
 ### Sudar Agents (product feature)
-- **What they are**: Short, **task-style** runs with a fixed tool set and an **audit row** in Postgres (`agent_runs`) — e.g. **cohort path health** (`path_health`) for admins, learner **week-plan** sketches on Learn when enabled. Same Intelligence gateway (`/api/agents/*`), different teams (admin vs learner). See repo **docs/AGENTS_PLATFORM.md** for architecture and LMS integrators.
+- **What they are**: Short, **task-style** runs with a fixed tool set and an **audit row** in Postgres (`agent_runs`), e.g. **cohort path health** (`path_health`) for admins, learner **week-plan** sketches on Learn when enabled. Same Intelligence gateway (`/api/agents/*`), different teams (admin vs learner). See repo **docs/AGENTS_PLATFORM.md** for architecture and LMS integrators.
 - **Studio page**: Sidebar → Organization → **Sudar Agents** → **/agents**. Use **Simple** vs **Advanced** on the page; **Documentation** links to AGENTS_PLATFORM.
-- **Run cohort pulse**: Button on /agents triggers an admin-team `path_health` run (path rollups + org risk snippets). **Requires Sudar Intelligence to be configured and reachable**: set `SUDAR_INTELLIGENCE_URL` or `BYTEOS_INTELLIGENCE_URL` on Studio. **Intelligence must have `SUPABASE_JWT_SECRET`** (same value as Supabase Project Settings → API → JWT Secret) in `sudar-intelligence/.env.local` or `.env` — those files load automatically when Intelligence starts. If you see `JWT validation not configured`, that variable is missing on Intelligence.
+- **Run cohort pulse**: Button on /agents triggers an admin-team `path_health` run (path rollups + org risk snippets). **Requires Sudar Intelligence to be configured and reachable**: set `SUDAR_INTELLIGENCE_URL` or `BYTEOS_INTELLIGENCE_URL` on Studio. **Intelligence must have `SUPABASE_JWT_SECRET`** (same value as Supabase Project Settings → API → JWT Secret) in `sudar-intelligence/.env.local` or `.env`, those files load automatically when Intelligence starts. If you see `JWT validation not configured`, that variable is missing on Intelligence.
 - **Org toggles**: Sidebar → Organization → **Org settings** → section **Sudar Agents** (`organisations.settings.sudar_agents`): master **enabled**, per-feature toggles (**cohort pulse**, learner week-plan / API, spacing nudge cron). If cohort pulse is off, the button is disabled and API returns 403.
 - **Empty table after a "success" message**: Confirm Postgres has the `agent_runs` table (Supabase migration); without it persistence may be missing. Otherwise: Intelligence unreachable, run failed upstream, sparse path/analytics data, or page not refreshed yet.
 
@@ -45,9 +45,9 @@
 - **Tutor from outside Learn**: Either call POST .../api/alp/tutor/query with API key and user_id (build your own chat UI), or use the embed iframe flow above.
 
 ### ALP endpoints summary (all on Learn app base URL)
-- POST /api/alp/events — event ingestion (batch); auth: x-alp-api-key or Bearer.
-- POST /api/alp/tutor/query — tutor Q&A; body: user_id, message, optional course_id, module_id, context_text.
-- POST /api/alp/next-action — next-best-action for dashboard; body: user_id.
+- POST /api/alp/events, event ingestion (batch); auth: x-alp-api-key or Bearer.
+- POST /api/alp/tutor/query, tutor Q&A; body: user_id, message, optional course_id, module_id, context_text.
+- POST /api/alp/next-action, next-best-action for dashboard; body: user_id.
 - Embed token: generate in Studio (Integrations → Embed Sudar); token in URL for iframe; expires 1 hour.
 
 ### Compliance and reminders
@@ -56,13 +56,13 @@
 
 ### Users
 - **List/manage**: Sidebar → Organization → Users (/users). Admin/Manager only.
-- **User detail**: /users/[id] — view profile, enrollments, performance records; assign path, add performance record, reset password.
+- **User detail**: /users/[id], view profile, enrollments, performance records; assign path, add performance record, reset password.
 - **Add user**: Users page: invite flow or bulk import (CSV: email, name, role). Provisioning API: POST to org provisioning endpoint with users array (see integration guide).
 
 ### Org settings
 - **Path**: Sidebar → Organization → Org settings (/settings). Contains: performance_config (institution_type, kpis, terms, scale), ai_models (default TTS, content generation), sso_config. Admin/Manager can view and update.
 
-### Quick reference — Where to do what
+### Quick reference, Where to do what
 | Goal | Where in Studio |
 |------|------------------|
 | Give external LMS access to ALP | Integrations → Create key, share base URL + key |
@@ -73,7 +73,7 @@
 | Assign a path to a learner | Users → click user → assign path (or path detail page) |
 | Training compliance reminders | Call POST .../api/cron/compliance-reminders with CRON_SECRET |
 | Sudar Agents (runs table, cohort pulse) | Sidebar → Sudar Agents **/agents**; configure Org settings → Sudar Agents |
-| Troubleshoot cohort pulse failing | Confirm `SUDAR_INTELLIGENCE_URL`; Intelligence healthy; Org settings enable Agents + cohort pulse — see docs/AGENTS_PLATFORM.md |
+| Troubleshoot cohort pulse failing | Confirm `SUDAR_INTELLIGENCE_URL`; Intelligence healthy; Org settings enable Agents + cohort pulse, see docs/AGENTS_PLATFORM.md |
 
 ### Integration blocks (Lego-style)
 - **SudarMemory**: Sends events → POST /api/alp/events.

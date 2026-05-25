@@ -10,8 +10,8 @@ export default function MonetizePage() {
     <ProseSection title="Make Money with Sudar">
       <p className="text-lg text-foreground">
         Sudar is open source (Apache-2.0). You can use it to build a business: host for others, customize for verticals, or
-        extend the platform. Below are high-level ways to monetize — no formal partner program is required; the
-        platform is yours to build on.
+        extend the platform. Below are practical ways to monetize. There is no formal partner program; the platform
+        is yours to build on.
       </p>
       <div className="mt-10 space-y-6">
         <div className="rounded-xl border border-card-border bg-card-bg shadow-card p-6">

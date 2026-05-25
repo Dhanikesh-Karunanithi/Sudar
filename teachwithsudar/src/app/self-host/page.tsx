@@ -22,28 +22,28 @@ export default function SelfHostPage() {
       <h2 className="mt-10 text-xl font-semibold text-foreground">Why $0 is possible</h2>
       <p className="mt-2 text-foreground">
         Sudar is open source. Vercel hosts the Next.js apps for free. Railway, Render, and Fly.io offer free tiers
-        for the Python Intelligence service. You bring your own Supabase project and AI API keys (usage-based).
+        for the Python Intelligence service. You bring your own Postgres-compatible database and AI API keys (usage-based).
         Open-weight models and Edge-TTS keep per-learner cost very low; under $0.02/month in our reference setup.
       </p>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Prerequisites</h2>
       <ul className="mt-4 list-disc space-y-1 pl-6 text-foreground">
         <li>GitHub repo: <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">{GITHUB_URL}</a></li>
         <li>Vercel account (sign in with GitHub)</li>
-        <li>Supabase project (same for both Studio and Learn)</li>
+        <li>Postgres-compatible database (shared by Studio and Learn, managed cloud or self-operated)</li>
         <li>Sudar Intelligence hosted somewhere (Railway / Render / Fly.io) for production</li>
       </ul>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Step 1: Deploy Sudar Studio</h2>
       <ol className="mt-4 list-decimal space-y-2 pl-6 text-foreground">
         <li>Go to <a href="https://vercel.com/new" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">vercel.com/new</a> and import the repo <code>Dhanikesh-Karunanithi/Sudar</code>.</li>
         <li>Set <strong>Root Directory</strong> to <code>sudar-studio</code> (monorepo).</li>
-        <li>Add environment variables from <code>sudar-studio/.env.example</code>: Supabase keys, <code>NEXTAUTH_URL</code>, <code>NEXTAUTH_SECRET</code>, <code>SUDAR_INTELLIGENCE_URL</code>, at least one AI key, <code>NEXT_PUBLIC_LEARN_APP_URL</code> (you’ll set this after deploying Learn).</li>
+        <li>Add environment variables from <code>sudar-studio/.env.example</code>: database and auth connection settings, <code>NEXTAUTH_URL</code>, <code>NEXTAUTH_SECRET</code>, <code>SUDAR_INTELLIGENCE_URL</code>, at least one AI key, <code>NEXT_PUBLIC_LEARN_APP_URL</code> (you’ll set this after deploying Learn).</li>
         <li>Deploy. Then set <code>NEXTAUTH_URL</code> to the actual Vercel URL and redeploy if needed.</li>
       </ol>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Step 2: Deploy Sudar Learn</h2>
       <ol className="mt-4 list-decimal space-y-2 pl-6 text-foreground">
         <li>Create another Vercel project from the same repo.</li>
         <li>Set <strong>Root Directory</strong> to <code>sudar-learn</code>.</li>
-        <li>Add env vars from <code>sudar-learn/.env.example</code>: Supabase, <code>NEXTAUTH_URL</code> (your Learn URL), <code>NEXTAUTH_SECRET</code>, <code>SUDAR_INTELLIGENCE_URL</code>, <code>NEXT_PUBLIC_APP_URL</code> (same as NEXTAUTH_URL).</li>
+        <li>Add env vars from <code>sudar-learn/.env.example</code>: database connection settings, <code>NEXTAUTH_URL</code> (your Learn URL), <code>NEXTAUTH_SECRET</code>, <code>SUDAR_INTELLIGENCE_URL</code>, <code>NEXT_PUBLIC_APP_URL</code> (same as NEXTAUTH_URL).</li>
         <li>Deploy.</li>
       </ol>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Step 3: Deploy Sudar Intelligence</h2>
@@ -54,7 +54,7 @@ export default function SelfHostPage() {
       <ol className="mt-4 list-decimal space-y-2 pl-6 text-foreground">
         <li>Sign up at <a href="https://railway.app" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">railway.app</a>. New Project → Deploy from GitHub repo, root <code>sudar-intelligence</code>.</li>
         <li>Build: <code>pip install -r requirements.txt</code>. Start: <code>uvicorn src.api.main:app --host 0.0.0.0 --port $PORT</code>.</li>
-        <li>Set variables: <code>SUPABASE_URL</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code>, at least one of <code>TOGETHER_API_KEY</code> / <code>OPENAI_API_KEY</code> / <code>ANTHROPIC_API_KEY</code>, <code>CORS_ORIGINS</code> (your Studio and Learn URLs), <code>ENVIRONMENT=production</code>.</li>
+        <li>Set variables: Postgres connection settings (see <code>.env.example</code>), at least one of <code>TOGETHER_API_KEY</code> / <code>OPENAI_API_KEY</code> / <code>ANTHROPIC_API_KEY</code>, <code>CORS_ORIGINS</code> (your Studio and Learn URLs), <code>ENVIRONMENT=production</code>.</li>
         <li>Generate a domain in Railway. Copy the URL (e.g. <code>https://sudar-intelligence.up.railway.app</code>).</li>
         <li>In both Vercel projects, set <code>SUDAR_INTELLIGENCE_URL</code> to that URL and redeploy.</li>
       </ol>

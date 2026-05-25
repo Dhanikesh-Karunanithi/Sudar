@@ -17,12 +17,13 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Teach with Sudar — The Operating System for Learning", template: "%s | Teach with Sudar" },
+  metadataBase: new URL("https://teachwithsudar.com"),
+  title: { default: "Teach with Sudar | The Operating System for Learning", template: "%s | Teach with Sudar" },
   description:
-    "Sudar is the AI-native learning platform. Build courses in Studio, deliver in Learn, and power both with adaptive intelligence. Self-host at $0 or plug into your LMS.",
+    "Sudar combines Studio (authoring), Learn (delivery), and Intelligence (adaptive tutoring). Self-host on free tiers or extend your LMS with ALP.",
   openGraph: {
-    title: "Teach with Sudar — The Operating System for Learning",
-    description: "Build courses in minutes. Deliver adaptively. Every learner gets a tutor that remembers.",
+    title: "Teach with Sudar | The Operating System for Learning",
+    description: "Open-source courses, multimodal delivery, and a tutor that keeps context across sessions.",
   },
 };
 

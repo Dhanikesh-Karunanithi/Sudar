@@ -6,7 +6,7 @@
 
 **Admin UI**: In **Sudar Studio**, open **Integrations** (Organization section) to see the Learn base URL for ALP, API key setup, and embed pointers.
 
-**See also**: [ECOSYSTEM.md](ECOSYSTEM.md) §5 (schema) and §6 (Learn → Intelligence contracts); `sudar-intelligence/` for AI routes Learn calls.
+**See also**: [ECOSYSTEM.md](ECOSYSTEM.md) §5 (schema) and §6 (Learn → Intelligence contracts); `sudar-intelligence/` for AI routes Learn calls. For **MCP (Model Context Protocol)** clients (Cursor, Claude, partner agents), see [MCP_SERVERS.md](MCP_SERVERS.md) — same ALP endpoints via `@sudar/mcp-server`.
 
 ---
 

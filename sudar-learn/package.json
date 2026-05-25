@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node ../scripts/dev-with-sudarvid.mjs learn",
     "dev:next-only": "next dev -p 3001",
-    "build": "next build",
+    "build": "node ../scripts/sync-help-center-ai.mjs && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -27,7 +27,7 @@
     "fuse.js": "^7.3.0",
     "jose": "^5.10.0",
     "lucide-react": "^0.575.0",
-    "next": "^15.1.0",
+    "next": "^15.5.18",
     "next-intl": "^3.26.5",
     "prisma": "^6.19.2",
     "react": "^18",
@@ -47,8 +47,8 @@
     "@types/react-dom": "^18",
     "@types/web-push": "^3.6.4",
     "eslint": "^8",
-    "eslint-config-next": "^15.1.0",
-    "postcss": "^8",
+    "eslint-config-next": "^15.5.18",
+    "postcss": "^8.5.10",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
     "vitest": "^3.2.4"

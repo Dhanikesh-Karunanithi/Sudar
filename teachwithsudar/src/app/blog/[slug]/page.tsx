@@ -1,6 +1,8 @@
 import { ProseSection } from "@/components/ProseSection";
+import { BlogArticle } from "@/components/BlogArticle";
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPost, getAllSlugs } from "@/data/blogPosts";
 
@@ -8,75 +10,95 @@ export async function generateStaticParams() {
   return getAllSlugs().map((slug) => ({ slug }));
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const post = getPost(slug);
+  if (!post) return { title: "Blog" };
+
+  return {
+    title: post.title,
+    description: post.excerpt,
+    keywords: post.tags,
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      type: "article",
+      publishedTime: post.date,
+      tags: post.tags,
+      ...(post.heroImage ? { images: [{ url: post.heroImage.src, alt: post.heroImage.alt }] } : {}),
+    },
+  };
+}
+
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const post = getPost(slug);
   if (!post) notFound();
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt,
+    datePublished: post.date,
+    keywords: post.tags.join(", "),
+    author: {
+      "@type": "Organization",
+      name: "Sudar",
+      url: "https://github.com/Dhanikesh-Karunanithi/Sudar",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Teach with Sudar",
+    },
+    ...(post.heroImage ? { image: post.heroImage.src } : {}),
+  };
+
   return (
     <ProseSection title={post.title}>
-      <p className="text-slate-400">{post.date}</p>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {post.sections.map((section, i) => {
-        if (section.type === "paragraph") {
-          return (
-            <div key={i} className="mt-8">
-              {section.heading && (
-                <h2 className="text-xl font-semibold text-foreground mt-10 mb-2">{section.heading}</h2>
-              )}
-              <p className="text-foreground leading-relaxed">{section.body}</p>
-              {section.cta && (
-                <a
-                  href={section.cta.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 inline-block text-accent hover:underline font-medium"
-                >
-                  {section.cta.label} →
-                </a>
-              )}
-            </div>
-          );
-        }
-        if (section.type === "steps") {
-          return (
-            <div key={i} className="mt-8">
-              <ol className="list-decimal list-inside space-y-6 pl-0 mt-6">
-                {section.steps.map((step, j) => (
-                  <li key={j} className="text-foreground">
-                    <span className="font-semibold">{step.title}.</span> {step.body}
-                  </li>
-                ))}
-              </ol>
-              {section.cta && (
-                <a
-                  href={section.cta.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-6 inline-block rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
-                >
-                  {section.cta.label} →
-                </a>
-              )}
-            </div>
-          );
-        }
-        return null;
-      })}
+      <div className="not-prose">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-400">
+          <time dateTime={post.date}>{post.date}</time>
+          <span aria-hidden="true">·</span>
+          <span>{post.readingTime}</span>
+        </div>
 
-      {post.imageUrls && post.imageUrls.length > 0 && (
-        <div className="mt-10 space-y-6">
-          {post.imageUrls.map((src, i) => (
-            <div key={i} className="relative w-full aspect-video rounded-xl overflow-hidden bg-card-bg">
-              <Image src={src} alt="" fill className="object-cover" />
-            </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {post.tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full border border-card-border bg-card-bg px-3 py-1 text-xs font-medium text-slate-300"
+            >
+              {tag}
+            </span>
           ))}
         </div>
-      )}
 
-      <Link href="/blog" className="mt-10 inline-block text-accent hover:underline">
-        ← Back to Blog
-      </Link>
+        {post.heroImage && (
+          <figure className="mt-8">
+            <div className="relative isolate aspect-[16/9] w-full overflow-hidden rounded-xl bg-card-bg shadow-card">
+              <Image
+                src={post.heroImage.src}
+                alt={post.heroImage.alt}
+                fill
+                priority
+                className="object-cover"
+                sizes="(max-width: 896px) 100vw, 896px"
+              />
+            </div>
+          </figure>
+        )}
+
+        <p className="mt-8 text-lg leading-8 text-foreground">{post.excerpt}</p>
+
+        <BlogArticle sections={post.sections} />
+
+        <Link href="/blog" className="mt-12 inline-block text-accent hover:underline">
+          ← Back to Blog
+        </Link>
+      </div>
     </ProseSection>
   );
 }

@@ -24,11 +24,25 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ show: false, reason: 'disabled' })
   }
 
+  const { data: enrollment } = await admin
+    .from('enrollments')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('course_id', courseId)
+    .maybeSingle()
+  if (!enrollment) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const { data: course } = await admin
     .from('courses')
     .select('id, title, modules(id, title, order_index)')
     .eq('id', courseId)
-    .single()
+    .eq('status', 'published')
+    .maybeSingle()
+  if (!course) {
+    return NextResponse.json({ error: 'Course not available.' }, { status: 404 })
+  }
 
   const modules = (course?.modules as Array<{ id: string; title: string; order_index: number }>) ?? []
   const ordered = [...modules].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))

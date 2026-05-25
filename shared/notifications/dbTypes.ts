@@ -67,6 +67,12 @@ export type NotificationDatabase = {
           last_monthly_bonus_at: string | null
           never_prompt_push: boolean | null
           daily_digest_email: boolean | null
+          sound_enabled: boolean | null
+          sound_volume: number | null
+          sound_task_complete: boolean | null
+          sound_sudar_reply: boolean | null
+          sound_notifications: boolean | null
+          sound_celebration: boolean | null
         }
         Insert: {
           user_id: string
@@ -79,6 +85,12 @@ export type NotificationDatabase = {
           last_monthly_bonus_at?: string | null
           never_prompt_push?: boolean | null
           daily_digest_email?: boolean | null
+          sound_enabled?: boolean | null
+          sound_volume?: number | null
+          sound_task_complete?: boolean | null
+          sound_sudar_reply?: boolean | null
+          sound_notifications?: boolean | null
+          sound_celebration?: boolean | null
         }
         Update: {
           timezone?: string | null
@@ -90,6 +102,12 @@ export type NotificationDatabase = {
           last_monthly_bonus_at?: string | null
           never_prompt_push?: boolean | null
           daily_digest_email?: boolean | null
+          sound_enabled?: boolean | null
+          sound_volume?: number | null
+          sound_task_complete?: boolean | null
+          sound_sudar_reply?: boolean | null
+          sound_notifications?: boolean | null
+          sound_celebration?: boolean | null
         }
         Relationships: []
       }

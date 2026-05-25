@@ -20,6 +20,7 @@ import { ProactiveSudarChoiceChips } from '@/components/tutor/ProactiveSudarChoi
 import { PROACTIVE_FOLLOW_UP_EVENT, type ProactiveFollowUpDetail } from '@/lib/tutor/proactiveEvents'
 import type { ProactivePromptChoice } from '@/types/tutor'
 import { validateTutorQueryResponsePayload } from '@/lib/tutor/responseContract'
+import { useNotificationSound } from '@/components/features/notifications/NotificationSoundProvider'
 import { CHAT_OPEN_PET_EVENT } from '@/lib/mascot/petSpriteManifest'
 import { SUDAR_PERSONA_VOICE } from '@/lib/mascot/sudarPersonaVoice'
 import { SudarPetSprite } from '@/components/mascot/SudarPetSprite'
@@ -57,6 +58,7 @@ interface FloatingSudarChatProps {
 }
 
 export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
+  const { playChime } = useNotificationSound()
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -141,6 +143,7 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
       detail: { trigger: 'chat_query' },
     })
 
+    let tutorSucceeded = false
     try {
       const res = await fetch('/api/tutor/query', {
         method: 'POST',
@@ -180,6 +183,7 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
         },
       ]
       setMessages(mergedMessages)
+      tutorSucceeded = true
       setLastRouting((data.routing as RoutingMeta | undefined) ?? null)
       if (isLocalTutorCacheEnabled()) {
         setSyncStatus('reconnecting')
@@ -199,6 +203,7 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
     } finally {
       setThinking(false)
       setPastedText('')
+      if (tutorSucceeded) playChime('sudar_reply')
     }
   }
 

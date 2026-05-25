@@ -5,6 +5,7 @@ import type { TutorAction, TutorBlock } from '@/types/tutor'
 import { validateTutorQueryResponsePayload } from '@/lib/tutor/responseContract'
 import { GenerativeBlockRenderer } from '@/components/tutor/GenerativeBlockRenderer'
 import { ChatMarkdown } from '@/components/tutor/ChatMarkdown'
+import { useNotificationSoundOptional } from '@/components/features/notifications/NotificationSoundProvider'
 
 interface AlpEmbedChatProps {
   token: string
@@ -14,6 +15,7 @@ interface AlpEmbedChatProps {
 }
 
 export function AlpEmbedChat({ token, userId, courseId, moduleId }: AlpEmbedChatProps) {
+  const sound = useNotificationSoundOptional()
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; actions?: TutorAction[]; blocks?: TutorBlock[] }>>([])
   const [loading, setLoading] = useState(false)
@@ -30,6 +32,7 @@ export function AlpEmbedChat({ token, userId, courseId, moduleId }: AlpEmbedChat
     setMessages((m) => [...m, { role: 'user', content: text }])
     setLoading(true)
     setError(null)
+    let tutorSucceeded = false
     try {
       const res = await fetch('/api/alp/tutor/query', {
         method: 'POST',
@@ -57,11 +60,13 @@ export function AlpEmbedChat({ token, userId, courseId, moduleId }: AlpEmbedChat
           blocks: data.blocks,
         },
       ])
+      tutorSucceeded = true
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
       setMessages((m) => [...m, { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' }])
     } finally {
       setLoading(false)
+      if (tutorSucceeded) sound?.playChime('sudar_reply')
     }
   }
 

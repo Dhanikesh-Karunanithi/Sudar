@@ -13,9 +13,9 @@ export default function AccessibilityPage() {
       </p>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Multimodal delivery</h2>
       <p className="mt-2 text-slate-300">
-        Content is available in multiple modalities — text (Read), Listen (audio TTS), Video, Flashcards,
-        MindMap — so learners can choose the format that works for them. Dual coding and multimodal presentation
-        support different learning preferences and assistive needs.
+        Content is available as text (Read), Listen (audio TTS), Video, Flashcards, and MindMap so learners can pick
+        the format that works for them. Multimodal presentation supports different preferences and some assistive
+        needs.
       </p>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Structure and semantics</h2>
       <p className="mt-2 text-slate-300">
