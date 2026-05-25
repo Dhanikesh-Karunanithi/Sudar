@@ -9,7 +9,7 @@ type TextOverlayProps = {
   body?: string;
 };
 
-/** Bottom-center captions — gradient depth only, no box container */
+/** Bottom-center captions, gradient depth only, no box container */
 export function TextOverlay({ eyebrow, headline, body }: TextOverlayProps) {
   const wordCount = headline.split(/\s+/).filter(Boolean).length;
   const bodyDelay = 0.28 + wordCount * 0.055 + 0.18;

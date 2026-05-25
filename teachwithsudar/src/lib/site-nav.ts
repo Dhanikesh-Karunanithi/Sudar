@@ -19,6 +19,7 @@ export const navSections = {
   ] as NavLink[],
   product: [
     { href: "/features", label: "Features" },
+    { href: "/guides", label: "Guides" },
     { href: "/modalities", label: "Modalities" },
     { href: "/alp", label: "ALP & Plugins" },
   ] as NavLink[],
@@ -34,8 +35,10 @@ export const navSections = {
     { href: "/best-practices", label: "Best Practices" },
   ] as NavLink[],
   help: [
+    { href: "/guides", label: "Guides & Walkthroughs" },
     { href: "/help/studio", label: "Studio Help" },
     { href: "/help/learn", label: "Learn Help" },
+    { href: "/best-practices", label: "Best Practices" },
     { href: "/faq", label: "FAQ" },
   ] as NavLink[],
   legal: [

@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "sudar": {
+      "command": "node",
+      "args": ["ABSOLUTE_PATH_TO_REPO/packages/sudar-mcp/dist/index.js"],
+      "env": {
+        "SUDAR_LEARN_URL": "http://localhost:3001",
+        "SUDAR_ALP_API_KEY": "alp_your_integration_key_from_studio",
+        "SUDAR_TOOLSET": "integrator"
+      }
+    },
+    "sudar-full": {
+      "command": "node",
+      "args": ["ABSOLUTE_PATH_TO_REPO/packages/sudar-mcp/dist/index.js"],
+      "env": {
+        "SUDAR_LEARN_URL": "http://localhost:3001",
+        "SUDAR_STUDIO_URL": "http://localhost:3000",
+        "SUDAR_INTELLIGENCE_URL": "http://localhost:8001",
+        "SUDAR_ALP_API_KEY": "alp_your_integration_key",
+        "SUDAR_ACCESS_TOKEN": "supabase_jwt_access_token",
+        "SUDAR_TOOLSET": "all",
+        "SUDAR_MCP_AUDIT": "true"
+      }
+    }
+  }
+}

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node ../scripts/dev-with-sudarvid.mjs learn",
     "dev:next-only": "next dev -p 3001",
-    "build": "next build",
+    "build": "node ../scripts/sync-help-center-ai.mjs && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",

@@ -1,49 +1,61 @@
-import { ProseSection } from "@/components/ProseSection";
 import Link from "next/link";
+import { ProseSection } from "@/components/ProseSection";
+import { bestPracticeGroups } from "@/data/bestPractices";
 
 export const metadata = {
   title: "Best Practices & Tips",
+  description: "Operational tips for Sudar Studio, Learn, paths, ALP, MCP, and production deploys.",
 };
 
 export default function BestPracticesPage() {
   return (
-    <ProseSection title="Best Practices & Tips">
-      <p className="text-lg text-foreground">
-        Tips for getting the most out of Sudar Studio and Learn — course design, path setup, ALP integration, and
-        compliance.
+    <ProseSection title="Best Practices & Tips" wide>
+      <p className="text-lg text-foreground max-w-3xl">
+        Practical guidance for teams running Sudar in production. Pair these notes with{" "}
+        <Link href="/guides" className="text-primary hover:underline">
+          animated walkthroughs
+        </Link>{" "}
+        and the{" "}
+        <Link href="/help/studio" className="text-primary hover:underline">
+          help center
+        </Link>
+        .
       </p>
-      <h2 className="mt-10 text-xl font-semibold text-foreground">Course design</h2>
-      <ul className="mt-4 list-disc space-y-2 pl-6 text-foreground">
-        <li>Use a clear document or URL as source; the AI generates better structure when the input is well-organized.</li>
-        <li>Review and edit generated modules before publishing; add media (images, video) from the media search to reinforce key points.</li>
-        <li>Use quizzes to reinforce learning and feed struggle detection into the learner model.</li>
-      </ul>
-      <h2 className="mt-10 text-xl font-semibold text-foreground">Learning paths</h2>
-      <ul className="mt-4 list-disc space-y-2 pl-6 text-foreground">
-        <li>Set mandatory vs. optional courses; Sudar can reorder optional courses adaptively per learner.</li>
-        <li>Use due dates for compliance paths; enable compliance email reminders (cron) so at-risk learners get a nudge.</li>
-      </ul>
-      <h2 className="mt-10 text-xl font-semibold text-foreground">ALP integration</h2>
-      <ul className="mt-4 list-disc space-y-2 pl-6 text-foreground">
-        <li>Create an API key in Studio → Integrations; use it for all ALP endpoints (events, tutor, next-action).</li>
-        <li>Map LMS user IDs to Sudar <code>profiles.id</code> consistently (e.g. LTI <code>user_id</code> or SSO subject).</li>
-        <li>Send events in batches at end of session or on a schedule to avoid overwhelming the API.</li>
-      </ul>
-      <h2 className="mt-10 text-xl font-semibold text-foreground">RAG & tutor quality</h2>
-      <ul className="mt-4 list-disc space-y-2 pl-6 text-foreground">
-        <li>Publish courses so content is chunked and embedded; the tutor RAG uses <code>content_chunks</code> in Supabase.</li>
-        <li>Learners can use “Explain this” on selected text for contextual help; encourage them to ask follow-ups so the tutor memory builds.</li>
-      </ul>
-      <div className="mt-10 flex flex-wrap gap-4">
-        <Link href="/help/studio" className="text-accent hover:underline">
-          Studio Help →
-        </Link>
-        <Link href="/help/learn" className="text-accent hover:underline">
-          Learn Help →
-        </Link>
-        <Link href="/alp" className="text-accent hover:underline">
-          ALP & Plugins →
-        </Link>
+
+      <div className="mt-12 space-y-14">
+        {bestPracticeGroups.map((group) => (
+          <section key={group.title}>
+            <h2 className="text-2xl font-semibold text-foreground">{group.title}</h2>
+            <div className="mt-6 grid sm:grid-cols-2 gap-6">
+              {group.practices.map((p) => (
+                <article
+                  key={p.id}
+                  className="rounded-xl border border-card-border bg-card-bg p-6 shadow-card"
+                >
+                  <h3 className="font-semibold text-foreground">{p.title}</h3>
+                  <p className="mt-2 text-sm text-foreground-muted">{p.summary}</p>
+                  <ul className="mt-4 space-y-2 list-disc pl-5 text-sm text-foreground-muted">
+                    {p.bullets.map((b) => (
+                      <li key={b}>{b}</li>
+                    ))}
+                  </ul>
+                  <div className="mt-4 flex flex-wrap gap-4 text-sm">
+                    {p.guideSlug ? (
+                      <Link href={`/guides/${p.guideSlug}`} className="text-primary hover:underline font-medium">
+                        Walkthrough →
+                      </Link>
+                    ) : null}
+                    {p.helpSlug ? (
+                      <Link href={`/help/article/${p.helpSlug}`} className="text-primary hover:underline font-medium">
+                        Help article →
+                      </Link>
+                    ) : null}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
     </ProseSection>
   );

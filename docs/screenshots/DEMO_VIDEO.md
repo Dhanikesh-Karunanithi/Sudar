@@ -2,6 +2,8 @@
 
 Record a short demo to show that Sudar’s tutor **remembers** the learner across sessions. Use this for pitches, README, or social.
 
+**Alternative:** Screen-record the interactive **ecosystem wireframe demo** (`sudar-ecosystem-demo`, `npm run demo:ecosystem`) on autoplay for a full-platform pitch without live env setup. See [docs/demo.md](../demo.md).
+
 ## Goal
 
 Show in 1–2 minutes:

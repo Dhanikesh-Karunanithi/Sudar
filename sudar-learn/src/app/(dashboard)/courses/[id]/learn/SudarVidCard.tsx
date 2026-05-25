@@ -5,6 +5,7 @@ import { Video, RotateCcw, Sparkles, AlertCircle, Maximize2, Minimize2 } from 'l
 import { cn } from '@/lib/utils'
 import { SudarContentCreatingMark, SudarLoadingFrost } from '@/components/branding/SudarPremiumLoader'
 import { postLearningEvent } from '@/lib/learn/postLearningEvent'
+import { useNotificationSound } from '@/components/features/notifications/NotificationSoundProvider'
 import type { SudarVidVideoPreset } from '@/lib/sudarvidPresets'
 
 type Phase = 'idle' | 'checking' | 'generating' | 'done' | 'error'
@@ -80,6 +81,8 @@ function parseEventData(raw: string): Record<string, unknown> | null {
 }
 
 export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: Props) {
+  const { playChime } = useNotificationSound()
+  const prevPhaseRef = useRef<Phase>('idle')
   const [phase, setPhase] = useState<Phase>('idle')
   const [jobId, setJobId] = useState<string | null>(null)
   const [progressStep, setProgressStep] = useState('Starting…')
@@ -103,6 +106,18 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
   function presetToEngineMode(preset: SudarVidVideoPreset): 'classic' | 'premium' {
     return preset === 'rich' || preset === 'rich_mp4' ? 'premium' : 'classic'
   }
+
+  useEffect(() => {
+    const prev = prevPhaseRef.current
+    if (
+      phase === 'done' &&
+      prev !== 'done' &&
+      (prev === 'generating' || prev === 'checking')
+    ) {
+      playChime('task_complete')
+    }
+    prevPhaseRef.current = phase
+  }, [phase, playChime])
 
   // On mount, check localStorage for a previously generated job for this module
   useEffect(() => {

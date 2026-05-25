@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Sudar — Product Launch",
+  title: "Sudar: Product Launch",
   description:
     "Cinematic overview of Sudar: the AI-native Learning Operating System. Learns with you, for you.",
 };

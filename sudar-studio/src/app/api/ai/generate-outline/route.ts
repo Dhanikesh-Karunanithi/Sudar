@@ -1,13 +1,14 @@
-import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { getRequestSession } from '@/lib/auth/requestSession'
 import { getOrgIdAndRole } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await getRequestSession(request)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { user } = session
 
   const { orgId } = await getOrgIdAndRole(user.id)
   const admin = createServiceRoleSupabaseClient()

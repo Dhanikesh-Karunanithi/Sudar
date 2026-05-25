@@ -4,6 +4,8 @@ Share this file with reviewers alongside the repo (or link to GitHub paths below
 
 **Run locally:** `npm run demo:ecosystem` → http://localhost:3003 (cinematic) · http://localhost:3003/interactive (tour)
 
+**Review applied (May 2026):** Cut `act6-1`; copy pass on overlays; `act8-0` integrations hook; upgraded ALP flow, analytics KPIs, ecosystem feedback loop; dashboard source chips. Prison Mike image unchanged.
+
 **Key paths:**
 - `sudar-ecosystem-demo/src/data/launchDemo.ts` — cinematic script (~5.4 min, 40 frames)
 - `sudar-ecosystem-demo/src/data/ecosystemDemo.ts` — interactive chapters
@@ -54,7 +56,7 @@ Score 1–5 on: narrative arc · value prop · instructional design credibility 
 | act3-2 | 8.5s | `studio-dashboard` · Start from anywhere (document, idea, business, cohort, learner) |
 | act3-3 | 9.2s | `studio-create-sources` · **An idea is enough** · Michael Scott / office management |
 | act3-4 | 8.2s | `studio-create-sources` · **Ground it in the business** · escalations Q3 |
-| act3-5 | 8.8s | `studio-id-blueprint` · **Built on learning science** · Bloom · archetypes · objectives |
+| act3-5 | 8.8s | `studio-id-blueprint` · **Bloom's taxonomy. Not prompting tricks.** |
 | act3-block-text | 8.5s | `studio-live-editor` · block: text · She builds the module live |
 | act3-block-video | 7.8s | + video · No production crew · Somehow I manage |
 | act3-block-audio | 7.8s | + audio · Audio for commuters |
@@ -67,25 +69,25 @@ Score 1–5 on: narrative arc · value prop · instructional design credibility 
 ### Act 4 — Personalization
 | act4-0 | 6.0s | One course. Many learners. |
 | act4-cohort | 8.5s | Cohort targeting · new hire managers |
-| act4-individual | 8.8s | Individual context · background, goals, learn style |
-| act4-same | 6.8s | Same course. Different pace. Different voice. |
+| act4-individual | 8.8s | Learners share their context · Memory tab |
+| act4-same | 5.0s | Same course. Different pace. Different voice. |
 
 ### Act 5 — Marcus learns
 | act5-1 | 7.0s | Meet Marcus · Lagos · phone |
 | act5-2 | 8.2s | `learn-dashboard` · Somehow I manage waiting |
 | act5-watch-start | 8.2s | Watch · 35% · learns by watching first |
-| act5-stuck | 8.8s | Paused 62% · stuck on delegation |
+| act5-stuck | 8.8s | Paused 62% · Delegation. He's watched it twice. |
 | act5-interact | 8.2s | Accordion + flipcards |
-| act5-tutor-proactive | 9.2s | Contextual Sudar · delegation on screen |
+| act5-tutor-proactive | 11.0s | Contextual Sudar · Screen-aware. Session-aware. Longitudinal. |
 | act5-tutor-reply | 9.5s | Marcus types · Dunder example please |
-| act5-memory | 8.5s | Uncertainty tags · knew before he asked |
+| act5-memory | 8.5s | Sudar noticed before Marcus asked |
 
-### Act 6–9
-| act6-1 | 8.2s | Digital Learner Twin · Sudar tracks learning |
-| act7-1 | 8.2s | Marcus certified · Sarah sees real time |
+### Act 7–9
+| act7-1 | 8.2s | Marcus certified · analytics KPIs · Live badge |
 | act7-2 | 8.2s | Fifteen minutes. Under fifty cents. |
-| act8-1–3 | 8.2s each | ALP · Moodle · MCP ChatGPT/Cursor |
-| act9-1–2 | 5.5s + 8.2s | Sudar · Learns with you, for you |
+| act8-0 | 5.5s | Sudar fits your world. |
+| act8-1–3 | 8.2s each | ALP events + Twin affinity · MCP |
+| act9-1–2 | 5.5s + 8.2s | Sudar · Learns with you, for you · teachwithsudar.com |
 
 **Tutor line:** *You paused on delegation in this scene — want a Dunder-style example, or the formal definition?*
 

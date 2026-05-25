@@ -1,5 +1,5 @@
 /**
- * Web Audio cues for launch demo — soft cinematic transitions (no harsh noise whoosh).
+ * Web Audio cues for launch demo, soft cinematic transitions (no harsh noise whoosh).
  */
 
 export type AudioCue = "ambient" | "whoosh" | "click" | "success" | "title";
@@ -28,7 +28,7 @@ function envGain(
   return g;
 }
 
-/** Soft tonal sweep — closer to premium SaaS UI transitions than noise whoosh */
+/** Soft tonal sweep, closer to premium SaaS UI transitions than noise whoosh */
 function playWhoosh(context: AudioContext, volume: number) {
   const t = context.currentTime;
   const dur = 0.42;

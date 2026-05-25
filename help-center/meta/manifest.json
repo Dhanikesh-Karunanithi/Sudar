@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-05-02T18:53:09.731Z",
+  "generatedAt": "2026-05-25T21:13:19.116Z",
   "articles": [
     {
       "slug": "admins/integrations-overview",
       "title": "Integrations and ALP (overview)",
-      "description": "High-level map of Authenticated Learning Plane patterns—without duplicating secrets.",
+      "description": "High-level map of Authenticated Learning Plane patterns, without duplicating secrets.",
       "audience": "admin",
       "category": "admins",
       "order": 2,
@@ -13,7 +13,7 @@
     {
       "slug": "admins/provisioning-checklist",
       "title": "Enterprise provisioning checklist",
-      "description": "SSO, roster sync, LMS, AI keys, and telemetry—anchors for integrations deep links.",
+      "description": "SSO, roster sync, LMS, AI keys, and telemetry, anchors for integrations deep links.",
       "audience": "admin",
       "category": "admins",
       "order": 3,
@@ -40,7 +40,7 @@
     {
       "slug": "ai-literacy/connecting-a-private-server",
       "title": "Connecting a private server",
-      "description": "Mental model—install an app, pull a model, paste an address.",
+      "description": "Mental model, install an app, pull a model, paste an address.",
       "audience": "admin",
       "category": "ai-literacy",
       "order": 4,
@@ -76,7 +76,7 @@
     {
       "slug": "ai-literacy/sudar-agents-for-admins",
       "title": "Sudar Agents (for admins)",
-      "description": "Bounded automation with an audit trail—not “extra chatbots”.",
+      "description": "Bounded automation with an audit trail, not “extra chatbots”.",
       "audience": "admin",
       "category": "ai-literacy",
       "order": 6,
@@ -103,7 +103,7 @@
     {
       "slug": "learners/dashboard-and-navigation",
       "title": "Dashboard and navigation",
-      "description": "How the learner home screen is organised — courses, paths, streak, and Sudar prompts.",
+      "description": "How the learner home screen is organised, courses, paths, streak, and Sudar prompts.",
       "audience": "learner",
       "category": "learners",
       "order": 1,
@@ -148,7 +148,7 @@
     {
       "slug": "start-here/getting-started",
       "title": "Getting started with Sudar",
-      "description": "First-time setup for organisations using Studio and Learn — high level order of operations before env details.",
+      "description": "First-time setup for organisations using Studio and Learn, high level order of operations before env details.",
       "audience": "admin",
       "category": "start-here",
       "order": 1,
@@ -157,7 +157,7 @@
     {
       "slug": "success/pilot-checklist",
       "title": "Pilot success checklist",
-      "description": "Lightweight CS framing before wide rollout—content, metrics, champions, and feedback loops.",
+      "description": "Lightweight CS framing before wide rollout, content, metrics, champions, and feedback loops.",
       "audience": "admin",
       "category": "success",
       "order": 1,
@@ -166,7 +166,7 @@
     {
       "slug": "trust/overview",
       "title": "Trust, privacy, and governance (short briefing)",
-      "description": "Where to audit Sudar responsibly—organisation toggles vs open-source posture pack.",
+      "description": "Where to audit Sudar responsibly, organisation toggles vs open-source posture pack.",
       "audience": "both",
       "category": "trust",
       "order": 1,

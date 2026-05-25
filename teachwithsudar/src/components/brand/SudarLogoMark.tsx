@@ -1,5 +1,5 @@
 /**
- * Sudar mark — geometry MUST match `assets/sudar logo/Sudar_Logo.svg` (path `d` and transforms).
+ * Sudar mark: geometry MUST match `assets/sudar logo/Sudar_Logo.svg` (path `d` and transforms).
  * Do not approximate with rects/rx; that causes seams and a broken central star.
  */
 
@@ -39,10 +39,10 @@ export function SudarLogoMark({
       className={className}
     >
       <metadata>
-        {`SUDAR_LOGO_GEOMETRY_LOCK: Do not edit path d attributes or transform values—they are
+        {`SUDAR_LOGO_GEOMETRY_LOCK: Do not edit path d attributes or transform values; they are
 paired with fill-rule evenodd and must stay in sync with assets/sudar logo/Sudar_Logo.svg.
 The mark is two rounded capsules offset vertically; the centre is a four-point concave star
-(white path on-light, dark fill on-dark)—never replace with separate rects or a loose overlay
+(white path on-light, dark fill on-dark). Never replace with separate rects or a loose overlay
 or you will get hairline cracks and a wrong star. To recolour, only change fill on the three
 groups; do not change geometry.`}
       </metadata>

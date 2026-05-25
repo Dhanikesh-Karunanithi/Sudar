@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Bell } from 'lucide-react'
+import { Bell, Volume2 } from 'lucide-react'
 import { registerServiceWorkerAndSubscribe, unsubscribeWebPush } from '@/lib/notifications/webPush'
+import { useNotificationSound } from '@/components/features/notifications/NotificationSoundProvider'
+import type { SoundEventGroup } from '../../../../../../shared/notifications/sound'
 
 type FrequencyMode = 'minimal' | 'balanced' | 'high'
 
@@ -18,7 +20,15 @@ async function requestForegroundNotificationPermission(): Promise<NotificationPe
   return Notification.permission
 }
 
+const SOUND_GROUPS: Array<{ id: SoundEventGroup; label: string; hint: string }> = [
+  { id: 'task_complete', label: 'Task complete', hint: 'When AI finishes generating content (video, cards, audio, etc.)' },
+  { id: 'sudar_reply', label: 'Sudar reply', hint: 'When Sudar finishes answering in chat' },
+  { id: 'notification', label: 'Notifications', hint: 'In-app alerts from missions, assignments, and updates' },
+  { id: 'celebration', label: 'Celebrations', hint: 'Level-ups, achievements, and coin moments' },
+]
+
 export default function NotificationSettingsPage() {
+  const { previewChime, setPrefsLocal } = useNotificationSound()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [categories, setCategories] = useState<string[]>([])
@@ -31,6 +41,12 @@ export default function NotificationSettingsPage() {
   const [activity, setActivity] = useState({ sent: 0, opened: 0, suppressed: 0 })
   const [coinPreview, setCoinPreview] = useState({ balance: 0, opt_in_bonus_awarded_at: null as string | null })
   const [webPushEnabled, setWebPushEnabled] = useState(false)
+  const [soundEnabled, setSoundEnabled] = useState(false)
+  const [soundVolume, setSoundVolume] = useState(50)
+  const [soundTaskComplete, setSoundTaskComplete] = useState(true)
+  const [soundSudarReply, setSoundSudarReply] = useState(true)
+  const [soundNotifications, setSoundNotifications] = useState(true)
+  const [soundCelebration, setSoundCelebration] = useState(true)
 
   useEffect(() => {
     async function load() {
@@ -47,6 +63,23 @@ export default function NotificationSettingsPage() {
       setActivity(data.activity ?? { sent: 0, opened: 0, suppressed: 0 })
       setCoinPreview(data.coin_preview ?? { balance: 0, opt_in_bonus_awarded_at: null })
       setWebPushEnabled(!!data.channel_status?.web_push_enabled)
+      setSoundEnabled(!!data.settings?.sound_enabled)
+      setSoundVolume(typeof data.settings?.sound_volume === 'number' ? data.settings.sound_volume : 50)
+      setSoundTaskComplete(data.settings?.sound_task_complete !== false)
+      setSoundSudarReply(data.settings?.sound_sudar_reply !== false)
+      setSoundNotifications(data.settings?.sound_notifications !== false)
+      setSoundCelebration(data.settings?.sound_celebration !== false)
+      setPrefsLocal({
+        sound_enabled: !!data.settings?.sound_enabled,
+        sound_volume: typeof data.settings?.sound_volume === 'number' ? data.settings.sound_volume : 50,
+        sound_task_complete: data.settings?.sound_task_complete !== false,
+        sound_sudar_reply: data.settings?.sound_sudar_reply !== false,
+        sound_notifications: data.settings?.sound_notifications !== false,
+        sound_celebration: data.settings?.sound_celebration !== false,
+        timezone: data.settings?.timezone ?? 'UTC',
+        quiet_hours_start: data.settings?.quiet_hours_start ?? null,
+        quiet_hours_end: data.settings?.quiet_hours_end ?? null,
+      })
       setLoading(false)
     }
     void load()
@@ -83,11 +116,38 @@ export default function NotificationSettingsPage() {
           quiet_hours_end: quietEnd,
           frequency_mode: frequencyMode,
           daily_digest_email: dailyDigest,
+          sound_enabled: soundEnabled,
+          sound_volume: soundVolume,
+          sound_task_complete: soundTaskComplete,
+          sound_sudar_reply: soundSudarReply,
+          sound_notifications: soundNotifications,
+          sound_celebration: soundCelebration,
         },
         preferences,
       }),
     })
+    setPrefsLocal({
+      sound_enabled: soundEnabled,
+      sound_volume: soundVolume,
+      sound_task_complete: soundTaskComplete,
+      sound_sudar_reply: soundSudarReply,
+      sound_notifications: soundNotifications,
+      sound_celebration: soundCelebration,
+      timezone,
+      quiet_hours_start: quietStart,
+      quiet_hours_end: quietEnd,
+    })
     setSaving(false)
+  }
+
+  function updateSoundEnabled(enabled: boolean) {
+    setSoundEnabled(enabled)
+    setPrefsLocal({ sound_enabled: enabled })
+  }
+
+  function updateSoundVolume(volume: number) {
+    setSoundVolume(volume)
+    setPrefsLocal({ sound_volume: volume })
   }
 
   async function enablePush() {
@@ -136,6 +196,91 @@ export default function NotificationSettingsPage() {
           <input type="checkbox" checked={dailyDigest} onChange={(e) => setDailyDigest(e.target.checked)} />
           Weekly digest email
         </label>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <Volume2 className="w-4 h-4 text-primary" />
+          <h2 className="font-semibold text-card-foreground">Sounds</h2>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Subtle in-app chimes when Sudar or AI tasks finish. Respects quiet hours above. Off by default.
+        </p>
+        <label className="text-sm flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={soundEnabled}
+            onChange={(e) => updateSoundEnabled(e.target.checked)}
+          />
+          Enable notification sounds
+        </label>
+        <label className="text-sm block">
+          Volume ({soundVolume}%)
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={soundVolume}
+            disabled={!soundEnabled}
+            onChange={(e) => updateSoundVolume(Number(e.target.value))}
+            className="mt-2 w-full disabled:opacity-50"
+          />
+        </label>
+        <div className="space-y-3">
+          {SOUND_GROUPS.map((group) => {
+            const checked =
+              group.id === 'task_complete'
+                ? soundTaskComplete
+                : group.id === 'sudar_reply'
+                  ? soundSudarReply
+                  : group.id === 'notification'
+                    ? soundNotifications
+                    : soundCelebration
+            const setChecked =
+              group.id === 'task_complete'
+                ? setSoundTaskComplete
+                : group.id === 'sudar_reply'
+                  ? setSoundSudarReply
+                  : group.id === 'notification'
+                    ? setSoundNotifications
+                    : setSoundCelebration
+            const prefKey =
+              group.id === 'task_complete'
+                ? 'sound_task_complete'
+                : group.id === 'sudar_reply'
+                  ? 'sound_sudar_reply'
+                  : group.id === 'notification'
+                    ? 'sound_notifications'
+                    : 'sound_celebration'
+            return (
+              <div key={group.id} className="flex items-start justify-between gap-3 border-t border-border/50 pt-3 first:border-0 first:pt-0">
+                <label className="text-sm flex-1">
+                  <span className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={!soundEnabled}
+                      onChange={(e) => {
+                        setChecked(e.target.checked)
+                        setPrefsLocal({ [prefKey]: e.target.checked })
+                      }}
+                    />
+                    {group.label}
+                  </span>
+                  <span className="block text-xs text-muted-foreground mt-1">{group.hint}</span>
+                </label>
+                <button
+                  type="button"
+                  disabled={!soundEnabled}
+                  onClick={() => previewChime(group.id)}
+                  className="shrink-0 px-2.5 py-1 rounded-lg border border-border text-xs disabled:opacity-50"
+                >
+                  Preview
+                </button>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-5">

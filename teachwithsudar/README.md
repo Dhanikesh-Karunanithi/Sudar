@@ -1,4 +1,4 @@
-# Teach with Sudar — Marketing & Documentation Site
+# Teach with Sudar | Marketing & Documentation Site
 
 Dedicated website for **teachwithsudar.com**: research, story, mission, self-host guides, plugins, help, legal, and community.
 
@@ -23,7 +23,34 @@ npm run build
 npm start
 ```
 
-## Deploy to Vercel (teachwithsudar.com)
+## Deploy to Cloudflare Pages (teachwithsudar.com)
+
+Production host: **Cloudflare Pages** (static export). Preview URL: `https://teachwithsudar.pages.dev`.
+
+### One-time CLI setup
+
+```bash
+cd teachwithsudar
+npm install
+npm run build          # outputs static site to out/
+npx wrangler login
+npx wrangler pages project create teachwithsudar --production-branch main
+npx wrangler pages deploy out --project-name=teachwithsudar --branch=main
+```
+
+Attach the custom domain in Cloudflare Dashboard → **Workers & Pages** → **teachwithsudar** → **Custom domains** → add `teachwithsudar.com`. If DNS is not auto-created, add a proxied **CNAME** for `@` → `teachwithsudar.pages.dev` in the zone’s DNS tab.
+
+### Redeploy after changes
+
+```bash
+cd teachwithsudar
+npm run build
+npx wrangler pages deploy out --project-name=teachwithsudar --branch=main
+```
+
+Optional env at build time: `NEXT_PUBLIC_ECOSYSTEM_DEMO_URL` (e.g. `https://demo.thesudar.app`) for the `/demo` page link.
+
+## Deploy to Vercel (alternative)
 
 1. In Vercel, import the repo **Dhanikesh-Karunanithi/Sudar**.
 2. Set **Root Directory** to **`teachwithsudar`** (this app).
@@ -34,14 +61,15 @@ No environment variables are required for the marketing site unless you add a co
 
 ## Routes
 
-- `/` — Home (hero, what is Sudar, problem, how it works, CTAs)
-- `/story`, `/mission`, `/research`, `/papers` — About
-- `/features`, `/modalities`, `/alp` — Product
-- `/self-host`, `/plugins`, `/monetize` — Get started
-- `/blog`, `/updates`, `/edtech`, `/best-practices` — Resources
-- `/help/studio`, `/help/learn`, `/faq` — Help
-- `/privacy`, `/terms` — Legal
-- `/collaborate`, `/contact` — Community
-- `/demo`, `/roadmap`, `/compare`, `/accessibility` — Extra
+- `/` Home (hero, what is Sudar, problem, how it works, CTAs)
+- `/story`, `/mission`, `/research`, `/papers` About
+- `/features`, `/guides`, `/modalities`, `/alp` Product
+- `/self-host`, `/plugins`, `/monetize` Get started
+- `/guides` Animated wireframe walkthroughs (Studio, Learn, ALP, MCP, deploy)
+- `/blog`, `/updates`, `/edtech`, `/best-practices` Resources
+- `/help/studio`, `/help/learn`, `/faq` Help (synced from `help-center/`)
+- `/privacy`, `/terms` Legal
+- `/collaborate`, `/contact` Community
+- `/demo`, `/roadmap`, `/compare`, `/accessibility` Extra
 
 Content is derived from the repo `docs/` and `ECOSYSTEM.md`; update pages when those sources change.

@@ -1,4 +1,5 @@
-import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { getRequestSession } from '@/lib/auth/requestSession'
 import { getOrCreateOrg } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -18,9 +19,9 @@ const bodySchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await getRequestSession(request)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { user } = session
 
   const admin = createServiceRoleSupabaseClient()
   const orgId = await getOrCreateOrg(user.id)

@@ -1,6 +1,6 @@
 ---
 title: Connecting a private server
-description: Mental model—install an app, pull a model, paste an address.
+description: Mental model, install an app, pull a model, paste an address.
 audience: admin
 category: ai-literacy
 order: 4
@@ -13,4 +13,4 @@ Typical steps: install Ollama or LM Studio on a machine, download a model (for e
 
 In **Org settings → “Where Sudar runs your AI”**, turn on private server, paste the full address (starting with http:// or https://), and enter the model name exactly as your app shows it.
 
-The “password” for the server is set once on the Sudar server by IT (environment variable), not in the form—this keeps secrets out of the database.
+The “password” for the server is set once on the Sudar server by IT (environment variable), not in the form, this keeps secrets out of the database.

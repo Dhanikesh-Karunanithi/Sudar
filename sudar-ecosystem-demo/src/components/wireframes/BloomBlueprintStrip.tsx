@@ -12,7 +12,9 @@ export function BloomBlueprintStrip({ state }: { state: SceneState }) {
         Instructional design
       </p>
       <div className="flex flex-wrap gap-2">
-        <MiniChip active>BLOOM · {bloom.toUpperCase()}</MiniChip>
+        <span className="inline-flex items-center rounded-full border border-[#FF4500]/40 bg-[#FF4500]/10 px-2.5 py-1 text-[12px] font-semibold font-mono tracking-widest text-[#FF4500]/90">
+          BLOOM · {bloom.toUpperCase()}
+        </span>
         <MiniChip>SCENARIO ARC</MiniChip>
         <MiniChip>ANDRAGOGY</MiniChip>
       </div>

@@ -1,6 +1,6 @@
 ---
 title: Enterprise provisioning checklist
-description: SSO, roster sync, LMS, AI keys, and telemetry—anchors for integrations deep links.
+description: SSO, roster sync, LMS, AI keys, and telemetry, anchors for integrations deep links.
 audience: admin
 category: admins
 order: 3
@@ -11,13 +11,13 @@ marketing: false
 
 ### Identity
 
-Configure SSO (**SAML or OIDC**) in Supabase Auth → Providers, then mirror any policy annotations your security team expects inside Sudar Org settings.
+Configure SSO (**SAML or OIDC**) in your identity provider (see deployment docs for the reference auth stack), then mirror any policy annotations your security team expects inside Sudar Org settings.
 
 <a id="directory"></a>
 
 ### Directory / roster sync
 
-Use provisioning APIs or scheduled jobs mirroring learners from HRIS/SIS—the Integration Guide outlines field mapping nuances.
+Use provisioning APIs or scheduled jobs mirroring learners from HRIS/SIS, the Integration Guide outlines field mapping nuances.
 
 <a id="lms"></a>
 
@@ -35,4 +35,4 @@ Add cloud or private inference endpoints inside **Organization → AI & API Keys
 
 ### Data-plane telemetry
 
-Pipe learning events (`module_start`, `module_complete`, `modality_switch`, etc.) via Learn’s ingestion endpoint—batch friendly for warehouse replay.
+Pipe learning events (`module_start`, `module_complete`, `modality_switch`, etc.) via Learn’s ingestion endpoint, batch friendly for warehouse replay.

@@ -15,7 +15,7 @@ export default function PluginsPage() {
       </p>
       <h2 className="mt-10 text-xl font-semibold text-foreground">ALP API documentation</h2>
       <p className="mt-2 text-foreground">
-        The full API — event ingestion, tutor query, next-action, embed token — is documented in the repository:
+        The full API (event ingestion, tutor query, next-action, embed token) is documented in the repository:
       </p>
       <a
         href={`${GITHUB_URL}/blob/main/docs/ALP_API.md`}
@@ -30,9 +30,9 @@ export default function PluginsPage() {
         Three ALP components are implemented for Moodle (or any LMS that can send HTTP requests):
       </p>
       <ul className="mt-4 list-disc space-y-2 pl-6 text-foreground">
-        <li><strong className="text-foreground">SudarMemory</strong> — Sends LMS events to <code>POST /api/alp/events</code> on your Sudar Learn app.</li>
-        <li><strong className="text-foreground">SudarChat</strong> — Block or LTI that embeds the tutor and calls <code>POST /api/alp/tutor/query</code>.</li>
-        <li><strong className="text-foreground">SudarRecommend</strong> — Dashboard block that calls <code>POST /api/alp/next-action</code> and shows the recommendation.</li>
+        <li><strong className="text-foreground">SudarMemory</strong>: sends LMS events to <code>POST /api/alp/events</code> on your Sudar Learn app.</li>
+        <li><strong className="text-foreground">SudarChat</strong>: block or LTI that embeds the tutor and calls <code>POST /api/alp/tutor/query</code>.</li>
+        <li><strong className="text-foreground">SudarRecommend</strong>: dashboard block that calls <code>POST /api/alp/next-action</code> and shows the recommendation.</li>
       </ul>
       <p className="mt-4 text-foreground">
         Plugin packages (e.g. Moodle block ZIP) will be published via <strong>GitHub Releases</strong> when ready.

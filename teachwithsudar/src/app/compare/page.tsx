@@ -17,8 +17,8 @@ export default function ComparePage() {
           <p className="mt-2 text-foreground">
             Those tools need instructional designers, weeks of work, and high licence fees. With Sudar you generate
             a course from a document or URL in minutes, then edit and publish. No instructional designer required.
-            Cost: self-host at $0 or pay only for Supabase and AI usage, a fraction of enterprise authoring
-            subscriptions.
+            Cost: self-host at $0 or pay only for the infrastructure you choose (database, hosting, AI usage). A
+            fraction of enterprise authoring subscriptions.
           </p>
         </div>
         <div className="rounded-xl border border-card-border bg-card-bg shadow-card p-6">

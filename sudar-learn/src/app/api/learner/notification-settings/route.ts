@@ -22,13 +22,26 @@ export async function GET() {
   const opened = (log ?? []).filter((r) => ['opened', 'clicked'].includes((r as { status: string }).status)).length
   const suppressed = (log ?? []).filter((r) => (r as { status: string }).status === 'suppressed').length
 
+  const defaultSettings = {
+    timezone: 'UTC',
+    locale: 'en',
+    frequency_mode: 'balanced',
+    daily_digest_email: false,
+    sound_enabled: false,
+    sound_volume: 50,
+    sound_task_complete: true,
+    sound_sudar_reply: true,
+    sound_notifications: true,
+    sound_celebration: true,
+  }
+
   return NextResponse.json({
-    settings: settings ?? {
-      timezone: 'UTC',
-      locale: 'en',
-      frequency_mode: 'balanced',
-      daily_digest_email: false,
-    },
+    settings: settings
+      ? {
+          ...defaultSettings,
+          ...settings,
+        }
+      : defaultSettings,
     categories: NOTIFICATION_CATEGORIES,
     preferences: preferences ?? [],
     channel_status: {

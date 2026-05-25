@@ -71,6 +71,60 @@ body {
   animation: glow-pulse 5s ease-in-out infinite;
 }
 
+@keyframes hero-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.hero-float {
+  animation: hero-float 7s ease-in-out infinite;
+}
+
+.hero-float-delay {
+  animation-delay: -3.5s;
+}
+
+/* Hero text line accent- subtle shimmer after entrance */
+@keyframes hero-line-shimmer {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+.hero-text-line-accent {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.75) 45%,
+    rgba(255, 255, 255, 0.45) 90%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: hero-line-shimmer 6s ease-in-out 1.2s infinite;
+}
+
+@keyframes hero-scroll-pulse {
+  0%, 100% { opacity: 0.35; transform: scaleY(1); }
+  50% { opacity: 0.85; transform: scaleY(1.08); }
+}
+
+.hero-scroll-cue {
+  animation: hero-scroll-pulse 2.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-text-line-accent {
+    animation: none;
+    color: rgba(255, 255, 255, 0.55);
+    background: none;
+  }
+
+  .hero-scroll-cue {
+    animation: none;
+  }
+}
+
 /* ── Parallax scroll cards ───────────────────────────────────────────── */
 .parallax-card-up {
   transform: translateY(var(--scroll-offset-up, 0px));
@@ -102,6 +156,46 @@ body {
 .prose li { color: var(--foreground); }
 .prose strong { color: var(--foreground); }
 
+/* prose-a:text-primary turns links orange; override for filled primary buttons */
+.prose a[class*="bg-primary"] {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+.prose a[class*="bg-primary"]:hover {
+  text-decoration: none !important;
+}
+
+/* Inline code- prose-slate defaults are dark-on-dark and unreadable */
+.prose :where(code):not(:where(pre code)) {
+  color: #fafafa;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.875em;
+  font-weight: 500;
+}
+
+.prose :where(code)::before,
+.prose :where(code)::after {
+  content: none !important;
+}
+
+.prose pre {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--foreground);
+}
+
+.prose pre code {
+  color: inherit;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+}
+
 /* ── Stat counter shimmer ────────────────────────────────────────────── */
 @keyframes shimmer-slide {
   0%   { background-position: -200% 0; }
@@ -128,6 +222,31 @@ body {
 }
 .citation-card:hover .citation-line {
   width: 100%;
+}
+
+/* ── Help Center (Teach with Sudar) ──────────────────────────────────── */
+.help-hub-shell a.help-hub-link {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.help-hub-shell a.help-hub-link:hover {
+  text-decoration: underline;
+}
+
+.help-prose a {
+  color: var(--primary);
+}
+
+.help-prose p,
+.help-prose li {
+  color: var(--foreground-muted);
+}
+
+.help-prose h2,
+.help-prose h3,
+.help-prose strong {
+  color: var(--foreground);
 }
 
 @layer utilities {

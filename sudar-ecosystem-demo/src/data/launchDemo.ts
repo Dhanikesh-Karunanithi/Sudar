@@ -5,6 +5,8 @@ import type { CourseBlockType, SceneState } from "@/types/sceneState";
 
 export type OverlayPosition = "lower-third" | "center" | "upper";
 
+export type CameraEffect = "zoom-in" | "zoom-out" | "push-left" | "push-right" | "static";
+
 export type TitleCardFrame = {
   type: "title-card";
   id: string;
@@ -26,6 +28,7 @@ export type SceneFrame = {
   hotspot?: DemoHotspot;
   action?: "click" | "hover";
   audioCue?: AudioCue;
+  cameraEffect?: CameraEffect;
   overlay: {
     position: OverlayPosition;
     eyebrow?: string;
@@ -36,7 +39,7 @@ export type SceneFrame = {
 
 export type CinematicFrame = TitleCardFrame | SceneFrame;
 
-const BLOCK_STEPS: CourseBlockType[] = [
+const FULL_BLOCKS: CourseBlockType[] = [
   "text",
   "video",
   "audio",
@@ -45,20 +48,16 @@ const BLOCK_STEPS: CourseBlockType[] = [
   "quiz",
 ];
 
-function blockPatch(index: number): Partial<SceneState> {
-  return {
-    visibleBlocks: BLOCK_STEPS.slice(0, index + 1),
-    uiMotion: "slide-in",
-    highlightId: "add-block",
-    activeModuleIndex: 0,
-  };
-}
+const BUILD_ONE_BLOCKS: CourseBlockType[] = ["text", "video"];
+
+/** Marcus on-the-go, phone framing for Learn scenes */
+const MOBILE_LEARN: Partial<SceneState> = { deviceLayout: "mobile" };
 
 export const launchFrames: CinematicFrame[] = [
   {
     type: "title-card",
     id: "open",
-    durationMs: 7500,
+    durationMs: 6000,
     headline: "Learns with you, for you.",
     showLogo: true,
     logoOnly: true,
@@ -66,162 +65,129 @@ export const launchFrames: CinematicFrame[] = [
   },
   {
     type: "title-card",
-    id: "act1-1",
-    durationMs: 9500,
+    id: "gap-1",
+    durationMs: 6000,
     audioCue: "whoosh",
-    headline: "Corporate training is failing millions of learners.",
+    headline: "Your learners forget 70% of training within 72 hours.",
   },
   {
     type: "title-card",
-    id: "act1-2",
+    id: "gap-2",
     durationMs: 7000,
-    headline: "Teams forget most of what you teach them. Within days.",
+    headline: "1:1 tutoring is 2× more effective than a classroom.",
+    subhead: "Bloom proved it in 1984.",
   },
   {
     type: "title-card",
-    id: "act1-3",
-    durationMs: 9500,
-    headline: "The tools haven't changed in thirty years. The world has.",
-  },
-  {
-    type: "title-card",
-    id: "act2-1",
-    durationMs: 7000,
-    headline: "What if learning could learn you?",
+    id: "gap-3",
+    durationMs: 7500,
+    headline: "We can deliver that to every learner.",
+    subhead: "For less than $0.02 a month.",
   },
   {
     type: "scene",
-    id: "act2-2",
-    durationMs: 8200,
+    id: "meet-sudar",
+    durationMs: 7000,
     scene: "ecosystem-map",
-    scenePatch: { ecosystemHighlight: "studio" },
-    hotspot: { x: 50, y: 22 },
+    cameraEffect: "zoom-in",
+    scenePatch: { ecosystemHighlight: "twin" },
+    hotspot: { x: 50, y: 50 },
     action: "hover",
     overlay: {
       position: "lower-third",
       eyebrow: "Introducing",
-      headline: "Sudar.",
-      body: "The Learning Operating System.",
+      headline: "Sudar. The learning OS.",
+      body: "Create once. Deliver every way. Remember every learner.",
     },
   },
-  {
-    type: "scene",
-    id: "act2-3",
-    durationMs: 8200,
-    scene: "ecosystem-map",
-    scenePatch: { ecosystemHighlight: "twin" },
-    hotspot: { x: 50, y: 72 },
-    action: "hover",
-    overlay: {
-      position: "lower-third",
-      headline: "Create once. Deliver every way. Remember every learner.",
-    },
-  },
-  // Act 3 — Sarah creates (content generation)
   {
     type: "title-card",
-    id: "act3-1",
-    durationMs: 7000,
+    id: "sarah-intro",
+    durationMs: 6000,
     eyebrow: "The creator",
     headline: "Meet Sarah.",
-    subhead: "L&D for five hundred stores. No video team. No instructional design army.",
+    subhead: "500 stores. No production team.",
   },
   {
     type: "scene",
-    id: "act3-2",
-    durationMs: 8500,
-    scene: "studio-dashboard",
-    scenePatch: { highlightId: "new-course", studioSidebarActive: "Courses" },
-    hotspot: { x: 58, y: 28 },
-    action: "click",
-    audioCue: "click",
-    overlay: {
-      position: "lower-third",
-      headline: "Start from anywhere.",
-      body: "Document · idea · business need · cohort · learner context.",
-    },
-  },
-  {
-    type: "scene",
-    id: "act3-3",
-    durationMs: 9200,
+    id: "sarah-idea",
+    durationMs: 7000,
     scene: "studio-create-sources",
+    cameraEffect: "zoom-in",
     scenePatch: { generationSource: "idea", highlightId: "prompt" },
     hotspot: { x: 50, y: 48 },
     action: "click",
     audioCue: "click",
     overlay: {
       position: "lower-third",
-      headline: "An idea is enough.",
-      body: "Fun ways to manage an office — taught by Michael Scott. Engaging. Still rigorous.",
+      headline: "She types an idea.",
+      body: "Fun office management, still rigorous.",
     },
   },
   {
     type: "scene",
-    id: "act3-4",
-    durationMs: 8200,
-    scene: "studio-create-sources",
-    scenePatch: { generationSource: "business", highlightId: "business" },
-    hotspot: { x: 72, y: 32 },
-    action: "click",
-    overlay: {
-      position: "lower-third",
-      headline: "Ground it in the business.",
-      body: "Reduce manager escalations in Q3 — Sudar shapes objectives and tone.",
-    },
-  },
-  {
-    type: "scene",
-    id: "act3-5",
-    durationMs: 8800,
+    id: "sarah-blueprint",
+    durationMs: 7000,
     scene: "studio-id-blueprint",
+    cameraEffect: "push-right",
     scenePatch: { bloomLevel: "Apply" },
     hotspot: { x: 78, y: 40 },
     action: "hover",
     overlay: {
       position: "lower-third",
-      headline: "Built on learning science.",
-      body: "Bloom's taxonomy · instructional archetypes · clear objectives — not random AI text.",
+      headline: "AI structures it to Bloom's level.",
+      body: "Apply objectives. Scenario archetype. Every module.",
     },
   },
-  ...BLOCK_STEPS.map(
-    (block, i): SceneFrame => ({
-      type: "scene",
-      id: `act3-block-${block}`,
-      durationMs: i === 0 ? 8500 : 7800,
-      scene: "studio-live-editor",
-      scenePatch: blockPatch(i),
-      hotspot: { x: 85, y: 72 },
-      action: "click",
-      audioCue: i === BLOCK_STEPS.length - 1 ? "success" : "click",
-      overlay: {
-        position: "lower-third",
-        headline:
-          i === 0
-            ? "She builds the module live."
-            : i === 1
-              ? "Video. Generated. No production crew."
-              : i === 2
-                ? "Audio for commuters."
-                : i === 3
-                  ? "Accordions for depth."
-                  : i === 4
-                    ? "Flip cards for recall."
-                    : "Quizzes that respect Bloom's Apply level.",
-        body:
-          i === 1
-            ? "Somehow I manage — World's Best Boss 101."
-            : undefined,
-      },
-    })
-  ),
   {
     type: "scene",
-    id: "act3-adaptive",
-    durationMs: 8200,
+    id: "sarah-build-1",
+    durationMs: 6000,
     scene: "studio-live-editor",
+    cameraEffect: "zoom-in",
     scenePatch: {
-      visibleBlocks: BLOCK_STEPS,
+      visibleBlocks: BUILD_ONE_BLOCKS,
+      uiMotion: "slide-in",
+      highlightId: "add-block",
+      activeModuleIndex: 0,
+    },
+    hotspot: { x: 85, y: 72 },
+    action: "click",
+    audioCue: "click",
+    overlay: {
+      position: "lower-third",
+      headline: "Five modules. Built live.",
+    },
+  },
+  {
+    type: "scene",
+    id: "sarah-build-2",
+    durationMs: 6500,
+    scene: "studio-live-editor",
+    cameraEffect: "zoom-in",
+    scenePatch: {
+      visibleBlocks: FULL_BLOCKS,
+      uiMotion: "slide-in",
+      highlightId: "add-block",
+      activeModuleIndex: 0,
+    },
+    hotspot: { x: 85, y: 72 },
+    action: "click",
+    audioCue: "success",
+    overlay: {
+      position: "lower-third",
+      headline: "Video. Audio. Interactive.",
+      body: "Somehow I manage, World's Best Boss 101.",
+    },
+  },
+  {
+    type: "scene",
+    id: "sarah-adaptive",
+    durationMs: 5500,
+    scene: "studio-live-editor",
+    cameraEffect: "static",
+    scenePatch: {
+      visibleBlocks: FULL_BLOCKS,
       adaptiveLearningOn: true,
       highlightId: "adaptive",
     },
@@ -229,274 +195,249 @@ export const launchFrames: CinematicFrame[] = [
     action: "click",
     overlay: {
       position: "lower-third",
-      headline: "Adaptive Learning on.",
-      body: "Every enrollee gets a welcome that bridges their context to this course.",
+      headline: "Adaptive learning, on.",
+      body: "Personalized for every learner on enrollment.",
     },
   },
   {
     type: "title-card",
-    id: "act3-publish",
-    durationMs: 7000,
-    headline: "Twelve minutes.",
-    subhead: "From idea to Somehow I manage — live in Learn.",
+    id: "sarah-done",
+    durationMs: 5000,
+    headline: "12 minutes. Course live.",
     audioCue: "success",
   },
-  // Act 4 — Personalization
   {
     type: "title-card",
-    id: "act4-0",
-    durationMs: 6000,
+    id: "personalization",
+    durationMs: 5000,
     eyebrow: "Personalization",
-    headline: "One course. Many learners.",
+    headline: "One course. Different people.",
   },
   {
     type: "scene",
-    id: "act4-cohort",
-    durationMs: 8500,
+    id: "cohort",
+    durationMs: 7000,
     scene: "studio-settings",
+    cameraEffect: "push-left",
     scenePatch: { highlightId: "cohort" },
     hotspot: { x: 50, y: 42 },
     action: "click",
+    audioCue: "click",
     overlay: {
       position: "lower-third",
-      headline: "Cohort targeting.",
-      body: "New hire store managers — mandatory path, adaptive welcome for the group.",
+      headline: "Group context, set by Sarah.",
+      body: "New hire store managers · mandatory path.",
     },
   },
   {
     type: "scene",
-    id: "act4-individual",
-    durationMs: 8800,
+    id: "individual",
+    durationMs: 7000,
     scene: "learn-memory-rich",
-    scenePatch: { memoryHighlight: "context", learnNavActive: "Memory" },
+    cameraEffect: "push-right",
+    scenePatch: { ...MOBILE_LEARN, memoryHighlight: "context", learnNavActive: "Memory" },
     hotspot: { x: 50, y: 75 },
     action: "hover",
     overlay: {
       position: "lower-third",
-      headline: "Individual context.",
-      body: "Background, goals, how they learn best — injected into every Sudar conversation.",
+      headline: "Personal context, set by Marcus.",
+      body: "Goals and style, in every conversation.",
     },
   },
   {
     type: "title-card",
-    id: "act4-same",
-    durationMs: 6800,
-    headline: "Same course. Different pace. Different voice.",
-    subhead: "Engaging and intuitive — because Sudar knows the learner.",
-  },
-  // Act 5 — Marcus learns
-  {
-    type: "title-card",
-    id: "act5-1",
-    durationMs: 7000,
+    id: "marcus-intro",
+    durationMs: 6000,
     eyebrow: "The learner",
     headline: "Meet Marcus.",
-    subhead: "Store manager in Lagos. On his phone. Between shifts.",
+    subhead: "Lagos. Phone. Between shifts.",
   },
   {
     type: "scene",
-    id: "act5-2",
-    durationMs: 8200,
+    id: "marcus-dash",
+    durationMs: 7000,
     scene: "learn-dashboard",
-    scenePatch: { highlightId: "continue", learnNavActive: "Learn" },
+    cameraEffect: "zoom-in",
+    scenePatch: { ...MOBILE_LEARN, highlightId: "continue", learnNavActive: "Learn" },
     hotspot: { x: 35, y: 48 },
     action: "click",
     audioCue: "click",
     overlay: {
       position: "lower-third",
-      headline: "Somehow I manage is waiting.",
-      body: "Assigned. Personalised. Ready.",
+      headline: "His course is waiting.",
+      body: "Assigned. Shaped for him.",
     },
   },
   {
     type: "scene",
-    id: "act5-watch-start",
-    durationMs: 8200,
+    id: "marcus-watch",
+    durationMs: 7500,
     scene: "learn-course-rich",
-    scenePatch: { activeTab: "Watch", videoProgress: 35 },
+    cameraEffect: "zoom-in",
+    scenePatch: { ...MOBILE_LEARN, activeTab: "Watch", videoProgress: 35, animateVideo: true },
     hotspot: { x: 44, y: 22 },
     action: "click",
     overlay: {
       position: "lower-third",
-      headline: "He learns by watching first.",
-      body: "Sudar opens on video — because the Twin knows his style.",
+      headline: "He learns by watching.",
+      body: "Sudar knows his style.",
     },
   },
   {
     type: "scene",
-    id: "act5-stuck",
-    durationMs: 8800,
+    id: "marcus-stuck",
+    durationMs: 7000,
     scene: "learn-course-rich",
-    scenePatch: { activeTab: "Watch", videoProgress: 62 },
-    hotspot: { x: 50, y: 45 },
-    action: "click",
-    overlay: {
-      position: "lower-third",
-      headline: "He pauses. Stuck on delegation.",
-    },
-  },
-  {
-    type: "scene",
-    id: "act5-interact",
-    durationMs: 8200,
-    scene: "learn-course-rich",
+    cameraEffect: "zoom-in",
     scenePatch: {
+      ...MOBILE_LEARN,
       activeTab: "Watch",
       videoProgress: 62,
       accordionExpanded: true,
       flipcardFlipped: true,
     },
-    hotspot: { x: 40, y: 68 },
+    hotspot: { x: 50, y: 45 },
     action: "click",
-    audioCue: "click",
     overlay: {
       position: "lower-third",
-      headline: "Accordion. Flip cards. Same lesson — more ways in.",
+      headline: "He pauses. Twice.",
+      body: "Delegation, still stuck.",
     },
   },
   {
     type: "scene",
-    id: "act5-tutor-proactive",
-    durationMs: 9200,
+    id: "tutor-proactive",
+    durationMs: 9000,
     scene: "learn-tutor-contextual",
+    cameraEffect: "zoom-in",
     scenePatch: {
+      ...MOBILE_LEARN,
       tutorMode: "proactive",
       tutorMessage:
-        "You paused on delegation in this scene — want a Dunder-style example, or the formal definition?",
+        "You paused on delegation in this scene. Want a Dunder-style example, or the formal definition?",
     },
     hotspot: { x: 78, y: 55 },
     action: "hover",
     overlay: {
       position: "lower-third",
-      headline: "Sudar speaks to what's on screen.",
-      body: "Not a generic chatbot — context from the lesson you're in.",
+      headline: "Sudar notices.",
+      body: "Before he asks.",
     },
   },
   {
     type: "scene",
-    id: "act5-tutor-reply",
-    durationMs: 9500,
+    id: "tutor-reply",
+    durationMs: 8000,
     scene: "learn-tutor-contextual",
+    cameraEffect: "push-left",
     scenePatch: {
+      ...MOBILE_LEARN,
       tutorMode: "learner-reply",
-      learnerDraft: "Dunder example please — keep it short",
+      learnerDraft: "Dunder example please. Keep it short",
       tutorMessage:
-        "You paused on delegation in this scene — want a Dunder-style example, or the formal definition?",
+        "You paused on delegation in this scene. Want a Dunder-style example, or the formal definition?",
+      tutorReply:
+        "Picture Michael handing Dwight a task list, that's delegation. Outcomes, not micromanaging.",
     },
     hotspot: { x: 75, y: 82 },
     action: "click",
     audioCue: "click",
     overlay: {
       position: "lower-third",
-      headline: "Marcus answers in his own words.",
-      body: "Sudar responds — encouraging, specific, never judgmental.",
+      headline: "He replies. Sudar responds.",
+      body: "Encouraging. Specific. Never judgmental.",
     },
   },
   {
     type: "scene",
-    id: "act5-memory",
-    durationMs: 8500,
+    id: "memory",
+    durationMs: 7000,
     scene: "learn-memory-rich",
-    scenePatch: { memoryHighlight: "uncertainty", learnNavActive: "Memory" },
+    cameraEffect: "zoom-out",
+    scenePatch: { ...MOBILE_LEARN, memoryHighlight: "uncertainty", learnNavActive: "Memory" },
     hotspot: { x: 50, y: 70 },
     action: "hover",
     overlay: {
       position: "lower-third",
-      headline: "Sudar already knew where he struggles.",
-      body: "Uncertainty tags feed the Twin — before he had to ask.",
+      headline: "Logged.",
+      body: "For every session after this.",
     },
   },
-  // Act 6 — Twin
   {
     type: "scene",
-    id: "act6-1",
-    durationMs: 8200,
-    scene: "learn-memory-rich",
-    scenePatch: { memoryHighlight: "twin", learnNavActive: "Memory" },
-    hotspot: { x: 50, y: 38 },
-    overlay: {
-      position: "center",
-      headline: "Every LMS tracks completions.",
-      body: "Sudar tracks learning. The Digital Learner Twin remembers.",
-    },
-  },
-  // Act 7 — Result
-  {
-    type: "scene",
-    id: "act7-1",
-    durationMs: 8200,
+    id: "result",
+    durationMs: 7000,
     scene: "analytics-compliance",
+    cameraEffect: "zoom-in",
     scenePatch: { highlightId: "at-risk" },
     hotspot: { x: 50, y: 62 },
     action: "click",
     overlay: {
       position: "lower-third",
-      headline: "Marcus is certified.",
+      headline: "Certified.",
       body: "Sarah sees it in real time.",
     },
   },
   {
     type: "title-card",
-    id: "act7-2",
-    durationMs: 8200,
-    headline: "Fifteen minutes. Under fifty cents.",
-    subhead: "From idea to certified learner — video, audio, interactives included.",
+    id: "cost",
+    durationMs: 6000,
+    headline: "15 minutes. $0.02. One learner.",
+    subhead: "From idea to certified, video, audio, interactives included.",
+    audioCue: "success",
   },
-  // Act 8 — Ecosystem
+  {
+    type: "title-card",
+    id: "integrations",
+    durationMs: 5000,
+    eyebrow: "Integrations",
+    headline: "Keep your LMS.",
+    subhead: "No rip and replace.",
+  },
   {
     type: "scene",
-    id: "act8-1",
-    durationMs: 8200,
+    id: "alp",
+    durationMs: 7000,
     scene: "studio-integrations",
+    cameraEffect: "push-left",
     scenePatch: { integrationsHighlight: "alp", highlightId: "copy-key" },
     hotspot: { x: 28, y: 42 },
     action: "click",
+    audioCue: "click",
     overlay: {
       position: "lower-third",
-      headline: "Keep your LMS. Add Sudar.",
-      body: "No rip and replace.",
+      headline: "Connect it.",
+      body: "Events in. Intelligence out.",
     },
   },
   {
     type: "scene",
-    id: "act8-2",
-    durationMs: 8200,
+    id: "alp-flow",
+    durationMs: 7000,
     scene: "alp-flow",
+    cameraEffect: "static",
     hotspot: { x: 50, y: 50 },
     action: "hover",
     overlay: {
       position: "lower-third",
       headline: "Moodle. Canvas. Blackboard.",
-      body: "Events in. The Twin learns.",
-    },
-  },
-  {
-    type: "scene",
-    id: "act8-3",
-    durationMs: 8200,
-    scene: "studio-integrations",
-    scenePatch: { integrationsHighlight: "mcp", highlightId: "mcp-json" },
-    hotspot: { x: 78, y: 42 },
-    action: "click",
-    overlay: {
-      position: "lower-third",
-      headline: "Build from ChatGPT. From Cursor.",
-      body: "Your stack. Sudar's intelligence.",
+      body: "The Twin joins them.",
     },
   },
   {
     type: "title-card",
-    id: "act9-1",
-    durationMs: 5500,
+    id: "close-1",
+    durationMs: 5000,
     headline: "Sudar.",
     showLogo: true,
   },
   {
     type: "title-card",
-    id: "act9-2",
-    durationMs: 8200,
+    id: "close-2",
+    durationMs: 7000,
     headline: "Learns with you, for you.",
     showLogo: true,
+    subhead: "teachwithsudar.com",
   },
 ];
 

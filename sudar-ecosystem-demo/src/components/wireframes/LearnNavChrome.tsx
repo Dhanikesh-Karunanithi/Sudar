@@ -2,11 +2,38 @@
 
 import { SudarLogoMark } from "@/components/brand/SudarLogoMark";
 import type { SceneState } from "@/types/sceneState";
+import { useDeviceLayout } from "./WireframeCinematicContext";
 
 const NAV = ["Learn", "Courses", "Paths", "Progress", "Memory"] as const;
 
+const NAV_SHORT: Record<(typeof NAV)[number], string> = {
+  Learn: "Home",
+  Courses: "Courses",
+  Paths: "Paths",
+  Progress: "Progress",
+  Memory: "Memory",
+};
+
 export function LearnNavChrome({ state }: { state: SceneState }) {
   const active = state.learnNavActive ?? "Learn";
+  const ctxLayout = useDeviceLayout();
+  const isMobile = (state.deviceLayout ?? ctxLayout) === "mobile";
+
+  if (isMobile) {
+    return (
+      <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-100 shrink-0">
+        <div className="flex items-center gap-2">
+          <SudarLogoMark size={22} variant="on-light" />
+          <span className="text-[12px] font-semibold text-zinc-900">Sudar</span>
+        </div>
+        <div className="flex items-center gap-1.5 rounded-full bg-violet-100 px-2 py-1">
+          <span className="w-6 h-6 rounded-full bg-violet-600 text-[9px] text-white flex items-center justify-center font-medium">
+            MK
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-zinc-100">
@@ -38,5 +65,28 @@ export function LearnNavChrome({ state }: { state: SceneState }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** Bottom tab bar for mobile Learn screens (place after main content) */
+export function LearnMobileTabBar({ state }: { state: SceneState }) {
+  const active = state.learnNavActive ?? "Learn";
+  const ctxLayout = useDeviceLayout();
+  const isMobile = (state.deviceLayout ?? ctxLayout) === "mobile";
+  if (!isMobile) return null;
+
+  return (
+    <nav className="mt-auto pt-3 shrink-0 border-t border-zinc-100 flex justify-between gap-0.5">
+      {NAV.map((item) => (
+        <span
+          key={item}
+          className={`flex-1 text-center text-[8px] font-semibold py-2 rounded-lg ${
+            item === active ? "bg-violet-600 text-white" : "text-zinc-500"
+          }`}
+        >
+          {NAV_SHORT[item]}
+        </span>
+      ))}
+    </nav>
   );
 }

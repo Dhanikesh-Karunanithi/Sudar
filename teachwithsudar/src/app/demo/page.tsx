@@ -13,7 +13,7 @@ export default function DemoPage() {
     <ProseSection title="See Sudar in Action">
       <p className="text-lg text-foreground">
         Watch the Sudar product launch: a cinematic wireframe story with animated typography, cursor clicks, and a
-        full creator-to-learner narrative. Play and pause only — like a video.
+        full creator-to-learner narrative. Play and pause only, like a video.
       </p>
 
       <div className="mt-8 rounded-xl border border-primary/30 bg-primary/5 p-8">
@@ -44,7 +44,7 @@ export default function DemoPage() {
       </p>
       <ul className="mt-4 list-disc space-y-2 pl-6 text-foreground">
         <li>
-          <strong className="text-foreground">Content generation:</strong> Idea, business need, and document — not PDF-only.
+          <strong className="text-foreground">Content generation:</strong> Idea, business need, and document, not PDF-only.
         </li>
         <li>
           <strong className="text-foreground">Contextual tutor:</strong> Sudar references the lesson on screen; learner types a reply.

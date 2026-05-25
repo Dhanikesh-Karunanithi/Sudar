@@ -36,7 +36,7 @@ export const ecosystemChapters: DemoChapter[] = [
       },
       {
         title: "Learner delivery surface",
-        body: "Sudar Learn hosts courses, modalities, the tutor, and the Digital Learner Twin — every interaction feeds personalization.",
+        body: "Sudar Learn hosts courses, modalities, the tutor, and the Digital Learner Twin, every interaction feeds personalization.",
         scene: "ecosystem-map",
         hotspot: { x: 50, y: 38 },
         scenePatch: { ecosystemHighlight: "learn" },
@@ -64,21 +64,21 @@ export const ecosystemChapters: DemoChapter[] = [
       },
       {
         title: "Generate from an idea",
-        body: "A prompt is enough: fun office-management training in Michael Scott's voice — engaging, relatable, still rigorous.",
+        body: "A prompt is enough: fun office-management training in Michael Scott's voice, engaging, relatable, still rigorous.",
         scene: "studio-create-sources",
         hotspot: { x: 50, y: 48 },
         scenePatch: { generationSource: "idea", highlightId: "prompt" },
       },
       {
         title: "Anchor to business need",
-        body: "Sudar aligns objectives to operator goals — e.g. reduce manager escalations for new hire store managers.",
+        body: "Sudar aligns objectives to operator goals, e.g. reduce manager escalations for new hire store managers.",
         scene: "studio-create-sources",
         hotspot: { x: 72, y: 32 },
         scenePatch: { generationSource: "business" },
       },
       {
         title: "Instructional design blueprint",
-        body: "Outlines follow Bloom's levels, learning objectives, and archetypes — the same pipeline as production Studio generation.",
+        body: "Outlines follow Bloom's levels, learning objectives, and archetypes, the same pipeline as production Studio generation.",
         scene: "studio-id-blueprint",
         hotspot: { x: 78, y: 40 },
         scenePatch: { bloomLevel: "Apply" },
@@ -92,7 +92,7 @@ export const ecosystemChapters: DemoChapter[] = [
     steps: [
       {
         title: "Add text and video",
-        body: "Modules gain text, AI-generated video (SudarVid), and podcast audio — blocks appear as the creator builds.",
+        body: "Modules gain text, AI-generated video (SudarVid), and podcast audio, blocks appear as the creator builds.",
         scene: "studio-live-editor",
         hotspot: { x: 85, y: 72 },
         scenePatch: {
@@ -103,7 +103,7 @@ export const ecosystemChapters: DemoChapter[] = [
       },
       {
         title: "Audio and accordion",
-        body: "Listen on the go; expandable sections for depth — no second authoring pass.",
+        body: "Listen on the go; expandable sections for depth, no second authoring pass.",
         scene: "studio-live-editor",
         hotspot: { x: 85, y: 72 },
         scenePatch: {
@@ -130,14 +130,14 @@ export const ecosystemChapters: DemoChapter[] = [
     steps: [
       {
         title: "Cohort assignment",
-        body: "Mandatory paths and due dates for learner groups — adaptive welcome per cohort policy.",
+        body: "Mandatory paths and due dates for learner groups, adaptive welcome per cohort policy.",
         scene: "studio-settings",
         hotspot: { x: 50, y: 42 },
         scenePatch: { highlightId: "cohort" },
       },
       {
         title: "Individual learner context",
-        body: "Learners add background, goals, and how they learn best — injected into every Sudar conversation.",
+        body: "Learners add background, goals, and how they learn best, injected into every Sudar conversation.",
         scene: "learn-memory-rich",
         hotspot: { x: 50, y: 75 },
         scenePatch: { memoryHighlight: "context", learnNavActive: "Memory" },
@@ -157,14 +157,14 @@ export const ecosystemChapters: DemoChapter[] = [
     steps: [
       {
         title: "AI generation pipeline",
-        body: "Studio and Learn call Sudar Intelligence for outlines, tutor RAG, TTS, and adaptive scoring — not a bolt-on chatbot.",
+        body: "Studio and Learn call Sudar Intelligence for outlines, tutor RAG, TTS, and adaptive scoring, not a bolt-on chatbot.",
         scene: "intelligence-pipeline",
         hotspot: { x: 72, y: 38 },
         scenePatch: { highlightId: "generate" },
       },
       {
         title: "SudarVid · Watch",
-        body: "The Watch modality uses SudarVid: slide planning, image gen, TTS, and FFmpeg — learners see the same module in Read, Listen, or Watch.",
+        body: "The Watch modality uses SudarVid: slide planning, image gen, TTS, and FFmpeg, learners see the same module in Read, Listen, or Watch.",
         scene: "sudar-vid",
         hotspot: { x: 50, y: 35 },
       },
@@ -176,7 +176,7 @@ export const ecosystemChapters: DemoChapter[] = [
     steps: [
       {
         title: "Continue learning",
-        body: "Marcus opens Somehow I manage from his Learn dashboard — progress and memory banner visible.",
+        body: "Marcus opens Somehow I manage from his Learn dashboard, progress and memory banner visible.",
         scene: "learn-dashboard",
         hotspot: { x: 35, y: 48 },
         scenePatch: { highlightId: "continue", learnNavActive: "Learn" },
@@ -190,7 +190,7 @@ export const ecosystemChapters: DemoChapter[] = [
       },
       {
         title: "Interact with blocks",
-        body: "Accordion and flipcards in the same lesson — engaging without leaving the flow.",
+        body: "Accordion and flipcards in the same lesson, engaging without leaving the flow.",
         scene: "learn-course-rich",
         hotspot: { x: 40, y: 68 },
         scenePatch: {
@@ -207,13 +207,13 @@ export const ecosystemChapters: DemoChapter[] = [
     steps: [
       {
         title: "Contextual proactive help",
-        body: "Sudar references what's on screen — delegation in the video — before Marcus has to type.",
+        body: "Sudar references what's on screen, delegation in the video, before Marcus has to type.",
         scene: "learn-tutor-contextual",
         hotspot: { x: 78, y: 55 },
         scenePatch: {
           tutorMode: "proactive",
           tutorMessage:
-            "You paused on delegation in this scene — want a Dunder-style example, or the formal definition?",
+            "You paused on delegation in this scene. Want a Dunder-style example, or the formal definition?",
         },
       },
       {
@@ -223,13 +223,13 @@ export const ecosystemChapters: DemoChapter[] = [
         hotspot: { x: 75, y: 82 },
         scenePatch: {
           tutorMode: "learner-reply",
-          learnerDraft: "Dunder example please — keep it short",
+          learnerDraft: "Dunder example please. Keep it short",
         },
         callout: "Screen-aware · Non-judgmental",
       },
       {
         title: "Memory and uncertainty",
-        body: "My Memory shows concepts engaged and areas of uncertainty — AI-observed, read-only where appropriate.",
+        body: "My Memory shows concepts engaged and areas of uncertainty, AI-observed, read-only where appropriate.",
         scene: "learn-memory-rich",
         hotspot: { x: 50, y: 70 },
         scenePatch: { memoryHighlight: "uncertainty", learnNavActive: "Memory" },
@@ -255,7 +255,7 @@ export const ecosystemChapters: DemoChapter[] = [
     steps: [
       {
         title: "Notification sounds",
-        body: "Optional chimes for task complete, tutor reply, and celebrations — with quiet hours and reduced motion.",
+        body: "Optional chimes for task complete, tutor reply, and celebrations, with quiet hours and reduced motion.",
         scene: "learn-settings",
         hotspot: { x: 42, y: 42 },
         scenePatch: { highlightId: "sound-slider" },
@@ -282,7 +282,7 @@ export const ecosystemChapters: DemoChapter[] = [
       },
       {
         title: "Events to the Twin",
-        body: "SudarMemory posts completions and time-on-task to POST /api/alp/events — twin rollups stay in sync.",
+        body: "SudarMemory posts completions and time-on-task to POST /api/alp/events, twin rollups stay in sync.",
         scene: "alp-flow",
         hotspot: { x: 50, y: 50 },
       },
@@ -314,7 +314,7 @@ export const ecosystemChapters: DemoChapter[] = [
       },
       {
         title: "Trust documentation",
-        body: "Studio Governance links to docs/trust — data flows, subprocessors, and AI system register for procurement.",
+        body: "Studio Governance links to docs/trust, data flows, subprocessors, and AI system register for procurement.",
         scene: "studio-settings",
         hotspot: { x: 50, y: 72 },
         scenePatch: { settingsHighlightIndex: 3 },
@@ -327,7 +327,7 @@ export const ecosystemChapters: DemoChapter[] = [
     steps: [
       {
         title: "From idea to certified learner",
-        body: "Idea or document to rich course in Studio, personalized delivery in Learn, integrations via ALP and MCP — one ecosystem.",
+        body: "Idea or document to rich course in Studio, personalized delivery in Learn, integrations via ALP and MCP, one ecosystem.",
         scene: "ecosystem-map",
         action: "hover",
         hotspot: { x: 50, y: 50 },

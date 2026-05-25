@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { SudarLogoMark } from "@/components/brand/SudarLogoMark";
-import { useWireframeCinematic } from "./WireframeCinematicContext";
+import { useDeviceLayout, useWireframeCinematic } from "./WireframeCinematicContext";
 
 export type WireframeVariant = "studio" | "learn";
 
@@ -67,60 +67,75 @@ export function WireframeScreen({
   cinematic?: boolean;
   variant?: WireframeVariant;
 }) {
-  const cinematicCtx = useWireframeCinematic();
-  const cinematic = cinematicProp ?? cinematicCtx;
+  const cinematic = cinematicProp ?? useWireframeCinematic();
+  const deviceLayout = useDeviceLayout();
   const isLearn = variant === "learn";
+  const isMobile = deviceLayout === "mobile" && isLearn;
 
   return (
     <div
-      className={`w-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] ${
-        isLearn
-          ? "bg-white border border-zinc-200/80"
-          : "bg-[#0a0a0a] border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.4)]"
-      } ${cinematic ? "rounded-3xl overflow-hidden" : "rounded-2xl overflow-hidden"}`}
+      className={`h-full min-h-0 ${
+        isMobile
+          ? "w-full shadow-none border-0 bg-white"
+          : `shadow-[0_20px_50px_rgba(0,0,0,0.15)] ${
+              isLearn
+                ? "bg-white border border-zinc-200/80"
+                : "bg-[#0a0a0a] border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.4)]"
+            } ${cinematic ? "rounded-3xl overflow-hidden" : "rounded-2xl overflow-hidden"}`
+      }`}
     >
+      {!isMobile && (
+        <div
+          className={`flex items-center justify-between border-b ${
+            isLearn
+              ? "border-zinc-100 bg-zinc-50/80"
+              : "border-white/[0.06] bg-[#0b0b0b]"
+          } ${cinematic ? "px-5 py-4" : "px-4 py-3"}`}
+        >
+          <div className="flex items-center gap-2">
+            <span
+              className={`rounded-full ${isLearn ? "bg-zinc-300" : "bg-white/[0.10]"} ${
+                cinematic ? "w-2.5 h-2.5" : "w-2 h-2"
+              }`}
+            />
+            <span
+              className={`rounded-full ${isLearn ? "bg-zinc-300" : "bg-white/[0.10]"} ${
+                cinematic ? "w-2.5 h-2.5" : "w-2 h-2"
+              }`}
+            />
+            <span
+              className={`rounded-full ${isLearn ? "bg-zinc-300" : "bg-white/[0.10]"} ${
+                cinematic ? "w-2.5 h-2.5" : "w-2 h-2"
+              }`}
+            />
+          </div>
+          {label ? (
+            <span
+              className={`font-mono tracking-widest uppercase ${
+                isLearn ? "text-zinc-400" : "text-zinc-600"
+              } ${cinematic ? "text-[11px]" : "text-[10px]"}`}
+            >
+              {label}
+            </span>
+          ) : null}
+          <div className={`flex items-center gap-2 ${isLearn ? "opacity-90" : "opacity-[0.14]"}`}>
+            <SudarLogoMark
+              size={cinematic ? 28 : 22}
+              variant={isLearn ? "on-light" : "on-dark"}
+              className={pulse ? "animate-pulse" : undefined}
+            />
+          </div>
+        </div>
+      )}
       <div
-        className={`flex items-center justify-between border-b ${
-          isLearn
-            ? "border-zinc-100 bg-zinc-50/80"
-            : "border-white/[0.06] bg-[#0b0b0b]"
-        } ${cinematic ? "px-5 py-4" : "px-4 py-3"}`}
+        className={`${
+          isMobile
+            ? "px-3 pt-1 pb-2 flex-1 min-h-0 overflow-auto flex flex-col"
+            : cinematic
+              ? "p-5 sm:p-6 h-[min(58vh,520px)] overflow-auto flex flex-col"
+              : "p-4 sm:p-5 min-h-[280px]"
+        }`}
       >
-        <div className="flex items-center gap-2">
-          <span
-            className={`rounded-full ${isLearn ? "bg-zinc-300" : "bg-white/[0.10]"} ${
-              cinematic ? "w-2.5 h-2.5" : "w-2 h-2"
-            }`}
-          />
-          <span
-            className={`rounded-full ${isLearn ? "bg-zinc-300" : "bg-white/[0.10]"} ${
-              cinematic ? "w-2.5 h-2.5" : "w-2 h-2"
-            }`}
-          />
-          <span
-            className={`rounded-full ${isLearn ? "bg-zinc-300" : "bg-white/[0.10]"} ${
-              cinematic ? "w-2.5 h-2.5" : "w-2 h-2"
-            }`}
-          />
-        </div>
-        {label ? (
-          <span
-            className={`font-mono tracking-widest uppercase ${
-              isLearn ? "text-zinc-400" : "text-zinc-600"
-            } ${cinematic ? "text-[11px]" : "text-[10px]"}`}
-          >
-            {label}
-          </span>
-        ) : null}
-        <div className={`flex items-center gap-2 ${isLearn ? "opacity-90" : "opacity-[0.14]"}`}>
-          <SudarLogoMark
-            size={cinematic ? 28 : 22}
-            variant={isLearn ? "on-light" : "on-dark"}
-            className={pulse ? "animate-pulse" : undefined}
-          />
-        </div>
-      </div>
-      <div className={`${cinematic ? "p-5 sm:p-6 min-h-[280px]" : "p-4 sm:p-5 min-h-[280px]"}`}>
         {children}
       </div>
     </div>

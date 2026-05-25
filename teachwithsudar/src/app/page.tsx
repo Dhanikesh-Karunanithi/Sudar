@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { HeroSection } from "@/components/home/HeroSection";
+import { PlatformAtAGlance } from "@/components/home/PlatformAtAGlance";
 import { STUDIO_APP_URL, LEARN_APP_URL, GITHUB_URL } from "@/lib/site-nav";
 import * as React from "react";
 import {
@@ -9,14 +10,15 @@ import {
   type ModalityPreviewId,
   type ModalityPreviewMode,
 } from "@/components/home/ModalityPreviewPanel";
+import { SectionReveal } from "@/components/home/SectionReveal";
 
 // ─── Impact numbers ────────────────────────────────────────────────────────────
 
 function ImpactNumbers() {
   const stats = [
-    { value: "$370B", label: "spent on corporate training annually", sub: "Most of it doesn't transfer." },
-    { value: "15%", label: "average LMS course completion rate", sub: "The industry accepts this as normal." },
-    { value: "70%", label: "of new knowledge forgotten within 24h", sub: "Ebbinghaus, 1885. Still ignored." },
+    { value: "$370B", label: "spent on corporate training annually", sub: "Much of it never shows up on the job." },
+    { value: "15%", label: "average LMS course completion rate", sub: "A number teams have learned to expect." },
+    { value: "70%", label: "of new knowledge forgotten within 24h", sub: "Ebbinghaus measured this in 1885." },
   ];
 
   return (
@@ -67,26 +69,27 @@ function TheCrisis() {
 
           <div className="reveal space-y-6 text-lg text-zinc-400 font-light leading-relaxed" style={{ transitionDelay: "200ms" }}>
             <p>
-              Every major LMS — Moodle, Canvas, Blackboard — was built for content delivery, not learning. 
-              They serve the same module to every employee regardless of what they already know, how they prefer to learn, 
-              or where they dropped off last session. There is no memory. There is no adaptation. There is no intelligence.
+              Most LMS platforms (Moodle, Canvas, Blackboard) were built to host content and record completions.
+              The same module goes to every employee, whether they are new to the topic or not, and whether they
+              learn better from text, audio, or practice. Last session&apos;s struggles rarely shape what they see
+              next.
             </p>
             <p>
-              Meanwhile, decades of cognitive science have given us clear answers: spaced repetition fights forgetting, 
-              multimodal delivery improves retention, adaptive paths preserve motivation, and continuous feedback accelerates mastery. 
-              None of these principles are operationalized in the tools that companies actually use.
+              Learning science has been clearer for decades: review at intervals, offer more than one format, adjust
+              difficulty to prior knowledge, give feedback while people work. Those ideas are easy to describe and
+              hard to find in the tools most companies buy.
             </p>
             <p>
-              The result? <span className="text-white/80">Billions spent. Almost nothing learned.</span> Teams
-              who need real skills get checkbox compliance training. L&D managers who care deeply about their 
-              people are handed software from 2003 with a new coat of paint.
+              <span className="text-white/80">Training budgets grow; transfer often does not.</span> Teams that need
+              real skills get compliance checklists. L&D leads who want better outcomes spend their time fighting
+              software instead of improving courses.
             </p>
           </div>
 
           <div className="reveal mt-12 pt-10 border-t border-white/[0.06]" style={{ transitionDelay: "300ms" }}>
             <p className="text-xl sm:text-2xl text-white/70 font-serif italic leading-relaxed">
-              &ldquo;Sudar was built because the tools that exist are not good enough — 
-              and the science to build something better has existed for forty years.&rdquo;
+              &ldquo;We built Sudar because the category needed to catch up. The research has been there for a long
+              time.&rdquo;
             </p>
           </div>
 
@@ -112,9 +115,9 @@ function PlatformArchitecture() {
       number: "01",
       name: "Sudar Studio",
       verb: "Author",
-      tagline: "From raw knowledge to published course — in under ten minutes.",
+      tagline: "From a document or URL to a published course in under ten minutes.",
       description:
-        "Upload a PDF, paste a URL, or describe a topic. Studio's AI pipeline structures, writes, and designs a complete course across 14 visual templates. L&D managers, SMEs, and independent educators author world-class training without a production team.",
+        "Upload a PDF, paste a URL, or describe a topic. Studio drafts structure and copy across 14 templates so you can edit, approve, and publish without a separate design team.",
       features: ["AI course generation from any document", "14 professional visual templates", "SCORM & LMS export", "Org-wide governance & approval flows"],
       href: STUDIO_APP_URL,
       external: true,
@@ -126,7 +129,7 @@ function PlatformArchitecture() {
       verb: "Adapt",
       tagline: "The AI brain shared by Studio and Learn.",
       description:
-        "A FastAPI microservice that powers adaptive learning at scale. Maintains the Digital Learner Twin — a persistent, evolving model of every learner. Computes modality preferences, skill gaps, and next-best-action recommendations on every event.",
+        "A FastAPI service shared by Studio and Learn. It maintains the Digital Learner Twin (a persistent profile per person), scores modality fit and skill gaps, and returns next-best-action recommendations as events arrive.",
       features: ["Digital Learner Twin (persistent learner model)", "Adaptive content sequencing engine", "AI tutor with governed longitudinal memory (learner + org cadence)", "Real-time next-best-action inference"],
       href: "/features",
       external: false,
@@ -138,8 +141,8 @@ function PlatformArchitecture() {
       verb: "Deliver",
       tagline: "Every learner gets a tutor, a path, and seven ways to learn.",
       description:
-        "The learner-facing surface. Courses arrive in the format each individual learns best — text, video, audio, mind map, flashcards, TikTok-style feed, or interactive game. The AI tutor Sudar is always present, proactive, and remembers everything.",
-      features: ["7 adaptive learning modalities", "AI tutor 'Sudar' — reactive & proactive", "Mobile-first responsive experience", "Progress tracking & skill attestation"],
+        "Where learners take courses. They can switch between text, video, audio, mind map, flashcards, short-form feed, or game-style practice. Tutor Sudar answers questions, nudges when someone is stuck, and uses prior sessions as context.",
+      features: ["7 learning modalities", "Tutor Sudar with session memory", "Mobile-first layout", "Progress and skill tracking"],
       href: LEARN_APP_URL,
       external: true,
       accent: false,
@@ -159,8 +162,8 @@ function PlatformArchitecture() {
             <span className="italic font-light text-white/50">One learner model. Three surfaces.</span>
           </h2>
           <p className="mt-6 text-base sm:text-lg text-zinc-500 max-w-2xl mx-auto font-light">
-            Most platforms are a collection of disconnected tools. Sudar is a single system — 
-            every action in Studio informs Intelligence; every event in Learn updates the learner model.
+            Studio, Intelligence, and Learn share one database. What you publish in Studio and what learners do in
+            Learn both feed the same profile, so recommendations stay consistent.
           </p>
         </div>
 
@@ -283,7 +286,7 @@ function DigitalLearnerTwin() {
     { label: "Engagement Patterns", desc: "Session duration, replay rate, drop-off points, time-to-completion. Every interaction is a signal." },
     { label: "Skill Graph", desc: "What has been mastered? Where are the gaps? What prerequisite knowledge is missing?" },
     { label: "Cognitive Load Index", desc: "Is the learner being overwhelmed or under-challenged? Content complexity adjusts in real time." },
-    { label: "Session Memory", desc: "The AI tutor Sudar remembers every previous interaction — questions asked, misconceptions surfaced, progress made." },
+    { label: "Session Memory", desc: "Tutor Sudar can refer back to earlier questions, misconceptions, and progress instead of treating each visit as a first meeting." },
     { label: "Next Best Action", desc: "At the end of every session, Intelligence computes the single most valuable next step for this learner." },
   ];
 
@@ -306,23 +309,21 @@ function DigitalLearnerTwin() {
               </span>
             </div>
             <h2 className="reveal text-4xl sm:text-5xl font-serif font-medium text-white leading-[1.1] tracking-tight mb-8 text-balance" style={{ transitionDelay: "100ms" }}>
-              Every learner gets a permanent, evolving model of who they are.
+              A profile that updates as people actually learn.
             </h2>
             <div className="reveal space-y-5 text-base text-zinc-400 font-light leading-relaxed" style={{ transitionDelay: "200ms" }}>
               <p>
-                The <strong className="text-white/80 font-normal">Digital Learner Twin</strong> is the center of gravity in Sudar. 
-                Unlike traditional LMSs that track only completion status, Sudar builds a multi-dimensional, 
-                longitudinal model of every learner — accumulating signals across every session, 
-                every interaction, every moment of engagement or hesitation.
+                The <strong className="text-white/80 font-normal">Digital Learner Twin</strong> is Sudar&apos;s
+                per-learner record. It goes beyond a completion checkbox: modality use, time on task, quiz results,
+                tutor exchanges, and drop-off points accumulate over time.
               </p>
               <p>
-                This model is never shown to the learner in raw form. Instead, it silently powers every 
-                personalization decision: which modality to recommend next, when the AI tutor should proactively 
-                intervene, what content to surface or suppress, and when a learner is ready to be assessed.
+                Learners never see a raw dashboard of scores. The twin sits behind routing (which modality to suggest),
+                when the tutor should check in, which module to surface next, and when someone looks ready for an
+                assessment.
               </p>
               <p>
-                The result is an experience that feels impossibly personal — as if a brilliant tutor has been 
-                studying this particular human for months.
+                The goal is practical: fewer generic paths, more responses that fit what this person has already done.
               </p>
             </div>
             <div className="reveal mt-10" style={{ transitionDelay: "300ms" }}>
@@ -352,12 +353,156 @@ function DigitalLearnerTwin() {
             <div className="mt-4 p-4 rounded-xl border border-[#FF4500]/10 bg-[#FF4500]/[0.03] flex items-start gap-3">
               <span className="w-1.5 h-1.5 rounded-full bg-[#FF4500]/60 flex-shrink-0 mt-1.5" />
               <p className="text-xs text-zinc-500 leading-relaxed">
-                All learner data is stored in Supabase with row-level security. 
-                No data is used to train external AI models. 
-                Self-hosters maintain full data sovereignty.
+                Twin data stays in infrastructure you control, your database, your region, your
+                retention policies. Sudar is built for data sovereignty: self-host in your tenant,
+                choose your AI providers, and keep learner records where your organisation requires
+                them.
               </p>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Trust & guardrails ────────────────────────────────────────────────────────
+
+function TrustAndGuardrails() {
+  const pillars = [
+    {
+      title: "Safety",
+      summary: "AI that stays inside the course, with guardrails operators can see and tune.",
+      points: [
+        "Sensitive-input checks on tutor and generation routes before content reaches a model.",
+        "Tutor Sudar is RAG-bound to published course material, not the open web.",
+        "Org governance in Studio: memory cadence, personalization limits, and approval flows.",
+        "Proactive nudges are designed to help, not pressure; configurable per deployment.",
+      ],
+    },
+    {
+      title: "Privacy",
+      summary: "Tenant-scoped by default. Learner context is collected for learning, not resale.",
+      points: [
+        "Organisation-scoped data, no cross-tenant reads in the reference architecture.",
+        "Learners can review surfaced context, adjust preferences, and opt out of tutor memory.",
+        "You choose cloud inference or private/self-hosted model endpoints.",
+        "Sudar does not sell learner profiles; deployers control subprocessors and API keys.",
+      ],
+    },
+    {
+      title: "Security",
+      summary: "Hardening you can audit, especially when you self-host.",
+      points: [
+        "Role-aware access and row-level isolation in the reference Postgres stack.",
+        "Fail-closed scheduled jobs, dedicated signing secrets, and SSRF-resistant ingestion.",
+        "SCORM, embed, and media proxies enforce ownership before privileged access.",
+        "Technical trust pack in the repo: threat model, data flows, and operator checklists.",
+      ],
+    },
+    {
+      title: "Compliance & rights",
+      summary: "Built for teams who must answer GDPR, FERPA, and UK GDPR questions.",
+      points: [
+        "Deployer remains data controller; Sudar supplies software and documented flows.",
+        "Support for access, correction, export, and erasure workflows (policy-driven retention).",
+        "Subprocessor transparency, hosting, email, and model vendors are your choices.",
+        "Governance surfaces in Studio link operators to the evidence procurement needs.",
+      ],
+    },
+  ];
+
+  return (
+    <section
+      className="py-24 sm:py-32 md:py-40 bg-[#080808] border-y border-white/[0.04]"
+      aria-label="Trust, safety, and data sovereignty"
+    >
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="reveal max-w-3xl">
+          <span className="text-[10px] tracking-[0.35em] text-[#FF4500]/60 uppercase font-mono">
+            Trust &amp; guardrails
+          </span>
+          <h2 className="mt-4 text-4xl sm:text-5xl font-serif font-medium text-white leading-[1.1] tracking-tight text-balance">
+            Your data. Your infrastructure.
+            <br />
+            <span className="italic font-light text-white/50">Your learners&apos; rights.</span>
+          </h2>
+          <p className="mt-5 text-base text-zinc-500 max-w-2xl font-light leading-relaxed">
+            Sudar&apos;s reference stack runs on Postgres with tenant isolation, but the principle
+            is broader: learning records should live where{" "}
+            <strong className="font-normal text-white/70">you</strong> choose, your cloud
+            account, your VPC, your region, with policies your legal team can defend.
+          </p>
+        </div>
+
+        <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-5">
+          {pillars.map((pillar, i) => (
+            <div
+              key={pillar.title}
+              className="reveal rounded-2xl border border-white/[0.06] bg-[#0d0d0d] p-7 sm:p-8"
+              style={{ transitionDelay: `${i * 80}ms` }}
+            >
+              <p className="text-[10px] font-mono uppercase tracking-[0.32em] text-[#FF4500]/55">
+                {pillar.title}
+              </p>
+              <p className="mt-3 text-sm text-white/80 leading-relaxed">{pillar.summary}</p>
+              <ul className="mt-5 space-y-3">
+                {pillar.points.map((point) => (
+                  <li key={point} className="flex items-start gap-3 text-xs text-zinc-500 leading-relaxed">
+                    <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-[#FF4500]/50" />
+                    {point}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div
+          className="reveal mt-8 rounded-2xl border border-[#FF4500]/15 bg-[#FF4500]/[0.04] p-8 sm:p-10"
+          style={{ transitionDelay: "320ms" }}
+        >
+          <p className="text-[10px] font-mono uppercase tracking-[0.35em] text-[#FF4500]/70">
+            Long-term alignment
+          </p>
+          <p className="mt-4 text-xl sm:text-2xl font-serif font-medium text-white leading-snug text-balance">
+            Learning data exists to serve the learner, not to enrich a vendor&apos;s model or ad
+            business.
+          </p>
+          <div className="mt-6 space-y-4 text-sm text-zinc-400 font-light leading-relaxed max-w-3xl">
+            <p>
+              Sudar does not claim ownership of learner profiles, tutor conversations, or progress
+              records. The Digital Learner Twin is a tool for better teaching, not a data asset for
+              Sudar or your organisation to monetise without the learner&apos;s knowledge and
+              consent.
+            </p>
+            <p>
+              We publish the trust pack and source code so institutions can verify behaviour instead
+              of trusting marketing slides. Product direction stays anchored to learner agency:
+              portable records, minimal necessary inference, and governance defaults that favour
+              privacy over surveillance.
+            </p>
+          </div>
+        </div>
+
+        <div className="reveal mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm">
+          <Link href="/privacy" className="text-[#FF4500]/80 hover:text-[#FF4500] font-medium transition-colors">
+            Privacy Policy →
+          </Link>
+          <Link href="/help/studio" className="text-zinc-500 hover:text-zinc-300 transition-colors">
+            Studio help &amp; governance →
+          </Link>
+          <Link href="/faq" className="text-zinc-500 hover:text-zinc-300 transition-colors">
+            FAQ: privacy &amp; GDPR →
+          </Link>
+          <a
+            href={`${GITHUB_URL}/tree/main/docs/trust`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
+            Trust pack (docs/trust) →
+          </a>
         </div>
       </div>
     </section>
@@ -432,7 +577,7 @@ function Modalities() {
       id: "SudarFeed",
       name: "SudarFeed",
       tag: "Microlearning",
-      desc: "Vertical short-form content — the TikTok-style learning feed. Bite-sized lessons for high engagement.",
+      desc: "Short vertical clips in a scrollable feed. Useful when learners want small chunks instead of a long module.",
     },
     {
       icon: (
@@ -474,7 +619,7 @@ function Modalities() {
   }, [activeId, close]);
 
   return (
-    <section className="py-24 sm:py-32 bg-[#060606]" aria-label="Learning modalities">
+    <section id="modalities" className="py-24 sm:py-32 bg-[#060606]" aria-label="Learning modalities">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="reveal text-center mb-14 sm:mb-18">
           <span className="text-[10px] tracking-[0.35em] text-[#FF4500]/60 uppercase font-mono">
@@ -484,60 +629,62 @@ function Modalities() {
             One course. Seven ways to experience it.
           </h2>
           <p className="mt-5 text-base text-zinc-500 max-w-xl mx-auto font-light leading-relaxed">
-            Author your course once in Studio. Sudar Intelligence renders it in every modality — 
-            automatically. No re-authoring. No duplication. No extra cost.
+            Write the course once in Studio. Intelligence can render the same material as text, audio, video,
+            cards, and more without maintaining separate copies for each format.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {modes.map((m, i) => (
-            <button
-              key={m.name}
-              type="button"
-              onClick={() => setActiveId((cur) => (cur === m.id ? null : m.id))}
-              className={`reveal group p-6 rounded-2xl border bg-[#0d0d0d] hover:bg-[#111] transition-all duration-400 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4500]/50 ${
-                activeId === m.id ? "border-[#FF4500]/25" : "border-white/[0.05] hover:border-white/[0.10]"
-              }`}
-              style={{ transitionDelay: `${(i % 4) * 80}ms` }}
-              aria-expanded={activeId === m.id}
-              aria-controls="modality-preview-overlay"
-              aria-label={`${activeId === m.id ? "Close" : "Open"} ${m.name} preview`}
-            >
-              <div className="flex items-start justify-between mb-5">
-                <div className="w-9 h-9 rounded-xl bg-white/[0.04] flex items-center justify-center text-[#FF4500]/70 group-hover:text-[#FF4500] group-hover:bg-[#FF4500]/[0.08] transition-all duration-300">
-                  {m.icon}
+            <SectionReveal key={m.name} delay={(i % 4) * 0.08} className="h-full">
+              <button
+                type="button"
+                onClick={() => setActiveId((cur) => (cur === m.id ? null : m.id))}
+                className={`group h-full w-full p-6 rounded-2xl border bg-[#0d0d0d] hover:bg-[#111] transition-all duration-400 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4500]/50 ${
+                  activeId === m.id ? "border-[#FF4500]/25" : "border-white/[0.05] hover:border-white/[0.10]"
+                }`}
+                aria-expanded={activeId === m.id}
+                aria-controls="modality-preview-overlay"
+                aria-label={`${activeId === m.id ? "Close" : "Open"} ${m.name} preview`}
+              >
+                <div className="flex items-start justify-between mb-5">
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.04] flex items-center justify-center text-[#FF4500]/70 group-hover:text-[#FF4500] group-hover:bg-[#FF4500]/[0.08] transition-all duration-300">
+                    {m.icon}
+                  </div>
+                  <span className="text-[9px] font-mono tracking-widest text-zinc-700 border border-white/[0.05] px-2 py-0.5 rounded-full">
+                    {m.tag}
+                  </span>
                 </div>
-                <span className="text-[9px] font-mono tracking-widest text-zinc-700 border border-white/[0.05] px-2 py-0.5 rounded-full">
-                  {m.tag}
-                </span>
-              </div>
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-sm font-medium text-white/90 mb-2">{m.name}</h3>
-                <span
-                  className={`mt-0.5 inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-mono tracking-widest transition-colors ${
-                    activeId === m.id
-                      ? "border-[#FF4500]/20 bg-[#FF4500]/[0.05] text-[#FF4500]/70"
-                      : "border-white/[0.06] bg-white/[0.02] text-zinc-700 group-hover:text-zinc-600"
-                  }`}
-                >
-                  Preview
-                </span>
-              </div>
-              <p className="text-xs text-zinc-600 leading-relaxed group-hover:text-zinc-500 transition-colors">
-                {m.desc}
-              </p>
-            </button>
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-sm font-medium text-white/90 mb-2">{m.name}</h3>
+                  <span
+                    className={`mt-0.5 inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-mono tracking-widest transition-colors ${
+                      activeId === m.id
+                        ? "border-[#FF4500]/20 bg-[#FF4500]/[0.05] text-[#FF4500]/70"
+                        : "border-white/[0.06] bg-white/[0.02] text-zinc-700 group-hover:text-zinc-600"
+                    }`}
+                  >
+                    Preview
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-600 leading-relaxed group-hover:text-zinc-500 transition-colors">
+                  {m.desc}
+                </p>
+              </button>
+            </SectionReveal>
           ))}
 
           {/* "And more" placeholder */}
-          <div className="reveal group p-6 rounded-2xl border border-dashed border-white/[0.05] flex flex-col items-center justify-center text-center gap-3 min-h-[160px]" style={{ transitionDelay: "560ms" }}>
-            <Link
-              href="/modalities"
-              className="text-xs text-zinc-600 hover:text-[#FF4500]/70 transition-colors font-mono tracking-wide"
-            >
-              Explore all modalities →
-            </Link>
-          </div>
+          <SectionReveal delay={0.56} className="h-full">
+            <div className="group h-full p-6 rounded-2xl border border-dashed border-white/[0.05] flex flex-col items-center justify-center text-center gap-3 min-h-[160px]">
+              <Link
+                href="/modalities"
+                className="text-xs text-zinc-600 hover:text-[#FF4500]/70 transition-colors font-mono tracking-wide"
+              >
+                Explore all modalities →
+              </Link>
+            </div>
+          </SectionReveal>
         </div>
 
         <ModalityPreviewPanel active={active} onClose={close} />
@@ -555,38 +702,68 @@ function ResearchFoundation() {
       author: "Hermann Ebbinghaus",
       year: "1885",
       journal: "Über das Gedächtnis",
+      era: "Foundation",
       finding:
-        "Without reinforcement, learners forget 70% of new information within 24 hours. Sudar's flashcard engine and spaced repetition scheduling directly counter this effect.",
+        "Without reinforcement, learners forget most new information within days — a pattern replicated for over a century. Spaced review is the standard countermeasure.",
       how: "Spaced repetition in Flashcards & Adaptive Sequencing",
-    },
-    {
-      theory: "Cognitive Load Theory",
-      author: "John Sweller",
-      year: "1988",
-      journal: "Cognitive Science, 12(2)",
-      finding:
-        "Working memory has strict capacity limits. Effective instruction must respect cognitive bandwidth. Overburdening learners with irrelevant complexity impairs learning.",
-      how: "Cognitive Load Index in the Digital Learner Twin",
     },
     {
       theory: "Multimedia Learning",
       author: "Richard E. Mayer",
-      year: "2001",
-      journal: "Cambridge University Press",
+      year: "2009",
+      journal: "Multimedia Learning, 2nd ed.",
+      era: "Foundation",
       finding:
-        "People learn more deeply from words and pictures together than from words alone. Different learners achieve deeper understanding through different channel combinations.",
+        "People learn more deeply when words and visuals work together than from text alone. Learners differ in which channel combinations help them encode material.",
       how: "Seven adaptive modalities per course",
     },
     {
-      theory: "Self-Determination Theory",
-      author: "Deci & Ryan",
-      year: "1985",
-      journal: "Plenum Press",
+      theory: "Testing Effect",
+      author: "Roediger & Karpicke",
+      year: "2006",
+      journal: "Psychological Science, 17(3)",
+      era: "Modern validation",
       finding:
-        "Intrinsic motivation — driven by autonomy, competence, and relatedness — produces more durable behavioral change than extrinsic rewards and compliance pressure.",
-      how: "Adaptive paths that preserve learner autonomy",
+        "Retrieval practice — answering questions, not just re-reading — strengthens long-term retention more than passive review alone.",
+      how: "In-module quizzes, flashcards, and struggle signals in the Digital Learner Twin",
+    },
+    {
+      theory: "Intelligent Tutoring Systems",
+      author: "Kurt VanLehn",
+      year: "2011",
+      journal: "Educational Psychologist, 46(4)",
+      era: "Modern validation",
+      finding:
+        "Meta-analysis shows adaptive tutoring and ITS approaches outperform fixed classroom instruction — the gap mainstream LMS products still leave open.",
+      how: "Adaptive sequencing, Next Best Action, and the AI tutor sidebar",
+    },
+    {
+      theory: "AI-Augmented Textbooks",
+      author: "LearnLM Team (Google)",
+      year: "2025",
+      journal: "arXiv:2509.13348",
+      era: "AI era",
+      finding:
+        "Personalised, multimodal views of the same source material (text, slides, audio, mind maps) with formative checks improved learning in a randomised trial.",
+      how: "Author once, deliver in text, video, audio, mind map, flashcards, and more",
+    },
+    {
+      theory: "Memory-Aware AI Tutoring",
+      author: "Liu et al. (AgentTutor)",
+      year: "2026",
+      journal: "arXiv:2601.04219",
+      era: "AI era",
+      finding:
+        "Multi-turn tutoring with knowledge memory and strategy adjustment beats stateless chat — yet most LLM tutors still reset every session.",
+      how: "Cross-session tutor memory in ai_tutor_context and consent-governed learner model updates",
     },
   ];
+
+  const eraBadgeClass: Record<(typeof citations)[number]["era"], string> = {
+    Foundation: "text-zinc-500 border-white/10 bg-white/[0.03]",
+    "Modern validation": "text-zinc-400 border-white/15 bg-white/[0.05]",
+    "AI era": "text-[#FF4500]/70 border-[#FF4500]/20 bg-[#FF4500]/[0.06]",
+  };
 
   return (
     <section className="py-24 sm:py-32 md:py-40" aria-label="Research foundation">
@@ -596,14 +773,13 @@ function ResearchFoundation() {
             Research Foundation
           </span>
           <h2 className="mt-4 text-4xl sm:text-5xl font-serif font-medium text-white leading-[1.1] tracking-tight max-w-3xl text-balance">
-            Not built on vibes.
+            Grounded in published research.
             <br />
-            <span className="italic font-light text-white/50">Built on sixty years of science.</span>
+            <span className="italic font-light text-white/50">Mapped to product choices you can inspect.</span>
           </h2>
           <p className="mt-5 text-base text-zinc-500 max-w-2xl font-light leading-relaxed">
-            Every design decision in Sudar traces back to peer-reviewed research in cognitive science, 
-            educational psychology, and instructional design. This is not a chatbot with a course wrapper. 
-            It is a principled system.
+            Durable foundations from Ebbinghaus and Mayer, modern validation from retrieval practice and tutoring
+            meta-analyses, and 2020s AI-era trials — each mapped to a feature you can inspect in the open codebase.
           </p>
         </div>
 
@@ -621,8 +797,10 @@ function ResearchFoundation() {
                     {c.author} · {c.year} · <em className="not-italic text-zinc-700">{c.journal}</em>
                   </p>
                 </div>
-                <span className="text-[10px] font-mono tracking-widest text-[#FF4500]/50 border border-[#FF4500]/15 bg-[#FF4500]/[0.04] px-2.5 py-1 rounded-full flex-shrink-0 whitespace-nowrap">
-                  {c.year}
+                <span
+                  className={`text-[10px] font-mono tracking-widest border px-2.5 py-1 rounded-full flex-shrink-0 whitespace-nowrap ${eraBadgeClass[c.era]}`}
+                >
+                  {c.era} · {c.year}
                 </span>
               </div>
               <div className="citation-line mb-5" />
@@ -676,14 +854,14 @@ function OpenByDesign() {
             </h2>
             <div className="reveal space-y-5 text-base text-zinc-400 font-light leading-relaxed" style={{ transitionDelay: "200ms" }}>
               <p>
-                Sudar is open source under the Apache License, Version 2.0, and designed to deploy on free infrastructure. 
-                Vercel handles the Next.js apps. Railway runs the Python intelligence service. 
-                Supabase provides the database. Your total hosting cost: <strong className="text-white/80 font-normal">$0</strong> for teams under generous free tiers.
+                Sudar is Apache-2.0 and designed to run on infrastructure you choose: common free tiers for the
+                Next.js apps and Intelligence, plus a Postgres-compatible database in your account or VPC. Many teams
+                can host for{" "}
+                <strong className="text-white/80 font-normal">$0</strong> before they outgrow hobby limits.
               </p>
               <p>
-                We chose openness because we believe educational technology should be inspectable, 
-                forkable, and improvable by the people who use it. Every algorithm that shapes a 
-                learner&rsquo;s experience is in the open. No black boxes.
+                You can read the code that scores learners, routes modalities, and powers the tutor. Fork it, audit
+                it, or patch it for your org without negotiating a proprietary roadmap.
               </p>
             </div>
 
@@ -715,11 +893,11 @@ function OpenByDesign() {
                 Manifesto
               </p>
               {[
-                "Every learner is different. One-size-fits-all is a failure of imagination.",
-                "The science of learning is settled. The technology is not.",
-                "Open-source tools can be better than expensive enterprise software.",
-                "An AI that remembers you is not a chatbot. It is a tutor.",
-                "The future of corporate training is adaptive, personal, and remembers you.",
+                "Learners differ. Defaulting everyone to the same path is a design choice, not a law of nature.",
+                "The research on how people learn is extensive. Most products still ship as if it were not.",
+                "Source code you can read beats black-box claims about personalization.",
+                "A tutor that keeps context across sessions behaves differently from a one-off chat window.",
+                "Corporate training works better when it adapts to the person, not only the compliance deadline.",
               ].map((line, i) => (
                 <div key={i} className="flex items-start gap-4">
                   <span className="text-[#FF4500]/40 font-mono text-xs mt-0.5 flex-shrink-0 w-5">
@@ -761,8 +939,8 @@ function ClosingCTA() {
           <span className="italic font-light text-white/50">than what they&rsquo;re getting.</span>
         </h2>
         <p className="reveal text-base sm:text-lg text-zinc-500 max-w-xl mx-auto mb-12 font-light leading-relaxed" style={{ transitionDelay: "200ms" }}>
-          Start with Sudar Studio — free, no card required. Build your first course 
-          in ten minutes and see why adaptive learning is different.
+          Open Sudar Studio (free, no card). Publish a first course from a document or URL and walk through it in
+          Learn to see how the tutor and modalities behave.
         </p>
 
         <div className="reveal flex flex-col sm:flex-row items-center justify-center gap-4 mb-16" style={{ transitionDelay: "300ms" }}>
@@ -772,7 +950,7 @@ function ClosingCTA() {
             rel="noopener noreferrer"
             className="group inline-flex items-center gap-2.5 bg-[#FF4500] hover:bg-[#FF5722] text-white font-medium px-10 py-4 rounded-full transition-all duration-300 text-sm tracking-wide shadow-[0_0_40px_rgba(255,69,0,0.30)] hover:shadow-[0_0_60px_rgba(255,69,0,0.50)]"
           >
-            Start building — it&rsquo;s free
+            Start building (free)
             <svg
               className="w-4 h-4 group-hover:translate-x-0.5 transition-transform"
               fill="none"
@@ -794,6 +972,7 @@ function ClosingCTA() {
 
         <div className="reveal flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[10px] text-zinc-700 font-mono tracking-widest uppercase" style={{ transitionDelay: "400ms" }}>
           <Link href="/features" className="hover:text-zinc-400 transition-colors">Features</Link>
+          <Link href="/guides" className="hover:text-zinc-400 transition-colors">Guides</Link>
           <Link href="/research" className="hover:text-zinc-400 transition-colors">Research</Link>
           <Link href="/alp" className="hover:text-zinc-400 transition-colors">ALP Plugin</Link>
           <Link href="/compare" className="hover:text-zinc-400 transition-colors">Compare</Link>
@@ -814,7 +993,9 @@ export default function HomePage() {
       <ImpactNumbers />
       <TheCrisis />
       <PlatformArchitecture />
+      <PlatformAtAGlance />
       <DigitalLearnerTwin />
+      <TrustAndGuardrails />
       <Modalities />
       <ResearchFoundation />
       <OpenByDesign />

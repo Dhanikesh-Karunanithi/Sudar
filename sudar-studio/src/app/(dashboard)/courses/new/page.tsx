@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, BookOpen, Sparkles, LayoutList, CheckCircle2, Package, FileText, Upload, Loader2, Bell } from 'lucide-react'
+import { ArrowLeft, BookOpen, Sparkles, LayoutList, CheckCircle2, Package, FileText, Upload, Loader2, Bell, Volume2 } from 'lucide-react'
 import { SudarInlineLoader, SudarBrandLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
 import { useBrowserCompletionNotification } from '@/hooks/useBrowserCompletionNotification'
@@ -41,6 +41,11 @@ export default function NewCoursePage() {
   const {
     notifyWhenReady,
     toggleNotifyWhenReady,
+    soundWhenReady,
+    toggleSoundWhenReady,
+    soundVolume,
+    updateSoundVolume,
+    previewTaskCompleteSound,
     notifyCourseReady,
     notifyCourseFailed,
     notificationsMissingApi,
@@ -101,39 +106,83 @@ export default function NewCoursePage() {
 
   function notifyWhenReadyCheckbox(className?: string) {
     return (
-      <div className={cn('rounded-lg border border-slate-700/80 bg-slate-800/40 px-3.5 py-3', className)}>
-        <label className="flex cursor-pointer items-start gap-3 text-left">
-          <input
-            type="checkbox"
-            checked={notifyWhenReady}
-            onChange={(e) => void toggleNotifyWhenReady(e.target.checked)}
-            disabled={notificationsUnavailable}
-            className="mt-0.5 rounded border-slate-600 bg-slate-800 text-violet-600 focus:ring-violet-500/30 disabled:opacity-40"
-            aria-label="Notify me in the browser when generation finishes"
-          />
-          <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-2 text-sm font-medium text-slate-200">
-              <Bell className="h-4 w-4 shrink-0 text-violet-400" aria-hidden />
-              Notify me when the course is ready
-            </span>
-            <span className="mt-1 block text-xs text-slate-500">
-              Uses your browser’s permission to show a normal system notification when generation finishes (like other sites), so you can switch tabs or work elsewhere.
-            </span>
-            {notificationsNeedSecurePage && (
-              <span className="mt-2 block text-xs text-amber-400/90">
-                Open Sudar Studio over HTTPS or localhost so the browser can show notifications.
+      <div className={cn('space-y-3', className)}>
+        <div className="rounded-lg border border-slate-700/80 bg-slate-800/40 px-3.5 py-3">
+          <label className="flex cursor-pointer items-start gap-3 text-left">
+            <input
+              type="checkbox"
+              checked={notifyWhenReady}
+              onChange={(e) => void toggleNotifyWhenReady(e.target.checked)}
+              disabled={notificationsUnavailable}
+              className="mt-0.5 rounded border-slate-600 bg-slate-800 text-violet-600 focus:ring-violet-500/30 disabled:opacity-40"
+              aria-label="Notify me in the browser when generation finishes"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-2 text-sm font-medium text-slate-200">
+                <Bell className="h-4 w-4 shrink-0 text-violet-400" aria-hidden />
+                Notify me when the course is ready
               </span>
-            )}
-            {notificationPermissionDenied && (
-              <span className="mt-2 block text-xs text-amber-400/90">
-                Notifications are blocked for this site. Enable them in your browser settings to use this option.
+              <span className="mt-1 block text-xs text-slate-500">
+                Uses your browser’s permission to show a normal system notification when generation finishes (like other sites), so you can switch tabs or work elsewhere.
               </span>
-            )}
-            {notificationsMissingApi && (
-              <span className="mt-2 block text-xs text-slate-500">This browser does not support notifications.</span>
-            )}
-          </span>
-        </label>
+              {notificationsNeedSecurePage && (
+                <span className="mt-2 block text-xs text-amber-400/90">
+                  Open Sudar Studio over HTTPS or localhost so the browser can show notifications.
+                </span>
+              )}
+              {notificationPermissionDenied && (
+                <span className="mt-2 block text-xs text-amber-400/90">
+                  Notifications are blocked for this site. Enable them in your browser settings to use this option.
+                </span>
+              )}
+              {notificationsMissingApi && (
+                <span className="mt-2 block text-xs text-slate-500">This browser does not support notifications.</span>
+              )}
+            </span>
+          </label>
+        </div>
+        <div className="rounded-lg border border-slate-700/80 bg-slate-800/40 px-3.5 py-3">
+          <label className="flex cursor-pointer items-start gap-3 text-left">
+            <input
+              type="checkbox"
+              checked={soundWhenReady}
+              onChange={(e) => toggleSoundWhenReady(e.target.checked)}
+              className="mt-0.5 rounded border-slate-600 bg-slate-800 text-violet-600 focus:ring-violet-500/30"
+              aria-label="Play a subtle chime when generation finishes"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-2 text-sm font-medium text-slate-200">
+                <Volume2 className="h-4 w-4 shrink-0 text-violet-400" aria-hidden />
+                Play a chime when the course is ready
+              </span>
+              <span className="mt-1 block text-xs text-slate-500">
+                Soft in-tab sound while Sudar Studio is open (separate from system notifications).
+              </span>
+              {soundWhenReady && (
+                <div className="mt-3 space-y-2">
+                  <label className="block text-xs text-slate-400">
+                    Volume ({soundVolume}%)
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={soundVolume}
+                      onChange={(e) => updateSoundVolume(Number(e.target.value))}
+                      className="mt-1 w-full"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => previewTaskCompleteSound()}
+                    className="text-xs rounded-md border border-slate-600 px-2 py-1 text-slate-300 hover:bg-slate-700/50"
+                  >
+                    Preview chime
+                  </button>
+                </div>
+              )}
+            </span>
+          </label>
+        </div>
       </div>
     )
   }

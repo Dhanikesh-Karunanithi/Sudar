@@ -1,7 +1,8 @@
 /**
  * Studio BFF: admin_team Sudar Agent runs → Intelligence gateway.
  */
-import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { getRequestSession } from '@/lib/auth/requestSession'
 import { requireOrgAdmin } from '@/lib/org'
 import { resolveSudarAgentsFromOrgSettings } from '../../../../../../shared/sudarAgentsOrgSettings'
 import { sudarIntelligenceBaseUrl } from '@/lib/intelligence/baseUrl'
@@ -16,24 +17,16 @@ const bodySchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await getRequestSession(request)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { user } = session
 
   let orgId: string
   try {
     orgId = await requireOrgAdmin(user.id)
   } catch {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  if (!session?.access_token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const parsed = bodySchema.safeParse(await request.json().catch(() => ({})))
@@ -66,7 +59,7 @@ export async function POST(request: NextRequest) {
   }
 
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${session.access_token}`,
+    Authorization: `Bearer ${session.accessToken}`,
     'Content-Type': 'application/json',
   }
 

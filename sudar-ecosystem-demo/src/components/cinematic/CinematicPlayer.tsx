@@ -12,6 +12,11 @@ import {
   type SceneFrame,
 } from "@/data/launchDemo";
 import { resumeAudioContext } from "@/lib/cinematicAudio";
+import {
+  CINEMATIC_PLAYBACK_RATE,
+  effectiveFrameDurationMs,
+} from "@/lib/cinematicPlayback";
+import { MobileDeviceFrame } from "./MobileDeviceFrame";
 import { CinematicBackdrop } from "./CinematicBackdrop";
 import { Scene3DStage } from "./Scene3DStage";
 import { TitleCard } from "./TitleCard";
@@ -44,10 +49,15 @@ export function CinematicPlayer({ autoPlay = true }: CinematicPlayerProps) {
     [frameIndex]
   );
 
+  const effectiveTotalMs = totalLaunchDurationMs / CINEMATIC_PLAYBACK_RATE;
+
   const progressWithCurrent = useMemo(() => {
     if (!frame) return 0;
-    return ((elapsedBeforeMs + frame.durationMs * 0.5) / totalLaunchDurationMs) * 100;
-  }, [elapsedBeforeMs, frame]);
+    const elapsedEffective =
+      elapsedBeforeMs / CINEMATIC_PLAYBACK_RATE +
+      effectiveFrameDurationMs(frame.durationMs) * 0.5;
+    return (elapsedEffective / effectiveTotalMs) * 100;
+  }, [elapsedBeforeMs, frame, effectiveTotalMs]);
 
   const showControls = useCallback(() => {
     setControlsVisible(true);
@@ -87,7 +97,7 @@ export function CinematicPlayer({ autoPlay = true }: CinematicPlayerProps) {
     if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
     if (!playing || !frame) return;
 
-    advanceTimerRef.current = setTimeout(advance, frame.durationMs);
+    advanceTimerRef.current = setTimeout(advance, effectiveFrameDurationMs(frame.durationMs));
     return () => {
       if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
     };
@@ -157,15 +167,30 @@ export function CinematicPlayer({ autoPlay = true }: CinematicPlayerProps) {
 
 function SceneFrameView({ frame, frameKey }: { frame: SceneFrame; frameKey: string }) {
   const sceneState = mergeLaunchSceneState(frame);
+  const isMobile = sceneState.deviceLayout === "mobile";
+
+  const wireframe = (
+    <div className={`relative ${isMobile ? "h-full min-h-0 w-full" : "w-full"}`}>
+      <WireframeScene id={frame.scene} state={sceneState} cinematic />
+      <DemoCursor hotspot={frame.hotspot} action={frame.action} stepKey={frameKey} />
+    </div>
+  );
 
   return (
     <div className="absolute inset-0 flex flex-col overflow-visible">
-      <div className="relative flex-1 min-h-0 pt-[3vh] sm:pt-[5vh] pb-[4vh] overflow-visible">
-        <Scene3DStage frameKey={frameKey}>
-          <div className="relative w-full">
-            <WireframeScene id={frame.scene} state={sceneState} cinematic />
-            <DemoCursor hotspot={frame.hotspot} action={frame.action} stepKey={frameKey} />
-          </div>
+      <div
+        className={`relative flex-1 min-h-0 overflow-visible ${
+          isMobile
+            ? "pt-[1vh] pb-[1vh] flex items-center justify-center"
+            : "pt-[2vh] sm:pt-[3vh] pb-[2vh]"
+        }`}
+      >
+        <Scene3DStage
+          frameKey={frameKey}
+          cameraEffect={frame.cameraEffect}
+          mobile={isMobile}
+        >
+          {isMobile ? <MobileDeviceFrame>{wireframe}</MobileDeviceFrame> : wireframe}
         </Scene3DStage>
       </div>
       <TextOverlay

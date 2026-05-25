@@ -50,7 +50,7 @@ function parseAudience(v: unknown): Audience {
 
 function metaFrom(slug: string, data: Record<string, unknown>): PublicHelpMeta {
   const category = typeof data.category === "string" && data.category.trim() ? data.category.trim() : "start-here";
-  const title = typeof data.title === "string" && data.title.trim() ? data.title.trim() : slug.replace(/\//g, " — ");
+  const title = typeof data.title === "string" && data.title.trim() ? data.title.trim() : slug.replace(/\//g, " · ");
   const description =
     typeof data.description === "string" && data.description.trim() ? data.description.trim() : undefined;
   const audience = parseAudience(data.audience);
@@ -84,6 +84,39 @@ export function loadAllPublicMarketingMetas(mode: "learner" | "admin"): PublicHe
     rows.push(meta);
   }
   return rows.sort((a, b) => a.title.localeCompare(b.title));
+}
+
+export function loadGroupedPublicMarketingMetas(mode: "learner" | "admin") {
+  const articles = loadAllPublicMarketingMetas(mode);
+  const byCategory = new Map<string, PublicHelpMeta[]>();
+  for (const article of articles) {
+    const list = byCategory.get(article.category) ?? [];
+    list.push(article);
+    byCategory.set(article.category, list);
+  }
+
+  const categoryOrder = ["start-here", "learners", "admins", "ai-literacy", "trust", "success"];
+  const labels: Record<string, string> = {
+    "start-here": "Start here",
+    learners: "For learners",
+    admins: "For admins",
+    "ai-literacy": "Understanding AI",
+    trust: "Trust & privacy",
+    success: "Customer success",
+  };
+
+  const ordered = [
+    ...categoryOrder.filter((c) => byCategory.has(c)),
+    ...[...byCategory.keys()].filter((c) => !categoryOrder.includes(c)).sort(),
+  ];
+
+  return ordered.map((category) => ({
+    category,
+    label: labels[category] ?? category,
+    articles: (byCategory.get(category) ?? []).sort(
+      (a, b) => a.order - b.order || a.title.localeCompare(b.title)
+    ),
+  }));
 }
 
 export function getPublicMarketingArticle(slug: string[]): PublicHelpArticle | null {

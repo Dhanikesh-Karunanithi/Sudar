@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
+import { LessonVideoThumb } from "./LessonVideoThumb";
 import type { CourseBlockType, SceneState } from "@/types/sceneState";
 import { MiniChip, PulseHighlight } from "./WireframePrimitives";
 
@@ -48,9 +48,14 @@ export function CourseBlockCanvas({
         {order.map((block, i) => (
           <motion.div
             key={block}
-            initial={state.uiMotion === "slide-in" ? { opacity: 0, y: 12 } : false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: i * 0.05 }}
+            initial={state.uiMotion === "slide-in" ? { opacity: 0, y: 24, scale: 0.98 } : false}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{
+              type: "spring",
+              stiffness: 320,
+              damping: 28,
+              delay: i * 0.07,
+            }}
             className="rounded-xl border border-white/[0.08] bg-[#111] overflow-hidden"
           >
             <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06]">
@@ -60,25 +65,20 @@ export function CourseBlockCanvas({
             </div>
             {block === "text" && (
               <p className="px-3 py-2 text-[10px] text-zinc-500 leading-relaxed">
-                Welcome to World&apos;s Best Boss 101 — Michael Scott teaches management, Dunder
+                Welcome to World&apos;s Best Boss 101, Michael Scott teaches management, Dunder
                 Mifflin style.
               </p>
             )}
             {block === "video" && (
-              <div className="relative aspect-video bg-black/40 mx-2 mb-2 rounded-lg overflow-hidden">
-                <Image
-                  src="/characters/prison-mike.png"
-                  alt="Course video preview"
-                  fill
-                  className="object-cover object-top opacity-90"
-                  sizes="400px"
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="w-10 h-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white text-sm">
-                    ▶
-                  </span>
-                </div>
-                <p className="absolute bottom-1 left-2 text-[8px] text-white/60">7 scenes · TTS ready</p>
+              <div className="mx-2 mb-2 relative">
+                <LessonVideoThumb sizes="400px" rounded="rounded-lg">
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <span className="w-10 h-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white text-sm">
+                      ▶
+                    </span>
+                  </div>
+                  <p className="absolute bottom-1 left-2 z-10 text-[8px] text-white/60">7 scenes · TTS ready</p>
+                </LessonVideoThumb>
               </div>
             )}
             {block === "audio" && (
@@ -110,7 +110,7 @@ export function CourseBlockCanvas({
             )}
             {block === "quiz" && (
               <p className="px-3 py-2 text-[10px] text-zinc-500 italic">
-                What&apos;s the most important quality for a manager — according to Michael?
+                What&apos;s the most important quality for a manager, according to Michael?
               </p>
             )}
           </motion.div>

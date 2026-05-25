@@ -41,4 +41,4 @@ npm run dev
 
 Vercel project root: `sudar-ecosystem-demo`. Suggested URL: `demo.thesudar.app`.
 
-*Sudar — Learns with you, for you.*
+*Sudar, Learns with you, for you.*

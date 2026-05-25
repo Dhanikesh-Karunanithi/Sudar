@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Award, Sparkles, TrendingUp, X } from 'lucide-react'
+import { useNotificationSound } from '@/components/features/notifications/NotificationSoundProvider'
 
 type ToastKind = 'level-up' | 'achievement'
 
@@ -27,6 +28,7 @@ const rarityCopy: Record<AchievementUnlock['rarity'], string> = {
 }
 
 export function GamificationToasts() {
+  const { playChime } = useNotificationSound()
   const [queue, setQueue] = useState<ToastItem[]>([])
   const [visible, setVisible] = useState<ToastItem | null>(null)
   const [reduceMotion, setReduceMotion] = useState(false)
@@ -46,8 +48,9 @@ export function GamificationToasts() {
       const [next, ...rest] = queue
       setVisible(next)
       setQueue(rest)
+      playChime('celebration')
     }
-  }, [queue, visible])
+  }, [queue, visible, playChime])
 
   useEffect(() => {
     if (!visible) return

@@ -1,0 +1,97 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Sudar Studio Creator (ALP companion)",
+    "version": "0.1.0",
+    "description": "Subset of Sudar Studio AI routes for ChatGPT Custom GPT Actions. Prefer MCP at https://mcp.thesudar.app/mcp when available."
+  },
+  "servers": [
+    { "url": "https://studio.thesudar.app" }
+  ],
+  "security": [{ "bearerAuth": [] }],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Supabase access token from Sudar Studio session"
+      }
+    }
+  },
+  "paths": {
+    "/api/ai/generate-outline": {
+      "post": {
+        "operationId": "generateOutline",
+        "summary": "Generate course module outline",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["course_title"],
+                "properties": {
+                  "course_title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "difficulty": { "type": "string" },
+                  "num_modules": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Outline JSON" } }
+      }
+    },
+    "/api/ai/generate-course-metadata": {
+      "post": {
+        "operationId": "generateCourseMetadata",
+        "summary": "Generate course metadata",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "brief": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Metadata" } }
+      }
+    },
+    "/api/courses": {
+      "get": {
+        "operationId": "listCourses",
+        "summary": "List organisation courses",
+        "responses": { "200": { "description": "Course list" } }
+      },
+      "post": {
+        "operationId": "createCourse",
+        "summary": "Create draft course",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Created course" } }
+      }
+    }
+  }
+}

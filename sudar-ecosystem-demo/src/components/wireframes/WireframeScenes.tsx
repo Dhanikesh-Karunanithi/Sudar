@@ -2,8 +2,9 @@
 
 import { motion } from "framer-motion";
 import type { ModalityTab, SceneState } from "@/types/sceneState";
+import { useCountUp } from "@/lib/demoMotion";
 import { SudarLogoMark } from "@/components/brand/SudarLogoMark";
-import { WireframeCinematicProvider } from "./WireframeCinematicContext";
+import { WireframeCinematicProvider, useWireframeCinematic } from "./WireframeCinematicContext";
 import { MiniChip, PlaceholderLine, PulseHighlight, WireframeScreen } from "./WireframePrimitives";
 
 import { CourseOutlinePanel } from "./CourseOutlinePanel";
@@ -94,6 +95,7 @@ function StudioSidebar({ active }: { active: string }) {
 }
 
 function EcosystemMapScene({ state }: { state: SceneState }) {
+  const cinematic = useWireframeCinematic();
   const layers = [
     { id: "studio" as const, label: "Sudar Studio", sub: "Create · Paths · Analytics" },
     { id: "learn" as const, label: "Sudar Learn", sub: "Deliver · Modalities · Tutor" },
@@ -102,10 +104,13 @@ function EcosystemMapScene({ state }: { state: SceneState }) {
   ];
   return (
     <WireframeScreen label={sceneLabels["ecosystem-map"]} pulse>
-      <div className="space-y-3">
-        {layers.map((layer) => (
-          <div
+      <div className="space-y-3 flex flex-col justify-center h-full">
+        {layers.map((layer, i) => (
+          <motion.div
             key={layer.id}
+            initial={cinematic ? { opacity: 0, x: -16 } : false}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.1, duration: 0.4, type: "spring", stiffness: 240 }}
             className={`rounded-xl border px-4 py-3 transition-colors ${
               state.ecosystemHighlight === layer.id
                 ? "border-[#FF4500]/40 bg-[#FF4500]/[0.08]"
@@ -114,8 +119,18 @@ function EcosystemMapScene({ state }: { state: SceneState }) {
           >
             <p className="text-[12px] text-white/85 font-medium">{layer.label}</p>
             <p className="text-[10px] text-zinc-600 mt-1">{layer.sub}</p>
-          </div>
+          </motion.div>
         ))}
+        <motion.div
+          className="flex items-center justify-center gap-2 mt-2"
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ repeat: Infinity, duration: 2.5 }}
+        >
+          <span className="text-[9px] font-mono text-[#FF4500]/50">
+            every interaction → updates the Twin
+          </span>
+          <span className="text-[#FF4500]/40 text-xs">↺</span>
+        </motion.div>
         <p className="text-center text-[10px] font-mono text-[#FF4500]/50 pt-2">
           Learns with you, for you.
         </p>
@@ -148,6 +163,8 @@ function StudioDashboardScene({ state }: { state: SceneState }) {
                 <MiniChip active={state.highlightId === "source-doc"}>DOCUMENT</MiniChip>
                 <MiniChip active={state.highlightId === "source-idea"}>IDEA</MiniChip>
                 <MiniChip active={state.highlightId === "source-business"}>BUSINESS NEED</MiniChip>
+                <MiniChip>COHORT</MiniChip>
+                <MiniChip>LEARNER CONTEXT</MiniChip>
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
                 {["Safety onboarding", "Product 101", "Compliance Q3"].map((t) => (
@@ -495,22 +512,73 @@ function GamificationScene({ state }: { state: SceneState }) {
   );
 }
 
-function AlpFlowScene() {
+function AlpFlowScene(_props: { state: SceneState }) {
+  const events = [
+    { label: "module_complete", dot: "bg-emerald-400" },
+    { label: "quiz_attempt", dot: "bg-blue-400" },
+    { label: "video_pause", dot: "bg-amber-400" },
+  ];
+  const affinities = [
+    { label: "Video", pct: 82, color: "bg-violet-500" },
+    { label: "Text", pct: 64, color: "bg-blue-500" },
+    { label: "Audio", pct: 51, color: "bg-emerald-500" },
+  ];
+
   return (
     <WireframeScreen label={sceneLabels["alp-flow"]}>
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 py-2">
-        <div className="rounded-xl border border-white/[0.06] px-4 py-3 text-[11px] text-zinc-500">
-          Moodle LMS
+      <div className="flex flex-col sm:flex-row items-stretch justify-center gap-4 py-2">
+        <div className="flex-1 rounded-xl border border-white/[0.06] bg-[#0d0d0d] p-3 min-w-0">
+          <p className="text-[10px] font-mono text-zinc-500 uppercase mb-2">Your LMS</p>
+          <p className="text-[11px] text-white/70 mb-3">Moodle · Canvas · Blackboard</p>
+          <div className="space-y-1.5">
+            {events.map((e, i) => (
+              <motion.div
+                key={e.label}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.4, duration: 0.35 }}
+                className="rounded border border-white/[0.05] px-2 py-1 font-mono text-[9px] flex items-center gap-2"
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${e.dot}`} />
+                <span className="text-zinc-500">{e.label}</span>
+              </motion.div>
+            ))}
+          </div>
         </div>
-        <motion.span
-          className="text-[#FF4500]/60 font-mono text-xs"
-          animate={{ opacity: [0.4, 1, 0.4] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-        >
-          POST /api/alp/events →
-        </motion.span>
-        <div className="rounded-xl border border-[#FF4500]/25 bg-[#FF4500]/[0.06] px-4 py-3 text-[11px] text-zinc-400">
-          Sudar Learn + Twin
+
+        <div className="flex flex-col items-center justify-center gap-1 self-center shrink-0">
+          <motion.span
+            className="text-[#FF4500]/60 font-mono text-[9px]"
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ repeat: Infinity, duration: 1.5 }}
+          >
+            POST /api/alp/events
+          </motion.span>
+          <span className="text-[#FF4500]/50 text-lg">→</span>
+          <span className="text-[9px] font-mono text-zinc-600">47 events/day</span>
+        </div>
+
+        <div className="flex-1 rounded-xl border border-[#FF4500]/25 bg-[#FF4500]/[0.06] p-3 min-w-0">
+          <p className="text-[10px] font-mono text-[#FF4500]/60 uppercase mb-2">Digital Learner Twin</p>
+          <p className="text-[11px] text-zinc-400 mb-3">Modality affinity</p>
+          <div className="space-y-2">
+            {affinities.map((a) => (
+              <div key={a.label}>
+                <div className="flex justify-between text-[9px] text-zinc-500 mb-0.5">
+                  <span>{a.label}</span>
+                  <span>{a.pct}%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                  <motion.div
+                    className={`h-full rounded-full ${a.color}`}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${a.pct}%` }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </WireframeScreen>
@@ -537,14 +605,55 @@ function AgentsRunScene({ state }: { state: SceneState }) {
 }
 
 function AnalyticsComplianceScene({ state }: { state: SceneState }) {
+  const cinematic = useWireframeCinematic();
+  const learners = useCountUp(18, 900, cinematic);
+  const complete = useCountUp(14, 900, cinematic);
+  const atRisk = useCountUp(2, 700, cinematic);
+
+  const rows = [
+    { name: "Marcus K.", status: "Complete", risk: false, certified: true },
+    { name: "Sarah L.", status: "In progress", risk: false, certified: false },
+    { name: "Team B · 4", status: "At risk", risk: true, certified: false },
+  ];
+
+  const kpis = [
+    { label: "Learners", value: learners, highlight: false },
+    { label: "Complete", value: complete, highlight: false },
+    { label: "At risk", value: atRisk, highlight: true },
+  ];
+
   return (
     <WireframeScreen label={sceneLabels["analytics-compliance"]}>
+      <div className="flex flex-wrap gap-3 mb-4 items-center">
+        {kpis.map((kpi) => (
+          <div
+            key={kpi.label}
+            className={`flex-1 min-w-[72px] rounded-lg border px-3 py-2 text-center ${
+              kpi.highlight ? "border-[#FF4500]/30 bg-[#FF4500]/[0.04]" : "border-white/[0.06]"
+            }`}
+          >
+            <p
+              className={`text-[13px] font-mono font-bold ${
+                kpi.highlight ? "text-[#FF4500]/80" : "text-white/80"
+              }`}
+            >
+              {kpi.value}
+            </p>
+            <p className="text-[9px] text-zinc-600 uppercase mt-0.5">{kpi.label}</p>
+          </div>
+        ))}
+        <div className="flex items-center gap-1.5 px-2">
+          <motion.span
+            className="w-2 h-2 rounded-full bg-emerald-400"
+            animate={{ opacity: [1, 0.3, 1] }}
+            transition={{ repeat: Infinity, duration: 1.2 }}
+          />
+          <span className="text-[9px] text-zinc-500 font-mono">Live</span>
+        </div>
+      </div>
+
       <div className="space-y-2">
-        {[
-          { name: "Marcus K.", status: "Complete", risk: false },
-          { name: "Sarah L.", status: "In progress", risk: false },
-          { name: "Team B · 4", status: "At risk", risk: true },
-        ].map((row) => (
+        {rows.map((row) => (
           <div
             key={row.name}
             className={`flex items-center justify-between rounded-lg border px-4 py-2 ${
@@ -554,13 +663,25 @@ function AnalyticsComplianceScene({ state }: { state: SceneState }) {
             }`}
           >
             <span className="text-[11px] text-zinc-500">{row.name}</span>
-            <span
-              className={`text-[10px] font-mono ${
-                row.risk ? "text-[#FF4500]/80" : "text-zinc-600"
-              }`}
-            >
-              {row.status}
-            </span>
+            <div className="flex items-center gap-2">
+              {row.certified && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono"
+                >
+                  ✓ Certified
+                </motion.span>
+              )}
+              <span
+                className={`text-[10px] font-mono ${
+                  row.risk ? "text-[#FF4500]/80" : "text-zinc-600"
+                }`}
+              >
+                {row.status}
+              </span>
+            </div>
           </div>
         ))}
       </div>
@@ -592,7 +713,7 @@ const sceneComponents: Record<WireframeSceneId, (props: SceneProps) => React.JSX
   "learn-memory-rich": LearnMemoryRichScene,
   "learn-settings": LearnSettingsScene,
   gamification: GamificationScene,
-  "alp-flow": () => <AlpFlowScene />,
+  "alp-flow": AlpFlowScene,
   "agents-run": AgentsRunScene,
   "analytics-compliance": AnalyticsComplianceScene,
 };
@@ -608,7 +729,10 @@ export function WireframeScene({
 }) {
   const Component = sceneComponents[id];
   return (
-    <WireframeCinematicProvider cinematic={cinematic}>
+    <WireframeCinematicProvider
+      cinematic={cinematic}
+      deviceLayout={state.deviceLayout ?? "desktop"}
+    >
       <Component state={state} />
     </WireframeCinematicProvider>
   );

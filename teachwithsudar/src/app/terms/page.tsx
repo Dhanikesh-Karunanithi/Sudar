@@ -28,9 +28,9 @@ export default function TermsPage() {
       </p>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Third-party services</h2>
       <p className="mt-2 text-foreground">
-        If you deploy Sudar, you may use third-party services (e.g. Vercel, Railway, Supabase, AI providers).
-        Your use of those services is subject to their terms. We are not responsible for their availability,
-        pricing, or data practices.
+        If you deploy Sudar, you may use third-party services (e.g. Vercel, Railway, managed or self-hosted Postgres,
+        AI providers). Your use of those services is subject to their terms. We are not responsible for their
+        availability, pricing, or data practices.
       </p>
       <h2 className="mt-10 text-xl font-semibold text-foreground">Contact</h2>
       <p className="mt-2 text-foreground">

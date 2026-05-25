@@ -1,0 +1,25 @@
+{
+  "name": "sudar-mcp-remote",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Hosted Sudar MCP server (HTTP/SSE + API-key token exchange)",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@sudar/mcp-server": "file:../../packages/sudar-mcp",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -36,3 +36,22 @@ export function createServiceRoleSupabaseClient() {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 }
+
+/** Stateless anon client for validating Bearer JWTs (MCP, API clients). */
+export function createBearerTokenClient() {
+  return createSupabaseClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
+
+export async function getUserFromBearerToken(accessToken: string) {
+  const client = createBearerTokenClient()
+  const {
+    data: { user },
+    error,
+  } = await client.auth.getUser(accessToken)
+  if (user && !error) return user
+  return null
+}

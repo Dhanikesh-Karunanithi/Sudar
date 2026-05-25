@@ -1,28 +1,42 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SudarLogoMark } from "@/components/brand/SudarLogoMark";
+import {
+  HERO_NAV_COMPACT_THRESHOLD,
+  useHeroLogoScroll,
+} from "@/hooks/useHeroLogoScroll";
 import { GITHUB_URL } from "@/lib/site-nav";
 
 const NAV_LINKS = [
   { href: "/features", label: "Platform" },
+  { href: "/guides", label: "Guides" },
   { href: "/research", label: "Research" },
   { href: "/story", label: "About" },
-  { href: "/blog", label: "Blog" },
   { href: "/self-host", label: "Get Started" },
   { href: "/collaborate", label: "Collaborate" },
 ] as const;
 
 export function Header() {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+  const { active: heroLogoActive, settled: heroLogoSettled } = useHeroLogoScroll(isHome);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", onScroll);
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(
+        heroLogoActive ? y > HERO_NAV_COMPACT_THRESHOLD : y > 50
+      );
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [heroLogoActive]);
 
   useEffect(() => {
     if (mobileOpen) document.body.style.overflow = "hidden";
@@ -41,9 +55,14 @@ export function Header() {
       >
         <div className="mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
           <Link
+            id="nav-logo-anchor"
             href="/"
-            className="flex items-center gap-2.5 sm:gap-3 text-xl sm:text-2xl font-bold tracking-tighter font-serif text-white shrink-0"
+            className={`flex items-center gap-2.5 sm:gap-3 text-xl sm:text-2xl font-bold tracking-tighter font-serif text-white shrink-0 ${
+              heroLogoActive && !heroLogoSettled ? "invisible" : ""
+            }`}
             onClick={() => setMobileOpen(false)}
+            aria-hidden={heroLogoActive && !heroLogoSettled}
+            tabIndex={heroLogoActive && !heroLogoSettled ? -1 : undefined}
           >
             <span className="inline-flex shrink-0" aria-hidden="true">
               <SudarLogoMark size={36} variant="on-dark" />
