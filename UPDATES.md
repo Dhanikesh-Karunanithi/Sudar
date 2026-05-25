@@ -16,6 +16,10 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-25 — Tutor input guardrail hardening (Learn)
+
+- **Security**: First-turn tutor messages can no longer skip the learning-scope LLM check solely because they start with common question words (`What…`, `How…`, etc.) or contain continuation tokens (`continue`, `next`, …). Session-only follow-up bypass patterns live in `sudar-learn/src/lib/tutor/tutorFollowupBypassPatterns.ts` with Vitest coverage.
+
 ### 2026-05-13 — Localization + tutor memory LLM cadence
 
 - **Localization (Learn + Studio + Intelligence)**:

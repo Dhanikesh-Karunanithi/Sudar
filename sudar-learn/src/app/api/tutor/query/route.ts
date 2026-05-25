@@ -35,6 +35,7 @@ import { loadSkillGapSummary, recordMasteredTopics, recordStruggleTopics } from 
 import { parseTutorModelOutput } from '@/lib/tutor/responseContract'
 import { sanitizeTutorBlocks } from '@/lib/tutor/tutorBlockSanitize'
 import { tutorMessageMatchesIdentityBypass } from '@/lib/tutor/tutorIdentityBypassPatterns'
+import { tutorMessageMatchesFollowupBypass } from '@/lib/tutor/tutorFollowupBypassPatterns'
 import {
   detectsTutorResourceIntent,
   searchImagesForTutor,
@@ -127,31 +128,6 @@ const INPUT_BLOCKLIST_PATTERNS = [
   /\bexfiltrat|send\s+(me\s+)?(the\s+)?(api\s+key|password|secret|env|\.env)\b/i,
 ]
 
-// Short conversational follow-ups that are always valid in a learning context.
-// These are frequently misclassified by the guardrail LLM because they have no
-// standalone learning keywords, yet they are clearly continuations of study sessions.
-const FOLLOWUP_BYPASS_PATTERNS = [
-  /^(simplif(y|ied)|simpler|simple version|make\s+it\s+simpler)/i,
-  /\bin\s+brief\b/i,
-  /\bin\s+short\b/i,
-  /\bbriefly\b/i,
-  /\bsummarise\b|\bsummarize\b/i,
-  /\bsummary\b/i,
-  /\bshorten\b|\bshorter\b/i,
-  /\brepeat\s+that\b|\bsay\s+that\s+again\b|\bonce\s+more\b/i,
-  /^(ok|okay|got\s+it|thanks|thank\s+you|great|nice|cool|makes\s+sense|understood)/i,
-  /\bexplain\s+(again|more|further|that|this|it)\b/i,
-  /\bgive\s+(me\s+)?(an?\s+)?(example|analogy|analogy|demo)\b/i,
-  /\bmore\s+(detail|context|depth|info|information|examples?)\b/i,
-  /^(what|why|how|when|where|who|which)\s/i,
-  /\bwhat\s+does\s+(that|this)\s+mean\b/i,
-  /\bi\s+(don'?t\s+)?(understand|get\s+it|follow)\b/i,
-  /\bcan\s+you\s+(re)?explain\b/i,
-  /\btoo\s+(long|complex|technical|advanced|complicated)\b/i,
-  /\beli5\b|\blayman'?s?\s+terms?\b/i,
-  /\bnext\b|\bcontinue\b|\bgo\s+on\b|\bproceed\b/i,
-]
-
 /** Returns true if the message passes the input guardrail (learning/platform scope). */
 async function runInputGuardrail(
   message: string,
@@ -168,11 +144,9 @@ async function runInputGuardrail(
   // Identity / platform-intro questions always pass — no LLM check needed
   if (tutorMessageMatchesIdentityBypass(trimmed)) return { pass: true }
 
-  // Conversational follow-ups always pass — they're context-free by nature but
-  // are clearly part of an ongoing learning session
-  for (const pattern of FOLLOWUP_BYPASS_PATTERNS) {
-    if (pattern.test(trimmed)) return { pass: true }
-  }
+  // Conversational follow-ups: some patterns only apply when there is prior chat,
+  // so a first message cannot skip the LLM scope check via common question starters.
+  if (tutorMessageMatchesFollowupBypass(trimmed, hasConversationHistory)) return { pass: true }
 
   // If there's an active conversation, skip the LLM guardrail entirely.
   // The user is already in a learning session; a follow-up message is inherently
