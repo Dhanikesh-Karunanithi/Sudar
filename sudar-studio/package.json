@@ -40,7 +40,7 @@
     "next-intl": "^3.26.5",
     "pdf-parse": "^2.4.5",
     "prisma": "^6.19.2",
-    "react": "^18",
+    "react": "^19",
     "react-dom": "^18",
     "react-markdown": "^9.1.0",
     "remark-gfm": "^4.0.1",
@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
-    "@types/react": "^18",
+    "@types/react": "^19",
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "^15.5.18",
