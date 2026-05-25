@@ -61,7 +61,7 @@ export default function FeaturesPage() {
           className="block rounded-xl overflow-hidden border border-card-border bg-card-bg"
         >
           <div className="relative aspect-video w-full">
-            <Image src="/screenshots/studio-login.png" alt="Sudar Studio login" fill className="object-cover" />
+            <Image src="/screenshots/studio-login.png" alt="Sudar Studio dashboard" fill className="object-cover" />
           </div>
           <p className="p-3 text-sm text-foreground-muted">Sudar Studio</p>
         </a>
@@ -72,7 +72,7 @@ export default function FeaturesPage() {
           className="block rounded-xl overflow-hidden border border-card-border bg-card-bg"
         >
           <div className="relative aspect-video w-full">
-            <Image src="/screenshots/learn-login.png" alt="Sudar Learn login" fill className="object-cover" />
+            <Image src="/screenshots/learn-login.png" alt="Sudar Learn dashboard" fill className="object-cover" />
           </div>
           <p className="p-3 text-sm text-foreground-muted">Sudar Learn</p>
         </a>
