@@ -7,6 +7,11 @@
     "supabase": "npx --yes supabase@latest",
     "security:audit": "node scripts/security-audit.mjs",
     "benchmark:sudar": "node scripts/benchmark-sudar.mjs",
-    "db:apply:agent-runs": "node scripts/apply-agent-runs-sql.cjs"
+    "db:apply:agent-runs": "node scripts/apply-agent-runs-sql.cjs",
+    "mcp:build": "npm run build --prefix packages/sudar-mcp",
+    "mcp:remote:build": "npm run build --prefix workers/sudar-mcp-remote",
+    "mcp:cloudflare:dev": "npm run dev --prefix workers/sudar-mcp-cloudflare",
+    "mcp:cloudflare:deploy": "npm run deploy --prefix workers/sudar-mcp-cloudflare",
+    "demo:ecosystem": "npm run dev --prefix sudar-ecosystem-demo"
   }
 }

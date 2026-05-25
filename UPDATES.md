@@ -16,6 +16,57 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-25 — Ecosystem demo narrative v2 (~5 min)
+
+- **Launch story** (`sudar-ecosystem-demo/` `/`): Expanded to **~5 minutes** — content generation from idea, business need, document, cohort, and learner context; instructional-design blueprint (Bloom, archetypes); live Studio block build (text, video, audio, accordion, flipcard, quiz); personalization act; Marcus stuck on video with **contextual Sudar chat** and typed reply.
+- **Course theme**: Sarah prompts *fun office management* → **Somehow I manage** (Michael Scott); `public/characters/prison-mike.png` in video preview.
+- **UI fidelity**: Learn wireframes use light/purple chrome; Studio stays dark; new scenes `studio-create-sources`, `studio-id-blueprint`, `studio-live-editor`, `learn-course-rich`, `learn-tutor-contextual`, `learn-memory-rich`.
+- **Interactive tour** (`/interactive`): Chapters rewritten — Content generation, Live editor blocks, Tutor, Memory.
+- **Key files**: `launchDemo.ts`, `ecosystemDemo.ts`, `sceneState.ts`, `DemoScenesExtended.tsx`, `CourseBlockCanvas.tsx`, `TutorConversationPanel.tsx`, `LearnNavChrome.tsx`.
+
+### 2026-05-25 — Cinematic product launch demo
+
+- **Launch experience** (`sudar-ecosystem-demo/` `/`): Full-screen cinematic player — 28 frames, title cards, animated typography overlays on wireframes, play/pause only (auto-hide controls), ~3 min narrative.
+- **How-to tour** (`/interactive`): Previous step-by-step player retained for teachwithsudar guides and help how-tos.
+- **Key files**: `launchDemo.ts`, `CinematicPlayer.tsx`, `TitleCard.tsx`, `TextOverlay.tsx`, `VideoControls.tsx`.
+
+### 2026-05-25 — Ecosystem wireframe demo app
+
+- **Standalone demo** (`sudar-ecosystem-demo/`): Next.js app on port 3003 — wireframe scenes, cursor animation; interactive mode at `/interactive`.
+- **Docs**: [docs/demo.md](docs/demo.md), teachwithsudar `/demo`; root script `npm run demo:ecosystem`.
+
+### 2026-05-24 — teachwithsudar.com platform upgrade
+
+- **Marketing site** (`teachwithsudar/`): Capability catalog (`platformCapabilities.ts`), 10 animated wireframe guides (`/guides/[slug]`), expanded Features/Updates/Best Practices/Help hubs, FAQ refresh (MCP, sounds, i18n), homepage “What ships today” section. Copy pass: no em-dashes; plainer voice.
+
+### 2026-05-24 — teachwithsudar.com copy pass
+
+- **Marketing site** (`teachwithsudar/`): Removed em-dashes sitewide; rewrote homepage hero, problem, platform, Digital Learner Twin, research, manifesto, and CTA copy for a plainer voice. Metadata titles use `|` instead of em-dash. `WEBSITE_CONTENT.md` aligned for editors.
+
+### 2026-05-24 — ChatGPT-ready MCP (thesudar.app)
+
+- **Creator MCP tools**: `sudar_generate_outline`, `sudar_generate_course`, `sudar_generate_quiz`, `sudar_generate_from_document`, `sudar_create_course`, `sudar_list_courses` — proxy Studio routes with Bearer JWT.
+- **Studio**: Bearer auth on creator API routes; `POST /api/mcp/audit`; Integrations **ChatGPT connector** URL + [MCP_CHATGPT_LAUNCH.md](docs/MCP_CHATGPT_LAUNCH.md).
+- **Cloudflare Worker**: [workers/sudar-mcp-cloudflare](workers/sudar-mcp-cloudflare) — OAuth metadata, Supabase token exchange, Streamable HTTP `/mcp` for ChatGPT/Claude.
+- **Deploy docs**: [DNS_THESUDAR_APP.md](docs/DNS_THESUDAR_APP.md), [DEPLOY_THESUDAR_APP.md](docs/DEPLOY_THESUDAR_APP.md), [openapi/sudar-creator-v1.json](openapi/sudar-creator-v1.json) (Custom GPT Actions fallback).
+- **npm**: `@sudar/mcp-server` v0.2.0 — [NPM_PUBLISH.md](docs/NPM_PUBLISH.md).
+
+### 2026-05-22 — Sudar MCP servers (ALP + Agents for AI clients)
+
+- **MCP package**: `packages/sudar-mcp` (`@sudar/mcp-server`) — stdio server with integrator, admin, and learner toolsets proxying Learn ALP and BFF routes.
+- **Remote worker**: `workers/sudar-mcp-remote` — `POST /token` (API-key exchange) + SSE `/sse` for hosted MCP partners.
+- **Learn/Studio**: `getRequestSession` Bearer JWT support on agents, tutor, next-action, proactive-nudge; `POST /api/mcp/audit` for optional MCP telemetry.
+- **Studio UI**: Integrations page — Cursor `mcp.json` snippet and MCP docs link.
+- **Docs**: `docs/MCP_SERVERS.md`, `docs/ENV_REFERENCE.md`, `docs/SHIPPED_FEATURES.md`, `docs/ALP_API.md` cross-link.
+
+### 2026-05-22 — Chime-style notification sounds (Learn + Studio)
+
+- **Learn — in-app chimes**: Optional subtle completion sounds when AI content generation finishes, Sudar tutor replies, realtime notification toasts, and gamification celebrations. Master toggle + volume + per-event groups on **Settings → Notification controls**; respects quiet hours and `prefers-reduced-motion`.
+- **Learn — implementation**: `shared/notifications/sound.ts`, `NotificationSoundProvider`, hooks in `SudarVidCard`, `CourseViewer`, tutor chat, `NotificationToasts`, `GamificationToasts`; assets under `sudar-learn/public/audio/notifications/`.
+- **Studio — course generation**: “Play a chime when the course is ready” (localStorage) alongside existing browser notifications on **New course**; `useBrowserCompletionNotification` plays `task_complete` chime on success.
+- **Database**: `supabase/migrations/20260522120000_notification_sound_settings.sql` — `user_notification_settings` sound columns.
+- **Docs**: `docs/SHIPPED_FEATURES.md` catalog entry.
+
 ### 2026-05-22 — Learn API correctness + dependency security patches
 
 - **Learn — security / correctness**:
