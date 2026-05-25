@@ -40,7 +40,22 @@ npx wrangler pages deploy out --project-name=teachwithsudar --branch=main
 
 Attach the custom domain in Cloudflare Dashboard → **Workers & Pages** → **teachwithsudar** → **Custom domains** → add `teachwithsudar.com`. If DNS is not auto-created, add a proxied **CNAME** for `@` → `teachwithsudar.pages.dev` in the zone’s DNS tab.
 
-### Redeploy after changes
+### Automatic deploy (GitHub Actions)
+
+On every push to **`main`** that touches `teachwithsudar/` or `help-center/`, [`.github/workflows/teachwithsudar-pages.yml`](../.github/workflows/teachwithsudar-pages.yml) builds the static export and runs `wrangler pages deploy`.
+
+**One-time repo secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Description |
+|--------|-------------|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API token with **Account → Cloudflare Pages → Edit** |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID (Dashboard → Workers & Pages URL or Overview) |
+
+**Optional repository variable:** `NEXT_PUBLIC_ECOSYSTEM_DEMO_URL` (e.g. `https://demo.thesudar.app`) for the `/demo` page link at build time.
+
+Manual redeploy without a code change: **Actions → Deploy teachwithsudar → Run workflow**.
+
+### Manual redeploy (CLI)
 
 ```bash
 cd teachwithsudar

@@ -200,4 +200,16 @@ Sudar Agents org-level behaviour is stored in Postgres (`organisations.settings.
 
 ---
 
+## GitHub Actions — teachwithsudar.com (Cloudflare Pages)
+
+| Secret / variable | Where | Description |
+|-------------------|-------|-------------|
+| `CLOUDFLARE_API_TOKEN` | GitHub repo secret | API token with **Account → Cloudflare Pages → Edit**. Used by [`.github/workflows/teachwithsudar-pages.yml`](../.github/workflows/teachwithsudar-pages.yml). |
+| `CLOUDFLARE_ACCOUNT_ID` | GitHub repo secret | Cloudflare account ID for `wrangler pages deploy`. |
+| `NEXT_PUBLIC_ECOSYSTEM_DEMO_URL` | GitHub repo **variable** (optional) | Passed at build time for teachwithsudar `/demo` (e.g. `https://demo.thesudar.app`). |
+
+See [teachwithsudar/README.md](../teachwithsudar/README.md) for manual CLI deploy fallback.
+
+---
+
 *This document is the canonical reference. Studio’s "AI & API Keys" page and in-app "How to get this key" steps are driven from the same provider list where possible.*

@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-26 — Teach with Sudar: GitHub Actions → Cloudflare Pages
+
+- **CI/CD**: Added `.github/workflows/teachwithsudar-pages.yml` — on push to `main` (paths: `teachwithsudar/`, `help-center/`), builds static export and deploys to Cloudflare Pages project `teachwithsudar`. Supports manual **workflow_dispatch**.
+- **Ops**: Requires GitHub secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`; optional repo variable `NEXT_PUBLIC_ECOSYSTEM_DEMO_URL`.
+- **Key files**: `.github/workflows/teachwithsudar-pages.yml`, `teachwithsudar/README.md`, `docs/ENV_REFERENCE.md`.
+
 ### 2026-05-26 — Teach with Sudar: research foundation refresh
 
 - **Homepage**: Research Foundation section now uses six citations in three tiers (Foundation, Modern validation, AI era) — classics (Ebbinghaus, Mayer 2009) plus Roediger & Karpicke (2006), VanLehn (2011), Learn Your Way (2025), and AgentTutor (2026), each mapped to a Sudar feature.

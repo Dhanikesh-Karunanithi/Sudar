@@ -1,0 +1,52 @@
+# Deploy teachwithsudar.com (Cloudflare Pages) when marketing site or help-center sources change.
+name: Deploy teachwithsudar
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "teachwithsudar/**"
+      - "help-center/**"
+      - ".github/workflows/teachwithsudar-pages.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    name: Cloudflare Pages
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: teachwithsudar/package-lock.json
+
+      - name: Install
+        working-directory: teachwithsudar
+        run: npm ci
+
+      - name: Build static export
+        working-directory: teachwithsudar
+        env:
+          NEXT_PUBLIC_ECOSYSTEM_DEMO_URL: ${{ vars.NEXT_PUBLIC_ECOSYSTEM_DEMO_URL }}
+        run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: teachwithsudar
+          command: pages deploy out --project-name=teachwithsudar --branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Print deployment URL
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: echo "Deployed to ${DEPLOYMENT_URL}"
