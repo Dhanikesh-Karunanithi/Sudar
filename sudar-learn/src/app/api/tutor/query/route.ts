@@ -472,9 +472,15 @@ export async function POST(request: NextRequest) {
       const workflowType = /extract|key\s+terms/i.test(message) ? 'extract_terms' : 'summarize'
       const baseUrl = request.nextUrl.origin
       try {
+        const wfHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
+        const cookie = request.headers.get('cookie')
+        if (cookie) wfHeaders.Cookie = cookie
+        const authorization = request.headers.get('authorization')
+        if (authorization) wfHeaders.Authorization = authorization
+
         const wfRes = await fetch(`${baseUrl}/api/tutor/workflow`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Cookie: request.headers.get('cookie') ?? '' },
+          headers: wfHeaders,
           body: JSON.stringify({ type: workflowType, text: pastedText }),
         })
         const wf = await wfRes.json()
