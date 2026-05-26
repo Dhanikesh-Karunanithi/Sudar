@@ -16,6 +16,26 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-26 — Teach with Sudar: /demo ships launch demo on teachwithsudar.com
+
+- **Demo page**: Removed local-dev instructions; **Watch launch demo** links to same-origin `/launch-demo` (no broken localhost:3003).
+- **Build**: `sudar-ecosystem-demo` static export with `basePath=/launch-demo` copied into `teachwithsudar/public/launch-demo` on `npm run build` (CI included).
+- **UX**: Embedded preview iframe on `/demo`; interactive tour at `/launch-demo/interactive/`.
+- **Key files**: `teachwithsudar/src/app/demo/page.tsx`, `teachwithsudar/src/lib/demo-urls.ts`, `scripts/copy-launch-demo.mjs`, `sudar-ecosystem-demo/next.config.ts`.
+
+### 2026-05-26 — Teach with Sudar: homepage hero demo polish (full width, 3D, chat flow)
+
+- **Homepage hero**: Demo spans full content width (`max-w-[1400px]`); wireframe stage has mouse-reactive 3D tilt and depth shadow.
+- **Cursor**: Spring-physics pointer persists across steps with delayed click on arrival (feels hand-driven).
+- **Learn + tutor**: Steps 5–7 use one continuous Learn scene — video stays on screen, Sudar chat slides in as a messenger panel with typing and reply bubbles (no hard scene swap).
+- **Key files**: `HeroFlowDemo.tsx`, `HeroDemoCursor.tsx`, `HeroScene3D.tsx`, `HeroLearnFlowScene.tsx`, `HeroTutorChat.tsx`.
+
+### 2026-05-26 — Teach with Sudar: homepage hero user-flow demo
+
+- **Homepage hero**: Replaced the static “I paused the video” chat card with an autoplaying wireframe journey — Studio creation → cohort personalization → Marcus on Learn → contextual tutor → Memory (animated cursor, step captions, progress dots).
+- **Wireframes**: Ported rich ecosystem-demo scenes into teachwithsudar (`learn-course-rich`, `learn-tutor-contextual`, `studio-live-editor`, etc.) plus `DemoCursor`, `heroFlowDemo.ts`, and Prison Mike lesson asset.
+- **Key files**: `teachwithsudar/src/components/home/HeroFlowDemo.tsx`, `teachwithsudar/src/data/heroFlowDemo.ts`, `teachwithsudar/src/components/wireframes/**`, `teachwithsudar/public/characters/prison-mike.png`.
+
 ### 2026-05-26 — Teach with Sudar: GitHub Actions → Cloudflare Pages
 
 - **CI/CD**: Added `.github/workflows/teachwithsudar-pages.yml` — on push to `main` (paths: `teachwithsudar/`, `help-center/`), builds static export and deploys to Cloudflare Pages project `teachwithsudar`. Supports manual **workflow_dispatch**.

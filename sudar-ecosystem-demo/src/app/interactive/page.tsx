@@ -1,17 +1,10 @@
-import { DemoShell } from "@/components/DemoShell";
-import { EcosystemDemoPlayer } from "@/components/demo/EcosystemDemoPlayer";
+import { Suspense } from "react";
+import { InteractiveDemoClient } from "./InteractiveDemoClient";
 
-type PageProps = {
-  searchParams: Promise<{ chapter?: string }>;
-};
-
-export default async function InteractivePage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const chapter = typeof params.chapter === "string" ? params.chapter : undefined;
-
+export default function InteractivePage() {
   return (
-    <DemoShell>
-      <EcosystemDemoPlayer initialChapterId={chapter} autoPlay={false} />
-    </DemoShell>
+    <Suspense fallback={<div className="min-h-screen bg-[#050505]" />}>
+      <InteractiveDemoClient />
+    </Suspense>
   );
 }

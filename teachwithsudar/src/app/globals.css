@@ -80,6 +80,10 @@ body {
   animation: hero-float 7s ease-in-out infinite;
 }
 
+.hero-scene-3d {
+  transform-style: preserve-3d;
+}
+
 .hero-float-delay {
   animation-delay: -3.5s;
 }

@@ -30,10 +30,8 @@ jobs:
         working-directory: teachwithsudar
         run: npm ci
 
-      - name: Build static export
+      - name: Build static export (includes /launch-demo from sudar-ecosystem-demo)
         working-directory: teachwithsudar
-        env:
-          NEXT_PUBLIC_ECOSYSTEM_DEMO_URL: ${{ vars.NEXT_PUBLIC_ECOSYSTEM_DEMO_URL }}
         run: npm run build
 
       - name: Deploy to Cloudflare Pages

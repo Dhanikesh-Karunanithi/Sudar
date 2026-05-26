@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
+import { HeroFlowDemo } from "@/components/home/HeroFlowDemo";
 import { HeroScrollLogo } from "@/components/home/HeroScrollLogo";
 import { STUDIO_APP_URL } from "@/lib/site-nav";
-import { SudarLogoMark } from "@/components/brand/SudarLogoMark";
 
 const easeOut = [0.22, 1, 0.36, 1] as const;
 
@@ -28,112 +28,12 @@ function textRevealVariant(reducedMotion: boolean, delay: number) {
       };
 }
 
-function HeroMoment({ reducedMotion }: { reducedMotion: boolean }) {
-  const bubbleVariant = (delay: number) =>
-    reducedMotion
-      ? {
-          hidden: { opacity: 0 },
-          show: { opacity: 1, transition: { duration: 0.4, delay } },
-        }
-      : {
-          hidden: { opacity: 0, y: 16, filter: "blur(6px)" },
-          show: {
-            opacity: 1,
-            y: 0,
-            filter: "blur(0px)",
-            transition: { duration: 0.7, delay, ease: easeOut },
-          },
-        };
-
-  return (
-    <motion.div
-      className="relative mx-auto w-full max-w-lg"
-      initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 32, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.9, delay: 0.85, ease: easeOut }}
-    >
-      <div
-        className="pointer-events-none absolute -inset-6 rounded-[2rem] blur-[72px]"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 40%, rgba(255,69,0,0.16) 0%, rgba(255,69,0,0.04) 55%, transparent 75%)",
-        }}
-        aria-hidden
-      />
-
-      <div className="hero-float relative overflow-hidden rounded-[1.75rem] border border-white/[0.08] bg-[#0a0a0a]/80 p-6 shadow-[0_32px_100px_rgba(0,0,0,0.55)] backdrop-blur-md sm:p-8">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-90"
-          aria-hidden
-          style={{
-            background:
-              "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,69,0,0.09) 0%, transparent 65%)",
-          }}
-        />
-
-        <div className="relative">
-          <p className="text-[10px] font-mono uppercase tracking-[0.35em] text-zinc-600">
-            A moment on the job
-          </p>
-
-          <blockquote className="mt-6 font-serif text-[1.65rem] leading-[1.15] tracking-tight text-white sm:text-[1.85rem]">
-            &ldquo;I paused the video.&rdquo;
-            <span className="mt-3 block font-light italic text-white/45">
-              Sudar already knew why.
-            </span>
-          </blockquote>
-
-          <div className="mt-8 space-y-3">
-            <motion.div
-              className="rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-3.5 text-left"
-              initial="hidden"
-              animate="show"
-              variants={bubbleVariant(1.05)}
-            >
-              <p className="text-[11px] font-mono uppercase tracking-widest text-zinc-600">Sudar</p>
-              <p className="mt-2 text-sm font-light leading-relaxed text-zinc-400">
-                You mixed up the escalation steps on Tuesday. Want the short version for this scene?
-              </p>
-            </motion.div>
-            <motion.div
-              className="rounded-2xl border border-[#FF4500]/20 bg-[#FF4500]/[0.06] px-4 py-3.5 text-left"
-              initial="hidden"
-              animate="show"
-              variants={bubbleVariant(1.25)}
-            >
-              <p className="text-[11px] font-mono uppercase tracking-widest text-[#FF4500]/60">Marcus</p>
-              <p className="mt-2 text-sm font-light leading-relaxed text-zinc-300">
-                Yes. Walk me through it.
-              </p>
-            </motion.div>
-          </div>
-
-          <div className="mt-8 flex items-center justify-between gap-4 border-t border-white/[0.06] pt-5">
-            <div className="flex items-center gap-3">
-              <div className="opacity-30">
-                <SudarLogoMark size={28} variant="on-dark" />
-              </div>
-              <div className="text-left">
-                <p className="text-xs text-zinc-500">Session 4 · Video modality</p>
-                <p className="text-[11px] text-zinc-600">Context carried forward</p>
-              </div>
-            </div>
-            <span className="hidden rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-emerald-400/80 sm:inline">
-              Not from scratch
-            </span>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 export function HeroSection() {
   const reducedMotion = useReducedMotion() ?? false;
 
   return (
     <section
-      className="relative flex min-h-[calc(100dvh_-_var(--site-header-offset))] flex-col items-center justify-start overflow-hidden bg-[#050505] pb-16 pt-2 sm:pb-20 sm:pt-3"
+      className="relative flex flex-col items-center justify-start overflow-hidden bg-[#050505] pb-12 pt-2 sm:pb-16 sm:pt-3"
       aria-label="Hero: Sudar"
     >
       <HeroScrollLogo />
@@ -275,8 +175,11 @@ export function HeroSection() {
           </motion.p>
         </div>
 
-        <div className="mt-14 sm:mt-16">
-          <HeroMoment reducedMotion={reducedMotion} />
+      </div>
+
+      <div className="relative z-10 mt-10 w-full px-4 sm:mt-12 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-[1400px]">
+          <HeroFlowDemo reducedMotion={reducedMotion} />
         </div>
       </div>
 

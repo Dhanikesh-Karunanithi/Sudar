@@ -9,7 +9,7 @@ Full-screen **video-like** experience for launching Sudar to the world: title ca
 - **Controls**: Play / Pause + sound on/off (auto-hide); Space toggles playback
 - **Motion**: Triboo-style reference — static camera, vertical scroll and accordion UI motion, sharp legible text (no chaotic 3D pan)
 - **Audio**: Frame-synced whoosh, click, success, and title cues via Web Audio (enable sound on first play if the browser blocks autoplay)
-- **Marketing link**: [teachwithsudar.com/demo](https://teachwithsudar.com/demo) — set `NEXT_PUBLIC_ECOSYSTEM_DEMO_URL` when deployed
+- **Marketing link**: [teachwithsudar.com/demo](https://teachwithsudar.com/demo) — embeds and links to [teachwithsudar.com/launch-demo](https://teachwithsudar.com/launch-demo) (built into the static site on deploy)
 
 ### Launch story beats (v2)
 

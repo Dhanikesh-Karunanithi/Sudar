@@ -51,7 +51,7 @@ On every push to **`main`** that touches `teachwithsudar/` or `help-center/`, [`
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token with **Account → Cloudflare Pages → Edit** |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID (Dashboard → Workers & Pages URL or Overview) |
 
-**Optional repository variable:** `NEXT_PUBLIC_ECOSYSTEM_DEMO_URL` (e.g. `https://demo.thesudar.app`) for the `/demo` page link at build time.
+**Launch demo:** `npm run build` bundles `sudar-ecosystem-demo` into `public/launch-demo/` so [teachwithsudar.com/demo](https://teachwithsudar.com/demo) and [/launch-demo](https://teachwithsudar.com/launch-demo) work without localhost.
 
 Manual redeploy without a code change: **Actions → Deploy teachwithsudar → Run workflow**.
 
