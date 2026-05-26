@@ -185,6 +185,8 @@ This document summarizes **shipped** features that are committed and ready for u
   - `workers/sudar-mcp-cloudflare/` — production remote MCP (OAuth + `/mcp`)
   - `workers/sudar-mcp-remote/` — dev Express remote (API-key token)
   - `sudar-studio/src/lib/auth/requestSession.ts` — Bearer on Studio creator routes
+  - `sudar-learn/src/lib/auth/requestSession.ts` — Bearer JWT or cookies on Learn API routes (tutor)
+  - `sudar-learn/src/app/api/tutor/workflow/route.ts`, `sudar-learn/src/app/api/tutor/query/route.ts` — tutor query delegates to workflow with forwarded `Authorization` so Bearer-only clients get summarize / extract workflows
   - `sudar-studio/src/app/api/mcp/audit/route.ts`, `sudar-learn/.../mcp/audit/route.ts`
   - `openapi/sudar-creator-v1.json` — Custom GPT Actions fallback
 - **Env**: `NEXT_PUBLIC_MCP_URL`, `SUDAR_*`, Wrangler secrets — [ENV_REFERENCE.md](ENV_REFERENCE.md).

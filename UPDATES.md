@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-26 — Learn: Bearer auth for tutor workflow (MCP / API clients)
+
+- **Fix**: `POST /api/tutor/workflow` (and workflow status GET) now resolve the learner via `getRequestSession` (Supabase JWT Bearer or cookies), matching `/api/tutor/query`. Tutor query’s internal call to the workflow forwards the incoming `Authorization` header so summarize / extract-key-terms flows work without browser cookies.
+- **Key files**: `sudar-learn/src/app/api/tutor/workflow/route.ts`, `sudar-learn/src/app/api/tutor/workflow/[id]/route.ts`, `sudar-learn/src/app/api/tutor/query/route.ts`.
+- **Docs**: `UPDATES.md`, `docs/SHIPPED_FEATURES.md` (MCP key files).
+
 ### 2026-05-26 — Teach with Sudar: GitHub Actions → Cloudflare Pages
 
 - **CI/CD**: Added `.github/workflows/teachwithsudar-pages.yml` — on push to `main` (paths: `teachwithsudar/`, `help-center/`), builds static export and deploys to Cloudflare Pages project `teachwithsudar`. Supports manual **workflow_dispatch**.
