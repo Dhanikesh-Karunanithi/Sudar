@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-26 — Teach with Sudar: Research Papers page aligned with LAMP preprint
+
+- **Papers page**: Rebuilt `/papers` from the May 2026 LAMP/ALP preprint — paper card with keywords and abstract, three contribution cards, capability comparison table, infrastructure cost table, BibTeX/APA citations, and reproducibility artefact list.
+- **Readability**: Tables use `not-prose` styling so captions and columns render cleanly on the marketing site.
+- **Key files**: `teachwithsudar/src/app/papers/page.tsx`.
+
 ### 2026-05-26 — Teach with Sudar: /demo ships launch demo on teachwithsudar.com
 
 - **Demo page**: Removed local-dev instructions; **Watch launch demo** links to same-origin `/launch-demo` (no broken localhost:3003).
