@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-05-30 — Learn: certificate and progress integrity fixes
+
+- **Certificate issuance**: `POST /api/certificates/issue` now requires path enrollment and completed mandatory courses (or completed path enrollment) before minting a verification code — closes unauthenticated completion bypass.
+- **Course progress**: `module_complete` progress uses **distinct** `module_id` counts so duplicate telemetry cannot mark a course or path complete; progress side-effects require an active course enrollment.
+- **Key files**: `sudar-learn/src/app/api/certificates/issue/route.ts`, `sudar-learn/src/app/api/events/route.ts`, `sudar-learn/src/lib/learner/courseProgress.ts`.
+
 ### 2026-05-26 — Teach with Sudar: Research Papers page aligned with LAMP preprint
 
 - **Papers page**: Rebuilt `/papers` from the May 2026 LAMP/ALP preprint — paper card with keywords and abstract, three contribution cards, capability comparison table, infrastructure cost table, BibTeX/APA citations, and reproducibility artefact list.
