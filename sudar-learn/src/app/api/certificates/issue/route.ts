@@ -5,6 +5,7 @@
  */
 
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { pathMandatoryCoursesCompleted } from '@/lib/learner/courseProgress'
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 
@@ -26,6 +27,29 @@ export async function POST(request: NextRequest) {
 
   if (!path) return NextResponse.json({ error: 'Path not found' }, { status: 404 })
   if (!path.issues_certificate) return NextResponse.json({ error: 'Path does not issue certificates' }, { status: 400 })
+
+  const { data: pathEnrollment } = await admin
+    .from('enrollments')
+    .select('id, status, personalized_sequence')
+    .eq('user_id', user.id)
+    .eq('path_id', path_id)
+    .maybeSingle()
+
+  if (!pathEnrollment) {
+    return NextResponse.json({ error: 'Not enrolled in this learning path' }, { status: 403 })
+  }
+
+  const mandatoryComplete = await pathMandatoryCoursesCompleted(
+    admin,
+    user.id,
+    pathEnrollment.personalized_sequence,
+  )
+  if (pathEnrollment.status !== 'completed' && !mandatoryComplete) {
+    return NextResponse.json(
+      { error: 'Path requirements are not complete' },
+      { status: 403 },
+    )
+  }
 
   // Check existing cert
   const { data: existing } = await admin
