@@ -40,7 +40,6 @@ const FOLLOWUP_BYPASS_PATTERNS = [
   /\bexplain\s+(again|more|further|that|this|it)\b/i,
   /\bgive\s+(me\s+)?(an?\s+)?(example|analogy|analogy|demo)\b/i,
   /\bmore\s+(detail|context|depth|info|information|examples?)\b/i,
-  /^(what|why|how|when|where|who|which)\s/i,
   /\bwhat\s+does\s+(that|this)\s+mean\b/i,
   /\bi\s+(don'?t\s+)?(understand|get\s+it|follow)\b/i,
   /\bcan\s+you\s+(re)?explain\b/i,
