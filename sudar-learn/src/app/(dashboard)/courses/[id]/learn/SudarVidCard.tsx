@@ -102,6 +102,7 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
   /** Iframe document loads often omit Supabase cookies; we mint an HttpOnly render grant first. */
   const [renderGrantReady, setRenderGrantReady] = useState(false)
   const [renderGrantError, setRenderGrantError] = useState(false)
+  const [iframeLoaded, setIframeLoaded] = useState(false)
 
   function presetToEngineMode(preset: SudarVidVideoPreset): 'classic' | 'premium' {
     return preset === 'rich' || preset === 'rich_mp4' ? 'premium' : 'classic'
@@ -188,11 +189,13 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
     if (phase !== 'done' || !jobId) {
       setRenderGrantReady(false)
       setRenderGrantError(false)
+      setIframeLoaded(false)
       return
     }
     let cancelled = false
     setRenderGrantReady(false)
     setRenderGrantError(false)
+    setIframeLoaded(false)
     fetch('/api/ai/generate-video/render-grant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -200,14 +203,20 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
       body: JSON.stringify({ job_id: jobId }),
     })
       .then((r) => {
-        if (!r.ok) throw new Error(String(r.status))
+        if (!r.ok) {
+          throw new Error(`render-grant failed: ${r.status} ${r.statusText}`)
+        }
         return r.json()
       })
       .then(() => {
-        if (!cancelled) setRenderGrantReady(true)
+        if (!cancelled) {
+          setRenderGrantReady(true)
+        }
       })
-      .catch(() => {
-        if (!cancelled) setRenderGrantError(true)
+      .catch((err) => {
+        if (!cancelled) {
+          setRenderGrantError(true)
+        }
       })
     return () => {
       cancelled = true
@@ -280,6 +289,12 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
     }
 
     window.addEventListener('message', handleSudarVidMessage)
+    
+    // Signal iframe readiness to sudarvid
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({ type: 'sudarvid_ready' }, window.location.origin)
+    }
+    
     return () => {
       window.removeEventListener('message', handleSudarVidMessage)
     }
@@ -610,23 +625,36 @@ export function SudarVidCard({ moduleId, moduleTitle, contentBody, courseId }: P
         </div>
       )}
       {!renderGrantError && !renderGrantReady && (
-        <div className="relative w-full rounded-xl border border-border bg-black min-h-[200px]">
-          <SudarLoadingFrost layout="block" label="Preparing video player…" className="min-h-[200px]" />
+        <div className="relative w-full rounded-xl border border-border bg-black min-h-[400px] flex items-center justify-center">
+          <SudarLoadingFrost layout="block" label="Preparing video player…" className="min-h-[400px]" />
         </div>
       )}
       {!renderGrantError && renderGrantReady && jobId && (
-        <iframe
-          key={jobId}
-          ref={iframeRef}
-          src={`/api/ai/generate-video/render/${jobId}/slides.html`}
-          className={cn(
-            'w-full rounded-xl border border-border bg-black',
-            fullscreen ? 'flex-1' : 'h-[580px]'
+        <div className={cn(
+          'relative w-full rounded-xl border border-border bg-black overflow-hidden',
+          fullscreen ? 'fixed inset-0 z-50 rounded-none border-none' : 'h-[600px]'
+        )}>
+          {!iframeLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
+              <div className="text-center space-y-3">
+                <div className="inline-flex">
+                  <div className="w-3 h-3 bg-primary rounded-full animate-pulse" />
+                </div>
+                <p className="text-xs text-white/70">Loading video…</p>
+              </div>
+            </div>
           )}
-          title={`Video: ${moduleTitle}`}
-          allow="autoplay"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-        />
+          <iframe
+            ref={iframeRef}
+            src={`/api/ai/generate-video/render/${jobId}/slides.html`}
+            className="absolute inset-0 w-full h-full"
+            title={`Video: ${moduleTitle}`}
+            allow="autoplay; accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-presentation allow-forms"
+            loading="eager"
+            onLoad={() => setIframeLoaded(true)}
+          />
+        </div>
       )}
       <p className="text-[11px] text-muted-foreground">
         Regenerate attempts used: {regenerateCount}/{REGEN_LIMIT}
