@@ -16,6 +16,20 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-02 — Video display fix: iframe rendering + sandbox security
+
+- **Theme**: Learn — video modality visibility and performance.
+- **Fixed**: Recurring issue where generated SudarVid videos wouldn't display after generation completed. Root causes: iframe remounting, restrictive sandbox, missing load state, unclear render grant errors.
+- **Changes**: Added iframe load tracking, expanded sandbox attributes (`allow-presentation`), enhanced `allow` attribute (fullscreen, picture-in-picture), removed `key={jobId}` remounting, improved render grant error handling, added iframe readiness signal via postMessage.
+- **Result**: Videos now display reliably; loading overlay shows while iframe initializes; better error diagnostics.
+- **Key files**: `sudar-learn/src/app/(dashboard)/courses/[id]/learn/SudarVidCard.tsx`, `VIDEO_DISPLAY_FIX.md`.
+
+### 2026-06-02 — Learn hibernation overlay animation
+
+- **Theme**: Learn — inactivity hibernation UX polish.
+- **Shipped**: Replaced spinning Sudar logo with a sleeping hibernation animation — tilted logo with closed-eye overlay, floating ZZZ particles, and subtle cave backdrop; distinct warning vs hibernating motion.
+- **Key files**: `sudar-learn/src/components/features/activity/HibernationAnimation.tsx`, `sudar-learn/src/components/features/activity/InactiveHibernationOverlay.tsx`, `sudar-learn/tailwind.config.ts`.
+
 ### 2026-06-01 — External open courses (Discover) in Learn
 
 - **Discover**: Published courses can be flagged `is_external` with provider (`youtube`, `khan_academy`, `mit_ocw`, `custom`), link-out URL, and optional embed URL. Catalog shows provider badges; detail page explains external hosting.
@@ -23,6 +37,20 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 - **NBA**: Next Best Action payload includes `is_external` / provider metadata; dashboard CTA routes to learn for open courses.
 - **Seed**: Migration seeds CS50 (YouTube), Khan Algorithms, MIT 6.006, PY4E when an org + profile exist.
 - **Key files**: `supabase/migrations/20260601000000_external_open_courses.sql`, `sudar-learn/src/app/(dashboard)/courses/[id]/learn/ExternalCourseViewer.tsx`, `sudar-learn/src/lib/courses/externalProviders.ts`, `sudar-learn/src/lib/intelligence/nextBestActionEngine.ts`.
+
+### 2026-05-29 — AI token monitoring & usage dashboard (Studio)
+
+- **Metering**: `ai_usage_events` append-only ledger + `ai_usage_daily_org` rollups + `ai_model_pricing` reference rates; `chatCompletion` parses provider `usage` and records per call (feature, call_kind, org, user).
+- **Studio**: **Analytics → AI usage** (`/analytics/ai-usage`) — totals, by-feature breakdown, estimated marginal USD, CSV export; cron `POST /api/cron/ai-usage-rollups`.
+- **Coverage**: Tutor (guardrail/main/quiz/memory), course generation pipeline, Studio agent, modalities, RAG query embeds, memory cron; optional org `ai_entitlements` monthly cap (`hard_stop`).
+- **Key files**: `supabase/migrations/20260529120000_ai_usage_monitoring.sql`, `shared/ai/*`, `sudar-learn/src/lib/ai/chat.ts`, `sudar-studio/src/app/api/org/ai-usage/*`, `sudar-studio/src/components/analytics/AiUsageDashboard.tsx`.
+
+### 2026-05-29 — Hugging Face integration: multilingual RAG v2 + Intelligence providers
+
+- **Learn RAG**: Default HF embed model `BAAI/bge-m3` (1024-dim); module-level ingest with chunking; in-course vector excerpts in tutor; optional `BAAI/bge-reranker-v2-m3` reranking (`RAG_RERANK_ENABLED`).
+- **Intelligence**: `AI_CHAT_PROVIDER=huggingface`, `IMAGE_PROVIDER=huggingface`; shared `hf_client.py`; smoke route `GET /api/health/hf-chat`.
+- **Ops**: `docs/HF_INTEGRATION_TEST.md`, `scripts/hf/*` smoke tests, expanded Studio keys card and `ENV_REFERENCE.md`.
+- **Key files**: `sudar-learn/src/lib/hf/client.ts`, `sudar-learn/src/lib/rag/chunk.ts`, `sudar-learn/src/lib/rag/rerank.ts`, `sudar-learn/src/app/api/rag/ingest/route.ts`, `sudar-intelligence/src/core/hf_client.py`, `sudar-intelligence/src/api/routes/image.py`.
 
 ### 2026-05-26 — Teach with Sudar: Research Papers page aligned with LAMP preprint
 
