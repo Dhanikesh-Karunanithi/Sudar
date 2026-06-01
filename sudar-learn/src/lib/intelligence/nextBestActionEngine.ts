@@ -3,7 +3,6 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
-import { buildLearnUsageChatCtx } from '@/lib/ai/learnUsageContext'
 import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { gapTopicLabelsForUser } from '@/lib/learner/syncTopicSkills'
 import { computeFocusRatio } from '@/types/analytics'
@@ -40,7 +39,7 @@ export async function computeNextBestActionForUser(
   options: { force?: boolean },
 ): Promise<NextBestActionResult> {
   const force = options.force === true
-  const { orgId, orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, { userId })
+  const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, { userId })
   const chatCfgError = resolveChatConfigError(orgSettings, privateRuntime)
 
   const { data: learnerProfile } = await admin
@@ -227,24 +226,13 @@ export async function computeNextBestActionForUser(
   if (!chatCfgError && best.reasons.length > 0) {
     try {
       const prompt = `Write one sentence (max 25 words) explaining to a learner why they should take the course "${best.course.title}" next. Reasons: ${best.reasons.join('; ')}. Be warm and specific. No fluff.`
-      const usageCtx =
-        orgId != null
-          ? buildLearnUsageChatCtx({
-              admin,
-              orgId,
-              userId,
-              feature: 'next_best_action',
-              route: '/api/intelligence/next-action',
-              privateRuntime,
-            })
-          : { privateOpenAi: privateRuntime }
       const { content: gen } = await chatCompletion(
         {
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 60,
           temperature: 0.6,
         },
-        usageCtx,
+        { privateOpenAi: privateRuntime },
       )
       if (gen) reason = gen
     } catch {
