@@ -2,11 +2,12 @@ import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/se
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, BookOpen, Clock, List, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, BookOpen, Clock, List, CheckCircle2, Globe, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SudarCourseBannerArt } from '@/components/branding/SudarCourseDefaultArt'
 import { CourseArtPatternSelect } from '@/components/branding/CourseArtPatternSelect'
 import { EnrollButton } from './EnrollButton'
+import { getExternalProviderMeta } from '@/lib/courses/externalProviders'
 
 const difficultyConfig = {
   beginner: { label: 'Beginner', class: 'text-success bg-success/10 border border-success/30' },
@@ -23,7 +24,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
   const { data: course } = await admin
     .from('courses')
     .select(
-      'id, title, description, difficulty, estimated_duration_mins, tags, thumbnail_url, banner_url, modules(id, title, order_index)'
+      'id, title, description, difficulty, estimated_duration_mins, tags, thumbnail_url, banner_url, is_external, external_provider, external_url, embed_url, modules(id, title, order_index)',
     )
     .eq('id', id)
     .eq('status', 'published')
@@ -31,6 +32,9 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
     .single()
 
   if (!course) notFound()
+
+  const isExternal = Boolean(course.is_external)
+  const providerMeta = isExternal ? getExternalProviderMeta(course.external_provider) : null
 
   const { data: enrollment } = await admin
     .from('enrollments')
@@ -115,6 +119,17 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
                 </div>
               )}
               <div className="flex items-center gap-3 flex-wrap pt-1">
+                {isExternal && providerMeta && (
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-pill border',
+                      providerMeta.accentClass,
+                    )}
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    {providerMeta.label}
+                  </span>
+                )}
                 {diff && (
                   <span className={cn('text-xs font-medium px-2.5 py-1 rounded-pill', diff.class)}>
                     {diff.label}
@@ -126,10 +141,12 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
                     {course.estimated_duration_mins} minutes
                   </span>
                 )}
-                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <List className="w-4 h-4" />
-                  {course.modules?.length ?? 0} modules
-                </span>
+                {!isExternal && (
+                  <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <List className="w-4 h-4" />
+                    {course.modules?.length ?? 0} modules
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -158,7 +175,29 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
         </div>
       )}
 
+      {isExternal && (
+        <div className="bg-card border border-primary/20 rounded-card p-6 space-y-3">
+          <h2 className="text-base font-semibold text-card-foreground">Open course on {providerMeta?.label}</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            This is a free open course hosted externally on {providerMeta?.label}. Enroll to add it to your
+            library, track progress in Sudar, and get credit when you mark it complete.
+          </p>
+          {course.external_url && (
+            <a
+              href={course.external_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:opacity-90"
+            >
+              Preview on {providerMeta?.shortLabel}
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          )}
+        </div>
+      )}
+
       {/* Modules list */}
+      {!isExternal && (
       <div className="space-y-3">
         <h2 className="text-base font-semibold text-card-foreground">Course content</h2>
         {(!course.modules || course.modules.length === 0) ? (
@@ -208,13 +247,15 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
           </div>
         )}
       </div>
+      )}
 
       {/* Primary CTA: Enrol / Start / Continue / Review */}
       <div className="flex justify-center pb-8">
         <EnrollButton
           courseId={course.id}
           isEnrolled={!!enrollment}
-          hasModules={(course.modules?.length ?? 0) > 0}
+          isExternal={isExternal}
+          hasModules={isExternal || (course.modules?.length ?? 0) > 0}
           firstModuleId={course.modules?.[0]?.id}
           progressPct={enrollment?.progress_pct ?? 0}
           enrollmentStatus={enrollment?.status}

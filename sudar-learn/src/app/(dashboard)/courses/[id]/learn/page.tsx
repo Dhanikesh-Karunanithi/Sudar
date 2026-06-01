@@ -1,6 +1,7 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { CourseViewer, type ModulePersonalizationOverlay } from './CourseViewer'
+import { ExternalCourseViewer } from './ExternalCourseViewer'
 import type { ComponentProps } from 'react'
 import { resolvePersonalizationAccess } from '@/lib/personalization/eligibility'
 import type { PersonalizationEligibility } from '@/lib/personalization/eligibility'
@@ -41,13 +42,18 @@ export default async function CourseLearnPage({
 
   const { data: course } = await admin
     .from('courses')
-    .select('id, title, template, settings, modules(id, title, content, modality_variants, order_index, quiz, sudarplay_map_url, sudarplay_map_id)')
+    .select(
+      'id, title, description, template, settings, is_external, external_provider, external_url, embed_url, modules(id, title, content, modality_variants, order_index, quiz, sudarplay_map_url, sudarplay_map_id)',
+    )
     .eq('id', id)
     .eq('status', 'published')
     .order('order_index', { referencedTable: 'modules', ascending: true })
     .single()
 
-  if (!course || !course.modules?.length) notFound()
+  if (!course) notFound()
+
+  const isExternal = Boolean(course.is_external)
+  if (!isExternal && !course.modules?.length) notFound()
 
   const { data: completedEvents } = await admin
     .from('learning_events')
@@ -62,7 +68,28 @@ export default async function CourseLearnPage({
       .filter((id): id is string => typeof id === 'string')
   )
 
-  const activeModuleId = selectedModuleId ?? course.modules[0].id
+  const activeModuleId =
+    selectedModuleId ?? course.modules?.[0]?.id ?? null
+
+  if (isExternal) {
+    const externalModuleId = activeModuleId ?? course.modules?.[0]?.id
+    if (!externalModuleId) notFound()
+
+    return (
+      <ExternalCourseViewer
+        courseId={course.id}
+        title={course.title}
+        description={course.description}
+        externalProvider={course.external_provider}
+        externalUrl={course.external_url}
+        embedUrl={course.embed_url}
+        moduleId={externalModuleId}
+        enrollmentProgress={Math.round(enrollment.progress_pct)}
+        enrollmentStatus={enrollment.status}
+        isModuleComplete={completedModuleIds.has(externalModuleId)}
+      />
+    )
+  }
 
   const welcomeRaw = enrollment.personalized_welcome as Record<string, unknown> | null
   const hasStoredWelcome =
@@ -80,7 +107,7 @@ export default async function CourseLearnPage({
   return (
     <CourseViewer
       course={course as unknown as CourseForViewer}
-      activeModuleId={activeModuleId}
+      activeModuleId={activeModuleId!}
       completedModuleIds={Array.from(completedModuleIds)}
       enrollmentProgress={Math.round(enrollment.progress_pct)}
       enrollmentId={enrollment.id}

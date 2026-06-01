@@ -14,6 +14,8 @@ type CourseCatalogRow = {
   published_at: string | null
   thumbnail_url: string | null
   banner_url: string | null
+  is_external?: boolean
+  external_provider?: string | null
   modules?: { count: number }[] | null
 }
 
@@ -34,7 +36,7 @@ export async function getCachedPublishedCourses() {
       const { data } = await admin
         .from('courses')
         .select(
-          'id, title, description, difficulty, tags, estimated_duration_mins, published_at, thumbnail_url, banner_url, modules(count)'
+          'id, title, description, difficulty, tags, estimated_duration_mins, published_at, thumbnail_url, banner_url, is_external, external_provider, modules(count)',
         )
         .eq('status', 'published')
         .order('published_at', { ascending: false })

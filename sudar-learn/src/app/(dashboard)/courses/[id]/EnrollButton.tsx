@@ -9,6 +9,7 @@ interface Props {
   courseId: string
   isEnrolled: boolean
   hasModules: boolean
+  isExternal?: boolean
   firstModuleId?: string
   progressPct?: number
   enrollmentStatus?: string
@@ -18,6 +19,7 @@ export function EnrollButton({
   courseId,
   isEnrolled,
   hasModules,
+  isExternal = false,
   firstModuleId,
   progressPct = 0,
   enrollmentStatus,
@@ -53,16 +55,27 @@ export function EnrollButton({
     }
 
     router.refresh()
-    if (firstModuleId) router.push(`/courses/${courseId}/learn?module=${firstModuleId}`)
+    if (isExternal) {
+      router.push(`/courses/${courseId}/learn`)
+    } else if (firstModuleId) {
+      router.push(`/courses/${courseId}/learn?module=${firstModuleId}`)
+    }
+  }
+
+  function learnHref() {
+    if (isExternal) return `/courses/${courseId}/learn`
+    if (firstModuleId) return `/courses/${courseId}/learn?module=${firstModuleId}`
+    return null
   }
 
   if (isEnrolled) {
-    const canStart = Boolean(firstModuleId)
+    const href = learnHref()
+    const canStart = Boolean(href)
     return (
       <div className="flex flex-col items-center gap-2 w-full max-w-md">
         {error && <p className="text-destructive text-sm">{error}</p>}
         <button
-          onClick={() => firstModuleId && router.push(`/courses/${courseId}/learn?module=${firstModuleId}`)}
+          onClick={() => href && router.push(href)}
           disabled={!canStart}
           className="w-full flex items-center justify-center gap-2.5 px-8 py-3 bg-primary hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed text-primary-foreground font-semibold rounded-button transition-colors shadow-lg"
         >

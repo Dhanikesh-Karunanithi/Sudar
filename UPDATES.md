@@ -16,6 +16,14 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-01 — External open courses (Discover) in Learn
+
+- **Discover**: Published courses can be flagged `is_external` with provider (`youtube`, `khan_academy`, `mit_ocw`, `custom`), link-out URL, and optional embed URL. Catalog shows provider badges; detail page explains external hosting.
+- **Learn viewer**: `ExternalCourseViewer` — hybrid YouTube embed or link-out card, **Mark as complete** → `module_complete` event, enrollment progress, gamification.
+- **NBA**: Next Best Action payload includes `is_external` / provider metadata; dashboard CTA routes to learn for open courses.
+- **Seed**: Migration seeds CS50 (YouTube), Khan Algorithms, MIT 6.006, PY4E when an org + profile exist.
+- **Key files**: `supabase/migrations/20260601000000_external_open_courses.sql`, `sudar-learn/src/app/(dashboard)/courses/[id]/learn/ExternalCourseViewer.tsx`, `sudar-learn/src/lib/courses/externalProviders.ts`, `sudar-learn/src/lib/intelligence/nextBestActionEngine.ts`.
+
 ### 2026-05-26 — Teach with Sudar: Research Papers page aligned with LAMP preprint
 
 - **Papers page**: Rebuilt `/papers` from the May 2026 LAMP/ALP preprint — paper card with keywords and abstract, three contribution cards, capability comparison table, infrastructure cost table, BibTeX/APA citations, and reproducibility artefact list.

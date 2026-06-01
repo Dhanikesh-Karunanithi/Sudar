@@ -482,7 +482,14 @@ export default async function DashboardPage() {
               <BookOpen className="w-4 h-4" /> Browse courses
             </Link>
             {nba?.course_id && !lastVisited && (
-              <Link href={`/courses/${nba.course_id}`} className="action-button">
+              <Link
+                href={
+                  nba.is_external
+                    ? `/courses/${nba.course_id}/learn`
+                    : `/courses/${nba.course_id}`
+                }
+                className="action-button"
+              >
                 Next Best Action <ChevronRight size={20} />
               </Link>
             )}

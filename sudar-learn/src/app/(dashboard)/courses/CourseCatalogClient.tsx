@@ -6,8 +6,9 @@ import Image from 'next/image'
 import {
   BookOpen, Clock, Search, X, LayoutGrid, List,
   CheckCircle2, PlayCircle, Sparkles, ChevronRight,
-  GraduationCap, Filter,
+  GraduationCap, Filter, Globe,
 } from 'lucide-react'
+import { getExternalProviderMeta } from '@/lib/courses/externalProviders'
 import { SudarCourseThumbnailArt } from '@/components/branding/SudarCourseDefaultArt'
 import { CourseArtPatternSelect } from '@/components/branding/CourseArtPatternSelect'
 
@@ -24,6 +25,8 @@ interface Course {
   thumbnail_url?: string | null
   banner_url?: string | null
   module_count?: number
+  is_external?: boolean
+  external_provider?: string | null
 }
 
 interface Enrollment {
@@ -91,6 +94,8 @@ function CourseCardGrid({ course, enrollment }: { course: Course; enrollment?: E
   const isCompleted = enrollment?.status === 'completed'
   const inProgress = enrollment && !isCompleted
   const tags = course.tags?.slice(0, 3) ?? []
+  const openCourse = course.is_external
+  const providerMeta = openCourse ? getExternalProviderMeta(course.external_provider) : null
 
   return (
     <Link href={`/courses/${course.id}`} className="group block h-full">
@@ -125,15 +130,25 @@ function CourseCardGrid({ course, enrollment }: { course: Course; enrollment?: E
             <div className="w-9 h-9 rounded-xl bg-primary/8 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors">
               <BookOpen className="h-[1.125rem] w-[1.125rem] text-primary" />
             </div>
-            {isCompleted ? (
-              <span className="flex items-center gap-1 text-xs font-semibold text-success bg-success/10 border border-success/30 px-2 py-0.5 rounded-pill">
-                <CheckCircle2 className="w-3 h-3" /> Done
-              </span>
-            ) : inProgress ? (
-              <span className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 border border-primary/30 px-2 py-0.5 rounded-pill">
-                <PlayCircle className="w-3 h-3" /> {Math.round(enrollment.progress_pct)}%
-              </span>
-            ) : null}
+            <div className="flex flex-col items-end gap-1">
+              {openCourse && providerMeta && (
+                <span
+                  className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-pill border ${providerMeta.accentClass}`}
+                >
+                  <Globe className="w-3 h-3" />
+                  {providerMeta.shortLabel}
+                </span>
+              )}
+              {isCompleted ? (
+                <span className="flex items-center gap-1 text-xs font-semibold text-success bg-success/10 border border-success/30 px-2 py-0.5 rounded-pill">
+                  <CheckCircle2 className="w-3 h-3" /> Done
+                </span>
+              ) : inProgress ? (
+                <span className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 border border-primary/30 px-2 py-0.5 rounded-pill">
+                  <PlayCircle className="w-3 h-3" /> {Math.round(enrollment.progress_pct)}%
+                </span>
+              ) : null}
+            </div>
           </div>
 
           {/* Title + description */}
@@ -198,6 +213,7 @@ function CourseCardList({ course, enrollment }: { course: Course; enrollment?: E
   const isCompleted = enrollment?.status === 'completed'
   const inProgress = enrollment && !isCompleted
   const tags = course.tags?.slice(0, 4) ?? []
+  const providerMeta = course.is_external ? getExternalProviderMeta(course.external_provider) : null
 
   return (
     <Link href={`/courses/${course.id}`} className="group block">
@@ -216,6 +232,14 @@ function CourseCardList({ course, enrollment }: { course: Course; enrollment?: E
             <h3 className="font-display font-bold text-sm text-card-foreground group-hover:text-primary transition-colors truncate">
               {course.title}
             </h3>
+            {providerMeta && (
+              <span
+                className={`hidden sm:inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-pill border flex-shrink-0 ${providerMeta.accentClass}`}
+              >
+                <Globe className="w-2.5 h-2.5" />
+                {providerMeta.shortLabel}
+              </span>
+            )}
             {isCompleted && (
               <CheckCircle2 className="w-3.5 h-3.5 text-success flex-shrink-0" />
             )}

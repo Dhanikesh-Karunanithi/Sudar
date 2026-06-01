@@ -4,6 +4,21 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## External open courses — Discover (Learn)
+
+- **Where**: Sudar Learn — **Courses** catalog (`/courses`), course detail, learn viewer for external items; Next Best Action on dashboard.
+- **What**: Learners discover free/open courses from YouTube, Khan Academy, MIT OCW, and custom URLs. Hybrid delivery: embedded player when `embed_url` is set, otherwise link-out to the provider. Enroll to save progress; **Mark as complete** records `module_complete` and awards XP/coins via the standard events pipeline.
+- **Key files**:
+  - `supabase/migrations/20260601000000_external_open_courses.sql` — `courses.is_external`, `external_provider`, `external_url`, `embed_url`; seed catalog.
+  - `sudar-learn/src/lib/courses/externalProviders.ts` — provider labels and badges.
+  - `sudar-learn/src/app/(dashboard)/courses/[id]/learn/ExternalCourseViewer.tsx` — embed + completion UI.
+  - `sudar-learn/src/app/(dashboard)/courses/[id]/page.tsx`, `EnrollButton.tsx` — external detail + enroll flow.
+  - `sudar-learn/src/lib/intelligence/nextBestActionEngine.ts` — NBA includes external metadata.
+- **Database**: `courses` columns above; one placeholder `modules` row per seeded open course for progress math.
+- **Flow**: Browse catalog → open course detail → enroll → learn (embed or link-out) → mark complete → progress and gamification update; NBA can recommend open courses from skill gaps.
+
+---
+
 ## Flashcards modality (Learn)
 
 - **Where**: Sudar Learn course viewer — **Cards** tab per module.

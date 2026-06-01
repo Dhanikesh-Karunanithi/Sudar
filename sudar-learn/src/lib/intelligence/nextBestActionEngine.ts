@@ -3,6 +3,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
+import { buildLearnUsageChatCtx } from '@/lib/ai/learnUsageContext'
 import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { gapTopicLabelsForUser } from '@/lib/learner/syncTopicSkills'
 import { computeFocusRatio } from '@/types/analytics'
@@ -21,6 +22,9 @@ export interface CourseCandidate {
   difficulty: string | null
   tags: string[]
   modules: Array<{ title: string }>
+  is_external?: boolean
+  external_provider?: string | null
+  external_url?: string | null
 }
 
 export type NextBestActionResult =
@@ -36,7 +40,7 @@ export async function computeNextBestActionForUser(
   options: { force?: boolean },
 ): Promise<NextBestActionResult> {
   const force = options.force === true
-  const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, { userId })
+  const { orgId, orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, { userId })
   const chatCfgError = resolveChatConfigError(orgSettings, privateRuntime)
 
   const { data: learnerProfile } = await admin
@@ -96,7 +100,7 @@ export async function computeNextBestActionForUser(
 
   const { data: allCourses } = await admin
     .from('courses')
-    .select('id, title, description, difficulty, tags, modules(title)')
+    .select('id, title, description, difficulty, tags, is_external, external_provider, external_url, modules(title)')
     .eq('status', 'published')
 
   const candidates: CourseCandidate[] = (allCourses ?? []).filter((c) => !enrolledIds.has(c.id))
@@ -205,6 +209,9 @@ export async function computeNextBestActionForUser(
         recommended_duration_mins: recommendedDurationMins(features),
         course_id: fallback.id,
         course_title: fallback.title,
+        is_external: Boolean(fallback.is_external),
+        external_provider: fallback.external_provider ?? null,
+        external_url: fallback.external_url ?? null,
         reason: 'A highly-rated course in your organisation — a great next step.',
         reasons: [],
         confidence: 0.62,
@@ -220,13 +227,24 @@ export async function computeNextBestActionForUser(
   if (!chatCfgError && best.reasons.length > 0) {
     try {
       const prompt = `Write one sentence (max 25 words) explaining to a learner why they should take the course "${best.course.title}" next. Reasons: ${best.reasons.join('; ')}. Be warm and specific. No fluff.`
+      const usageCtx =
+        orgId != null
+          ? buildLearnUsageChatCtx({
+              admin,
+              orgId,
+              userId,
+              feature: 'next_best_action',
+              route: '/api/intelligence/next-action',
+              privateRuntime,
+            })
+          : { privateOpenAi: privateRuntime }
       const { content: gen } = await chatCompletion(
         {
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 60,
           temperature: 0.6,
         },
-        { privateOpenAi: privateRuntime },
+        usageCtx,
       )
       if (gen) reason = gen
     } catch {
@@ -242,6 +260,9 @@ export async function computeNextBestActionForUser(
     course_id: best.course.id,
     course_title: best.course.title,
     course_difficulty: best.course.difficulty,
+    is_external: Boolean(best.course.is_external),
+    external_provider: best.course.external_provider ?? null,
+    external_url: best.course.external_url ?? null,
     reason,
     confidence: confidenceFromScore(best.score, features),
     score: best.score,

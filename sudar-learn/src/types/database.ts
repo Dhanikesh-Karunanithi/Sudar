@@ -595,6 +595,10 @@ export type Database = {
           scorm_url: string | null
           settings: Json | null
           is_adaptive: boolean
+          is_external: boolean
+          external_provider: string | null
+          external_url: string | null
+          embed_url: string | null
           published_at: string | null
           created_at: string
           updated_at: string
@@ -606,6 +610,10 @@ export type Database = {
           title: string
           description?: string | null
           status?: string
+          is_external?: boolean
+          external_provider?: string | null
+          external_url?: string | null
+          embed_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -613,6 +621,10 @@ export type Database = {
           title?: string
           description?: string | null
           status?: string
+          is_external?: boolean
+          external_provider?: string | null
+          external_url?: string | null
+          embed_url?: string | null
           published_at?: string | null
           updated_at?: string
         }
