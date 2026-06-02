@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/analytics-rollups",
       "schedule": "15 2 * * *"
+    },
+    {
+      "path": "/api/cron/ai-usage-rollups",
+      "schedule": "30 2 * * *"
     }
   ]
 }
