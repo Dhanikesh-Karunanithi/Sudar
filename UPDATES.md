@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-03 — Learn: enrollment progress + certificate hardening
+
+- **Progress**: `module_complete` enrollment updates now count **distinct** `module_id` values (SCORM re-finishes / duplicate ALP events no longer inflate `progress_pct` to 100% early). Progress updates require an active course enrollment.
+- **Certificates**: `POST /api/certificates/issue` requires path enrollment and mandatory course completion before issuing a verification code.
+- **Key files**: `sudar-learn/src/lib/learner/courseEnrollmentProgress.ts`, `sudar-learn/src/app/api/events/route.ts`, `sudar-learn/src/app/api/alp/events/route.ts`, `sudar-learn/src/app/api/certificates/issue/route.ts`.
+
 ### 2026-06-01 — External open courses (Discover) in Learn
 
 - **Discover**: Published courses can be flagged `is_external` with provider (`youtube`, `khan_academy`, `mit_ocw`, `custom`), link-out URL, and optional embed URL. Catalog shows provider badges; detail page explains external hosting.
