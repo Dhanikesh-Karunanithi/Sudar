@@ -26,8 +26,12 @@ jobs:
           cache: npm
           cache-dependency-path: teachwithsudar/package-lock.json
 
-      - name: Install
+      - name: Install marketing site
         working-directory: teachwithsudar
+        run: npm ci
+
+      - name: Install launch demo
+        working-directory: sudar-ecosystem-demo
         run: npm ci
 
       - name: Build static export (includes /launch-demo from sudar-ecosystem-demo)

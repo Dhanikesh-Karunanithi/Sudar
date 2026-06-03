@@ -13,6 +13,21 @@ const outDir = path.join(demoDir, "out");
 const targetDir = path.join(root, "teachwithsudar", "public", "launch-demo");
 
 const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
+const demoNext = path.join(demoDir, "node_modules", "next");
+
+// CI installs only teachwithsudar deps; without this, the demo build picks up the
+// parent Next.js version and can fail prerendering /500 during static export.
+if (!existsSync(demoNext)) {
+  console.log("Installing sudar-ecosystem-demo dependencies…");
+  const install = spawnSync(npmCmd, ["ci"], {
+    cwd: demoDir,
+    stdio: "inherit",
+    shell: true,
+  });
+  if (install.status !== 0) {
+    process.exit(install.status ?? 1);
+  }
+}
 
 console.log("Building sudar-ecosystem-demo (basePath=/launch-demo)…");
 const build = spawnSync(npmCmd, ["run", "build"], {
