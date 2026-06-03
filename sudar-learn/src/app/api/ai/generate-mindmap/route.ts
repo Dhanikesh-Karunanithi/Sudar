@@ -6,7 +6,7 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
-import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
+import { learnMeteringChatCtx, loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 import { capabilitySupported, parseOrgAiRuntimePolicy } from '@/types/orgAiInference'
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => ({} as Record<string, unknown>))
   const courseId = typeof body.course_id === 'string' ? body.course_id : null
-  const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
+  const { orgId, orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
     courseId,
     userId: user.id,
   })
@@ -154,7 +154,21 @@ JSON object (root with label and children):`
       max_tokens: maxTokens,
       temperature: 0.3,
     },
-    { privateOpenAi: privateRuntime }
+    orgId != null
+      ? learnMeteringChatCtx(
+          admin,
+          orgId,
+          user.id,
+          orgSettings,
+          privateRuntime,
+          'modality_mindmap',
+          '/api/ai/generate-mindmap',
+          {
+            course_id: courseId ?? undefined,
+            module_id: typeof body.module_id === 'string' ? body.module_id : undefined,
+          }
+        )
+      : { privateOpenAi: privateRuntime }
   )
   const rawStr = raw ?? ''
 

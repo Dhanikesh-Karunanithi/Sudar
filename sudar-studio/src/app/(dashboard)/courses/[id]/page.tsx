@@ -192,6 +192,12 @@ export default function CourseDetailPage() {
             )}
             Export JSON
           </button>
+          <Link
+            href={`/courses/${course.id}/quality`}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-600 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800"
+          >
+            Content quality
+          </Link>
           <CourseExportDialog courseId={course.id} disabled={!hasModules} />
           <button
             type="button"

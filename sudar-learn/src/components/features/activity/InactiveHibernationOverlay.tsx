@@ -1,7 +1,6 @@
 'use client'
 
-import { SudarLogoMark } from '@/components/branding/SudarLogo'
-import { cn } from '@/lib/utils'
+import { HibernationAnimation } from '@/components/features/activity/HibernationAnimation'
 import type { ActivityTrackingState } from './useInactivityHibernation'
 
 interface InactiveHibernationOverlayProps {
@@ -32,15 +31,7 @@ export function InactiveHibernationOverlay({
     >
       <div className="absolute inset-0 bg-background/55 backdrop-blur-md" />
       <div className="relative mx-4 w-full max-w-md rounded-2xl border border-border/80 bg-card/80 p-6 text-center shadow-2xl backdrop-blur">
-        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10">
-          <SudarLogoMark
-            className={cn(
-              'h-11 w-11 text-primary motion-reduce:animate-none',
-              isWarning ? 'motion-safe:animate-pulse' : 'motion-safe:animate-[spin_4s_linear_infinite]'
-            )}
-            starFill="var(--card)"
-          />
-        </div>
+        <HibernationAnimation isWarning={isWarning} className="mb-4" />
 
         <p className="text-sm font-semibold text-foreground">
           {isWarning ? 'Sudar will hibernate soon' : 'Sudar is hibernating'}

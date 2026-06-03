@@ -78,12 +78,12 @@ const faqs: FaqItem[] = [
         </Link>
         . Production remote MCP is at{" "}
         <a
-          href="https://mcp.thesudar.app"
+          href="https://mcp.thesudar.com"
           target="_blank"
           rel="noopener noreferrer"
           className={faqLinkClass}
         >
-          mcp.thesudar.app
+          mcp.thesudar.com
         </a>{" "}
         with OAuth; <code>@sudar/mcp-server</code> supports local stdio. Creator tools proxy Studio with your
         session.

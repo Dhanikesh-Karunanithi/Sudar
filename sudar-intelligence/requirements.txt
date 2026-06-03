@@ -17,3 +17,4 @@ PyJWT>=2.8.0
 slowapi>=0.1.9
 edge-tts>=6.1.0
 pydub>=0.25.0
+markitdown[all]>=0.1.6

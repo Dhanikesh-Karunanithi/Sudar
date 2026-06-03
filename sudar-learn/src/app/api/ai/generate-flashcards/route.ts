@@ -1,7 +1,7 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
-import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
+import { learnMeteringChatCtx, loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 import { capabilitySupported, parseOrgAiRuntimePolicy } from '@/types/orgAiInference'
 
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   const { content, module_title } = await request.json()
   const text = (content ?? '').trim().slice(0, 4000)
   const admin = createServiceRoleSupabaseClient()
-  const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, { userId: user.id })
+  const { orgId, orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, { userId: user.id })
   const runtimePolicy = parseOrgAiRuntimePolicy(orgSettings)
   if (
     runtimePolicy.mode === 'local' &&
@@ -56,7 +56,17 @@ JSON array:`
       max_tokens: 1200,
       temperature: 0.3,
     },
-    { privateOpenAi: privateRuntime }
+    orgId != null
+      ? learnMeteringChatCtx(
+          admin,
+          orgId,
+          user.id,
+          orgSettings,
+          privateRuntime,
+          'modality_flashcards',
+          '/api/ai/generate-flashcards'
+        )
+      : { privateOpenAi: privateRuntime }
   ).catch((err) => {
     throw new Error(err instanceof Error ? err.message : String(err))
   })

@@ -1,34 +1,39 @@
-# RAG + Sudar setup (Together AI) — full steps
+# RAG + Sudar setup — full steps
 
-RAG (course search for the tutor) and the AI tutor use **Together AI** by default. Embeddings can use **Together** or **OpenAI**; chat and workflows use Together.
+RAG powers catalog search (floating Sudar) and **in-course vector excerpts** for the tutor. Embeddings support **Together**, **OpenAI**, or **Hugging Face** (recommended for multilingual: `BAAI/bge-m3`).
 
 ---
 
 ## 1. Environment (sudar-learn)
 
-In `sudar-learn/.env.local` set:
+In `sudar-learn/.env.local` set one embedding provider:
 
 ```env
-# Required for tutor + RAG (default embedding provider)
+# Option A — Together (default if key present)
 TOGETHER_API_KEY=your_together_api_key_here
 
-# Optional: override embedding provider (default is together)
-# EMBED_PROVIDER=together
+# Option B — Hugging Face (multilingual RAG)
+# HUGGINGFACE_API_KEY=hf_...
+# EMBED_PROVIDER=huggingface
+# HF_EMBED_MODEL=BAAI/bge-m3
+# RAG_RERANK_ENABLED=true
+# HF_RERANK_MODEL=BAAI/bge-reranker-v2-m3
+
+# Option C — OpenAI embeddings
+# OPENAI_API_KEY=...
 # EMBED_PROVIDER=openai
 
-# Optional: if using OpenAI for embeddings
-# OPENAI_API_KEY=your_openai_key
-
-# Optional: override embedding model (Together default: BAAI/bge-large-en-v1.5)
-# EMBED_MODEL=BAAI/bge-large-en-v1.5
+# Optional: self-hosted TEI/vLLM (OpenAI-compatible)
+# HF_INFERENCE_BASE_URL=http://localhost:8080
 
 # Optional: tutor / memory models (defaults in code)
 # TOGETHER_TUTOR_MODEL=...
 # TOGETHER_MEMORY_MODEL=...
 ```
 
-- **RAG + tutor**: only `TOGETHER_API_KEY` is required.
-- **Embeddings**: default provider is **together** (uses `TOGETHER_API_KEY` and `BAAI/bge-large-en-v1.5`, 1024 dims). Set `EMBED_PROVIDER=openai` to use OpenAI instead (same 1024 dims for compatibility).
+- **RAG + tutor chat**: at least one chat key (`TOGETHER_API_KEY`, etc.) plus an embedding provider.
+- **HF multilingual**: `EMBED_PROVIDER=huggingface` + `HF_EMBED_MODEL=BAAI/bge-m3` (1024 dims, matches pgvector).
+- **After changing embed model**: re-run ingest for all published courses (vectors are not interchangeable).
 
 ---
 

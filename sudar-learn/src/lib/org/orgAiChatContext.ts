@@ -1,8 +1,12 @@
+import type { ChatCompletionContext } from '@/lib/ai/chat'
+import { buildLearnUsageChatCtx } from '@/lib/ai/learnUsageContext'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AiUsageFeature, AiUsageMetadata } from '../../../../shared/ai/usageTypes'
 import type { Database } from '@/types/database'
 import { buildPrivateOpenAiRuntime, type PrivateOpenAiRuntime } from '@/types/orgAiInference'
 
 export type OrgAiChatContext = {
+  orgId: string | null
   orgSettings: unknown
   privateRuntime: PrivateOpenAiRuntime | null
 }
@@ -25,12 +29,35 @@ export async function loadOrgAiChatContext(
     orgId = data?.org_id ?? null
   }
   if (!orgId) {
-    return { orgSettings: {}, privateRuntime: null }
+    return { orgId: null, orgSettings: {}, privateRuntime: null }
   }
   const { data: org } = await admin.from('organisations').select('settings').eq('id', orgId).maybeSingle()
   const settings = org?.settings ?? {}
   return {
+    orgId,
     orgSettings: settings,
     privateRuntime: buildPrivateOpenAiRuntime(settings),
   }
+}
+
+export function learnMeteringChatCtx(
+  admin: SupabaseClient<Database>,
+  orgId: string,
+  userId: string,
+  orgSettings: unknown,
+  privateRuntime: PrivateOpenAiRuntime | null,
+  feature: AiUsageFeature,
+  route: string,
+  metadata?: AiUsageMetadata
+): ChatCompletionContext {
+  return buildLearnUsageChatCtx({
+    admin: admin as unknown as NonNullable<ChatCompletionContext['usageAdmin']>,
+    orgId,
+    userId,
+    feature,
+    route,
+    metadata,
+    privateRuntime,
+    orgSettings,
+  })
 }

@@ -13,6 +13,9 @@
     "dev:fresh": "node ./scripts/rm-next-cache.mjs && node ./scripts/run-next.mjs dev",
     "dev:3003:fresh": "node ./scripts/rm-next-cache.mjs && node ./scripts/run-next.mjs dev -p 3003",
     "build": "node ../scripts/sync-help-center-ai.mjs && node ./scripts/run-next.mjs build",
+    "build:cf": "opennextjs-cloudflare build",
+    "preview:cf": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy:cf": "node ./scripts/deploy-cf.mjs",
     "start": "node ./scripts/run-next.mjs start",
     "lint": "node ./scripts/run-next.mjs lint"
   },
@@ -50,6 +53,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.19.11",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -57,6 +61,7 @@
     "eslint-config-next": "^15.5.18",
     "postcss": "^8.5.10",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.97.0"
   }
 }

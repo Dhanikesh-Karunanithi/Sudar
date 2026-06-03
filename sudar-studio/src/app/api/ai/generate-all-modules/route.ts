@@ -1,7 +1,8 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveChatConfigError } from '@/lib/ai/chat'
-import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
+import { fetchStudioOrgAiContext, studioMeteringChatCtx } from '@/lib/ai/studioOrgAiChat'
+import { withUsageMetadata } from '@/lib/ai/studioUsageContext'
 import { fillEmptyModulesForCourse } from '@/lib/ai/courseGeneration'
 
 export async function POST(request: NextRequest) {
@@ -26,7 +27,18 @@ export async function POST(request: NextRequest) {
   const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, course.org_id)
   const configError = resolveChatConfigError(orgSettings, privateRuntime)
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })
-  const chatAiCtx = { privateOpenAi: privateRuntime }
+  const chatAiCtx = withUsageMetadata(
+    studioMeteringChatCtx(
+      admin,
+      course.org_id,
+      user.id,
+      orgSettings,
+      privateRuntime,
+      'course_generation',
+      '/api/ai/generate-all-modules'
+    ),
+    { course_id: course.id }
+  )
 
   const { data: modules } = await admin
     .from('modules')

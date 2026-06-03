@@ -110,7 +110,11 @@ export function TopNav({ user, showOnboardingNudge, coinBalance = 0 }: TopNavPro
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-card px-4 md:px-6">
         <Link href="/courses" className="flex items-center gap-2 shrink-0">
           <span className="sr-only">Sudar</span>
-          <SudarLogoMark className="h-8 w-auto shrink-0 text-primary md:h-9" starFill="var(--card)" />
+          <SudarLogoMark
+            data-sudar-nav-logo
+            className="h-8 w-auto shrink-0 text-primary md:h-9"
+            starFill="var(--card)"
+          />
           <span className="font-display text-xl font-bold tracking-tighter text-card-foreground hidden sm:block">
             Sudar
           </span>
@@ -143,8 +147,8 @@ export function TopNav({ user, showOnboardingNudge, coinBalance = 0 }: TopNavPro
 
           {userMenuOpen && (
             <>
-              <div className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[2px]" onClick={() => setUserMenuOpen(false)} aria-hidden />
-              <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-card/98 shadow-xl shadow-black/5 dark:shadow-black/20">
+              <div className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-sm" onClick={() => setUserMenuOpen(false)} aria-hidden />
+              <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-border/80 bg-card/98 dark:bg-card/95 shadow-xl shadow-black/10 dark:shadow-black/30 backdrop-blur-md">
                 <div className="border-b border-border px-4 py-3 flex items-center gap-3">
                   <UserAvatar
                     email={user.email}
@@ -212,7 +216,11 @@ export function TopNav({ user, showOnboardingNudge, coinBalance = 0 }: TopNavPro
       {/* Logo — adequate left padding so logo isn't clipped */}
       <Link href="/" className="flex items-center gap-3 shrink-0 min-w-0">
         <span className="sr-only">Sudar</span>
-        <SudarLogoMark className="h-9 w-auto shrink-0 text-primary md:h-10" starFill="var(--card)" />
+        <SudarLogoMark
+          data-sudar-nav-logo
+          className="h-9 w-auto shrink-0 text-primary md:h-10"
+          starFill="var(--card)"
+        />
         <span className="font-display text-2xl font-bold tracking-tighter text-card-foreground hidden sm:block">
           Sudar
         </span>
@@ -266,8 +274,8 @@ export function TopNav({ user, showOnboardingNudge, coinBalance = 0 }: TopNavPro
           </button>
           {moreOpen && (
             <>
-              <div className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[2px]" onClick={() => setMoreOpen(false)} aria-hidden />
-              <div className="absolute right-0 left-auto top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-card/98 shadow-xl shadow-black/5 dark:shadow-black/20 py-1">
+              <div className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-sm" onClick={() => setMoreOpen(false)} aria-hidden />
+              <div className="absolute right-0 left-auto top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-border/80 bg-card/98 dark:bg-card/95 shadow-xl shadow-black/10 dark:shadow-black/30 backdrop-blur-md py-1">
                 <Link
                   href="/progress"
                   onClick={() => setMoreOpen(false)}
@@ -371,8 +379,8 @@ export function TopNav({ user, showOnboardingNudge, coinBalance = 0 }: TopNavPro
 
           {userMenuOpen && (
             <>
-              <div className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-[2px]" onClick={() => setUserMenuOpen(false)} aria-hidden />
-              <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-border/80 bg-card/95 dark:bg-card/98 shadow-xl shadow-black/5 dark:shadow-black/20">
+              <div className="fixed inset-0 z-40 bg-black/5 dark:bg-black/20 backdrop-blur-sm" onClick={() => setUserMenuOpen(false)} aria-hidden />
+              <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-border/80 bg-card/98 dark:bg-card/95 shadow-xl shadow-black/10 dark:shadow-black/30 backdrop-blur-md">
                 <div className="border-b border-border px-4 py-3 flex items-center gap-3">
                   <UserAvatar
                     email={user.email}

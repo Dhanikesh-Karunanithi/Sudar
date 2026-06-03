@@ -1,7 +1,7 @@
 import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, getDefaultMemoryModel, resolveChatConfigError } from '@/lib/ai/chat'
-import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
+import { learnMeteringChatCtx, loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { fetchResolvedLearnerPreferences } from '@/lib/learner/learnerPreferences'
 import { rejectInvalidCronRequest } from '@/lib/security/cronAuth'
 import { parseOrgAiCompliance } from '@/types/personalization'
@@ -96,11 +96,24 @@ async function consolidateOneUser(
     return { ok: true, skipped: 'fresh' }
   }
 
-  const { orgSettings, privateRuntime: rt } = await loadOrgAiChatContext(admin, { userId })
+  const { orgId, orgSettings, privateRuntime: rt } = await loadOrgAiChatContext(admin, { userId })
   const chatCfg = resolveChatConfigError(orgSettings, rt)
   if (chatCfg) {
     return { ok: true, skipped: 'no_ai' }
   }
+
+  const chatCtx =
+    orgId != null
+      ? learnMeteringChatCtx(
+          admin,
+          orgId,
+          userId,
+          orgSettings,
+          rt,
+          'memory_consolidation',
+          '/api/cron/consolidate-learner-memory'
+        )
+      : { privateOpenAi: rt }
 
   const { content } = await chatCompletion(
     {
@@ -114,7 +127,7 @@ async function consolidateOneUser(
       max_tokens: 400,
       temperature: 0.25,
     },
-    { privateOpenAi: rt },
+    chatCtx
   )
 
   const digest = (content ?? '').trim()

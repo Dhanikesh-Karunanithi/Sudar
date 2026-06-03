@@ -1,5 +1,7 @@
 # DNS — thesudar.app (Cloudflare)
 
+> **Current production domain:** **[DNS_THESUDAR_COM.md](DNS_THESUDAR_COM.md)** for **thesudar.com**. This file documents the legacy **thesudar.app** zone.
+
 Operator runbook for **thesudar.app** on Cloudflare Registrar + DNS.
 
 ## 1. Register domain

@@ -3,15 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import {
-  ArrowLeft,
-  CheckCircle2,
-  ExternalLink,
-  Globe,
-  Sparkles,
-} from 'lucide-react'
+import { ArrowLeft, CheckCircle2, MessageCircle, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getExternalProviderMeta } from '@/lib/courses/externalProviders'
+import {
+  getExternalProviderMeta,
+  providerRequiresSignIn,
+} from '@/lib/courses/externalProviders'
+import { ExternalCourseLabel } from '@/components/courses/ExternalCourseLabel'
+import { ExternalCourseEmbed } from '@/components/courses/ExternalCourseEmbed'
 import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 
 export interface ExternalCourseViewerProps {
@@ -25,6 +24,10 @@ export interface ExternalCourseViewerProps {
   enrollmentProgress: number
   enrollmentStatus?: string
   isModuleComplete: boolean
+  allowTutorDiscussion?: boolean
+  requiresSignIn?: boolean
+  signInInstructions?: string | null
+  requireLearnerConsent?: boolean
 }
 
 export function ExternalCourseViewer({
@@ -38,18 +41,34 @@ export function ExternalCourseViewer({
   enrollmentProgress,
   enrollmentStatus,
   isModuleComplete,
+  allowTutorDiscussion = true,
+  requiresSignIn: requiresSignInProp,
+  signInInstructions,
+  requireLearnerConsent = false,
 }: ExternalCourseViewerProps) {
   const router = useRouter()
   const provider = getExternalProviderMeta(externalProvider)
   const [completing, setCompleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [justCompleted, setJustCompleted] = useState(false)
+  const [consentGiven, setConsentGiven] = useState(!requireLearnerConsent)
+  const [signedInAck, setSignedInAck] = useState(false)
+
+  const needsSignIn = requiresSignInProp ?? providerRequiresSignIn(externalProvider)
 
   const isCompleted =
     justCompleted ||
     isModuleComplete ||
     enrollmentStatus === 'completed' ||
     enrollmentProgress >= 100
+
+  async function trackEngagement(eventType: 'view' | 'click' | 'duration' | 'complete', durationSecs?: number) {
+    await fetch('/api/external-courses/engagement', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ course_id: courseId, event_type: eventType, duration_secs: durationSecs }),
+    }).catch(() => undefined)
+  }
 
   async function handleMarkComplete() {
     if (isCompleted || completing) return
@@ -75,133 +94,153 @@ export function ExternalCourseViewer({
       return
     }
 
+    await trackEngagement('complete')
     setJustCompleted(true)
     setCompleting(false)
     router.refresh()
   }
 
-  return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-12">
-      <Link
-        href={`/courses/${courseId}`}
-        className="inline-flex items-center gap-2 text-muted-foreground hover:text-card-foreground text-sm transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to course
-      </Link>
+  function openTutor() {
+    window.dispatchEvent(
+      new CustomEvent('sudar:open-tutor', {
+        detail: { courseId, moduleId, prompt: `Tell me about this external course: ${title}` },
+      }),
+    )
+  }
 
-      <div className="rounded-card-xl border border-primary/20 bg-card overflow-hidden">
-        <div className="p-6 md:p-8 border-b border-border space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={cn(
-                'inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-pill border',
-                provider.accentClass,
-              )}
-            >
-              <Globe className="w-3.5 h-3.5" />
-              {provider.label}
-            </span>
-            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              Open course · Discover
-            </span>
-          </div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-card-foreground">{title}</h1>
-          {description && (
-            <p className="text-muted-foreground text-sm leading-relaxed max-w-2xl">{description}</p>
-          )}
-          <p className="text-xs text-muted-foreground max-w-2xl">
-            This course is hosted on {provider.label}. Watch or study there, then mark complete in Sudar to
-            track progress and earn rewards.
-          </p>
-        </div>
+  if (!consentGiven) {
+    return (
+      <div className="max-w-lg mx-auto py-16 px-4 space-y-4 text-center">
+        <ExternalCourseLabel provider={externalProvider} variant="banner" />
+        <h1 className="font-display text-xl font-bold">{title}</h1>
+        <p className="text-sm text-muted-foreground">
+          This course is hosted on {provider.label}. Sudar will embed or link their content; their privacy
+          policy applies when you continue.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setConsentGiven(true)
+            void trackEngagement('click')
+          }}
+          className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold rounded-button"
+        >
+          Continue to course
+        </button>
+      </div>
+    )
+  }
 
-        {embedUrl ? (
-          <div className="relative w-full aspect-video bg-black">
-            <iframe
-              src={embedUrl}
-              title={title}
-              className="absolute inset-0 w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              referrerPolicy="strict-origin-when-cross-origin"
-            />
-          </div>
-        ) : (
-          <div className="p-8 md:p-12 flex flex-col items-center text-center gap-4 bg-muted/30">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <ExternalLink className="w-8 h-8 text-primary" />
-            </div>
-            <p className="text-sm text-muted-foreground max-w-md">
-              Open this course on {provider.label} in a new tab. When you finish, return here to mark it
-              complete.
-            </p>
-            {externalUrl && (
-              <a
-                href={externalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:opacity-90 text-primary-foreground font-semibold rounded-button transition-all"
-              >
-                Go to course on {provider.shortLabel}
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            )}
-          </div>
+  if (needsSignIn && !signedInAck) {
+    return (
+      <div className="max-w-lg mx-auto py-16 px-4 space-y-4">
+        <ExternalCourseLabel provider={externalProvider} variant="banner" />
+        <h1 className="font-display text-xl font-bold">{title}</h1>
+        <p className="text-sm text-muted-foreground">
+          {signInInstructions ??
+            `Sign in to your ${provider.shortLabel} account in the viewer below, then confirm when ready.`}
+        </p>
+        <button
+          type="button"
+          onClick={() => setSignedInAck(true)}
+          className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold rounded-button"
+        >
+          I&apos;m signed in — show course
+        </button>
+        {externalUrl && (
+          <a
+            href={externalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-sm text-primary hover:opacity-90"
+            onClick={() => void trackEngagement('click')}
+          >
+            Open {provider.shortLabel} in a new tab
+          </a>
         )}
+      </div>
+    )
+  }
 
-        {embedUrl && externalUrl && (
-          <div className="px-6 py-4 border-t border-border bg-muted/20 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">Prefer the full site experience?</p>
-            <a
-              href={externalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:opacity-90"
+  return (
+    <div className="max-w-6xl mx-auto space-y-5 pb-24">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link
+          href={`/courses/${courseId}`}
+          className="inline-flex items-center gap-2 text-muted-foreground hover:text-card-foreground text-sm transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Course overview
+        </Link>
+        <div className="flex items-center gap-3">
+          {allowTutorDiscussion && (
+            <button
+              type="button"
+              onClick={openTutor}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:opacity-90"
             >
-              Open on {provider.shortLabel}
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          </div>
+              <MessageCircle className="w-3.5 h-3.5" />
+              Ask Sudar about this course
+            </button>
+          )}
+          <Link href="/courses?tab=discover" className="text-xs font-medium text-primary hover:opacity-90">
+            Browse open courses
+          </Link>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <ExternalCourseLabel provider={externalProvider} variant="banner" />
+        <h1 className="font-display text-2xl md:text-3xl font-bold text-card-foreground px-1">{title}</h1>
+        {description && (
+          <p className="text-muted-foreground text-sm leading-relaxed max-w-3xl px-1">{description}</p>
         )}
       </div>
 
+      <ExternalCourseEmbed
+        title={title}
+        externalProvider={externalProvider}
+        externalUrl={externalUrl}
+        embedUrl={embedUrl}
+        minHeight="min-h-[min(65vh,680px)]"
+        onView={() => void trackEngagement('view')}
+        onExternalClick={() => void trackEngagement('click')}
+      />
+
       <div
         className={cn(
-          'rounded-card border p-6 space-y-4',
-          isCompleted ? 'border-success/40 bg-success/5' : 'border-border bg-card',
+          'sticky bottom-4 z-10 rounded-card border shadow-lg p-4 md:p-5 space-y-3',
+          isCompleted ? 'border-success/40 bg-success/10' : 'border-border bg-card/95 backdrop-blur-sm',
         )}
       >
         {isCompleted ? (
-          <div className="flex flex-col items-center text-center gap-3 py-4">
-            <div className="w-14 h-14 rounded-full bg-success/15 flex items-center justify-center">
-              <CheckCircle2 className="w-8 h-8 text-success" />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="w-8 h-8 text-success shrink-0" />
+              <div>
+                <p className="font-semibold text-card-foreground">Course complete</p>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-warning" />
+                  Progress saved on Sudar
+                </p>
+              </div>
             </div>
-            <h2 className="font-display text-lg font-bold text-card-foreground">Course complete!</h2>
-            <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-warning" />
-              Progress saved — check your dashboard for XP and coins.
-            </p>
-            <Link
-              href="/courses"
-              className="text-sm font-medium text-primary hover:opacity-90 mt-2"
-            >
-              Browse more courses
+            <Link href="/courses?tab=discover" className="text-sm font-medium text-primary hover:opacity-90">
+              More open courses
             </Link>
           </div>
         ) : (
           <>
-            <h2 className="text-base font-semibold text-card-foreground">Track your progress</h2>
             <p className="text-sm text-muted-foreground">
-              Finished the material on {provider.shortLabel}? Mark this course complete to update your
-              learning record.
+              Finished learning on {provider.shortLabel}? Mark complete to update your Sudar record and earn
+              rewards.
             </p>
             {error && <p className="text-destructive text-sm">{error}</p>}
             <button
               type="button"
               onClick={handleMarkComplete}
               disabled={completing}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:opacity-90 disabled:opacity-60 text-primary-foreground font-semibold rounded-button transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-primary hover:opacity-90 disabled:opacity-60 text-primary-foreground font-semibold rounded-button transition-all"
             >
               {completing ? (
                 <SudarInlineLoader size="sm" className="text-primary-foreground" starFill="currentColor" />

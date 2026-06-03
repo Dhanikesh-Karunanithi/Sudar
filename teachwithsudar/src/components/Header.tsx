@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { SudarLogoMark } from "@/components/brand/SudarLogoMark";
 import {
   HERO_NAV_COMPACT_THRESHOLD,
@@ -11,12 +11,9 @@ import {
 import { GITHUB_URL } from "@/lib/site-nav";
 
 const NAV_LINKS = [
-  { href: "/features", label: "Platform" },
-  { href: "/guides", label: "Guides" },
-  { href: "/research", label: "Research" },
-  { href: "/story", label: "About" },
-  { href: "/self-host", label: "Get Started" },
-  { href: "/collaborate", label: "Collaborate" },
+  { href: "https://learn.thesudar.com/login", label: "Sudar Learn", external: true },
+  { href: "https://studio.thesudar.com/login", label: "Sudar Studio", external: true },
+  { href: "https://teachwithsudar.com/features", label: "Docs & Research", external: true },
 ] as const;
 
 export function Header() {
@@ -25,6 +22,8 @@ export function Header() {
   const { active: heroLogoActive, settled: heroLogoSettled } = useHeroLogoScroll(isHome);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => {
@@ -43,6 +42,17 @@ export function Header() {
     else document.body.style.overflow = "";
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <>
@@ -70,15 +80,23 @@ export function Header() {
             Sudar.
           </Link>
 
-          <div className="hidden lg:flex items-center gap-6 xl:gap-8">
-            {NAV_LINKS.map(({ href, label }) => (
-              <Link
+          {/* Desktop Nav Links */}
+          <div className="hidden lg:flex items-center gap-8">
+            {NAV_LINKS.map(({ href, label, external }) => (
+              <a
                 key={href}
                 href={href}
-                className="text-sm text-gray-400 hover:text-white transition-colors duration-300"
+                target={external ? "_blank" : undefined}
+                rel={external ? "noopener noreferrer" : undefined}
+                className="text-sm text-gray-400 hover:text-white transition-colors duration-300 flex items-center gap-1"
               >
                 {label}
-              </Link>
+                {external && (
+                  <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                )}
+              </a>
             ))}
           </div>
 
@@ -91,12 +109,41 @@ export function Header() {
             >
               GitHub
             </a>
-            <Link
-              href="/self-host"
-              className="hidden sm:inline-flex items-center justify-center px-5 py-2.5 sm:px-6 sm:py-3 rounded-full text-sm font-medium bg-white text-black hover:scale-105 hover:bg-gray-100 transition-all duration-300"
-            >
-              Start with Sudar
-            </Link>
+
+            {/* Premium Open Space Dropdown */}
+            <div ref={dropdownRef} className="relative hidden sm:inline-block">
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 rounded-full text-sm font-semibold bg-white text-black hover:bg-gray-100 transition-all duration-300"
+              >
+                Open Sudar
+                <svg className={`w-4 h-4 transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-3 w-64 rounded-2xl border border-white/5 bg-[#0d0d0d] p-3 shadow-2xl backdrop-blur-md animate-fade-up-in">
+                  <div className="flex flex-col gap-1">
+                    <a
+                      href="https://learn.thesudar.com/login"
+                      className="flex flex-col gap-1 p-3 rounded-xl hover:bg-white/5 transition-colors text-left group"
+                    >
+                      <span className="text-sm font-semibold text-white group-hover:text-primary transition-colors">Sudar Learn</span>
+                      <span className="text-xs text-foreground-muted font-light">Enter your personal learning space</span>
+                    </a>
+                    <a
+                      href="https://studio.thesudar.com/login"
+                      className="flex flex-col gap-1 p-3 rounded-xl hover:bg-white/5 transition-colors text-left group border-t border-white/5"
+                    >
+                      <span className="text-sm font-semibold text-white group-hover:text-primary transition-colors">Sudar Studio</span>
+                      <span className="text-xs text-foreground-muted font-light">Create and manage courses</span>
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={() => setMobileOpen((o) => !o)}
@@ -126,15 +173,22 @@ export function Header() {
         aria-hidden={!mobileOpen}
       >
         <div className="flex flex-col items-center justify-center min-h-full gap-8 pt-24 pb-12 px-6">
-          {NAV_LINKS.map(({ href, label }) => (
-            <Link
+          {NAV_LINKS.map(({ href, label, external }) => (
+            <a
               key={href}
               href={href}
-              className="text-lg text-gray-300 hover:text-white transition-colors"
+              target={external ? "_blank" : undefined}
+              rel={external ? "noopener noreferrer" : undefined}
+              className="text-lg text-gray-300 hover:text-white transition-colors flex items-center gap-1"
               onClick={() => setMobileOpen(false)}
             >
               {label}
-            </Link>
+              {external && (
+                <svg className="w-4 h-4 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              )}
+            </a>
           ))}
           <a
             href={GITHUB_URL}
@@ -145,13 +199,22 @@ export function Header() {
           >
             GitHub
           </a>
-          <Link
-            href="/self-host"
-            className="mt-4 inline-flex items-center justify-center px-8 py-4 rounded-full text-base font-medium bg-white text-black hover:bg-gray-100 transition-all"
-            onClick={() => setMobileOpen(false)}
-          >
-            Start with Sudar
-          </Link>
+          <div className="flex flex-col gap-4 w-full max-w-[280px] mt-4">
+            <a
+              href="https://learn.thesudar.com/login"
+              className="inline-flex items-center justify-center w-full px-6 py-3.5 rounded-full text-base font-semibold bg-indigo-600 text-white hover:bg-indigo-500 transition-all text-center"
+              onClick={() => setMobileOpen(false)}
+            >
+              Open Sudar Learn
+            </a>
+            <a
+              href="https://studio.thesudar.com/login"
+              className="inline-flex items-center justify-center w-full px-6 py-3.5 rounded-full text-base font-semibold bg-white text-black hover:bg-gray-100 transition-all text-center"
+              onClick={() => setMobileOpen(false)}
+            >
+              Open Sudar Studio
+            </a>
+          </div>
         </div>
       </div>
     </>

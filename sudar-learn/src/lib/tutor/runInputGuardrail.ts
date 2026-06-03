@@ -4,10 +4,11 @@ import {
   resolveChatConfigError,
   type ChatCompletionContext,
 } from '@/lib/ai/chat'
+import { buildTutorUsageChatCtx, type TutorMeteringDeps } from '@/lib/tutor/tutorUsageContext'
 import type { PrivateOpenAiRuntime } from '@/types/orgAiInference'
 import { tutorMessageMatchesIdentityBypass } from '@/lib/tutor/tutorIdentityBypassPatterns'
 
-export type TutorGuardrailAiDeps = {
+export type TutorGuardrailAiDeps = TutorMeteringDeps & {
   orgSettings: unknown
   privateRuntime: PrivateOpenAiRuntime | null
   chatCtx: ChatCompletionContext
@@ -85,7 +86,7 @@ export async function runTutorInputGuardrail(
         max_tokens: 10,
         temperature: 0,
       },
-      aiDeps.chatCtx
+      buildTutorUsageChatCtx(aiDeps, 'guardrail')
     )
     const answer = (content ?? '').toUpperCase()
     const pass = !answer.startsWith('NO')

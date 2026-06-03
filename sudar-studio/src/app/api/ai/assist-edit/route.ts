@@ -2,7 +2,7 @@ import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/se
 import { getOrgIdAndRole } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
-import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
+import { fetchStudioOrgAiContext, studioMeteringChatCtx } from '@/lib/ai/studioOrgAiChat'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -14,7 +14,15 @@ export async function POST(request: NextRequest) {
   const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
   const configError = resolveChatConfigError(orgSettings, privateRuntime)
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })
-  const chatAiCtx = { privateOpenAi: privateRuntime }
+  const chatAiCtx = studioMeteringChatCtx(
+    admin,
+    orgId,
+    user.id,
+    orgSettings,
+    privateRuntime,
+    'studio_assist',
+    '/api/ai/assist-edit'
+  )
 
   const body = await request.json()
   const text = typeof body?.text === 'string' ? body.text.trim() : ''

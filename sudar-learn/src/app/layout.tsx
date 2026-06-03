@@ -47,8 +47,13 @@ const notoSansKR = Noto_Sans_KR({
 })
 
 export const metadata: Metadata = {
-  title: { default: 'Sudar Learn', template: '%s | Sudar Learn' },
+  title: { default: 'Sudar Learn — AI-Powered Personalized Learning', template: '%s | Sudar Learn' },
   description: 'Your personalized AI-powered learning experience.',
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 }
 
 export default async function RootLayout({

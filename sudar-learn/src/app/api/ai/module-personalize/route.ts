@@ -6,7 +6,7 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
-import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
+import { learnMeteringChatCtx, loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { checkPersonalizationEligibility } from '@/lib/personalization/eligibility'
 import { loadPersonalizationMemoryForCourse, type PersonalizationSignal } from '@/lib/personalization/memoryContext'
 import { checkAndIncrementUsage } from '@/lib/usage-limits'
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
   ])
   if (blockedPers) return blockedPers
 
-  const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
+  const { orgId, orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
     courseId: course_id,
     userId: user.id,
   })
@@ -136,7 +136,19 @@ export async function POST(request: NextRequest) {
       { status: 503 }
     )
   }
-  const chatCtx = { privateOpenAi: privateRuntime }
+  const chatCtx =
+    orgId != null
+      ? learnMeteringChatCtx(
+          admin,
+          orgId,
+          user.id,
+          orgSettings,
+          privateRuntime,
+          'module_personalize',
+          '/api/ai/module-personalize',
+          { course_id, module_id }
+        )
+      : { privateOpenAi: privateRuntime }
 
   const styleHint = memoryBundle.explanationPreferencesActive
     ? ' Match their preferred explanation style and length preferences shown above when choosing tone and density.'

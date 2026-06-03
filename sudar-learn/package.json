@@ -7,6 +7,9 @@
     "dev": "node ../scripts/dev-with-sudarvid.mjs learn",
     "dev:next-only": "next dev -p 3001",
     "build": "node ../scripts/sync-help-center-ai.mjs && next build",
+    "build:cf": "opennextjs-cloudflare build",
+    "preview:cf": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -23,6 +26,7 @@
     "@supabase/supabase-js": "^2.97.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "file-type": "^19.6.0",
     "framer-motion": "^12.34.3",
     "fuse.js": "^7.3.0",
     "jose": "^5.10.0",
@@ -42,6 +46,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.19.11",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -51,6 +56,7 @@
     "postcss": "^8.5.10",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "wrangler": "^4.97.0"
   }
 }

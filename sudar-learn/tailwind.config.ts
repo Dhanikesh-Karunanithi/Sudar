@@ -99,6 +99,24 @@ const config: Config = {
           "0%, 100%": { opacity: "0.35", transform: "scale(0.9)" },
           "50%": { opacity: "0.7", transform: "scale(1.06)" },
         },
+        "hibernation-sleep": {
+          "0%, 100%": { transform: "translateY(0) scale(1)" },
+          "50%": { transform: "translateY(3px) scale(0.98)" },
+        },
+        "hibernation-warning-pulse": {
+          "0%, 100%": { transform: "scale(1)", opacity: "1" },
+          "50%": { transform: "scale(1.04)", opacity: "0.88" },
+        },
+        "zzz-float": {
+          "0%": { opacity: "0", transform: "translate(0, 0) scale(0.7)" },
+          "15%": { opacity: "0.85", transform: "translate(2px, -6px) scale(0.9)" },
+          "70%": { opacity: "0.5", transform: "translate(8px, -22px) scale(1)" },
+          "100%": { opacity: "0", transform: "translate(14px, -36px) scale(1.05)" },
+        },
+        "hibernation-cave-glow": {
+          "0%, 100%": { opacity: "0.45" },
+          "50%": { opacity: "0.7" },
+        },
       },
       animation: {
         "sudar-logo-pulse": "sudar-logo-pulse 2.8s ease-in-out infinite",
@@ -106,6 +124,10 @@ const config: Config = {
         "sudar-star-shimmer": "sudar-star-shimmer 1.85s ease-in-out infinite",
         "sudar-star-rim-glow": "sudar-star-rim-glow 6.5s ease-in-out infinite",
         "sudar-loader-glow": "sudar-loader-glow 2.2s ease-in-out infinite",
+        "hibernation-sleep": "hibernation-sleep 3.2s ease-in-out infinite",
+        "hibernation-warning-pulse": "hibernation-warning-pulse 2.4s ease-in-out infinite",
+        "zzz-float": "zzz-float 2.8s ease-out infinite",
+        "hibernation-cave-glow": "hibernation-cave-glow 4s ease-in-out infinite",
       },
     },
   },

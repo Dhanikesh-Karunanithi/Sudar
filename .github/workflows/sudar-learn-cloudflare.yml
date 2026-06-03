@@ -1,0 +1,37 @@
+# Deploy Sudar Learn to Cloudflare Workers (OpenNext) on push to main.
+name: Deploy sudar-learn (Cloudflare)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sudar-learn/**"
+      - "shared/**"
+      - "scripts/sync-help-center-ai.mjs"
+      - "help-center/**"
+      - ".github/workflows/sudar-learn-cloudflare.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Cloudflare Workers — sudar-learn
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: sudar-learn/package-lock.json
+
+      - name: Install
+        working-directory: sudar-learn
+        run: npm ci
+
+      - name: Build and deploy (OpenNext)
+        working-directory: sudar-learn
+        run: npm run deploy:cf
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

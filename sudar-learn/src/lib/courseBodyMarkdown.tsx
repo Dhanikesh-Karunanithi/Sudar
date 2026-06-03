@@ -112,17 +112,43 @@ export function renderCourseMarkdown(body: string, opts?: { showEmptyState?: boo
   )
 }
 
+const MAX_CONCEPT_CALLOUTS_PER_BLOCK = 2
+
 function ProseWithMarkers({ text }: { text: string }) {
   const segments = parseAdaptiveEngineMarkers(text)
+  let conceptCallouts = 0
   return (
     <>
-      {segments.map((seg, si) =>
-        seg.type === 'text' ? (
-          <MarkdownLineBlocks key={`t-${si}`} body={seg.value} />
-        ) : (
+      {segments.map((seg, si) => {
+        if (seg.type === 'text') {
+          return <MarkdownLineBlocks key={`t-${si}`} body={seg.value} />
+        }
+        if (seg.type === 'concept') {
+          const same =
+            !seg.value.trim() ||
+            seg.value.trim().toLowerCase() === seg.label.trim().toLowerCase()
+          if (same || seg.label.trim().length < 4) {
+            return (
+              <p key={`inline-c-${si}`} className="text-card-foreground text-sm leading-relaxed my-3">
+                <strong className="font-semibold text-primary">{parseInlineBasic(seg.label)}</strong>
+              </p>
+            )
+          }
+          if (conceptCallouts >= MAX_CONCEPT_CALLOUTS_PER_BLOCK) {
+            return (
+              <p key={`inline-c2-${si}`} className="text-card-foreground text-sm leading-relaxed my-3">
+                <strong className="font-semibold">{parseInlineBasic(seg.label)}</strong>
+                {' — '}
+                {parseInlineBasic(seg.value)}
+              </p>
+            )
+          }
+          conceptCallouts++
+        }
+        return (
           <AdaptiveMarkerCallout key={`m-${si}`} segment={seg} parseInlineBasic={parseInlineBasic} />
         )
-      )}
+      })}
     </>
   )
 }

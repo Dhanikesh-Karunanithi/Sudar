@@ -871,40 +871,54 @@ body {
   }
 }
 
-/* ── Sudar full-page warp loader (fullpage_loading_animation_sudar.html) ── */
-.sudar-fp-wrap {
+/* ── Sudar full-page hyperdrive loader ── */
+.sudar-fp-hyper-root {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: min(360px, 90vw);
-  height: min(220px, 55vw);
-}
-
-.sudar-fp-tunnel {
-  position: absolute;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
-  pointer-events: none;
-  z-index: 0;
-  top: 50%;
-  left: 50%;
-  width: 320px;
-  height: 200px;
-  transform: translate(-50%, -50%) scale(0);
-  animation: sudar-fp-ring-expand 3.8s cubic-bezier(0.2, 0, 0.6, 1) infinite;
+  width: 100%;
+  min-width: min(100vw, 480px);
+  height: min(280px, 42vh);
+  min-height: 200px;
+  overflow: visible;
 }
 
 .sudar-fp-speed-lines {
   position: absolute;
-  inset: -20% -40%;
+  inset: -30% -50%;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.85;
+  opacity: 1;
+}
+
+.sudar-fp-warp-rush {
+  position: absolute;
+  inset: -25% -15%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.42;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 28px,
+    color-mix(in srgb, var(--foreground) 7%, transparent) 28px,
+    color-mix(in srgb, var(--foreground) 14%, transparent) 30px,
+    transparent 32px,
+    transparent 64px
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 12%,
+    black 88%,
+    transparent 100%
+  );
+  animation: sudar-fp-rush-scroll 0.28s linear infinite;
 }
 
 .sudar-fp-streak {
-  stroke: color-mix(in srgb, var(--foreground) 28%, transparent);
+  stroke: color-mix(in srgb, var(--foreground) 38%, transparent);
   stroke-linecap: round;
   animation-name: sudar-fp-streak-fly;
   animation-timing-function: linear;
@@ -912,85 +926,107 @@ body {
 }
 
 .sudar-fp-s1 {
-  animation-duration: 1.1s;
+  animation-duration: 0.52s;
   animation-delay: 0s;
 }
 .sudar-fp-s2 {
-  animation-duration: 1.3s;
-  animation-delay: -0.28s;
+  animation-duration: 0.62s;
+  animation-delay: -0.14s;
 }
 .sudar-fp-s3 {
-  animation-duration: 1s;
-  animation-delay: -0.62s;
+  animation-duration: 0.48s;
+  animation-delay: -0.31s;
 }
 .sudar-fp-s4 {
-  animation-duration: 1.2s;
-  animation-delay: -0.12s;
+  animation-duration: 0.58s;
+  animation-delay: -0.06s;
 }
 .sudar-fp-s5 {
-  animation-duration: 1.05s;
-  animation-delay: -0.75s;
-}
-.sudar-fp-s6 {
-  animation-duration: 1.4s;
-  animation-delay: -0.45s;
-}
-.sudar-fp-s7 {
-  animation-duration: 1s;
-  animation-delay: -0.9s;
-}
-.sudar-fp-s8 {
-  animation-duration: 1.25s;
-  animation-delay: -0.2s;
-}
-.sudar-fp-s9 {
-  animation-duration: 1.15s;
-  animation-delay: -0.68s;
-}
-.sudar-fp-s10 {
-  animation-duration: 0.95s;
+  animation-duration: 0.5s;
   animation-delay: -0.38s;
 }
+.sudar-fp-s6 {
+  animation-duration: 0.66s;
+  animation-delay: -0.22s;
+}
+.sudar-fp-s7 {
+  animation-duration: 0.47s;
+  animation-delay: -0.45s;
+}
+.sudar-fp-s8 {
+  animation-duration: 0.59s;
+  animation-delay: -0.1s;
+}
+.sudar-fp-s9 {
+  animation-duration: 0.54s;
+  animation-delay: -0.34s;
+}
+.sudar-fp-s10 {
+  animation-duration: 0.46s;
+  animation-delay: -0.19s;
+}
 .sudar-fp-s11 {
-  animation-duration: 1.35s;
-  animation-delay: -0.82s;
+  animation-duration: 0.64s;
+  animation-delay: -0.41s;
 }
 .sudar-fp-s12 {
-  animation-duration: 1.05s;
-  animation-delay: -0.18s;
+  animation-duration: 0.5s;
+  animation-delay: -0.09s;
 }
 .sudar-fp-s13 {
-  animation-duration: 1.2s;
-  animation-delay: -0.52s;
+  animation-duration: 0.57s;
+  animation-delay: -0.26s;
 }
 .sudar-fp-s14 {
-  animation-duration: 1s;
-  animation-delay: -0.7s;
+  animation-duration: 0.48s;
+  animation-delay: -0.35s;
 }
 .sudar-fp-s15 {
-  animation-duration: 1.3s;
-  animation-delay: -0.32s;
+  animation-duration: 0.61s;
+  animation-delay: -0.16s;
 }
 .sudar-fp-s16 {
-  animation-duration: 1.1s;
-  animation-delay: -0.88s;
+  animation-duration: 0.53s;
+  animation-delay: -0.44s;
 }
 
-.sudar-fp-logo {
+.sudar-fp-hyper-stage {
   position: relative;
   z-index: 10;
   width: 360px;
   height: 220px;
-  max-width: 100%;
-  max-height: 100%;
+  max-width: min(90vw, 360px);
+  max-height: min(55vw, 220px);
 }
 
-.sudar-fp-scene {
-  position: relative;
-  width: 100%;
-  height: 100%;
+.sudar-fp-hyper-main {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transform-origin: center center;
-  animation: sudar-fp-scene-lean 3.8s ease-in-out infinite;
+  will-change: transform, opacity, filter;
+  z-index: 12;
+}
+
+.sudar-fp-hyper-root--warp .sudar-fp-hyper-main {
+  animation: sudar-fp-warp-cruise 1.15s linear infinite;
+}
+
+.sudar-fp-hyper-root--warp .sudar-fp-hyper-logo {
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--primary) 22%, transparent));
+}
+
+.sudar-fp-hyper-root--exit .sudar-fp-hyper-main {
+  animation: none;
+}
+
+.sudar-fp-hyper-logo {
+  position: relative;
+  width: 360px;
+  height: 220px;
+  transform-origin: center center;
 }
 
 .sudar-fp-pill {
@@ -1006,8 +1042,8 @@ body {
   top: 36px;
   left: 50%;
   z-index: 2;
+  transform: translateX(calc(-50% + 20px));
   transform-origin: center center;
-  animation: sudar-fp-pill-warp-top 3.8s ease-in-out infinite;
 }
 
 .sudar-fp-pill--bottom {
@@ -1015,40 +1051,8 @@ body {
   top: 100px;
   left: 50%;
   z-index: 1;
+  transform: translateX(calc(-50% - 20px));
   transform-origin: center center;
-  animation: sudar-fp-pill-warp-bottom 3.8s ease-in-out infinite;
-  animation-delay: -0.3s;
-}
-
-.sudar-fp-ghost-wrap {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9;
-  animation: sudar-fp-ghost-drift 3.8s ease-in-out infinite;
-}
-
-.sudar-fp-ghost-pill {
-  position: absolute;
-  border-radius: 999px;
-  height: 64px;
-  background: var(--foreground);
-  opacity: 0.85;
-}
-
-.sudar-fp-side-vignette {
-  position: absolute;
-  inset: -8px;
-  pointer-events: none;
-  z-index: 25;
-  background: linear-gradient(
-    to right,
-    color-mix(in srgb, var(--background) 95%, transparent) 0%,
-    transparent 22%,
-    transparent 78%,
-    color-mix(in srgb, var(--background) 95%, transparent) 100%
-  );
-  animation: sudar-fp-vignette-breathe 3.8s ease-in-out infinite;
 }
 
 .sudar-fp-star {
@@ -1060,7 +1064,6 @@ body {
   transform: translate(-50%, -50%);
   z-index: 20;
   pointer-events: none;
-  animation: sudar-fp-star-anchor 3.8s ease-in-out infinite;
 }
 
 .sudar-fp-star svg {
@@ -1068,132 +1071,87 @@ body {
   height: 100%;
 }
 
+@keyframes sudar-fp-rush-scroll {
+  0% {
+    transform: translate3d(-64px, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 @keyframes sudar-fp-streak-fly {
   0% {
-    transform: translateX(-110%);
+    transform: translateX(-120%);
     opacity: 0;
   }
-  10% {
-    opacity: 0.6;
+  6% {
+    opacity: 0.85;
   }
-  85% {
-    opacity: 0.4;
-  }
-  100% {
-    transform: translateX(110%);
-    opacity: 0;
-  }
-}
-
-@keyframes sudar-fp-ring-expand {
-  0% {
-    transform: translate(-50%, -50%) scale(0.3);
-    opacity: 0.5;
-  }
-  70% {
-    transform: translate(-50%, -50%) scale(3);
-    opacity: 0.1;
+  94% {
+    opacity: 0.7;
   }
   100% {
-    transform: translate(-50%, -50%) scale(5);
+    transform: translateX(120%);
     opacity: 0;
   }
 }
 
-@keyframes sudar-fp-scene-lean {
+@keyframes sudar-fp-warp-cruise {
   0% {
-    transform: skewX(-3deg);
+    transform: translate3d(-125vw, 0, 0);
+    opacity: 0;
   }
-  50% {
-    transform: skewX(-6deg);
+  2.5% {
+    opacity: 1;
   }
-  100% {
-    transform: skewX(-3deg);
-  }
-}
-
-@keyframes sudar-fp-pill-warp-top {
-  0% {
-    transform: translateX(calc(-50% + 20px)) scaleX(1.04) scaleY(0.97);
-    filter: blur(1px);
-  }
-  50% {
-    transform: translateX(calc(-50% + 20px)) scaleX(1.14) scaleY(0.91);
-    filter: blur(2.8px);
-  }
-  100% {
-    transform: translateX(calc(-50% + 20px)) scaleX(1.04) scaleY(0.97);
-    filter: blur(1px);
-  }
-}
-
-@keyframes sudar-fp-pill-warp-bottom {
-  0% {
-    transform: translateX(calc(-50% - 20px)) scaleX(1.04) scaleY(0.97);
-    filter: blur(1px);
-  }
-  50% {
-    transform: translateX(calc(-50% - 20px)) scaleX(1.14) scaleY(0.91);
-    filter: blur(2.8px);
-  }
-  100% {
-    transform: translateX(calc(-50% - 20px)) scaleX(1.04) scaleY(0.97);
-    filter: blur(1px);
-  }
-}
-
-@keyframes sudar-fp-ghost-drift {
-  0% {
-    transform: translateX(-10px) skewX(-3deg);
-    opacity: 0.06;
-  }
-  50% {
-    transform: translateX(-20px) skewX(-6deg);
-    opacity: 0.11;
-  }
-  100% {
-    transform: translateX(-10px) skewX(-3deg);
-    opacity: 0.06;
-  }
-}
-
-@keyframes sudar-fp-vignette-breathe {
-  0% {
-    opacity: 0.6;
-  }
-  50% {
+  97.5% {
     opacity: 1;
   }
   100% {
-    opacity: 0.6;
+    transform: translate3d(125vw, 0, 0);
+    opacity: 0;
   }
 }
 
-@keyframes sudar-fp-star-anchor {
-  0% {
-    transform: translate(-50%, -50%) scale(1);
-    filter: blur(0px);
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(0.98);
-    filter: blur(0.5px);
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-    filter: blur(0px);
+.sudar-fp-overlay-exit {
+  pointer-events: none;
+}
+
+body.sudar-warp-exit-active {
+  overflow: hidden;
+}
+
+body.sudar-warp-exit-active [data-sudar-app-shell] {
+  will-change: transform, opacity, filter;
+}
+
+/* Logo morph loader — subtle glow while centered */
+.sudar-logo-morph-glow {
+  filter: drop-shadow(0 0 18px color-mix(in srgb, var(--primary) 28%, transparent));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sudar-logo-morph-glow {
+    filter: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sudar-fp-tunnel,
   .sudar-fp-streak,
-  .sudar-fp-scene,
-  .sudar-fp-pill--top,
-  .sudar-fp-pill--bottom,
-  .sudar-fp-ghost-wrap,
-  .sudar-fp-side-vignette,
-  .sudar-fp-star {
+  .sudar-fp-warp-rush,
+  .sudar-fp-hyper-root--warp .sudar-fp-hyper-main {
     animation: none !important;
+  }
+
+  .sudar-fp-hyper-root--warp .sudar-fp-hyper-logo {
+    filter: none;
+  }
+
+  .sudar-fp-hyper-main {
+    opacity: 1;
+    transform: none;
+    filter: none;
   }
 }
 

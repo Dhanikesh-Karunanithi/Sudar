@@ -10,7 +10,7 @@ const updates = [
   {
     date: "2026-05-24",
     title: "MCP for ChatGPT & creator tools",
-    body: "Cloudflare remote MCP (mcp.thesudar.app), Studio Bearer routes, sudar_generate_* tools, MCP audit API, DEPLOY_THESUDAR_APP docs.",
+    body: "Cloudflare remote MCP (mcp.thesudar.com), Studio Bearer routes, sudar_generate_* tools, MCP audit API, DEPLOY_THESUDAR_COM docs.",
     guide: "mcp-chatgpt-studio",
   },
   {

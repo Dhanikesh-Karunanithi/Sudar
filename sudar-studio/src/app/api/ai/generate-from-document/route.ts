@@ -6,7 +6,8 @@ import type { Database, Json } from '@/types/database'
 
 type CourseInsert = Database['public']['Tables']['courses']['Insert']
 import { chatCompletion, resolveChatConfigError, type ChatCompletionContext } from '@/lib/ai/chat'
-import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
+import { fetchStudioOrgAiContext, studioMeteringChatCtx } from '@/lib/ai/studioOrgAiChat'
+import { withUsageMetadata } from '@/lib/ai/studioUsageContext'
 import { mergeBlueprintAnswersIntoSettings } from '@/lib/ai/courseGeneration/blueprintMerge'
 import type { AiGenerationCourseSettings, BlueprintQuestionAnswer, CourseBlueprintQuestion } from '@/lib/ai/courseGeneration/types'
 import { generateCourseMetadata } from '@/lib/ai/courseGeneration/courseMetadata'
@@ -88,7 +89,15 @@ export async function POST(request: NextRequest) {
   const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
   const configError = resolveChatConfigError(orgSettings, privateRuntime)
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })
-  const chatAiCtx = { privateOpenAi: privateRuntime }
+  const chatAiCtx = studioMeteringChatCtx(
+    admin,
+    orgId,
+    user.id,
+    orgSettings,
+    privateRuntime,
+    'course_generation',
+    '/api/ai/generate-from-document'
+  )
 
   let documentText = ''
   const extraGen: Partial<AiGenerationCourseSettings> = {}
@@ -299,7 +308,7 @@ Return ONLY a JSON array of ${numModules} module titles. Example: ["Introduction
       settings: settingsRecord as Record<string, unknown>,
     },
     modules: moduleRows ?? [],
-    chatAiCtx,
+    chatAiCtx: withUsageMetadata(chatAiCtx, { course_id: course.id }),
   })
 
   if (fillResult.error || !fillResult.completed) {

@@ -1,6 +1,6 @@
 # Teach with Sudar | Marketing & Documentation Site
 
-Dedicated website for **teachwithsudar.com**: research, story, mission, self-host guides, plugins, help, legal, and community.
+Dedicated website for **thesudar.com** (primary) and **teachwithsudar.com**: research, story, mission, self-host guides, plugins, help, legal, and community. Home page links learners to **Learn** and creators to **Studio**.
 
 ## Stack
 
@@ -23,26 +23,32 @@ npm run build
 npm start
 ```
 
-## Deploy to Cloudflare Pages (teachwithsudar.com)
+## Deploy to Cloudflare Pages (thesudar.com)
 
-Production host: **Cloudflare Pages** (static export). Preview URL: `https://teachwithsudar.pages.dev`.
+Production hosts: **thesudar.com** (primary), optionally **teachwithsudar.com** on the same Pages project **thesudar**. Preview URL: `https://thesudar.pages.dev`.
 
 ### One-time CLI setup
 
 ```bash
 cd teachwithsudar
 npm install
+NEXT_PUBLIC_STUDIO_APP_URL=https://studio.thesudar.com \
+NEXT_PUBLIC_LEARN_APP_URL=https://learn.thesudar.com \
 npm run build          # outputs static site to out/
 npx wrangler login
-npx wrangler pages project create teachwithsudar --production-branch main
-npx wrangler pages deploy out --project-name=teachwithsudar --branch=main
+npx wrangler pages project create thesudar --production-branch main
+npx wrangler pages deploy out --project-name=thesudar --branch=main
 ```
 
-Attach the custom domain in Cloudflare Dashboard → **Workers & Pages** → **teachwithsudar** → **Custom domains** → add `teachwithsudar.com`. If DNS is not auto-created, add a proxied **CNAME** for `@` → `teachwithsudar.pages.dev` in the zone’s DNS tab.
+Attach custom domains in Cloudflare Dashboard → **Workers & Pages** → **thesudar** → **Custom domains**:
+
+- `thesudar.com` (apex)
+- `www.thesudar.com` (optional)
+- `teachwithsudar.com` (optional alias)
 
 ### Automatic deploy (GitHub Actions)
 
-On every push to **`main`** that touches `teachwithsudar/` or `help-center/`, [`.github/workflows/teachwithsudar-pages.yml`](../.github/workflows/teachwithsudar-pages.yml) builds the static export and runs `wrangler pages deploy`.
+On every push to **`main`** that touches `teachwithsudar/` or `help-center/`, [`.github/workflows/teachwithsudar-pages.yml`](../.github/workflows/teachwithsudar-pages.yml) builds and deploys to project **thesudar**.
 
 **One-time repo secrets** (Settings → Secrets and variables → Actions):
 
@@ -63,7 +69,7 @@ npm run build
 npx wrangler pages deploy out --project-name=teachwithsudar --branch=main
 ```
 
-Optional env at build time: `NEXT_PUBLIC_ECOSYSTEM_DEMO_URL` (e.g. `https://demo.thesudar.app`) for the `/demo` page link.
+Optional env at build time: `NEXT_PUBLIC_ECOSYSTEM_DEMO_URL` (e.g. `https://demo.thesudar.com`) for the `/demo` page link.
 
 ## Deploy to Vercel (alternative)
 

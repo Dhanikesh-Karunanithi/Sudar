@@ -5,7 +5,7 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, getDefaultMemoryModel, resolveChatConfigError } from '@/lib/ai/chat'
-import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
+import { learnMeteringChatCtx, loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { scanSensitiveUserText } from '@/lib/security/sensitiveInputGuard'
 import { parseOrgAiCompliance, type OrgAiCompliance } from '@/types/personalization'
 
@@ -55,10 +55,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, { userId: user.id })
+    const { orgId, orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, { userId: user.id })
     const cfgErr = resolveChatConfigError(orgSettings, privateRuntime)
     if (cfgErr) return NextResponse.json({ error: cfgErr }, { status: 500 })
-    const chatCtx = { privateOpenAi: privateRuntime }
+    const chatCtx =
+      orgId != null
+        ? learnMeteringChatCtx(
+            admin,
+            orgId,
+            user.id,
+            orgSettings,
+            privateRuntime,
+            'tutor_workflow',
+            '/api/tutor/workflow'
+          )
+        : { privateOpenAi: privateRuntime }
 
     const workflowId = crypto.randomUUID()
     const steps: string[] = []

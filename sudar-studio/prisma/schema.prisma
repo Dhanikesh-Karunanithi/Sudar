@@ -25,6 +25,7 @@ model Profile {
   orgId                 String?  @map("org_id") @db.Uuid
   onboardingComplete    Boolean  @default(false) @map("onboarding_complete")
   requirePasswordChange Boolean  @default(false) @map("require_password_change")
+  notificationPreferences Json? @default("{\"notify_when_course_ready\": false, \"sound_when_course_ready\": false, \"sound_volume\": 50}") @map("notification_preferences") @db.JsonB
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @default(now()) @updatedAt @map("updated_at")
 
@@ -83,6 +84,8 @@ model Organisation {
   orgTags              OrgTag[]
   lmsIdentityLinks     LmsIdentityLink[]
   ltiPlatformDeployments LtiPlatformDeployment[]
+  externalCourseProviders ExternalCourseProvider[]
+  externalCourseSyncLogs  ExternalCourseSyncLog[]
 
   @@map("organisations")
 }
@@ -239,6 +242,7 @@ model LearnerProfile {
   overallEngagementScore Float   @default(0.5) @map("overall_engagement_score")
   nextBestAction        Json?    @map("next_best_action")
   aiTutorContext           Json?     @map("ai_tutor_context")
+  externalCourseEngagement Json     @default("{}") @map("external_course_engagement")
   generativeAiConsentAt    DateTime? @map("generative_ai_consent_at")
   learnerPreferences       Json?     @map("learner_preferences")
   updatedAt                DateTime  @updatedAt @map("updated_at")
@@ -391,18 +395,78 @@ model Course {
   scormUrl              String?   @map("scorm_url")
   settings              Json?
   isAdaptive            Boolean   @default(false) @map("is_adaptive")
+  isExternal            Boolean   @default(false) @map("is_external")
+  externalProvider      String?   @map("external_provider")
+  externalUrl           String?   @map("external_url")
+  embedUrl              String?   @map("embed_url")
+  externalMetadata      Json?     @map("external_metadata")
+  providerCourseId      String?   @map("provider_course_id")
+  syncStatus            String    @default("pending") @map("sync_status")
+  lastSyncedAt          DateTime? @map("last_synced_at")
+  allowTutorDiscussion  Boolean   @default(true) @map("allow_tutor_discussion")
+  contentAccessMode     String    @default("both") @map("content_access_mode")
   publishedAt           DateTime? @map("published_at")
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
 
-  org             Organisation    @relation(fields: [orgId], references: [id])
-  creator         Profile         @relation("CourseCreator", fields: [createdBy], references: [id])
-  modules         Module[]
-  enrollments     Enrollment[]
-  events          LearningEvent[]
-  courseOrgTags   CourseOrgTag[]
+  org                 Organisation       @relation(fields: [orgId], references: [id])
+  creator             Profile            @relation("CourseCreator", fields: [createdBy], references: [id])
+  modules             Module[]
+  enrollments         Enrollment[]
+  events              LearningEvent[]
+  courseOrgTags       CourseOrgTag[]
+  externalCourseData  ExternalCourseData?
 
   @@map("courses")
+}
+
+model ExternalCourseData {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId            String   @unique @map("course_id") @db.Uuid
+  courseDescription   String?  @map("course_description")
+  instructorBio       String?  @map("instructor_bio")
+  sectionTitles       String[] @default([]) @map("section_titles")
+  keyTopics           String[] @default([]) @map("key_topics")
+  requiresSignIn      Boolean  @default(false) @map("requires_sign_in")
+  signInInstructions  String?  @map("sign_in_instructions")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("external_course_data")
+}
+
+model ExternalCourseProvider {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId           String   @map("org_id") @db.Uuid
+  providerSlug    String   @map("provider_slug")
+  apiKey          String?  @map("api_key")
+  apiSecret       String?  @map("api_secret")
+  syncEnabled     Boolean  @default(false) @map("sync_enabled")
+  autoTagEnabled  Boolean  @default(true) @map("auto_tag_enabled")
+  tagMapping      Json     @default("{}") @map("tag_mapping")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, providerSlug])
+  @@map("external_course_providers")
+}
+
+model ExternalCourseSyncLog {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId           String   @map("org_id") @db.Uuid
+  provider        String
+  status          String   @default("pending")
+  errorMsg        String?  @map("error_msg")
+  coursesImported Int      @default(0) @map("courses_imported")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  org Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@map("external_course_sync_log")
 }
 
 model Module {

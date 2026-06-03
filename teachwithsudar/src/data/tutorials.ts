@@ -186,7 +186,7 @@ export const tutorials: Tutorial[] = [
       },
       {
         title: "Authenticate the MCP client",
-        body: "ChatGPT uses the Cloudflare worker at mcp.thesudar.app; Cursor uses stdio with your session token.",
+        body: "ChatGPT uses the Cloudflare worker at mcp.thesudar.com; Cursor uses stdio with your session token.",
         scene: "studio-integrations",
         callout: "See docs/MCP_CHATGPT_LAUNCH.md in the repo",
       },
@@ -284,7 +284,7 @@ export const tutorials: Tutorial[] = [
     slug: "self-host-production",
     title: "Self-host and production deploy",
     excerpt:
-      "Two Vercel projects, Intelligence on Railway/Render/Fly, a Postgres database you operate, and thesudar.app DNS when ready.",
+      "Cloudflare Workers for Learn and Studio, Intelligence on Railway/Render/Fly, and thesudar.com DNS when ready.",
     audience: "operator",
     duration: "30+ min",
     surfaces: ["studio", "learn", "intelligence", "integrations"],
@@ -303,7 +303,7 @@ export const tutorials: Tutorial[] = [
       },
       {
         title: "Deploy Intelligence and MCP",
-        body: "Host sudar-intelligence, set SUDAR_INTELLIGENCE_URL, then optional mcp.thesudar.app worker per DEPLOY_THESUDAR_APP.md.",
+        body: "Host sudar-intelligence, set SUDAR_INTELLIGENCE_URL, then optional mcp.thesudar.com worker per DEPLOY_THESUDAR_COM.md.",
         scene: "studio-integrations",
       },
     ],

@@ -5,6 +5,7 @@ import { z } from 'zod'
 import type { TutorAction, TutorActionType, TutorBlock } from '@/types/tutor'
 import { TUTOR_ACTION_TYPES } from '@/types/tutor'
 import { retrieveChunks } from '@/lib/rag/retrieve'
+import { resolveOrgKbIdsForRag } from '@/lib/knowledge-base/resolveOrgKbIds'
 import { getCachedPublishedCourses, getCachedPublishedPaths } from '@/lib/cache'
 import {
   chatCompletion,
@@ -35,7 +36,9 @@ import { loadSkillGapSummary, recordMasteredTopics, recordStruggleTopics } from 
 import { parseTutorModelOutput } from '@/lib/tutor/responseContract'
 import { sanitizeTutorBlocks } from '@/lib/tutor/tutorBlockSanitize'
 import { runTutorInputGuardrail, type TutorGuardrailAiDeps } from '@/lib/tutor/runInputGuardrail'
+import { buildTutorUsageChatCtx } from '@/lib/tutor/tutorUsageContext'
 import { buildTutorActionAllowlists } from '@/lib/tutor/tutorActionAllowlists'
+import { loadExternalCourseContext } from '@/lib/external/externalCourseContext'
 import {
   detectsTutorResourceIntent,
   searchImagesForTutor,
@@ -230,7 +233,7 @@ async function callAI(
       temperature: 0.7,
       top_p: 0.9,
     },
-    aiDeps.chatCtx
+    buildTutorUsageChatCtx(aiDeps, 'main')
   )
   return content ?? ''
 }
@@ -292,7 +295,7 @@ Rules:
         max_tokens: 600,
         temperature: 0.5,
       },
-      aiDeps.chatCtx
+      buildTutorUsageChatCtx(aiDeps, 'quiz')
     )
     if (!raw) return null
     const match = raw.match(/\{[\s\S]*\}/)
@@ -355,7 +358,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
+    const { orgId, orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
       courseId: course_id ?? null,
       userId: user.id,
     })
@@ -366,6 +369,14 @@ export async function POST(request: NextRequest) {
     const aiDeps: TutorAiDeps = {
       orgSettings,
       privateRuntime,
+      orgId,
+      userId: user.id,
+      usageAdmin: admin,
+      usageMetadata: {
+        course_id: course_id ?? undefined,
+        module_id: module_id ?? undefined,
+      },
+      orgSettings,
       chatCtx: { privateOpenAi: privateRuntime },
     }
     const runtimePolicy = parseOrgAiRuntimePolicy(orgSettings)
@@ -512,11 +523,12 @@ export async function POST(request: NextRequest) {
   let courseContext = ''
   let courseTitle = ''
   let currentModuleTitle = ''
+  let externalCourseContextBlock = ''
 
   if (course_id) {
     const { data: course } = await admin
       .from('courses')
-      .select('title, modules(id, title, content, order_index)')
+      .select('title, is_external, allow_tutor_discussion, modules(id, title, content, order_index)')
       .eq('id', course_id)
       .eq('status', 'published')
       .order('order_index', { referencedTable: 'modules', ascending: true })
@@ -534,6 +546,12 @@ export async function POST(request: NextRequest) {
       order_index: number
     }>) ?? []
 
+    if (course.is_external) {
+      externalCourseContextBlock = await loadExternalCourseContext(admin, course_id)
+      courseContext =
+        externalCourseContextBlock ||
+        `[External course "${course.title}" — content hosted off-platform. Help with topics and recommend related Sudar courses.]`
+    } else {
     // Build full course context, marking current module prominently.
     // For SCORM modules, use the extracted scorm_text_content as the knowledge base.
     // Give the active module up to 4 000 chars; others up to 400 chars each.
@@ -556,6 +574,7 @@ export async function POST(request: NextRequest) {
 
     // Cap total context at 8 000 chars (SCORM modules need more headroom)
     if (courseContext.length > 8000) courseContext = courseContext.slice(0, 8000) + '...[truncated]'
+    }
     currentModuleTitle = modules.find((m) => m.id === module_id)?.title ?? ''
   }
 
@@ -595,12 +614,35 @@ export async function POST(request: NextRequest) {
 
   // ── 2b. Action allowlists (always) + platform catalog text (floating chat only) ──
   let platformContextText = ''
-  const [allCourses, pathList, enrollmentsRes, ragChunks] = await Promise.all([
+  const orgKbIds =
+    aiDeps.orgId ? await resolveOrgKbIdsForRag(admin, aiDeps.orgId, course_id ?? null) : []
+  const ragUsage =
+    aiDeps.orgId && aiDeps.usageAdmin
+      ? { usage: { orgId: aiDeps.orgId, userId: user.id, admin: aiDeps.usageAdmin } }
+      : {}
+  const [allCourses, pathList, enrollmentsRes, ragChunks, inCourseRagChunks, kbRagChunks] = await Promise.all([
     getCachedPublishedCourses(),
     getCachedPublishedPaths(),
     admin.from('enrollments').select('course_id, status, progress_pct').eq('user_id', user.id),
-    course_id ? Promise.resolve([] as Awaited<ReturnType<typeof retrieveChunks>>) : retrieveChunks(message, { limit: 10 }),
+    course_id
+      ? Promise.resolve([] as Awaited<ReturnType<typeof retrieveChunks>>)
+      : retrieveChunks(message, { limit: 10, ...ragUsage }),
+    course_id
+      ? retrieveChunks(message, { courseId: course_id, limit: 8, ...ragUsage })
+      : Promise.resolve([] as Awaited<ReturnType<typeof retrieveChunks>>),
+    orgKbIds.length > 0
+      ? retrieveChunks(message, { limit: 6, kbIds: orgKbIds, ...ragUsage })
+      : Promise.resolve([] as Awaited<ReturnType<typeof retrieveChunks>>),
   ])
+  const kbRagSection =
+    kbRagChunks.length > 0
+      ? `\n\nOrganisation knowledge base excerpts (trusted reference material):\n${kbRagChunks
+          .map(
+            (ch, i) =>
+              `${i + 1}. ${ch.content.slice(0, 500)}${ch.content.length > 500 ? '…' : ''}`
+          )
+          .join('\n\n')}`
+      : ''
   const catalogCourses = allCourses.slice(0, PLATFORM_CONTEXT_CATALOG_LIMIT)
   const { allowedCourseIds, allowedPathIds, enrollmentByCourseId } = buildTutorActionAllowlists({
     catalogCourseIds: catalogCourses.map((c) => c.id),
@@ -629,7 +671,7 @@ export async function POST(request: NextRequest) {
         : ''
     platformContextText = `
 Platform context (use this when the learner asks about courses or paths):
-${ragSection}Available courses (id, title, description, difficulty, tags):
+${ragSection}${kbRagSection}Available courses (id, title, description, difficulty, tags):
 ${catalogLines.join('\n')}
 
 Learner's enrollments (course_id → status, progress_pct):
@@ -642,6 +684,17 @@ When the learner asks about courses (e.g. "Are there any courses on X?", "Recomm
 Format: ACTIONS: [{"type":"open_course","course_id":"<uuid>","label":"Enroll"}] (or "Continue", "Review course", etc.). Use the exact course id from the list above.
 When suggesting a learning path, append: ACTIONS: [{"type":"open_path","path_id":"<uuid>","label":"Open path"}].`
   }
+
+  const inCourseRagSection =
+    inCourseRagChunks.length > 0
+      ? `\n\nRelevant course excerpts (vector retrieval — prefer these for factual answers in this course):\n${inCourseRagChunks
+          .map(
+            (ch, i) =>
+              `${i + 1}. ${ch.content.slice(0, 500)}${ch.content.length > 500 ? '…' : ''}`
+          )
+          .join('\n\n')}`
+      : ''
+  const inCourseKbSection = course_id ? kbRagSection : ''
 
   if (learnerError) {
     console.error('[tutor] learner_profiles query error:', learnerError.message)
@@ -841,7 +894,7 @@ ${platformContextText}
 Full course content (your knowledge base):
 ---
 ${courseContext}
----
+---${inCourseRagSection}${inCourseKbSection}
 
 How to personalize:
 - If the learner has a stated preferred explanation style, use it (e.g., examples-first, analogies, step-by-step)
@@ -1046,7 +1099,7 @@ Return only the JSON, nothing else.`
         max_tokens: 150,
         temperature: 0.2,
       },
-      aiDeps.chatCtx
+      buildTutorUsageChatCtx(aiDeps, 'memory_extract')
     )
     const match = (content ?? '').match(/\{[\s\S]*\}/)
     if (!match) return

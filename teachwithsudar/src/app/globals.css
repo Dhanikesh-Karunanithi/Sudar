@@ -256,3 +256,23 @@ body {
 @layer utilities {
   .text-balance { text-wrap: balance; }
 }
+
+.font-bricolage {
+  font-family: var(--font-bricolage), sans-serif;
+}
+
+/* SplitType styles for GSAP stagger */
+.char {
+  display: inline-block;
+  transform-origin: center;
+}
+
+.word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Custom radial gradient for split screen */
+.bg-radial-gradient {
+  background-image: radial-gradient(circle, var(--tw-gradient-stops));
+}

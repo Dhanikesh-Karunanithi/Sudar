@@ -1,0 +1,2 @@
+# OpenNext local dev — loaded by wrangler preview (optional)
+NEXTJS_ENV=development

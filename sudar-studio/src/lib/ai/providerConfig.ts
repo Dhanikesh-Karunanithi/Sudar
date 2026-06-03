@@ -96,10 +96,14 @@ export const PROVIDER_KEYS: ProviderKeyDef[] = [
     steps: [
       'Go to huggingface.co and sign up or log in.',
       'Open Settings → Access Tokens and create a token (read or write).',
-      'Add HUGGINGFACE_API_KEY=your_token to .env.local or host env (Learn app).',
-      'Set EMBED_PROVIDER=huggingface in Learn if you want to use HF for embeddings.',
+      'Learn: HUGGINGFACE_API_KEY + EMBED_PROVIDER=huggingface + HF_EMBED_MODEL=BAAI/bge-m3 (multilingual RAG).',
+      'Optional Learn: RAG_RERANK_ENABLED=true, HF_RERANK_MODEL=BAAI/bge-reranker-v2-m3.',
+      'Intelligence: same HUGGINGFACE_API_KEY; AI_CHAT_PROVIDER=huggingface for chat; IMAGE_PROVIDER=huggingface for covers.',
+      'Optional: HF_INFERENCE_BASE_URL for self-hosted TEI/vLLM (OpenAI-compatible).',
+      'Re-ingest courses after switching embed models: POST /api/rag/ingest. See docs/HF_INTEGRATION_TEST.md.',
     ],
-    description: 'Used for embeddings when EMBED_PROVIDER=huggingface (e.g. BAAI/bge-large-en-v1.5).',
+    description:
+      'Multilingual RAG (bge-m3), reranking, Intelligence chat/image via HF Inference API or TEI/vLLM.',
   },
   {
     id: 'sarvam',

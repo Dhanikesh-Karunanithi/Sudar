@@ -41,6 +41,8 @@ export function ReadAlongControls({
   const [loading, setLoading] = useState(false)
   const [activeIndex, setActiveIndex] = useState<number>(-1)
   const [error, setError] = useState<string | null>(null)
+  const [learnerVoicePreference, setLearnerVoicePreference] = useState<string | null>(null)
+  const [voiceLoadError, setVoiceLoadError] = useState(false)
   const startTimeRef = useRef<number>(0)
   const sentenceIndexRef = useRef(0)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -48,6 +50,25 @@ export function ReadAlongControls({
   const activeSentenceRef = useRef<HTMLSpanElement>(null)
 
   const hasContent = sentences.length > 0
+
+  // Fetch learner's TTS voice preference on mount
+  useEffect(() => {
+    const fetchVoicePreference = async () => {
+      try {
+        const res = await fetch('/api/learner/preferences')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.tts_voice) {
+            setLearnerVoicePreference(data.tts_voice)
+          }
+        }
+      } catch {
+        setVoiceLoadError(true)
+      }
+    }
+
+    fetchVoicePreference()
+  }, [])
 
   const stop = useCallback(() => {
     if (audioRef.current) {
@@ -93,10 +114,15 @@ export function ReadAlongControls({
     setError(null)
     setLoading(true)
 
+    const payload: Record<string, unknown> = { text: sentence }
+    if (learnerVoicePreference) {
+      payload.voice = learnerVoicePreference
+    }
+
     fetch('/api/ai/generate-audio', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: sentence }),
+      body: JSON.stringify(payload),
     })
       .then(async (res) => {
         const contentType = (res.headers.get('content-type') || '').toLowerCase()
@@ -144,7 +170,7 @@ export function ReadAlongControls({
         setPlaying(false)
         onActiveIndexChange?.(-1)
       })
-  }, [sentences, onReadAlongComplete, onActiveIndexChange])
+  }, [sentences, onReadAlongComplete, onActiveIndexChange, learnerVoicePreference])
 
   const handlePlayPause = () => {
     if (!hasContent) return

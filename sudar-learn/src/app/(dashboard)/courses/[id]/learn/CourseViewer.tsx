@@ -21,6 +21,8 @@ import { SudarVidCard } from './SudarVidCard'
 import { RichModuleContent } from '@/components/learn/RichModuleContent'
 import { ReadAlongControls } from '@/components/learn/ReadAlongControls'
 import { CourseThemeProvider } from '@/components/learn/CourseThemeProvider'
+import { ThemeRenderer } from '@/components/learn/ThemeRenderer'
+import type { ThemeSlug } from '@/types/contentThemes'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { GenerativeBlockRenderer } from '@/components/tutor/GenerativeBlockRenderer'
 import { ChatMarkdown } from '@/components/tutor/ChatMarkdown'
@@ -66,6 +68,8 @@ interface Course {
     module_completion?: Record<string, { type: 'mark_button' | 'min_time'; min_time_secs?: number }>
     include_video?: boolean
     include_podcast?: boolean
+    content_theme?: string
+    brand_colors?: { primary?: string; accent?: string; secondary?: string }
     video_scenes?: Array<{ sceneNumber: number; title: string; narration: string; visuals?: string; duration?: number; audioDataURL?: string }>
     podcast_dialogue?: Array<{ speaker: 'host' | 'expert'; text: string; audioDataURL?: string }>
   } | null
@@ -427,7 +431,7 @@ export function CourseViewer({
     markInteraction,
   } = useInactivityHibernation({
     warningAfterMs: 4.5 * 60 * 1000,
-    hibernateAfterMs: 5 * 60 * 1000,
+    hibernateAfterMs: 4.5 * 60 * 1000,
     onWarningStart: () => {
       pauseActiveClock()
       recordInactivityEvent('inactivity_warning_started')
@@ -1690,7 +1694,7 @@ export function CourseViewer({
                 'mx-auto px-6 py-8 space-y-10',
                 activeModality === 'mindmap' ? 'max-w-6xl' :
                 activeModality === 'video' || activeModality === 'podcast' ? 'max-w-full' :
-                'max-w-2xl'
+                'max-w-3xl'
               )} ref={contentRef}>
 
                 {personalizeOffered && personalizationAccess.courseWelcome.allowed && (
@@ -2067,20 +2071,41 @@ export function CourseViewer({
                     } }
                   />
                 ) : isRichContent(currentModule?.content) ? (
-                  <RichModuleContent
-                    content={currentModule.content}
-                    renderMarkdown={renderCourseMarkdown}
-                    onExplain={(context) => {
-                      setInput(context)
-                      setTutorOpen(true)
-                    } }
-                    courseId={course.id}
-                    moduleId={currentModuleId}
-                    moduleTitle={currentModule?.title ?? ''}
-                    learnerName={learnerName}
-                    onQuizComplete={handleQuizComplete}
-                    onAskByte={handleQuizAskByte}
-                  />
+                  (() => {
+                    const themeSlug = course.settings?.content_theme as ThemeSlug | undefined
+                    const brand = course.settings?.brand_colors
+                    const brandStyle =
+                      brand?.primary
+                        ? ({
+                            ['--primary' as string]: brand.primary,
+                            ['--course-color-accent' as string]: brand.accent ?? brand.primary,
+                          } as React.CSSProperties)
+                        : undefined
+                    const body = (
+                      <RichModuleContent
+                        content={currentModule.content}
+                        renderMarkdown={renderCourseMarkdown}
+                        onExplain={(context) => {
+                          setInput(context)
+                          setTutorOpen(true)
+                        }}
+                        courseId={course.id}
+                        moduleId={currentModuleId}
+                        moduleTitle={currentModule?.title ?? ''}
+                        learnerName={learnerName}
+                        onQuizComplete={handleQuizComplete}
+                        onAskByte={handleQuizAskByte}
+                      />
+                    )
+                    if (themeSlug) {
+                      return (
+                        <ThemeRenderer theme={themeSlug} className={brandStyle ? undefined : ''}>
+                          <div style={brandStyle}>{body}</div>
+                        </ThemeRenderer>
+                      )
+                    }
+                    return brandStyle ? <div style={brandStyle}>{body}</div> : body
+                  })()
                 ) : (
                   <div>
                     {renderCourseMarkdown((currentModule?.content as { body?: string })?.body ?? '')}

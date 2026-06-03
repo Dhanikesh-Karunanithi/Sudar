@@ -82,9 +82,9 @@ async def tutor_query(
     _auth: Annotated[str | None, Depends(verify_supabase_jwt_or_service)] = None,
 ):
     """
-    Handles a learner's question to Sudar.
-    Uses RAG against the current module content.
-    Reads recent ai_interactions for longitudinal context.
+    Handles a learner's question to Sudar (ALP / external LMS path).
+    Full RAG + pgvector retrieval runs in Sudar Learn (/api/tutor/query); this route
+    forwards a placeholder until Intelligence tutor parity is implemented.
     """
     require_learner_match(request, body.user_id)
     policy = parse_runtime_policy(body.org_settings)

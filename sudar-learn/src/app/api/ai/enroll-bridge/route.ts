@@ -12,7 +12,7 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
-import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
+import { learnMeteringChatCtx, loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { checkPersonalizationEligibility } from '@/lib/personalization/eligibility'
 import {
   loadPersonalizationMemoryForCourse,
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: gate.reason }, { status: 403 })
   }
 
-  const { orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
+  const { orgId, orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
     courseId: course_id,
     userId: user.id,
   })
@@ -74,7 +74,19 @@ export async function POST(request: NextRequest) {
       { status: 503 }
     )
   }
-  const chatCtx = { privateOpenAi: privateRuntime }
+  const chatCtx =
+    orgId != null
+      ? learnMeteringChatCtx(
+          admin,
+          orgId,
+          user.id,
+          orgSettings,
+          privateRuntime,
+          'module_personalize',
+          '/api/ai/enroll-bridge',
+          { course_id }
+        )
+      : { privateOpenAi: privateRuntime }
 
   // ── Load learner profile, shared memory bundle, course ──────────────
   const [{ data: profile }, { data: newCourse }, memoryBundle] = await Promise.all([

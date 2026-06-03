@@ -599,6 +599,12 @@ export type Database = {
           external_provider: string | null
           external_url: string | null
           embed_url: string | null
+          external_metadata: Json | null
+          provider_course_id: string | null
+          sync_status: string
+          last_synced_at: string | null
+          allow_tutor_discussion: boolean
+          content_access_mode: string
           published_at: string | null
           created_at: string
           updated_at: string

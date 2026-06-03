@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { NOTIFICATION_ICON_PATH } from '../../../shared/notifications/notificationIconPath'
 import {
@@ -10,9 +10,11 @@ import {
   type NotificationSoundPrefs,
 } from '../../../shared/notifications/sound'
 
-const STORAGE_KEY = 'studio_notify_when_course_ready'
-const STORAGE_KEY_SOUND = 'studio_sound_enabled'
-const STORAGE_KEY_SOUND_VOLUME = 'studio_sound_volume'
+interface NotificationPreferences {
+  notify_when_course_ready: boolean
+  sound_when_course_ready: boolean
+  sound_volume: number
+}
 
 function notificationIconAbsoluteUrl(): string | undefined {
   if (typeof window === 'undefined') return undefined
@@ -20,7 +22,7 @@ function notificationIconAbsoluteUrl(): string | undefined {
 }
 
 /**
- * Uses the browser’s built-in Web Notifications API (Notification.requestPermission + new Notification).
+ * Uses the browser's built-in Web Notifications API (Notification.requestPermission + new Notification).
  * Those surface as normal OS/desktop notifications when permission is granted.
  */
 function notificationsAvailable(): boolean {
@@ -29,62 +31,6 @@ function notificationsAvailable(): boolean {
   // Required for notifications in Chromium-based browsers outside localhost.
   if (!window.isSecureContext) return false
   return true
-}
-
-function readStoredPreference(): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) === '1'
-  } catch {
-    return false
-  }
-}
-
-function readSoundEnabled(): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    return window.localStorage.getItem(STORAGE_KEY_SOUND) === '1'
-  } catch {
-    return false
-  }
-}
-
-function readSoundVolume(): number {
-  if (typeof window === 'undefined') return DEFAULT_NOTIFICATION_SOUND_PREFS.sound_volume
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY_SOUND_VOLUME)
-    const n = raw != null ? Number(raw) : NaN
-    if (Number.isFinite(n)) return Math.max(0, Math.min(100, n))
-  } catch {
-    /* ignore */
-  }
-  return DEFAULT_NOTIFICATION_SOUND_PREFS.sound_volume
-}
-
-function persistPreference(enabled: boolean): void {
-  try {
-    if (enabled) window.localStorage.setItem(STORAGE_KEY, '1')
-    else window.localStorage.removeItem(STORAGE_KEY)
-  } catch {
-    /* ignore quota / private mode */
-  }
-}
-
-function persistSoundEnabled(enabled: boolean): void {
-  try {
-    if (enabled) window.localStorage.setItem(STORAGE_KEY_SOUND, '1')
-    else window.localStorage.removeItem(STORAGE_KEY_SOUND)
-  } catch {
-    /* ignore */
-  }
-}
-
-function persistSoundVolume(volume: number): void {
-  try {
-    window.localStorage.setItem(STORAGE_KEY_SOUND_VOLUME, String(Math.max(0, Math.min(100, volume))))
-  } catch {
-    /* ignore */
-  }
 }
 
 function studioSoundPrefs(enabled: boolean, volume: number): NotificationSoundPrefs {
@@ -117,29 +63,74 @@ function showBrowserNotification(title: string, options: NotificationOptions): v
 }
 
 export function useBrowserCompletionNotification() {
-  const [notifyWhenReady, setNotifyWhenReady] = useState(() => readStoredPreference())
-  const [soundWhenReady, setSoundWhenReady] = useState(() => readSoundEnabled())
-  const [soundVolume, setSoundVolume] = useState(() => readSoundVolume())
+  const [notifyWhenReady, setNotifyWhenReady] = useState(false)
+  const [soundWhenReady, setSoundWhenReady] = useState(false)
+  const [soundVolume, setSoundVolume] = useState(DEFAULT_NOTIFICATION_SOUND_PREFS.sound_volume)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchPreferences() {
+      try {
+        const res = await fetch('/api/user/notification-preferences')
+        if (res.ok) {
+          const data = (await res.json()) as { preferences: NotificationPreferences }
+          setNotifyWhenReady(data.preferences.notify_when_course_ready)
+          setSoundWhenReady(data.preferences.sound_when_course_ready)
+          setSoundVolume(data.preferences.sound_volume)
+        }
+      } catch {
+        /* ignore */
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchPreferences()
+  }, [])
 
   const toggleNotifyWhenReady = useCallback(async (checked: boolean) => {
     setNotifyWhenReady(checked)
-    persistPreference(checked)
-    if (!checked || !notificationsAvailable()) return
-    if (Notification.permission === 'default') {
-      await Notification.requestPermission()
+    try {
+      await fetch('/api/user/notification-preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notify_when_course_ready: checked }),
+      })
+      if (checked && notificationsAvailable()) {
+        if (Notification.permission === 'default') {
+          await Notification.requestPermission()
+        }
+      }
+    } catch {
+      /* ignore */
     }
   }, [])
 
   const toggleSoundWhenReady = useCallback((checked: boolean) => {
     setSoundWhenReady(checked)
-    persistSoundEnabled(checked)
+    try {
+      fetch('/api/user/notification-preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sound_when_course_ready: checked }),
+      })
+    } catch {
+      /* ignore */
+    }
     if (checked) unlockNotificationAudio()
   }, [])
 
   const updateSoundVolume = useCallback((volume: number) => {
     const v = Math.max(0, Math.min(100, volume))
     setSoundVolume(v)
-    persistSoundVolume(v)
+    try {
+      fetch('/api/user/notification-preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sound_volume: v }),
+      })
+    } catch {
+      /* ignore */
+    }
   }, [])
 
   const previewTaskCompleteSound = useCallback(() => {
@@ -185,7 +176,7 @@ export function useBrowserCompletionNotification() {
       try {
         const safe = courseTitle.trim() || 'Course'
         showBrowserNotification('Course generation did not finish', {
-          body: detail ?? `Something went wrong while generating “${safe.length > 80 ? `${safe.slice(0, 77)}…` : safe}”.`,
+          body: detail ?? `Something went wrong while generating "${safe.length > 80 ? `${safe.slice(0, 77)}…` : safe}".`,
           tag: 'sudar-course-failed',
         })
       } catch {
@@ -203,6 +194,7 @@ export function useBrowserCompletionNotification() {
     !window.isSecureContext
 
   return {
+    loading,
     notifyWhenReady,
     toggleNotifyWhenReady,
     soundWhenReady,

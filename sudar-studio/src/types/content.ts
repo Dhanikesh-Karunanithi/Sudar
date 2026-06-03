@@ -58,11 +58,14 @@ export interface RichInteractiveElement {
   _blockId?: string
 }
 
+export type SideCardVisibility = 'hidden' | 'floating' | 'visible'
+
 export interface RichSideCard {
   title: string
   content: string
   tips?: string[]
   noteType?: SideNoteType
+  visibility?: SideCardVisibility
 }
 
 export interface RichContent {

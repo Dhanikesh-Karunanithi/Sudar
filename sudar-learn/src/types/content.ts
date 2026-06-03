@@ -66,6 +66,7 @@ export interface RichContentSection {
 /** Interactive element in rich content */
 export interface RichInteractiveElement {
   type: 'quiz' | 'expandable' | 'code-demo' | 'diagram' | 'video' | 'audio' | 'flashcard' | 'timeline' | 'flipcard' | 'hotspot' | 'matching' | 'tabs'
+    | 'case_study' | 'framework_grid' | 'highlight_box' | 'key_takeaways' | 'expert_voice' | 'scenario_challenge' | 'real_world_example'
   data: Record<string, unknown>
   /** For quiz elements: standard | predict-then-learn | confidence-tagged | scenario-fork | peer-contrast */
   quizMode?: QuizMode
@@ -73,12 +74,17 @@ export interface RichInteractiveElement {
   _blockId?: string
 }
 
+/** How supplementary side context is shown in Learn. */
+export type SideCardVisibility = 'hidden' | 'floating' | 'visible'
+
 /** Side card in rich content */
 export interface RichSideCard {
   title: string
   content: string
   tips?: string[]
   noteType?: SideNoteType
+  /** hidden = learner taps hotspot; floating = pill; visible = legacy sidebar column */
+  visibility?: SideCardVisibility
 }
 
 /** Rich module content (new) */

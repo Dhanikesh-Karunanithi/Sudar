@@ -50,7 +50,7 @@ export default async function DashboardLayout({
   return (
     <NotificationSoundShell>
       <div className="min-h-screen bg-shell">
-        <div className="max-w-[1600px] mx-auto min-h-screen flex flex-col rounded-shell overflow-hidden shadow-xl bg-background border border-border md:my-4 md:min-h-[calc(100vh-2rem)]">
+        <div className="max-w-[1600px] mx-auto min-h-screen flex flex-col rounded-shell overflow-hidden shadow-xl bg-background border border-border md:my-4 md:min-h-[calc(100vh-2rem)]" data-sudar-app-shell>
           <TopNav
             user={userProps}
             showOnboardingNudge={!onboardingDone}

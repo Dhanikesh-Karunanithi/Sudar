@@ -25,7 +25,7 @@ export interface SudarPetManifest {
 export const DEFAULT_SUDAR_PET_MANIFEST: SudarPetManifest = {
   id: 'sudar_fire_core_v1',
   sheetSrc: '/sudar/pet/sudar-fire-core-sheet.png',
-  placeholderSrc: '/sudar/pet/sudar-fire-core-placeholder.svg',
+  placeholderSrc: '/sudar-logo.svg',
   frameWidth: 96,
   frameHeight: 96,
   fps: 10,

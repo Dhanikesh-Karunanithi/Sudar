@@ -1,9 +1,29 @@
 'use client'
 
 import { useState } from 'react'
-import { Code, ChevronDown, ChevronRight, Sparkles, Quote, BarChart3, FileText, Lightbulb, ArrowRight, Clock, HelpCircle, HelpCircleIcon, Globe, Brain, QuoteIcon, BookOpen } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Code, ChevronDown, ChevronRight, Sparkles, Quote, BarChart3, FileText, Lightbulb, ArrowRight, Clock, HelpCircle, HelpCircleIcon, Globe, Brain, QuoteIcon, BookOpen, X } from 'lucide-react'
+import type { RichSideCard, SideCardVisibility } from '@/types/content'
 import { cn } from '@/lib/utils'
 import type { RichContent, EntryState, ExitState } from '@/types/content'
+import type {
+  CaseStudy,
+  FrameworkGrid,
+  HighlightBox,
+  KeyTakeaways,
+  ExpertVoice,
+  ScenarioChallenge,
+  RealWorldExample,
+} from '@/types/contentThemes'
+import {
+  CaseStudyBlock,
+  FrameworkGridBlock,
+  HighlightBoxBlock,
+  KeyTakeawaysBlock,
+  ExpertVoiceBlock,
+  ScenarioChallengeBlock,
+  RealWorldExampleBlock,
+} from './PedagogicalComponents'
 import { QuizCard } from '@/app/(dashboard)/courses/[id]/learn/QuizCard'
 import { TimelineBlock } from '@/components/learn/blocks/TimelineBlock'
 import { FlipcardBlock } from '@/components/learn/blocks/FlipcardBlock'
@@ -127,6 +147,76 @@ function DiagramBlock({
   )
 }
 
+function FloatingSideCard({
+  sideCard,
+}: {
+  sideCard: RichSideCard
+}) {
+  const [open, setOpen] = useState(false)
+  const visibility: SideCardVisibility = sideCard.visibility ?? 'hidden'
+
+  if (visibility === 'visible') {
+    return (
+      <SideCardBlock
+        title={sideCard.title}
+        content={sideCard.content}
+        tips={sideCard.tips}
+        noteType={sideCard.noteType}
+      />
+    )
+  }
+
+  return (
+    <>
+      <motion.button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="fixed bottom-24 right-6 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-2 ring-primary/20 hover:bg-primary/90"
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.95 }}
+        aria-expanded={open}
+        aria-label={open ? 'Close insight' : 'Show insight'}
+        title="Context & insight"
+      >
+        <Lightbulb className="h-5 w-5" />
+      </motion.button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 12, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.96 }}
+            className="fixed bottom-40 right-6 z-30 w-[min(340px,calc(100vw-2rem))] rounded-xl border border-border bg-card p-4 shadow-2xl"
+            role="dialog"
+            aria-label={sideCard.title}
+          >
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-primary">Insight</span>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-md p-1 text-muted-foreground hover:bg-muted"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <h4 className="text-sm font-semibold text-card-foreground mb-2">{sideCard.title}</h4>
+            <p className="text-sm text-muted-foreground leading-relaxed">{sideCard.content}</p>
+            {sideCard.tips && sideCard.tips.length > 0 && (
+              <ul className="mt-3 space-y-1 text-xs text-muted-foreground list-disc list-inside">
+                {sideCard.tips.map((tip, i) => (
+                  <li key={i}>{tip}</li>
+                ))}
+              </ul>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
+
 function SideCardBlock({ title, content, tips, noteType }: { title: string; content: string; tips?: string[]; noteType?: string }) {
   const isWaitWhy = noteType === 'wait-but-why'
   const isRealWorld = noteType === 'real-world'
@@ -242,9 +332,11 @@ export function RichModuleContent({
   onAskByte,
 }: RichModuleContentProps) {
   const hasSideCard = content.sideCard && (content.sideCard.title || content.sideCard.content)
+  const sideVisibility: SideCardVisibility = content.sideCard?.visibility ?? 'hidden'
+  const useSidebarColumn = hasSideCard && sideVisibility === 'visible'
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
       {content.entryState ? (
         <EntryStateBlock entry={content.entryState} renderMarkdown={renderMarkdown} />
       ) : content.introduction ? (
@@ -253,8 +345,8 @@ export function RichModuleContent({
         </div>
       ) : null}
 
-      <div className={cn('space-y-8', hasSideCard && 'lg:grid lg:grid-cols-[1fr,280px] lg:gap-8 lg:items-start')}>
-        <div className="space-y-8">
+      <div className={cn('space-y-8', useSidebarColumn && 'lg:grid lg:grid-cols-[1fr,280px] lg:gap-8 lg:items-start')}>
+        <div className="space-y-8 min-w-0">
           {content.sections.map((section, idx) => (
             <section key={idx}>
               <h3 className="text-lg font-semibold text-card-foreground mt-6 mb-2 first:mt-0">
@@ -341,24 +433,82 @@ export function RichModuleContent({
                 />
               )
             }
+            // Pedagogical Components (Phase 2 Integration)
+            if (el.type === 'case_study' && el.data) {
+              return (
+                <CaseStudyBlock
+                  key={idx}
+                  data={el.data as CaseStudy}
+                />
+              )
+            }
+            if (el.type === 'framework_grid' && el.data) {
+              return (
+                <FrameworkGridBlock
+                  key={idx}
+                  data={el.data as FrameworkGrid}
+                />
+              )
+            }
+            if (el.type === 'highlight_box' && el.data) {
+              return (
+                <HighlightBoxBlock
+                  key={idx}
+                  data={el.data as HighlightBox}
+                />
+              )
+            }
+            if (el.type === 'key_takeaways' && el.data) {
+              return (
+                <KeyTakeawaysBlock
+                  key={idx}
+                  data={el.data as KeyTakeaways}
+                />
+              )
+            }
+            if (el.type === 'expert_voice' && el.data) {
+              return (
+                <ExpertVoiceBlock
+                  key={idx}
+                  data={el.data as ExpertVoice}
+                />
+              )
+            }
+            if (el.type === 'scenario_challenge' && el.data) {
+              return (
+                <ScenarioChallengeBlock
+                  key={idx}
+                  data={el.data as ScenarioChallenge}
+                />
+              )
+            }
+            if (el.type === 'real_world_example' && el.data) {
+              return (
+                <RealWorldExampleBlock
+                  key={idx}
+                  data={el.data as RealWorldExample}
+                />
+              )
+            }
             if (el.type === 'video' && el.data?.url) {
               const url = String(el.data.url).trim()
-              const title = el.data?.title ? String(el.data.title) : 'Video'
+              const videoTitle = el.data?.title ? String(el.data.title) : 'Video'
               const isYouTube = /youtube\.com\/watch\?v=([^&]+)|youtu\.be\/([^?]+)/.exec(url)
               const isVimeo = /vimeo\.com\/(?:video\/)?(\d+)/.exec(url)
               const isDirect = /\.(mp4|webm|ogg)(\?|$)/i.test(url)
               if (isYouTube) {
                 const id = isYouTube[1] || isYouTube[2]
                 return (
-                  <div key={idx} className="my-4 rounded-xl overflow-hidden border border-border bg-muted/30">
-                    {title && <p className="px-4 py-2 text-sm font-medium text-card-foreground border-b border-border">{title}</p>}
-                    <div className="aspect-video">
+                  <div key={idx} className="my-4 rounded-xl overflow-hidden border border-border bg-black">
+                    {videoTitle && <p className="px-4 py-2 text-sm font-medium text-card-foreground border-b border-border bg-card">{videoTitle}</p>}
+                    <div className="aspect-video relative bg-black">
                       <iframe
-                        title={title}
+                        title={videoTitle}
                         src={`https://www.youtube.com/embed/${id}`}
-                        className="w-full h-full"
+                        className="w-full h-full border-0"
                         allowFullScreen
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerPolicy="no-referrer"
                       />
                     </div>
                   </div>
@@ -456,10 +606,18 @@ export function RichModuleContent({
               )
             }
             if (el.type === 'matching' && Array.isArray(el.data?.pairs)) {
+              const rawPairs = el.data.pairs as Array<Record<string, string>>
+              const pairs = rawPairs
+                .map((p) => ({
+                  term: String(p.term ?? p.left ?? '').trim(),
+                  definition: String(p.definition ?? p.right ?? '').trim(),
+                }))
+                .filter((p) => p.term && p.definition)
+              if (pairs.length < 2) return null
               return (
                 <div key={idx}>
                   <MatchingBlock
-                    pairs={el.data.pairs as { term: string; definition: string }[]}
+                    pairs={pairs}
                     instruction={el.data?.instruction != null ? String(el.data.instruction) : undefined}
                   />
                 </div>
@@ -502,7 +660,7 @@ export function RichModuleContent({
           ) : null}
         </div>
 
-        {hasSideCard && content.sideCard && (
+        {useSidebarColumn && content.sideCard && (
           <div className="lg:sticky lg:top-4">
             <SideCardBlock
               title={content.sideCard.title}
@@ -513,6 +671,10 @@ export function RichModuleContent({
           </div>
         )}
       </div>
+
+      {hasSideCard && content.sideCard && !useSidebarColumn && (
+        <FloatingSideCard sideCard={content.sideCard} />
+      )}
     </div>
   )
 }

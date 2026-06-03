@@ -1,0 +1,13 @@
+name = "sudar-cron-learn"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+
+# Secrets (wrangler secret put):
+# CRON_SECRET — same value as Learn CRON_SECRET
+# LEARN_APP_URL — https://learn.thesudar.com
+
+[triggers]
+crons = ["30 4 * * *", "*/10 * * * *"]
+
+[observability]
+enabled = true

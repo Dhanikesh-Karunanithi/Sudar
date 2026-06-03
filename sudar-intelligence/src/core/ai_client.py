@@ -14,6 +14,7 @@ PROVIDER_TOGETHER = "together"
 PROVIDER_OPENAI = "openai"
 PROVIDER_ANTHROPIC = "anthropic"
 PROVIDER_CUSTOM = "custom"
+PROVIDER_HUGGINGFACE = "huggingface"
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 TOGETHER_URL = "https://api.together.xyz/v1/chat/completions"
@@ -27,12 +28,20 @@ DEFAULT_MODELS = {
     PROVIDER_OPENAI: "gpt-4o-mini",
     PROVIDER_ANTHROPIC: "claude-3-5-sonnet-20241022",
     PROVIDER_CUSTOM: "gemma3:4b",
+    PROVIDER_HUGGINGFACE: "meta-llama/Meta-Llama-3.1-8B-Instruct",
 }
 
 
 def _get_provider() -> str:
     env = (os.environ.get("AI_CHAT_PROVIDER") or "").strip().lower()
-    if env in (PROVIDER_OPENROUTER, PROVIDER_TOGETHER, PROVIDER_OPENAI, PROVIDER_ANTHROPIC, PROVIDER_CUSTOM):
+    if env in (
+        PROVIDER_OPENROUTER,
+        PROVIDER_TOGETHER,
+        PROVIDER_OPENAI,
+        PROVIDER_ANTHROPIC,
+        PROVIDER_CUSTOM,
+        PROVIDER_HUGGINGFACE,
+    ):
         return env
     if os.environ.get("OPENROUTER_API_KEY", "").strip():
         return PROVIDER_OPENROUTER
@@ -67,10 +76,16 @@ def get_chat_config_error() -> str | None:
         )
         if not base or not key:
             return "Custom/local provider requires AI_CHAT_BASE_URL and AI_CHAT_API_KEY (or OPENAI_API_KEY / TOGETHER_API_KEY). Use any non-empty string for Ollama."
+    if p == PROVIDER_HUGGINGFACE and not os.environ.get("HUGGINGFACE_API_KEY", "").strip():
+        return "Hugging Face chat requires HUGGINGFACE_API_KEY and AI_CHAT_PROVIDER=huggingface."
     return None
 
 
 def _get_model(provider: str) -> str:
+    if provider == PROVIDER_HUGGINGFACE:
+        from src.core.hf_client import hf_chat_model
+
+        return (os.environ.get("AI_CHAT_DEFAULT_MODEL") or "").strip() or hf_chat_model()
     return (os.environ.get("AI_CHAT_DEFAULT_MODEL") or "").strip() or DEFAULT_MODELS.get(provider, "gpt-4o-mini")
 
 
@@ -95,6 +110,15 @@ async def chat_completion(
 
     if provider == PROVIDER_ANTHROPIC:
         return await _chat_anthropic(messages, model=model, max_tokens=max_tokens, temperature=temperature)
+    if provider == PROVIDER_HUGGINGFACE:
+        from src.core.hf_client import chat_completion_openai_compat
+
+        return await chat_completion_openai_compat(
+            messages,
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
     # OpenAI-compatible: OpenRouter, Together, OpenAI, custom
     return await _chat_openai_compatible(
         provider=provider,
@@ -154,7 +178,14 @@ async def _chat_openai_compatible(
         msg = data["choices"][0].get("message") or {}
         content = (msg.get("content") or "").strip()
 
-    return {"content": content, "raw": data, "provider": provider}
+    usage = _parse_openai_compatible_usage(data.get("usage"))
+    return {
+        "content": content,
+        "raw": data,
+        "provider": provider,
+        "model": model,
+        "usage": usage,
+    }
 
 
 async def _chat_anthropic(
@@ -203,4 +234,52 @@ async def _chat_anthropic(
             content += (block.get("text") or "").strip()
     content = content.strip()
 
-    return {"content": content, "raw": data, "provider": PROVIDER_ANTHROPIC}
+    usage = _parse_anthropic_usage(data.get("usage"))
+    return {
+        "content": content,
+        "raw": data,
+        "provider": PROVIDER_ANTHROPIC,
+        "model": model,
+        "usage": usage,
+    }
+
+
+def _parse_openai_compatible_usage(raw: Any) -> dict[str, int] | None:
+    if not isinstance(raw, dict):
+        return None
+    prompt = raw.get("prompt_tokens")
+    completion = raw.get("completion_tokens")
+    if not isinstance(prompt, (int, float)) and not isinstance(completion, (int, float)):
+        return None
+    p = int(prompt or 0)
+    c = int(completion or 0)
+    cached = 0
+    details = raw.get("prompt_tokens_details")
+    if isinstance(details, dict) and isinstance(details.get("cached_tokens"), (int, float)):
+        cached = int(details["cached_tokens"])
+    total = int(raw.get("total_tokens") or (p + c))
+    return {
+        "prompt_tokens": p,
+        "completion_tokens": c,
+        "cached_tokens": cached,
+        "total_tokens": total,
+    }
+
+
+def _parse_anthropic_usage(raw: Any) -> dict[str, int] | None:
+    if not isinstance(raw, dict):
+        return None
+    inp = raw.get("input_tokens")
+    out = raw.get("output_tokens")
+    if not isinstance(inp, (int, float)) and not isinstance(out, (int, float)):
+        return None
+    cache_read = int(raw.get("cache_read_input_tokens") or 0)
+    cache_create = int(raw.get("cache_creation_input_tokens") or 0)
+    p = int(inp or 0) + cache_create
+    c = int(out or 0)
+    return {
+        "prompt_tokens": p,
+        "completion_tokens": c,
+        "cached_tokens": cache_read,
+        "total_tokens": p + c,
+    }

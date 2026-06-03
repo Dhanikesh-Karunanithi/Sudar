@@ -189,6 +189,11 @@ export async function computeNextBestActionForUser(
       score += Math.min(10, peers * 2)
     }
 
+    if (course.is_external) {
+      score += 5
+      if (struggleMatches.length > 0) score += 10
+    }
+
     return { course, score, reasons }
   })
 

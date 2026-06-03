@@ -6,7 +6,7 @@ export const INTERACTIVE_DEMO_PATH = "/launch-demo/interactive";
 /** Legacy external host; prefer same-origin paths above. */
 export const EXTERNAL_LAUNCH_DEMO_URL =
   process.env.NEXT_PUBLIC_ECOSYSTEM_DEMO_URL?.replace(/\/$/, "") ||
-  "https://demo.thesudar.app";
+  "https://demo.thesudar.com";
 
 export function launchDemoHref(origin = ""): string {
   return `${origin}${LAUNCH_DEMO_PATH}`;

@@ -4,13 +4,22 @@
  * Backward compatible with TOGETHER_TUTOR_MODEL and TOGETHER_MEMORY_MODEL.
  */
 
+import { assertOrgAiQuota } from '../../../../shared/ai/checkOrgAiQuota'
+import { parseAnthropicUsage, parseOpenAiCompatibleUsage } from '../../../../shared/ai/parseChatUsage'
+import type { AiUsageContext, ChatUsage } from '../../../../shared/ai/usageTypes'
 import { getOrgPrivateAiConfigError, type PrivateOpenAiRuntime } from '@/types/orgAiInference'
+import { recordAiUsage, type RecordAiUsageInput, type UsageAdmin } from '@/lib/ai/recordUsage'
 
 export type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string }
 
 export type ChatCompletionContext = {
   /** When set, chat uses this private server instead of deployment env provider. */
   privateOpenAi?: PrivateOpenAiRuntime | null
+  /** When set with usageAdmin, records token usage after a successful completion. */
+  usageContext?: AiUsageContext
+  usageAdmin?: UsageAdmin
+  /** Required for org monthly token cap enforcement (ai_entitlements.hard_stop). */
+  orgSettings?: unknown
 }
 
 export type ChatCompletionOptions = {
@@ -21,7 +30,12 @@ export type ChatCompletionOptions = {
   top_p?: number
 }
 
-export type ChatCompletionResult = { content: string; provider: string }
+export type ChatCompletionResult = {
+  content: string
+  provider: string
+  model: string
+  usage?: ChatUsage
+}
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 const TOGETHER_URL = 'https://api.together.xyz/v1/chat/completions'
@@ -84,6 +98,45 @@ function getApiKeyAndUrl(provider: string): { key: string; url: string } {
   }
 }
 
+function getDefaultModel(provider: string): string {
+  return (
+    process.env.AI_CHAT_DEFAULT_MODEL?.trim() ||
+    (provider === 'together' ? (process.env.TOGETHER_TUTOR_MODEL?.trim() || DEFAULT_TUTOR_MODEL) : null) ||
+    DEFAULT_MODEL_BY_PROVIDER[provider] ||
+    DEFAULT_TUTOR_MODEL
+  )
+}
+
+/** Default model for tutor (main) responses. Backward compat: TOGETHER_TUTOR_MODEL. */
+export function getDefaultTutorModel(privateRuntime?: PrivateOpenAiRuntime | null): string {
+  if (privateRuntime) return privateRuntime.defaultModel
+  return process.env.AI_CHAT_DEFAULT_MODEL?.trim() || process.env.TOGETHER_TUTOR_MODEL?.trim() || DEFAULT_TUTOR_MODEL
+}
+
+/** Default model for memory/short tasks (e.g. quiz block). Backward compat: TOGETHER_MEMORY_MODEL. */
+export function getDefaultMemoryModel(privateRuntime?: PrivateOpenAiRuntime | null): string {
+  if (privateRuntime) return privateRuntime.defaultModel
+  return process.env.TOGETHER_MEMORY_MODEL?.trim() || DEFAULT_MEMORY_MODEL
+}
+
+function maybeRecordUsage(
+  ctx: ChatCompletionContext | undefined,
+  result: ChatCompletionResult
+): void {
+  if (!ctx?.usageContext || !ctx.usageAdmin || !result.usage) return
+  const input: RecordAiUsageInput = {
+    ...ctx.usageContext,
+    provider: result.provider,
+    model: result.model,
+    usage: result.usage,
+    metadata: {
+      ...ctx.usageContext.metadata,
+      private_runtime: Boolean(ctx.privateOpenAi),
+    },
+  }
+  recordAiUsage(ctx.usageAdmin, input)
+}
+
 async function chatOpenAICompatible(
   url: string,
   apiKey: string,
@@ -106,28 +159,8 @@ async function chatOpenAICompatible(
   if (!res.ok) throw new Error(text || `AI API ${res.status}`)
   const data = JSON.parse(text)
   const content = data.choices?.[0]?.message?.content?.trim() ?? ''
-  return { content, provider }
-}
-
-function getDefaultModel(provider: string): string {
-  return (
-    process.env.AI_CHAT_DEFAULT_MODEL?.trim() ||
-    (provider === 'together' ? (process.env.TOGETHER_TUTOR_MODEL?.trim() || DEFAULT_TUTOR_MODEL) : null) ||
-    DEFAULT_MODEL_BY_PROVIDER[provider] ||
-    DEFAULT_TUTOR_MODEL
-  )
-}
-
-/** Default model for tutor (main) responses. Backward compat: TOGETHER_TUTOR_MODEL. */
-export function getDefaultTutorModel(privateRuntime?: PrivateOpenAiRuntime | null): string {
-  if (privateRuntime) return privateRuntime.defaultModel
-  return process.env.AI_CHAT_DEFAULT_MODEL?.trim() || process.env.TOGETHER_TUTOR_MODEL?.trim() || DEFAULT_TUTOR_MODEL
-}
-
-/** Default model for memory/short tasks (e.g. quiz block). Backward compat: TOGETHER_MEMORY_MODEL. */
-export function getDefaultMemoryModel(privateRuntime?: PrivateOpenAiRuntime | null): string {
-  if (privateRuntime) return privateRuntime.defaultModel
-  return process.env.TOGETHER_MEMORY_MODEL?.trim() || DEFAULT_MEMORY_MODEL
+  const usage = parseOpenAiCompatibleUsage(data.usage)
+  return { content, provider, model, usage }
 }
 
 async function chatAnthropic(apiKey: string, options: ChatCompletionOptions): Promise<ChatCompletionResult> {
@@ -153,7 +186,8 @@ async function chatAnthropic(apiKey: string, options: ChatCompletionOptions): Pr
   if (!res.ok) throw new Error(text || `Anthropic API ${res.status}`)
   const data = JSON.parse(text)
   const content = data.content?.[0]?.text?.trim() ?? ''
-  return { content, provider: 'anthropic' }
+  const usage = parseAnthropicUsage(data.usage)
+  return { content, provider: 'anthropic', model, usage }
 }
 
 /**
@@ -163,16 +197,28 @@ export async function chatCompletion(
   options: ChatCompletionOptions,
   ctx?: ChatCompletionContext
 ): Promise<ChatCompletionResult> {
+  if (ctx?.usageContext?.orgId && ctx.usageAdmin && ctx.orgSettings) {
+    await assertOrgAiQuota(ctx.usageAdmin, ctx.usageContext.orgId, ctx.orgSettings)
+  }
+
+  let result: ChatCompletionResult
   const p = ctx?.privateOpenAi
   if (p) {
     const base = p.baseUrl.replace(/\/$/, '')
     const url = `${base}/v1/chat/completions`
-    return chatOpenAICompatible(url, p.apiKey, options, 'custom')
+    const model = options.model ?? p.defaultModel ?? getDefaultModel('custom')
+    result = await chatOpenAICompatible(url, p.apiKey, { ...options, model }, 'custom')
+  } else {
+    const provider = getProvider()
+    const { key, url } = getApiKeyAndUrl(provider)
+    if (provider === 'anthropic') {
+      result = await chatAnthropic(key, options)
+    } else {
+      result = await chatOpenAICompatible(url, key, options, provider)
+    }
   }
-  const provider = getProvider()
-  const { key, url } = getApiKeyAndUrl(provider)
-  if (provider === 'anthropic') return chatAnthropic(key, options)
-  return chatOpenAICompatible(url, key, options, provider)
+  maybeRecordUsage(ctx, result)
+  return result
 }
 
 /**
@@ -210,3 +256,5 @@ export function getChatConfigError(): string | null {
   }
   return null
 }
+
+export type { ChatUsage, AiUsageContext }

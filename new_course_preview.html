@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sudar — Next-Gen Course Preview</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts (Plus Jakarta Sans & JetBrains Mono) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            primary: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="bg-[#f8fafc] text-[#0f172a] dark:bg-[#0b0f19] dark:text-[#f1f5f9] min-h-screen flex flex-col antialiased transition-colors duration-300">
+
+  <!-- Header / Navigation Bar -->
+  <header class="sticky top-0 z-50 bg-white/80 dark:bg-[#0b0f19]/80 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-800/50 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-md shadow-sky-500/20">
+        <i data-lucide="sparkles" class="w-5 h-5 text-white animate-pulse"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold tracking-wider text-sky-600 dark:text-sky-400 uppercase">Sudar Intelligence</span>
+          <span class="px-1.5 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400 rounded-full">ID Upgraded</span>
+        </div>
+        <h1 class="text-base font-bold text-slate-800 dark:text-white leading-tight">Next-Gen Content Generation Preview</h1>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="toggleDarkMode()" class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+        <i id="theme-icon" data-lucide="moon" class="w-5 h-5 text-slate-600 dark:text-slate-400"></i>
+      </button>
+      <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">Modality: Text & Interactive</span>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-8 items-start">
+    
+    <!-- Course Content Area -->
+    <article class="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm p-6 sm:p-10 space-y-8 relative overflow-hidden">
+      
+      <!-- Ambient Decorative Accent -->
+      <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-sky-500/5 to-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Course Header -->
+      <div class="space-y-3 border-b border-slate-100 dark:border-slate-800/80 pb-6">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="px-2.5 py-1 text-xs font-semibold bg-sky-50 text-sky-700 dark:bg-sky-950/30 dark:text-sky-400 rounded-lg">Module 3 of 5</span>
+          <span class="px-2.5 py-1 text-xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400 rounded-lg">Archetype: Cold Open</span>
+          <span class="px-2.5 py-1 text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 rounded-lg">Bloom Level: Apply</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">The Art of System Architecture: Designing for High Availability</h2>
+        <p class="text-slate-500 dark:text-slate-400 text-sm max-w-2xl">
+          Learn how to design self-healing systems that survive massive traffic spikes and sudden infrastructure failures without dropping a single request.
+        </p>
+      </div>
+
+      <!-- NEW ID ELEMENT: Attention Grabber / Cold Open Entry State -->
+      <div class="rounded-2xl border border-amber-200/60 bg-amber-50/30 dark:border-amber-950/40 dark:bg-amber-950/10 p-6 relative overflow-hidden">
+        <div class="absolute top-0 right-0 p-4 opacity-10">
+          <i data-lucide="alert-triangle" class="w-24 h-24 text-amber-600"></i>
+        </div>
+        <div class="flex gap-4">
+          <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center shrink-0">
+            <i data-lucide="zap" class="w-5 h-5 text-amber-600 dark:text-amber-400"></i>
+          </div>
+          <div class="space-y-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Scenario Fragment</span>
+            <p class="text-base font-semibold text-slate-800 dark:text-slate-200 leading-relaxed">
+              It is 2:14 AM on Black Friday. Your database CPU hits 100%. The checkout service starts throwing 503 Service Unavailable errors. Within 45 seconds, $120,000 in revenue is lost. You are the engineer on call. What do you do?
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 1: The Anatomy of Failure -->
+      <section class="space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-6 bg-sky-500 rounded-full"></span>
+          <h3 class="text-xl font-bold text-slate-900 dark:text-white">1. The Anatomy of Failure</h3>
+        </div>
+        
+        <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+          In high-availability engineering, we don't design systems that never fail; we design systems that <strong class="text-slate-900 dark:text-white">fail gracefully</strong>. The core culprit in almost every catastrophic outage is a <span class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-sm font-mono font-medium">Single Point of Failure (SPOF)</span>.
+        </p>
+
+        <!-- NEW ID ELEMENT: Beautiful Comparison Table -->
+        <div class="my-6 overflow-hidden rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-[#111827]">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200/60 dark:border-slate-800/60">
+                <th class="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Architecture Pattern</th>
+                <th class="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Failure Mode</th>
+                <th class="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ID Impact Metric</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-sm">
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/20">
+                <td class="p-4 font-semibold text-slate-800 dark:text-slate-200">Monolithic Database</td>
+                <td class="p-4 text-slate-500 dark:text-slate-400">Lock contention, hardware failure halts entire platform.</td>
+                <td class="p-4"><span class="px-2 py-0.5 text-xs font-medium bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 rounded-full">Critical SPOF</span></td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/20">
+                <td class="p-4 font-semibold text-slate-800 dark:text-slate-200">Active-Passive Replication</td>
+                <td class="p-4 text-slate-500 dark:text-slate-400">Delay during failover; potential minor data loss.</td>
+                <td class="p-4"><span class="px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 rounded-full">RTO: 1-5 mins</span></td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/20">
+                <td class="p-4 font-semibold text-slate-800 dark:text-slate-200">Active-Active Multi-Region</td>
+                <td class="p-4 text-slate-500 dark:text-slate-400">Complex write conflicts; eventual consistency lag.</td>
+                <td class="p-4"><span class="px-2 py-0.5 text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 rounded-full">Zero Downtime</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- NEW ID ELEMENT: Inline Interactive Tabs Block -->
+      <section class="space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-6 bg-sky-500 rounded-full"></span>
+          <h3 class="text-xl font-bold text-slate-900 dark:text-white">2. Redundancy Patterns</h3>
+        </div>
+        <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+          How do we eliminate SPOFs? We introduce redundancy. Click the tabs below to explore the trade-offs of the two primary redundancy patterns.
+        </p>
+
+        <div class="border border-slate-200/60 dark:border-slate-800/60 rounded-2xl overflow-hidden bg-slate-50/30 dark:bg-slate-900/10">
+          <div class="flex border-b border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-900 p-2 gap-2">
+            <button onclick="switchTab('active-passive')" id="tab-active-passive" class="px-4 py-2 text-sm font-semibold rounded-xl bg-white dark:bg-[#111827] text-sky-600 dark:text-sky-400 shadow-sm transition-all">
+              Active-Passive
+            </button>
+            <button onclick="switchTab('active-active')" id="tab-active-active" class="px-4 py-2 text-sm font-semibold rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all">
+              Active-Active
+            </button>
+          </div>
+          <div class="p-6">
+            <div id="content-active-passive" class="space-y-3">
+              <h4 class="text-base font-bold text-slate-800 dark:text-slate-200">Active-Passive (Warm Standby)</h4>
+              <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                In an active-passive setup, one server handles 100% of the traffic while a secondary server sits idle, continuously replicating data from the primary. If the primary crashes, a load balancer redirects traffic to the secondary.
+              </p>
+              <div class="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                <i data-lucide="check-circle" class="w-4 h-4"></i> Simple to implement, no write conflict issues.
+              </div>
+            </div>
+            <div id="content-active-active" class="space-y-3 hidden">
+              <h4 class="text-base font-bold text-slate-800 dark:text-slate-200">Active-Active (Fully Redundant)</h4>
+              <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                All servers run simultaneously, sharing the incoming traffic load. If one node fails, the load balancer simply stops sending requests to it. There is zero failover delay.
+              </p>
+              <div class="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 font-medium">
+                <i data-lucide="alert-circle" class="w-4 h-4"></i> Highly complex; requires conflict-free replicated data types (CRDTs).
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NEW ID ELEMENT: Beautiful Interactive Timeline -->
+      <section class="space-y-4">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-6 bg-sky-500 rounded-full"></span>
+          <h3 class="text-xl font-bold text-slate-900 dark:text-white">3. The Failover Sequence</h3>
+        </div>
+        <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+          When failure strikes, a self-healing system executes a precise, automated sequence to recover.
+        </p>
+
+        <div class="relative pl-8 border-l-2 border-sky-100 dark:border-sky-950/50 space-y-8 my-6 ml-4">
+          <!-- Step 1 -->
+          <div class="relative">
+            <span class="absolute -left-[41px] top-0 w-6 h-6 rounded-full bg-sky-500 border-4 border-white dark:border-[#111827] flex items-center justify-center"></span>
+            <div class="space-y-1">
+              <span class="text-xs font-bold text-sky-600 dark:text-sky-400">Step 1: Heartbeat Failure</span>
+              <h4 class="text-base font-bold text-slate-800 dark:text-slate-200">Health Check Timeout</h4>
+              <p class="text-sm text-slate-500 dark:text-slate-400">The load balancer fails to receive a response from the primary node for 3 consecutive intervals.</p>
+            </div>
+          </div>
+          <!-- Step 2 -->
+          <div class="relative">
+            <span class="absolute -left-[41px] top-0 w-6 h-6 rounded-full bg-sky-500 border-4 border-white dark:border-[#111827] flex items-center justify-center"></span>
+            <div class="space-y-1">
+              <span class="text-xs font-bold text-sky-600 dark:text-sky-400">Step 2: Traffic Rerouting</span>
+              <h4 class="text-base font-bold text-slate-800 dark:text-slate-200">Node Eviction</h4>
+              <p class="text-sm text-slate-500 dark:text-slate-400">The unhealthy node is automatically removed from the active routing pool within milliseconds.</p>
+            </div>
+          </div>
+          <!-- Step 3 -->
+          <div class="relative">
+            <span class="absolute -left-[41px] top-0 w-6 h-6 rounded-full bg-indigo-500 border-4 border-white dark:border-[#111827] flex items-center justify-center"></span>
+            <div class="space-y-1">
+              <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">Step 3: Promotion</span>
+              <h4 class="text-base font-bold text-slate-800 dark:text-slate-200">Standby Promotion</h4>
+              <p class="text-sm text-slate-500 dark:text-slate-400">The passive secondary node is promoted to primary, accepting writes and restoring full service.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NEW ID ELEMENT: Inline Interactive Quiz (Scenario-Fork / Predict-then-Learn) -->
+      <section class="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800/80">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-6 bg-indigo-500 rounded-full"></span>
+          <h3 class="text-xl font-bold text-slate-900 dark:text-white">4. Interactive Case Decision</h3>
+        </div>
+        <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+          Put your instructional design knowledge to the test. Read the scenario and predict the best architectural outcome.
+        </p>
+
+        <div class="border border-indigo-100 dark:border-indigo-950/40 rounded-2xl p-6 bg-indigo-50/10 dark:bg-indigo-950/5 space-y-4">
+          <div class="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+            <i data-lucide="help-circle" class="w-5 h-5"></i>
+            <span class="text-sm font-bold uppercase tracking-wider">Scenario Quiz: Predict-then-Learn</span>
+          </div>
+          <h4 class="text-base font-bold text-slate-800 dark:text-slate-200">
+            Your startup is launching a flash-sale app where 10,000 users will buy limited stock items in under 5 seconds. Which redundancy pattern should you choose?
+          </h4>
+
+          <div class="space-y-3">
+            <button onclick="selectOption(0)" id="option-0" class="w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500 dark:hover:border-indigo-500 bg-white dark:bg-[#111827] text-left transition-all">
+              <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Active-Passive: To guarantee strict consistency and prevent double-selling stock.</span>
+              <span class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center shrink-0" id="circle-0"></span>
+            </button>
+            <button onclick="selectOption(1)" id="option-1" class="w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500 dark:hover:border-indigo-500 bg-white dark:bg-[#111827] text-left transition-all">
+              <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Active-Active: To maximize throughput and ensure no user sees a 503 error page.</span>
+              <span class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center shrink-0" id="circle-1"></span>
+            </button>
+          </div>
+
+          <div id="quiz-feedback" class="hidden p-4 rounded-xl text-sm leading-relaxed"></div>
+        </div>
+      </section>
+
+      <!-- NEW ID ELEMENT: Exit State reflection -->
+      <div class="rounded-2xl border border-emerald-200/60 bg-emerald-50/30 dark:border-emerald-950/40 dark:bg-emerald-950/10 p-6">
+        <div class="flex gap-4">
+          <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center shrink-0">
+            <i data-lucide="clock" class="w-5 h-5 text-emerald-600 dark:text-emerald-400"></i>
+          </div>
+          <div class="space-y-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Apply in 24 Hours</span>
+            <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              Look at your current project's database setup today. Identify if it uses replication, and map out the exact steps that would occur if your primary database instance went offline right now.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </article>
+
+    <!-- Sidebar / ID Context Panel -->
+    <aside class="space-y-6">
+      
+      <!-- ID Side Card: Wait, but why? -->
+      <div class="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/60 dark:border-slate-800/60 p-6 shadow-sm space-y-4">
+        <div class="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+          <i data-lucide="help-circle" class="w-4 h-4"></i>
+          <span class="text-xs font-bold uppercase tracking-wider">Wait, but why?</span>
+        </div>
+        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">Why not just buy bigger servers?</h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          Vertical scaling (buying a bigger server) has a hard ceiling and does not protect you from physical datacenter disasters or network cuts. Redundancy is the only path to true 99.999% availability.
+        </p>
+      </div>
+
+      <!-- ID Side Card: Real World -->
+      <div class="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/60 dark:border-slate-800/60 p-6 shadow-sm space-y-4">
+        <div class="flex items-center gap-2 text-sky-600 dark:text-sky-400">
+          <i data-lucide="globe" class="w-4 h-4"></i>
+          <span class="text-xs font-bold uppercase tracking-wider">Real World</span>
+        </div>
+        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">The Netflix Chaos Monkey</h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          Netflix famously runs "Chaos Monkey" in production—a tool that randomly shuts down server instances during business hours to guarantee their system is fully resilient to unexpected failures.
+        </p>
+      </div>
+
+      <!-- ID Side Card: Expert Voice -->
+      <div class="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200/60 dark:border-slate-800/60 p-6 shadow-sm space-y-4">
+        <div class="flex items-center gap-2 text-violet-600 dark:text-violet-400">
+          <i data-lucide="quote" class="w-4 h-4"></i>
+          <span class="text-xs font-bold uppercase tracking-wider">The Expert Voice</span>
+        </div>
+        <blockquote class="text-xs italic text-slate-500 dark:text-slate-400 leading-relaxed">
+          "Everything fails, all the time. Design with that single assumption, and you will build systems that never go down."
+        </blockquote>
+        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">— Werner Vogels, CTO of Amazon</p>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- Interactive JS Logic -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+      const html = document.documentElement;
+      const themeIcon = document.getElementById('theme-icon');
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        themeIcon.setAttribute('data-lucide', 'moon');
+      } else {
+        html.classList.add('dark');
+        themeIcon.setAttribute('data-lucide', 'sun');
+      }
+      lucide.createIcons();
+    }
+
+    // Interactive Tabs Switcher
+    function switchTab(tabId) {
+      const activePassiveBtn = document.getElementById('tab-active-passive');
+      const activeActiveBtn = document.getElementById('tab-active-active');
+      const activePassiveContent = document.getElementById('content-active-passive');
+      const activeActiveContent = document.getElementById('content-active-active');
+
+      if (tabId === 'active-passive') {
+        activePassiveBtn.className = "px-4 py-2 text-sm font-semibold rounded-xl bg-white dark:bg-[#111827] text-sky-600 dark:text-sky-400 shadow-sm transition-all";
+        activeActiveBtn.className = "px-4 py-2 text-sm font-semibold rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all";
+        activePassiveContent.classList.remove('hidden');
+        activeActiveContent.classList.add('hidden');
+      } else {
+        activeActiveBtn.className = "px-4 py-2 text-sm font-semibold rounded-xl bg-white dark:bg-[#111827] text-sky-600 dark:text-sky-400 shadow-sm transition-all";
+        activePassiveBtn.className = "px-4 py-2 text-sm font-semibold rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all";
+        activeActiveContent.classList.remove('hidden');
+        activePassiveContent.classList.add('hidden');
+      }
+    }
+
+    // Interactive Quiz Selection
+    function selectOption(index) {
+      const feedback = document.getElementById('quiz-feedback');
+      const opt0 = document.getElementById('option-0');
+      const opt1 = document.getElementById('option-1');
+      const circle0 = document.getElementById('circle-0');
+      const circle1 = document.getElementById('circle-1');
+
+      // Reset options
+      opt0.className = "w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] text-left transition-all";
+      opt1.className = "w-full flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] text-left transition-all";
+      circle0.className = "w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center shrink-0";
+      circle1.className = "w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center shrink-0";
+      circle0.innerHTML = "";
+      circle1.innerHTML = "";
+
+      feedback.classList.remove('hidden');
+
+      if (index === 0) {
+        opt0.className = "w-full flex items-center justify-between p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10 text-left transition-all";
+        circle0.className = "w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 text-white";
+        circle0.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5"></i>';
+        
+        feedback.className = "p-4 rounded-xl text-sm leading-relaxed bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200/50";
+        feedback.innerHTML = "<strong>Correct! (Predict-then-Learn outcome):</strong> For flash sales with high contention on a single inventory item, an Active-Passive setup with strict consistency is crucial. Active-Active would introduce write latency and conflict resolution issues, leading to double-selling stock.";
+      } else {
+        opt1.className = "w-full flex items-center justify-between p-4 rounded-xl border-2 border-rose-500 bg-rose-50/10 dark:bg-rose-950/10 text-left transition-all";
+        circle1.className = "w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center shrink-0 text-white";
+        circle1.innerHTML = '<i data-lucide="x" class="w-3.5 h-3.5"></i>';
+        
+        feedback.className = "p-4 rounded-xl text-sm leading-relaxed bg-rose-50 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200/50";
+        feedback.innerHTML = "<strong>Incorrect (Predict-then-Learn outcome):</strong> While Active-Active maximizes throughput, write conflicts on a single inventory count are extremely difficult to resolve in real-time. Active-Passive is the industry standard here to ensure strict consistency.";
+      }
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

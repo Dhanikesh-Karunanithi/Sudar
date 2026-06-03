@@ -95,7 +95,7 @@ export default function DemoPage() {
         </Link>{" "}
         or try{" "}
         <a
-          href="https://studio.thesudar.app"
+          href="https://studio.thesudar.com"
           target="_blank"
           rel="noopener noreferrer"
           className="text-accent hover:underline"

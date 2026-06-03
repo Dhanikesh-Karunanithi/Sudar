@@ -2,13 +2,15 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import {
   BookOpen, Clock, Search, X, LayoutGrid, List,
   CheckCircle2, PlayCircle, Sparkles, ChevronRight,
   GraduationCap, Filter, Globe,
 } from 'lucide-react'
-import { getExternalProviderMeta } from '@/lib/courses/externalProviders'
+import { EXTERNAL_PROVIDERS, type ExternalProviderId } from '@/lib/courses/externalProviders'
+import { ExternalCourseLabel } from '@/components/courses/ExternalCourseLabel'
 import { SudarCourseThumbnailArt } from '@/components/branding/SudarCourseDefaultArt'
 import { CourseArtPatternSelect } from '@/components/branding/CourseArtPatternSelect'
 
@@ -35,10 +37,13 @@ interface Enrollment {
   progress_pct: number
 }
 
+type CatalogTab = 'org' | 'discover'
+
 interface Props {
   courses: Course[]
   enrollments: Enrollment[]
   initialSearch?: string
+  initialTab?: CatalogTab
 }
 
 /* ── Config ─────────────────────────────────────────────────────────────── */
@@ -95,11 +100,17 @@ function CourseCardGrid({ course, enrollment }: { course: Course; enrollment?: E
   const inProgress = enrollment && !isCompleted
   const tags = course.tags?.slice(0, 3) ?? []
   const openCourse = course.is_external
-  const providerMeta = openCourse ? getExternalProviderMeta(course.external_provider) : null
 
   return (
     <Link href={`/courses/${course.id}`} className="group block h-full">
-      <div className="h-full bg-card rounded-card-lg border border-border hover:border-primary/30 hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col">
+      <div
+        className={[
+          'h-full bg-card rounded-card-lg border hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col',
+          openCourse
+            ? 'border-dashed border-amber-500/45 hover:border-amber-500/60'
+            : 'border-border hover:border-primary/30',
+        ].join(' ')}
+      >
         {/* Accent strip */}
         <div className={`h-1 w-full bg-gradient-to-r ${diff?.strip ?? 'from-primary/40 to-primary/10'}`} />
 
@@ -131,13 +142,8 @@ function CourseCardGrid({ course, enrollment }: { course: Course; enrollment?: E
               <BookOpen className="h-[1.125rem] w-[1.125rem] text-primary" />
             </div>
             <div className="flex flex-col items-end gap-1">
-              {openCourse && providerMeta && (
-                <span
-                  className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-pill border ${providerMeta.accentClass}`}
-                >
-                  <Globe className="w-3 h-3" />
-                  {providerMeta.shortLabel}
-                </span>
+              {openCourse && (
+                <ExternalCourseLabel provider={course.external_provider} />
               )}
               {isCompleted ? (
                 <span className="flex items-center gap-1 text-xs font-semibold text-success bg-success/10 border border-success/30 px-2 py-0.5 rounded-pill">
@@ -213,11 +219,17 @@ function CourseCardList({ course, enrollment }: { course: Course; enrollment?: E
   const isCompleted = enrollment?.status === 'completed'
   const inProgress = enrollment && !isCompleted
   const tags = course.tags?.slice(0, 4) ?? []
-  const providerMeta = course.is_external ? getExternalProviderMeta(course.external_provider) : null
 
   return (
     <Link href={`/courses/${course.id}`} className="group block">
-      <div className="bg-card rounded-card border border-border hover:border-primary/30 hover:shadow-md transition-all duration-200 overflow-hidden flex items-center gap-4 px-4 py-3">
+      <div
+        className={[
+          'bg-card rounded-card border hover:shadow-md transition-all duration-200 overflow-hidden flex items-center gap-4 px-4 py-3',
+          course.is_external
+            ? 'border-dashed border-amber-500/45 hover:border-amber-500/55'
+            : 'border-border hover:border-primary/30',
+        ].join(' ')}
+      >
         {/* Left accent bar */}
         <div className={`w-1 self-stretch rounded-full bg-gradient-to-b ${diff?.strip ?? 'from-primary/40 to-primary/10'} flex-shrink-0`} />
 
@@ -232,13 +244,8 @@ function CourseCardList({ course, enrollment }: { course: Course; enrollment?: E
             <h3 className="font-display font-bold text-sm text-card-foreground group-hover:text-primary transition-colors truncate">
               {course.title}
             </h3>
-            {providerMeta && (
-              <span
-                className={`hidden sm:inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-pill border flex-shrink-0 ${providerMeta.accentClass}`}
-              >
-                <Globe className="w-2.5 h-2.5" />
-                {providerMeta.shortLabel}
-              </span>
+            {course.is_external && (
+              <ExternalCourseLabel provider={course.external_provider} className="hidden sm:inline-flex" />
             )}
             {isCompleted && (
               <CheckCircle2 className="w-3.5 h-3.5 text-success flex-shrink-0" />
@@ -289,33 +296,70 @@ function CourseCardList({ course, enrollment }: { course: Course; enrollment?: E
 
 /* ── Main component ─────────────────────────────────────────────────────── */
 
-export default function CourseCatalogClient({ courses, enrollments, initialSearch = '' }: Props) {
+export default function CourseCatalogClient({
+  courses,
+  enrollments,
+  initialSearch = '',
+  initialTab = 'org',
+}: Props) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [search, setSearch] = useState(initialSearch)
+  const [catalogTab, setCatalogTab] = useState<CatalogTab>(initialTab)
   const [diffFilter, setDiffFilter] = useState<typeof DIFFICULTY_FILTERS[number]>('all')
   const [statusFilter, setStatusFilter] = useState<typeof STATUS_FILTERS[number]['id']>('all')
+  const [providerFilter, setProviderFilter] = useState<'all' | ExternalProviderId>('all')
   const [view, setView] = useState<'grid' | 'list'>('grid')
 
   useEffect(() => {
     setSearch(initialSearch)
   }, [initialSearch])
 
+  useEffect(() => {
+    setCatalogTab(initialTab)
+  }, [initialTab])
+
+  const setTab = useCallback(
+    (tab: CatalogTab) => {
+      setCatalogTab(tab)
+      const params = new URLSearchParams(searchParams.toString())
+      if (tab === 'discover') params.set('tab', 'discover')
+      else params.delete('tab')
+      const qs = params.toString()
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    },
+    [pathname, router, searchParams],
+  )
+
   const enrollmentMap = useMemo(
     () => new Map(enrollments.map((e) => [e.course_id, e])),
     [enrollments]
   )
 
+  const orgCourses = useMemo(() => courses.filter((c) => !c.is_external), [courses])
+  const discoverCourses = useMemo(() => courses.filter((c) => c.is_external), [courses])
+
+  const tabCourses = catalogTab === 'discover' ? discoverCourses : orgCourses
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim()
-    return courses.filter((c) => {
+    return tabCourses.filter((c) => {
       if (q && !c.title.toLowerCase().includes(q) && !c.description?.toLowerCase().includes(q) && !c.tags?.some((t) => t.toLowerCase().includes(q))) return false
-      if (diffFilter !== 'all' && c.difficulty !== diffFilter) return false
-      const enrollment = enrollmentMap.get(c.id)
-      if (statusFilter === 'enrolled' && (!enrollment || enrollment.status === 'completed')) return false
-      if (statusFilter === 'completed' && enrollment?.status !== 'completed') return false
-      if (statusFilter === 'new' && enrollment) return false
+      if (catalogTab === 'org') {
+        if (diffFilter !== 'all' && c.difficulty !== diffFilter) return false
+        const enrollment = enrollmentMap.get(c.id)
+        if (statusFilter === 'enrolled' && (!enrollment || enrollment.status === 'completed')) return false
+        if (statusFilter === 'completed' && enrollment?.status !== 'completed') return false
+        if (statusFilter === 'new' && enrollment) return false
+      }
+      if (catalogTab === 'discover' && providerFilter !== 'all' && c.external_provider !== providerFilter) {
+        return false
+      }
+      if (catalogTab === 'discover' && diffFilter !== 'all' && c.difficulty !== diffFilter) return false
       return true
     })
-  }, [courses, search, diffFilter, statusFilter, enrollmentMap])
+  }, [tabCourses, search, diffFilter, statusFilter, enrollmentMap, catalogTab, providerFilter])
 
   const clearSearch = useCallback(() => setSearch(''), [])
 
@@ -330,11 +374,13 @@ export default function CourseCatalogClient({ courses, enrollments, initialSearc
           <div>
             <h1 className="text-xl font-display font-bold text-card-foreground">Course Catalog</h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {courses.length} course{courses.length !== 1 ? 's' : ''} available
-              {enrolledCount > 0 && (
+              {catalogTab === 'discover'
+                ? `${discoverCourses.length} open course${discoverCourses.length !== 1 ? 's' : ''} from external providers`
+                : `${orgCourses.length} organisation course${orgCourses.length !== 1 ? 's' : ''}`}
+              {catalogTab === 'org' && enrolledCount > 0 && (
                 <> · <span className="text-primary font-medium">{enrolledCount} in progress</span></>
               )}
-              {completedCount > 0 && (
+              {catalogTab === 'org' && completedCount > 0 && (
                 <> · <span className="text-success font-medium">{completedCount} completed</span></>
               )}
             </p>
@@ -364,6 +410,98 @@ export default function CourseCatalogClient({ courses, enrollments, initialSearc
           id="catalog-course-art-pattern"
           className="rounded-lg border border-border/80 bg-muted/25 px-3 py-2.5"
         />
+      </div>
+
+      {/* ── Catalog tabs ── */}
+      <div className="flex flex-col gap-3">
+        <div className="flex p-1 bg-muted rounded-button gap-1" role="tablist" aria-label="Course catalog sections">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={catalogTab === 'org'}
+            onClick={() => setTab('org')}
+            className={[
+              'flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-semibold transition-all',
+              catalogTab === 'org'
+                ? 'bg-card text-primary shadow-sm'
+                : 'text-muted-foreground hover:text-card-foreground',
+            ].join(' ')}
+          >
+            <BookOpen className="w-4 h-4" />
+            Organisation
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={catalogTab === 'discover'}
+            onClick={() => setTab('discover')}
+            className={[
+              'flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-semibold transition-all',
+              catalogTab === 'discover'
+                ? 'bg-card text-primary shadow-sm'
+                : 'text-muted-foreground hover:text-card-foreground',
+            ].join(' ')}
+          >
+            <Globe className="w-4 h-4" />
+            Open courses
+            {discoverCourses.length > 0 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-pill bg-amber-500/20 text-amber-800 dark:text-amber-200">
+                {discoverCourses.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {catalogTab === 'discover' && (
+          <div className="rounded-lg border border-dashed border-amber-500/35 bg-amber-500/5 px-4 py-3">
+            <p className="text-sm text-card-foreground font-medium">Discover free courses from trusted providers</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              External courses are clearly labelled and play inside Sudar when embedding is supported. Your progress
+              is tracked when you mark complete.
+            </p>
+          </div>
+        )}
+
+        {catalogTab === 'discover' && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button
+              type="button"
+              onClick={() => setProviderFilter('all')}
+              className={[
+                'text-left rounded-lg border px-3 py-2.5 transition-all',
+                providerFilter === 'all'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border bg-card hover:border-primary/30',
+              ].join(' ')}
+            >
+              <p className="text-xs font-bold text-card-foreground">All providers</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{discoverCourses.length} courses</p>
+            </button>
+            {EXTERNAL_PROVIDERS.map((p) => {
+              const count = discoverCourses.filter((c) => c.external_provider === p.id).length
+              if (count === 0) return null
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setProviderFilter(p.id)}
+                  className={[
+                    'text-left rounded-lg border px-3 py-2.5 transition-all',
+                    providerFilter === p.id
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border bg-card hover:border-primary/30',
+                  ].join(' ')}
+                >
+                  <p className={`text-xs font-bold ${p.accentClass.split(' ').find((c) => c.startsWith('text-')) ?? 'text-card-foreground'}`}>
+                    {p.shortLabel}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{p.description}</p>
+                  <p className="text-[10px] font-semibold text-muted-foreground mt-1">{count} course{count !== 1 ? 's' : ''}</p>
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── Search + Filters ── */}
@@ -397,13 +535,16 @@ export default function CourseCatalogClient({ courses, enrollments, initialSearc
               {d === 'all' ? 'All levels' : DIFFICULTY[d as keyof typeof DIFFICULTY]?.label ?? d}
             </FilterPill>
           ))}
-          <div className="w-px h-4 bg-border" />
-          {/* Status */}
-          {STATUS_FILTERS.map((s) => (
-            <FilterPill key={s.id} active={statusFilter === s.id} onClick={() => setStatusFilter(s.id)}>
-              {s.label}
-            </FilterPill>
-          ))}
+          {catalogTab === 'org' && (
+            <>
+              <div className="w-px h-4 bg-border" />
+              {STATUS_FILTERS.map((s) => (
+                <FilterPill key={s.id} active={statusFilter === s.id} onClick={() => setStatusFilter(s.id)}>
+                  {s.label}
+                </FilterPill>
+              ))}
+            </>
+          )}
         </div>
       </div>
 
@@ -415,11 +556,18 @@ export default function CourseCatalogClient({ courses, enrollments, initialSearc
             <Sparkles className="w-5 h-5 text-muted-foreground" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-card-foreground">No courses match your filters</p>
+            <p className="text-sm font-semibold text-card-foreground">
+              {catalogTab === 'discover' ? 'No open courses match your filters' : 'No courses match your filters'}
+            </p>
             <p className="text-xs text-muted-foreground mt-1">Try adjusting your search or filter criteria</p>
           </div>
           <button
-            onClick={() => { setSearch(''); setDiffFilter('all'); setStatusFilter('all') }}
+            onClick={() => {
+              setSearch('')
+              setDiffFilter('all')
+              setStatusFilter('all')
+              setProviderFilter('all')
+            }}
             className="text-xs text-primary font-semibold hover:underline"
           >
             Clear all filters

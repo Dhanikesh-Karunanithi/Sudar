@@ -1,4 +1,4 @@
-# Deploy teachwithsudar.com (Cloudflare Pages) when marketing site or help-center sources change.
+# Deploy teachwithsudar.com + thesudar.com (Cloudflare Pages) when marketing site or help-center sources change.
 name: Deploy teachwithsudar
 
 on:
@@ -32,6 +32,10 @@ jobs:
 
       - name: Build static export (includes /launch-demo from sudar-ecosystem-demo)
         working-directory: teachwithsudar
+        env:
+          NEXT_PUBLIC_STUDIO_APP_URL: https://studio.thesudar.com
+          NEXT_PUBLIC_LEARN_APP_URL: https://learn.thesudar.com
+          NEXT_PUBLIC_ECOSYSTEM_DEMO_URL: https://demo.thesudar.com
         run: npm run build
 
       - name: Deploy to Cloudflare Pages

@@ -14,7 +14,7 @@ const LEARN_BASE_URL =
 const MCP_PUBLIC_URL =
   typeof process.env.NEXT_PUBLIC_MCP_URL === 'string' && process.env.NEXT_PUBLIC_MCP_URL
     ? process.env.NEXT_PUBLIC_MCP_URL.replace(/\/$/, '')
-    : 'https://mcp.thesudar.app'
+    : 'https://mcp.thesudar.com'
 
 type ApiKeyRow = { id: string; name: string; key_prefix: string; created_at: string; last_used_at: string | null }
 

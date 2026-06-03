@@ -1,6 +1,6 @@
 """
-Sudar Intelligence — optional image generation via Together AI (FLUX).
-Requires TOGETHER_API_KEY. Used by Sudar Learn/Studio proxies when enabled.
+Sudar Intelligence — image generation via Together AI (FLUX) or Hugging Face Inference.
+Set IMAGE_PROVIDER=together|huggingface. Requires TOGETHER_API_KEY or HUGGINGFACE_API_KEY.
 """
 import os
 from typing import Annotated, Any
@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from src.api.auth import verify_supabase_jwt_or_service
+from src.core.hf_client import generate_image_bytes, image_provider
 
 router = APIRouter()
 
@@ -24,15 +25,7 @@ class ImageGenerateRequest(BaseModel):
     style: str | None = None
 
 
-@router.post("/generate")
-async def generate_image(
-    body: ImageGenerateRequest,
-    _auth: Annotated[str | None, Depends(verify_supabase_jwt_or_service)] = None,
-):
-    key = os.environ.get("TOGETHER_API_KEY", "").strip()
-    if not key:
-        raise HTTPException(status_code=501, detail="TOGETHER_API_KEY not configured")
-
+def _build_prompt(body: ImageGenerateRequest) -> str:
     parts: list[str] = []
     if body.language:
         parts.append(f"Locale: {body.language}.")
@@ -41,11 +34,17 @@ async def generate_image(
     if body.style:
         parts.append(f"Style: {body.style}.")
     parts.append(body.prompt.strip())
-    full_prompt = " ".join(p for p in parts if p)
+    return " ".join(p for p in parts if p)[:2000]
+
+
+async def _generate_together(full_prompt: str, model: str) -> dict[str, Any]:
+    key = os.environ.get("TOGETHER_API_KEY", "").strip()
+    if not key:
+        raise HTTPException(status_code=501, detail="TOGETHER_API_KEY not configured")
 
     payload: dict[str, Any] = {
-        "model": body.model.strip() or "black-forest-labs/FLUX.1-schnell-Free",
-        "prompt": full_prompt[:2000],
+        "model": model.strip() or "black-forest-labs/FLUX.1-schnell-Free",
+        "prompt": full_prompt,
         "n": 1,
         "response_format": "b64_json",
     }
@@ -65,6 +64,27 @@ async def generate_image(
         raise HTTPException(status_code=502, detail="Together returned no image data")
 
     first = items[0] if isinstance(items[0], dict) else {}
-    b64 = first.get("b64_json")
-    url = first.get("url")
-    return {"b64_json": b64, "url": url, "model": payload["model"]}
+    return {
+        "b64_json": first.get("b64_json"),
+        "url": first.get("url"),
+        "model": payload["model"],
+    }
+
+
+@router.post("/generate")
+async def generate_image(
+    body: ImageGenerateRequest,
+    _auth: Annotated[str | None, Depends(verify_supabase_jwt_or_service)] = None,
+):
+    full_prompt = _build_prompt(body)
+    provider = image_provider()
+
+    if provider == "huggingface":
+        try:
+            result = await generate_image_bytes(full_prompt, model=body.model)
+            return result
+        except RuntimeError as e:
+            raise HTTPException(status_code=502, detail=str(e)) from e
+
+    model = body.model.strip() or "black-forest-labs/FLUX.1-schnell-Free"
+    return await _generate_together(full_prompt, model)

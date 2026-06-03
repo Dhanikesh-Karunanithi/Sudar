@@ -1,20 +1,25 @@
 name = "sudar-mcp-cloudflare"
 main = "src/index.ts"
+account_id = "c832f01f11c861e2b31cd36a0db18f36"
 compatibility_date = "2025-03-01"
 compatibility_flags = ["nodejs_compat"]
+
+[[routes]]
+pattern = "mcp.thesudar.com"
+custom_domain = true
 
 [vars]
 SUDAR_TOOLSET = "all"
 
 # Set via: wrangler secret put <NAME>
 # SUPABASE_URL, SUPABASE_ANON_KEY, MCP_TOKEN_SECRET
-# SUDAR_STUDIO_URL = https://studio.thesudar.app
-# SUDAR_LEARN_URL = https://learn.thesudar.app
-# SUDAR_INTELLIGENCE_URL = https://intelligence.thesudar.app
-# MCP_PUBLIC_URL = https://mcp.thesudar.app
+# SUDAR_STUDIO_URL = https://studio.thesudar.com
+# SUDAR_LEARN_URL = https://learn.thesudar.com
+# SUDAR_INTELLIGENCE_URL = https://intelligence.thesudar.com
+# MCP_PUBLIC_URL = https://mcp.thesudar.com
 
 # Attach custom domain after deploy:
-# wrangler custom-domains add mcp.thesudar.app
+# wrangler custom-domains add mcp.thesudar.com
 # Or configure in Cloudflare Dashboard → Workers → Triggers
 
 [observability]

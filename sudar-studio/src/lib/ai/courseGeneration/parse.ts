@@ -23,10 +23,18 @@ export function parseMarkdownSections(markdown: string): { heading: string; cont
   })
 }
 
+export type SideCardVisibility = 'hidden' | 'floating' | 'visible'
+
 export function parseEnvelope(raw: string): {
   entryState?: { type: string; content: string }
   exitState?: { type: string; content: string }
-  sideCard?: { title: string; content: string; tips?: string[]; noteType?: string }
+  sideCard?: {
+    title: string
+    content: string
+    tips?: string[]
+    noteType?: string
+    visibility?: SideCardVisibility
+  }
 } | null {
   try {
     const match = raw.match(/\{[\s\S]*\}/)
@@ -37,18 +45,37 @@ export function parseEnvelope(raw: string): {
       exitState?: { type: string; content: string }
       sideCard?: { title: string; content: string; tips?: string[]; noteType?: string }
     } = {}
-    const entry = parsed.entryState as { type?: string; content?: string } | undefined
-    if (entry?.type && ENTRY_TYPES.includes(entry.type as (typeof ENTRY_TYPES)[number]) && typeof entry.content === 'string') {
-      out.entryState = { type: entry.type, content: entry.content }
+    const entry = parsed.entryState as { type?: string; content?: string } | null | undefined
+    if (
+      entry &&
+      entry !== null &&
+      entry.type &&
+      ENTRY_TYPES.includes(entry.type as (typeof ENTRY_TYPES)[number]) &&
+      typeof entry.content === 'string' &&
+      entry.content.trim().length > 10
+    ) {
+      out.entryState = { type: entry.type, content: entry.content.trim() }
     }
     const exit = parsed.exitState as { type?: string; content?: string } | undefined
     if (exit?.type && EXIT_TYPES.includes(exit.type as (typeof EXIT_TYPES)[number]) && typeof exit.content === 'string') {
       out.exitState = { type: exit.type, content: exit.content }
     }
-    const side = parsed.sideCard as { title?: string; content?: string; noteType?: string } | undefined
-    if (side?.title && typeof side.content === 'string') {
-      const noteType = side.noteType && SIDE_NOTE_TYPES.includes(side.noteType as (typeof SIDE_NOTE_TYPES)[number]) ? side.noteType : undefined
-      out.sideCard = { title: side.title, content: side.content, noteType }
+    const side = parsed.sideCard as {
+      title?: string
+      content?: string
+      noteType?: string
+      visibility?: string
+    } | undefined
+    if (side?.title && typeof side.content === 'string' && side.content.trim().length > 20) {
+      const noteType =
+        side.noteType && SIDE_NOTE_TYPES.includes(side.noteType as (typeof SIDE_NOTE_TYPES)[number])
+          ? side.noteType
+          : undefined
+      const vis =
+        side.visibility === 'visible' || side.visibility === 'floating' || side.visibility === 'hidden'
+          ? side.visibility
+          : 'hidden'
+      out.sideCard = { title: side.title, content: side.content, noteType, visibility: vis }
     }
     return out
   } catch {

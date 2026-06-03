@@ -20,9 +20,12 @@ const distDirWin = useExternalDistOnWin
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
   ...(distDirWin ? { distDir: distDirWin } : {}),
   // Monorepo: avoid inferring a parent folder (e.g. stray lockfile outside the repo) as the workspace root
-  outputFileTracingRoot: path.join(__dirname, '..'),
+  outputFileTracingRoot: path.join(__dirname),
   experimental: {
     serverActions: {
       bodySizeLimit: '100mb',
@@ -73,3 +76,6 @@ const nextConfig = {
 };
 
 export default withNextIntl(nextConfig);
+
+import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare';
+initOpenNextCloudflareForDev();

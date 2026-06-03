@@ -107,6 +107,10 @@ export function buildComponentPromptSnippet(allowedTypes?: ComponentType[]): str
 }
 
 import { chatCompletion } from './chat'
+import {
+  filterAndSanitizeComponents,
+  getDomainComponentHints,
+} from '@/lib/ai/courseGeneration/componentValidation'
 
 function extractJson(raw: string): string {
   let s = raw.trim()
@@ -174,6 +178,7 @@ export interface SelectComponentsOptions {
   courseTypeCounts?: Partial<Record<ComponentType, number>>
   moduleIndex?: number
   totalModules?: number
+  courseType?: string
 }
 
 /** Drop or fix video components: no hallucinated YouTube URLs. */
@@ -338,6 +343,9 @@ export async function selectComponentsForModule(
       ? `Align interactives to these course outcomes:\n${outcomes.map((o, i) => `${i + 1}. ${o}`).join('\n')}`
       : ''
 
+  const courseType = options?.courseType?.trim() ?? 'general'
+  const domainHint = getDomainComponentHints(courseType)
+
   const fullText = options?.moduleFullText?.trim() ?? ''
   const grounding =
     fullText.length > 0
@@ -366,7 +374,12 @@ ${assessHint}
 ${ixHint}
 ${outcomeHint}
 
+DOMAIN COMPONENT STRATEGY:
+${domainHint}
+
 Return format: { "components": [ { "type": "<component type>", "data": { ... } }, ... ] }
+For matching use pairs: [{ "term": "...", "definition": "..." }] (not left/right).
+For flipcard each back must be 15+ words of insight, not repeating the front.
 For each component, populate "data" with the full structure (timeline: "steps": [{ "title", "description" }]; flipcard: "cards": [{ "front", "back" }]; quiz: "question", "options" (array of strings), "correctAnswer" (0-based index), "explanation"; matching: "pairs": [{ "left", "right" }]; tabs: "tabs": [{ "label", "content" }]; etc.).
 For video data use shape { "url": string, "title"?: string } only when video is allowed and a verified URL was provided above.`
 
@@ -399,6 +412,7 @@ Return JSON with "components" only. Max ${maxComponents} components. Only use al
       .slice(0, maxComponents)
 
     components = applyCourseTypeCaps(components, prior)
+    components = filterAndSanitizeComponents(components, fullText)
 
     if (assess === 'light') {
       components = components.filter((c, i) => !(c.type === 'quiz' && i > 0))
@@ -433,7 +447,8 @@ export function getSuggestedQuizMode(bloomLevel: string): QuizMode {
 
 /** Convert SelectedComponent[] to RichInteractiveElement[]. Optionally set quizMode for quiz elements from bloomLevel. */
 export function toInteractiveElements(components: SelectedComponent[], bloomLevel?: string): RichInteractiveElement[] {
-  return components.map((c) => {
+  const sanitized = filterAndSanitizeComponents(components)
+  return sanitized.map((c) => {
     const el: RichInteractiveElement = { type: c.type as RichInteractiveElement['type'], data: c.data }
     if (c.type === 'quiz' && bloomLevel) {
       el.quizMode = getSuggestedQuizMode(bloomLevel)

@@ -5,7 +5,7 @@ import { getCourseContentForGeneration } from '@/lib/courseContentForGeneration'
 import type { DialogueSegment } from '@/types/content'
 import type { Json } from '@/types/database'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
-import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
+import { fetchStudioOrgAiContext, studioMeteringChatCtx } from '@/lib/ai/studioOrgAiChat'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -27,7 +27,15 @@ export async function POST(request: NextRequest) {
   const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
   const configError = resolveChatConfigError(orgSettings, privateRuntime)
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })
-  const chatAiCtx = { privateOpenAi: privateRuntime }
+  const chatAiCtx = studioMeteringChatCtx(
+    admin,
+    orgId,
+    user.id,
+    orgSettings,
+    privateRuntime,
+    'modality_listen',
+    '/api/studio/podcast'
+  )
 
   const sampleText = await getCourseContentForGeneration(admin, courseId, user.id)
 

@@ -358,6 +358,9 @@ export default function SettingsPage() {
 
         <p className="text-xs text-muted-foreground">
           Want deeper personalization signals? Visit the <Link href="/memory" className="text-primary hover:underline">Memory panel</Link>.
+          {' '}
+          Contribute org documents for tutor RAG on the{' '}
+          <Link href="/settings/knowledge" className="text-primary hover:underline">Knowledge</Link> page (when enabled by your admin).
         </p>
       </div>
     </div>

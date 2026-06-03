@@ -86,8 +86,16 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 | `EMBED_PROVIDER` | Learn | `together` \| `openai` \| `huggingface`. Default: first available (Together, then OpenAI, then Hugging Face). | — |
 | `TOGETHER_API_KEY` | Learn | Used for Together embeddings (e.g. BAAI/bge-large-en-v1.5). | Same as Chat. |
 | `OPENAI_API_KEY` | Learn | Used for OpenAI embeddings (text-embedding-3-small, 1024 dims). | Same as Chat. |
-| `HUGGINGFACE_API_KEY` | Learn | [Hugging Face](https://huggingface.co/) — for embeddings via Inference API (e.g. BAAI/bge-large-en-v1.5, 1024 dims). | [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) |
-| `EMBED_MODEL` | Learn | Override embedding model (e.g. `BAAI/bge-large-en-v1.5` for Together/HF). | — |
+| `HUGGINGFACE_API_KEY` | Learn, Intelligence | [Hugging Face](https://huggingface.co/) — embeddings, rerank, chat, image via Inference API. | [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) |
+| `EMBED_MODEL` | Learn | Override embedding model (Together/OpenAI). For HF prefer `HF_EMBED_MODEL`. | — |
+| `HF_EMBED_MODEL` | Learn | HF embedding model (default `BAAI/bge-m3`, multilingual, 1024 dims). | — |
+| `HF_RERANK_MODEL` | Learn | Cross-encoder reranker (default `BAAI/bge-reranker-v2-m3`). | — |
+| `RAG_RERANK_ENABLED` | Learn | `true` to rerank pgvector candidates via HF before tutor injection. | — |
+| `HF_INFERENCE_BASE_URL` | Learn, Intelligence | Optional OpenAI-compatible base (TEI/vLLM). Overrides HF Router for embed/chat when set. | — |
+| `HF_CHAT_MODEL` | Intelligence | HF chat model when `AI_CHAT_PROVIDER=huggingface`. | — |
+| `HF_IMAGE_MODEL` | Intelligence | HF image model when `IMAGE_PROVIDER=huggingface`. | — |
+| `IMAGE_PROVIDER` | Intelligence | `together` (default FLUX) \| `huggingface`. | — |
+| `AI_CHAT_PROVIDER` | All | Add `huggingface` for Intelligence HF Router chat. | — |
 | `EMBED_DIM` | Learn | Vector dimension (default 1024 for RAG; must match pgvector). | — |
 
 ---
@@ -148,9 +156,9 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 | `MCP_REMOTE_PORT` | Remote worker | HTTP port (default `8787`) |
 | `MCP_TOKEN_SECRET` | Remote worker | HMAC secret for `/token` issued bearer tokens (required in production) |
 | `MCP_TOKEN_TTL_SEC` | Remote worker | Token lifetime seconds (default `3600`) |
-| `NEXT_PUBLIC_MCP_URL` | Studio | MCP connector URL shown on Integrations (e.g. `https://mcp.thesudar.app`) |
+| `NEXT_PUBLIC_MCP_URL` | Studio | MCP connector URL shown on Integrations (e.g. `https://mcp.thesudar.com`) |
 | `SUPABASE_URL` / `SUPABASE_ANON_KEY` | `workers/sudar-mcp-cloudflare` | Wrangler secrets for OAuth token validation |
-| `MCP_PUBLIC_URL` | Cloudflare worker | Public base URL (e.g. `https://mcp.thesudar.app`) |
+| `MCP_PUBLIC_URL` | Cloudflare worker | Public base URL (e.g. `https://mcp.thesudar.com`) |
 
 See [MCP_SERVERS.md](MCP_SERVERS.md) and [MCP_CHATGPT_LAUNCH.md](MCP_CHATGPT_LAUNCH.md).
 
@@ -175,7 +183,7 @@ Key vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, **`SUPABASE_JWT_SECRET` (
 
 Security hardening vars:
 
-- `CORS_ORIGINS` (Intelligence): comma-separated browser origins allowed to call Intelligence (e.g. `http://localhost:3001,http://localhost:3000`). **Required in production:** if `ENV`/`ENVIRONMENT` is `production` and this is unset/empty, the Intelligence process exits at startup.
+- `CORS_ORIGINS` (Intelligence): comma-separated browser origins allowed to call Intelligence (e.g. `https://learn.thesudar.com,https://studio.thesudar.com`). **Required in production:** if `ENV`/`ENVIRONMENT` is `production` and this is unset/empty, the Intelligence process exits at startup.
 - `SUPABASE_JWT_SECRET` (Intelligence): **HS256 secret from Supabase** (Dashboard → Project Settings → API → JWT Secret). Without it, routes that verify `Authorization: Bearer <access_token>` return **503** with message `JWT validation not configured (SUPABASE_JWT_SECRET)`.
 - `INTELLIGENCE_SERVICE_SECRET` (Intelligence + Learn + Studio): optional shared secret used for ALP, Studio TTS server-to-server proxy calls, Sudar Agents **internal** Learn helpers (`POST /api/internal/agent-tools/*`), and similar paths via `X-Intelligence-Service-Secret`. **Must match** on Intelligence and Learn when those routes are enabled.
 - `LEARN_INTERNAL_URL` (Intelligence): base URL of the **Sudar Learn** deployment (server-only). Used by the agents orchestrator when calling **`/api/internal/agent-tools/next-best-action`** so Intelligence reuses Learn’s canonical next-best-action implementation. Omit in local setups that do not wire agents → NBA tooling.
@@ -184,11 +192,37 @@ Sudar Agents org-level behaviour is stored in Postgres (`organisations.settings.
 
 ---
 
+## External courses (Studio import + Learn RAG)
+
+| Variable | App | Description |
+|----------|-----|-------------|
+| `YOUTUBE_API_KEY` | Studio | YouTube Data API v3 — search playlists for external course import. Alias: `GOOGLE_API_KEY`. |
+| `UDEMY_CLIENT_ID` | Studio | Udemy affiliate/API client ID for course search and metadata. |
+| `UDEMY_CLIENT_SECRET` | Studio | Udemy API client secret (Basic auth with client ID). |
+| `NEXT_PUBLIC_LEARN_URL` | Studio | Learn base URL (e.g. `http://localhost:3001`) — Studio triggers `/api/rag/ingest-external` after import. |
+| `INTERNAL_SERVICE_SECRET` | Studio, Learn | Shared bearer secret for server-to-server RAG ingest from Studio import. |
+
+---
+
+## Knowledge bases (MarkItDown RAG)
+
+| Variable | App | Description |
+|----------|-----|-------------|
+| `KB_PROCESSING_MAX_CONCURRENCY` | Learn | Max pending `kb_ingest_queue` jobs per cron run (default `5`). |
+| `MARKITDOWN_ENABLE_PLUGINS` | Intelligence | Enable MarkItDown plugins (`true` / `false`, default off). |
+| `MARKITDOWN_LLM_MODEL` | Intelligence | OpenAI model id for optional OCR / image description in MarkItDown. |
+
+Org setting (JSON in `organisations.settings`): `knowledge_bases.allow_learner_uploads` — when `true`, learners may upload via Learn `/settings/knowledge`.
+
+Setup: [KNOWLEDGE_BASE_SETUP.md](KNOWLEDGE_BASE_SETUP.md), [MARKITDOWN_INTEGRATION.md](MARKITDOWN_INTEGRATION.md).
+
+---
+
 ## Compliance & optional
 
 | Variable | App | Description |
 |----------|-----|-------------|
-| `CRON_SECRET` | Studio, Learn | Required secret for cron endpoints; cron routes fail closed when this is missing. On **Learn**, Vercel Cron sends `Authorization: Bearer <CRON_SECRET>` when this is set in the Vercel project (see `sudar-learn/vercel.json`). |
+| `CRON_SECRET` | Studio, Learn | Required secret for cron endpoints; cron routes fail closed when this is missing. On **Cloudflare**, deploy `workers/sudar-cron-learn` and `workers/sudar-cron-studio` with the same secret. On **Vercel**, Cron sends `Authorization: Bearer <CRON_SECRET>` (see `vercel.json`). |
 | `LEARN_CRON_SECRET` | Learn (optional) | If set and `CRON_SECRET` is unset, Learn’s `rejectInvalidCronRequest` accepts this value instead (dedicated secret name for Learn-only deploys). Prefer `CRON_SECRET` when Studio and Learn share ops. |
 | `RESEND_API_KEY` | Studio | [Resend](https://resend.com) — email for reminders. |
 | `RESEND_FROM` | Studio | From address (e.g. `Sudar <onboarding@resend.dev>`). |
@@ -200,15 +234,19 @@ Sudar Agents org-level behaviour is stored in Postgres (`organisations.settings.
 
 ---
 
-## GitHub Actions — teachwithsudar.com (Cloudflare Pages)
+## GitHub Actions — thesudar.com (Cloudflare)
 
 | Secret / variable | Where | Description |
 |-------------------|-------|-------------|
-| `CLOUDFLARE_API_TOKEN` | GitHub repo secret | API token with **Account → Cloudflare Pages → Edit**. Used by [`.github/workflows/teachwithsudar-pages.yml`](../.github/workflows/teachwithsudar-pages.yml). |
-| `CLOUDFLARE_ACCOUNT_ID` | GitHub repo secret | Cloudflare account ID for `wrangler pages deploy`. |
-| `NEXT_PUBLIC_ECOSYSTEM_DEMO_URL` | GitHub repo **variable** (optional) | Passed at build time for teachwithsudar `/demo` (e.g. `https://demo.thesudar.app`). |
+| `CLOUDFLARE_API_TOKEN` | GitHub repo secret | API token with **Account → Cloudflare Workers/Pages → Edit**. Used by Learn, Studio, and marketing workflows. |
+| `CLOUDFLARE_ACCOUNT_ID` | GitHub repo secret | Cloudflare account ID for `wrangler deploy` / `pages deploy`. |
+| `NEXT_PUBLIC_STUDIO_APP_URL` | teachwithsudar build (workflow) | Production Studio URL for landing CTAs (default `https://studio.thesudar.com`). |
+| `NEXT_PUBLIC_LEARN_APP_URL` | teachwithsudar build (workflow) | Production Learn URL for landing CTAs (default `https://learn.thesudar.com`). |
+| `NEXT_PUBLIC_ECOSYSTEM_DEMO_URL` | GitHub repo **variable** (optional) | Passed at build time for teachwithsudar `/demo` (e.g. `https://demo.thesudar.com`). |
 
-See [teachwithsudar/README.md](../teachwithsudar/README.md) for manual CLI deploy fallback.
+Workflows: `.github/workflows/sudar-learn-cloudflare.yml`, `sudar-studio-cloudflare.yml`, `teachwithsudar-pages.yml`.
+
+See [CLOUDFLARE_PAGES_DEPLOY.md](CLOUDFLARE_PAGES_DEPLOY.md) and [teachwithsudar/README.md](../teachwithsudar/README.md).
 
 ---
 

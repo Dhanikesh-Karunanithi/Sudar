@@ -1,5 +1,7 @@
 # Deploy Sudar on thesudar.app
 
+> **New production domain:** use **[DEPLOY_THESUDAR_COM.md](DEPLOY_THESUDAR_COM.md)** and **[CLOUDFLARE_PAGES_DEPLOY.md](CLOUDFLARE_PAGES_DEPLOY.md)** for **thesudar.com**. This file remains for the legacy **thesudar.app** zone.
+
 Production deployment checklist for **Studio**, **Learn**, and **Intelligence** before connecting ChatGPT MCP.
 
 ## URLs (target)

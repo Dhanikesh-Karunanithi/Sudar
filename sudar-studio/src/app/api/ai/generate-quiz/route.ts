@@ -10,7 +10,7 @@ import { getOrgIdAndRole } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import type { Json } from '@/types/database'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
-import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
+import { fetchStudioOrgAiContext, studioMeteringChatCtx } from '@/lib/ai/studioOrgAiChat'
 
 export async function POST(request: NextRequest) {
   const session = await getRequestSession(request)
@@ -22,7 +22,15 @@ export async function POST(request: NextRequest) {
   const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
   const configError = resolveChatConfigError(orgSettings, privateRuntime)
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })
-  const chatAiCtx = { privateOpenAi: privateRuntime }
+  const chatAiCtx = studioMeteringChatCtx(
+    admin,
+    orgId,
+    user.id,
+    orgSettings,
+    privateRuntime,
+    'studio_assist',
+    '/api/ai/generate-quiz'
+  )
   const { module_id, course_title, module_title, content, difficulty = 'intermediate', num_questions = 4 } = await request.json()
 
   if (!module_id || !content) return NextResponse.json({ error: 'module_id and content required' }, { status: 400 })

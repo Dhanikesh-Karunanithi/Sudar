@@ -4,12 +4,20 @@
  * Set AI_CHAT_PROVIDER or rely on fallback: first available key in order above.
  */
 
+import { assertOrgAiQuota } from '../../../../shared/ai/checkOrgAiQuota'
+import { parseAnthropicUsage, parseOpenAiCompatibleUsage } from '../../../../shared/ai/parseChatUsage'
+import type { AiUsageContext, ChatUsage } from '../../../../shared/ai/usageTypes'
+import type { UsageAdmin } from '@/lib/ai/recordUsage'
 import { getOrgPrivateAiConfigError, type PrivateOpenAiRuntime } from '@/types/orgAiInference'
+import { recordAiUsage, type RecordAiUsageInput } from '@/lib/ai/recordUsage'
 
 export type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string }
 
 export type ChatCompletionContext = {
   privateOpenAi?: PrivateOpenAiRuntime | null
+  usageContext?: AiUsageContext
+  usageAdmin?: UsageAdmin
+  orgSettings?: unknown
 }
 
 export type ChatCompletionOptions = {
@@ -22,7 +30,12 @@ export type ChatCompletionOptions = {
   response_format?: { type: 'json_object' }
 }
 
-export type ChatCompletionResult = { content: string; provider: string }
+export type ChatCompletionResult = {
+  content: string
+  provider: string
+  model: string
+  usage?: ChatUsage
+}
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 const TOGETHER_URL = 'https://api.together.xyz/v1/chat/completions'
@@ -82,6 +95,30 @@ function getApiKeyAndUrl(provider: string): { key: string; url: string } {
   }
 }
 
+function resolveModel(provider: string, options: ChatCompletionOptions): string {
+  return (
+    options.model ??
+    process.env.AI_CHAT_DEFAULT_MODEL?.trim() ??
+    DEFAULT_MODEL_BY_PROVIDER[provider] ??
+    DEFAULT_MODEL_BY_PROVIDER.together
+  )
+}
+
+function maybeRecordUsage(ctx: ChatCompletionContext | undefined, result: ChatCompletionResult): void {
+  if (!ctx?.usageContext || !ctx.usageAdmin || !result.usage) return
+  const input: RecordAiUsageInput = {
+    ...ctx.usageContext,
+    provider: result.provider,
+    model: result.model,
+    usage: result.usage,
+    metadata: {
+      ...ctx.usageContext.metadata,
+      private_runtime: Boolean(ctx.privateOpenAi),
+    },
+  }
+  recordAiUsage(ctx.usageAdmin, input)
+}
+
 /** OpenAI-compatible request (OpenRouter, Together, OpenAI, custom). */
 async function chatOpenAICompatible(
   url: string,
@@ -89,11 +126,7 @@ async function chatOpenAICompatible(
   options: ChatCompletionOptions,
   provider: string
 ): Promise<ChatCompletionResult> {
-  const model =
-    options.model ??
-    process.env.AI_CHAT_DEFAULT_MODEL?.trim() ??
-    DEFAULT_MODEL_BY_PROVIDER[provider] ??
-    DEFAULT_MODEL_BY_PROVIDER.together
+  const model = resolveModel(provider, options)
   const res = await fetch(url, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
@@ -110,12 +143,13 @@ async function chatOpenAICompatible(
   if (!res.ok) throw new Error(text || `AI API ${res.status}`)
   const data = JSON.parse(text)
   const content = data.choices?.[0]?.message?.content?.trim() ?? ''
-  return { content, provider }
+  const usage = parseOpenAiCompatibleUsage(data.usage)
+  return { content, provider, model, usage }
 }
 
 /** Anthropic Messages API — map messages to Anthropic format (system + user/assistant only). */
 async function chatAnthropic(apiKey: string, options: ChatCompletionOptions): Promise<ChatCompletionResult> {
-  const model = options.model ?? process.env.AI_CHAT_DEFAULT_MODEL?.trim() ?? DEFAULT_MODEL_BY_PROVIDER.anthropic
+  const model = resolveModel('anthropic', options)
   const system = options.messages.find((m) => m.role === 'system')?.content
   const rest = options.messages.filter((m) => m.role !== 'system') as Array<{ role: 'user' | 'assistant'; content: string }>
   if (!rest.some((m) => m.role === 'user')) throw new Error('No user message')
@@ -137,7 +171,8 @@ async function chatAnthropic(apiKey: string, options: ChatCompletionOptions): Pr
   if (!res.ok) throw new Error(text || `Anthropic API ${res.status}`)
   const data = JSON.parse(text)
   const content = data.content?.[0]?.text?.trim() ?? ''
-  return { content, provider: 'anthropic' }
+  const usage = parseAnthropicUsage(data.usage)
+  return { content, provider: 'anthropic', model, usage }
 }
 
 /**
@@ -147,18 +182,28 @@ export async function chatCompletion(
   options: ChatCompletionOptions,
   ctx?: ChatCompletionContext
 ): Promise<ChatCompletionResult> {
+  if (ctx?.usageContext?.orgId && ctx.usageAdmin && ctx.orgSettings) {
+    await assertOrgAiQuota(ctx.usageAdmin, ctx.usageContext.orgId, ctx.orgSettings)
+  }
+
+  let result: ChatCompletionResult
   const p = ctx?.privateOpenAi
   if (p) {
     const base = p.baseUrl.replace(/\/$/, '')
     const url = `${base}/v1/chat/completions`
-    const model =
-      options.model ?? p.defaultModel ?? process.env.AI_CHAT_DEFAULT_MODEL?.trim() ?? DEFAULT_MODEL_BY_PROVIDER.custom
-    return chatOpenAICompatible(url, p.apiKey, { ...options, model }, 'custom')
+    const model = options.model ?? p.defaultModel ?? process.env.AI_CHAT_DEFAULT_MODEL?.trim() ?? DEFAULT_MODEL_BY_PROVIDER.custom
+    result = await chatOpenAICompatible(url, p.apiKey, { ...options, model }, 'custom')
+  } else {
+    const provider = getProvider()
+    const { key, url } = getApiKeyAndUrl(provider)
+    if (provider === 'anthropic') {
+      result = await chatAnthropic(key, options)
+    } else {
+      result = await chatOpenAICompatible(url, key, options, provider)
+    }
   }
-  const provider = getProvider()
-  const { key, url } = getApiKeyAndUrl(provider)
-  if (provider === 'anthropic') return chatAnthropic(key, options)
-  return chatOpenAICompatible(url, key, options, provider)
+  maybeRecordUsage(ctx, result)
+  return result
 }
 
 export function resolveChatConfigError(orgSettings: unknown, privateRuntime: PrivateOpenAiRuntime | null): string | null {
@@ -196,3 +241,5 @@ export function getChatConfigError(): string | null {
   }
   return null
 }
+
+export type { ChatUsage, AiUsageContext }

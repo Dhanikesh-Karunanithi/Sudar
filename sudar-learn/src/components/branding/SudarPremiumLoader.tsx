@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ReactNode, type RefObject } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
@@ -223,9 +223,31 @@ const FP_STREAKS: { cls: string; y: number; x2: number; sw: number }[] = [
   { cls: 'sudar-fp-s16', y: 572, x2: 190, sw: 1 },
 ]
 
-/** Warp / speed-streak full-viewport hero loader */
-export function SudarFullpageMark({ className }: { className?: string }) {
-  const uid = useId().replace(/:/g, '')
+function FpHyperLogoScene({ className }: { className?: string }) {
+  return (
+    <div className={cn('sudar-fp-hyper-logo', className)}>
+      <div className="sudar-fp-pill sudar-fp-pill--top" />
+      <div className="sudar-fp-pill sudar-fp-pill--bottom" />
+      <div className="sudar-fp-star">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <path d={MICRO_STAR_PATH} className="fill-background" />
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+/** Warp / speed-streak full-viewport hero loader — continuous hyperdrive or exit zap */
+export function SudarFullpageMark({
+  className,
+  phase = 'warp',
+  mainRef,
+}: {
+  className?: string
+  /** `warp` = continuous L→R cruise while loading; `exit` = zap off-screen right when done */
+  phase?: 'warp' | 'exit'
+  mainRef?: RefObject<HTMLDivElement | null>
+}) {
   const reduceMotion = useReducedMotion()
   if (reduceMotion) {
     return (
@@ -235,19 +257,17 @@ export function SudarFullpageMark({ className }: { className?: string }) {
     )
   }
 
+  const phaseClass = phase === 'exit' ? 'sudar-fp-hyper-root--exit' : 'sudar-fp-hyper-root--warp'
+
   return (
-    <div className={cn('sudar-fp-wrap', className)} aria-hidden>
-      <svg width="0" height="0" className="absolute" aria-hidden>
-        <defs>
-          <filter id={`${uid}-hblur`} x="-40%" y="0%" width="180%" height="100%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="8 0" />
-          </filter>
-        </defs>
-      </svg>
-      {[0, -0.95, -1.9, -2.85].map((delay, i) => (
-        <div key={i} className="sudar-fp-tunnel" style={{ animationDelay: `${delay}s` }} />
-      ))}
-      <svg className="sudar-fp-speed-lines" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <div className={cn('sudar-fp-hyper-root', phaseClass, className)} aria-hidden>
+      <div className="sudar-fp-warp-rush" aria-hidden />
+      <svg
+        className="sudar-fp-speed-lines"
+        viewBox="0 0 800 600"
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="xMidYMid slice"
+      >
         {FP_STREAKS.map((s) => (
           <line
             key={s.cls}
@@ -260,26 +280,9 @@ export function SudarFullpageMark({ className }: { className?: string }) {
           />
         ))}
       </svg>
-      <div className="sudar-fp-logo mx-auto">
-        <div className="sudar-fp-scene">
-          <div className="sudar-fp-ghost-wrap" style={{ filter: `url(#${uid}-hblur)` }}>
-            <div
-              className="sudar-fp-ghost-pill w-[170px]"
-              style={{ top: 36, left: '50%', transform: 'translateX(calc(-50% + 20px))' }}
-            />
-            <div
-              className="sudar-fp-ghost-pill w-[170px]"
-              style={{ top: 100, left: '50%', transform: 'translateX(calc(-50% - 20px))' }}
-            />
-          </div>
-          <div className="sudar-fp-pill sudar-fp-pill--top" />
-          <div className="sudar-fp-pill sudar-fp-pill--bottom" />
-          <div className="sudar-fp-side-vignette" />
-          <div className="sudar-fp-star">
-            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <path d={MICRO_STAR_PATH} className="fill-background" />
-            </svg>
-          </div>
+      <div className="sudar-fp-hyper-stage">
+        <div ref={mainRef} className="sudar-fp-hyper-main">
+          <FpHyperLogoScene />
         </div>
       </div>
     </div>

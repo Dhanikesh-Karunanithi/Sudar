@@ -2,7 +2,9 @@ import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/se
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, BookOpen, Clock, List, CheckCircle2, Globe, ExternalLink } from 'lucide-react'
+import { ArrowLeft, BookOpen, Clock, List, CheckCircle2, Globe } from 'lucide-react'
+import { ExternalCourseDetailSection } from './ExternalCourseDetailSection'
+import { ExternalCourseLabel } from '@/components/courses/ExternalCourseLabel'
 import { cn } from '@/lib/utils'
 import { SudarCourseBannerArt } from '@/components/branding/SudarCourseDefaultArt'
 import { CourseArtPatternSelect } from '@/components/branding/CourseArtPatternSelect'
@@ -54,7 +56,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
   const diff = difficultyConfig[course.difficulty as keyof typeof difficultyConfig]
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
+    <div className={isExternal ? 'max-w-6xl mx-auto space-y-8' : 'max-w-3xl mx-auto space-y-8'}>
       {/* Back */}
       <Link
         href="/courses"
@@ -176,24 +178,12 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
       )}
 
       {isExternal && (
-        <div className="bg-card border border-primary/20 rounded-card p-6 space-y-3">
-          <h2 className="text-base font-semibold text-card-foreground">Open course on {providerMeta?.label}</h2>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            This is a free open course hosted externally on {providerMeta?.label}. Enroll to add it to your
-            library, track progress in Sudar, and get credit when you mark it complete.
-          </p>
-          {course.external_url && (
-            <a
-              href={course.external_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:opacity-90"
-            >
-              Preview on {providerMeta?.shortLabel}
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          )}
-        </div>
+        <ExternalCourseDetailSection
+          title={course.title}
+          externalProvider={course.external_provider}
+          externalUrl={course.external_url}
+          embedUrl={course.embed_url}
+        />
       )}
 
       {/* Modules list */}

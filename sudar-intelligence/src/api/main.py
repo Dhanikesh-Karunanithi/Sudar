@@ -20,7 +20,7 @@ from contextlib import asynccontextmanager
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from src.api.routes import tutor, learner, content, modality, health, audio, agents, runtime, image
+from src.api.routes import tutor, learner, content, modality, health, audio, agents, runtime, image, kb
 from src.api.logging_middleware import LoggingMiddleware
 from src.sudarplay.router import router as sudarplay_router
 
@@ -56,9 +56,9 @@ async def lifespan(app: FastAPI):
     print("Sudar Intelligence starting up...")
     if not os.getenv("SUPABASE_JWT_SECRET", "").strip():
         print(
-            "WARNING: SUPABASE_JWT_SECRET is unset. Bearer JWT routes (Sudar Agents, tutor, …) "
+            "WARNING: SUPABASE_JWT_SECRET is unset. Bearer JWT routes (Sudar Agents, tutor, ...) "
             "return 503 until it matches your Supabase JWT secret "
-            "(Dashboard → Project Settings → API → JWT Secret). "
+            "(Dashboard > Project Settings > API > JWT Secret). "
             f"Put it in {_intel_root / '.env.local'} or {_intel_root / '.env'} (both are auto-loaded)."
         )
     yield
@@ -110,3 +110,4 @@ app.include_router(audio.router, prefix="/api/audio", tags=["Audio TTS"])
 app.include_router(image.router, prefix="/api/image", tags=["Image Generation"])
 app.include_router(agents.router, prefix="/api/agents", tags=["Sudar Agents"])
 app.include_router(sudarplay_router, prefix="/api/sudarplay", tags=["sudarplay"])
+app.include_router(kb.router, prefix="/api/kb", tags=["Knowledge Bases"])

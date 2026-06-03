@@ -3,6 +3,7 @@ import { getOrgIdAndRole } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { orgSettingsToAiChatContext } from '@/lib/ai/orgAiChatContext'
+import { buildStudioUsageChatCtx } from '@/lib/ai/studioUsageContext'
 import { buildStudioContext } from '@/lib/agent/studioContext'
 import { STUDIO_ACTION_TYPES, type StudioAction } from '@/lib/agent/types'
 import {
@@ -133,7 +134,6 @@ export async function POST(request: NextRequest) {
         { status: 503 }
       )
     }
-    const chatAiCtx = { privateOpenAi: privateRuntime }
     const studioSettings = (orgRowStudio?.settings as Record<string, unknown> | null) ?? {}
     const studioAiCompliance = (studioSettings.ai_compliance as Record<string, unknown> | null) ?? {}
     if (studioAiCompliance.block_high_risk_pii_in_tutor !== false) {
@@ -151,6 +151,18 @@ export async function POST(request: NextRequest) {
     }
     const route = typeof body.route === 'string' ? body.route : ''
     const authoringCtx = body.authoring_context ?? {}
+    const chatAiCtx = buildStudioUsageChatCtx({
+      admin,
+      orgId,
+      userId: user.id,
+      feature: 'studio_agent',
+      route: '/api/agent/query',
+      privateRuntime,
+      orgSettings,
+      metadata: authoringCtx.courseId
+        ? { course_id: authoringCtx.courseId, module_id: authoringCtx.activeModuleId ?? undefined }
+        : undefined,
+    })
     const focusUserId = typeof body.focus_user_id === 'string' ? body.focus_user_id : undefined
 
     const ctx = await buildStudioContext(admin, orgId, { route, focusUserId })

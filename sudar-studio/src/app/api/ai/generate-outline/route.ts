@@ -3,7 +3,7 @@ import { getRequestSession } from '@/lib/auth/requestSession'
 import { getOrgIdAndRole } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
-import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
+import { fetchStudioOrgAiContext, studioMeteringChatCtx } from '@/lib/ai/studioOrgAiChat'
 
 export async function POST(request: NextRequest) {
   const session = await getRequestSession(request)
@@ -15,7 +15,15 @@ export async function POST(request: NextRequest) {
   const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
   const configError = resolveChatConfigError(orgSettings, privateRuntime)
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })
-  const chatAiCtx = { privateOpenAi: privateRuntime }
+  const chatAiCtx = studioMeteringChatCtx(
+    admin,
+    orgId,
+    user.id,
+    orgSettings,
+    privateRuntime,
+    'course_generation',
+    '/api/ai/generate-outline'
+  )
 
   const { course_title, description, difficulty = 'intermediate', num_modules = 5 } = await request.json()
   if (!course_title) return NextResponse.json({ error: 'course_title required' }, { status: 400 })

@@ -4,18 +4,149 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
-## External open courses — Discover (Learn)
+## Unified ecosystem branding — browser favicon and tab titles
 
-- **Where**: Sudar Learn — **Courses** catalog (`/courses`), course detail, learn viewer for external items; Next Best Action on dashboard.
-- **What**: Learners discover free/open courses from YouTube, Khan Academy, MIT OCW, and custom URLs. Hybrid delivery: embedded player when `embed_url` is set, otherwise link-out to the provider. Enroll to save progress; **Mark as complete** records `module_complete` and awards XP/coins via the standard events pipeline.
+- **Where**: Sudar Learn, Sudar Studio, marketing site (`teachwithsudar/`), and ecosystem demo — browser tab icon and default `<title>`.
+- **What**: Replaces default/Vercel globe favicon with a high-visibility Sudar mark (white logo on brand primary `#2f2a8a`, rounded square). Root layouts declare explicit `icons` metadata and professional default titles per surface.
 - **Key files**:
-  - `supabase/migrations/20260601000000_external_open_courses.sql` — `courses.is_external`, `external_provider`, `external_url`, `embed_url`; seed catalog.
-  - `sudar-learn/src/lib/courses/externalProviders.ts` — provider labels and badges.
-  - `sudar-learn/src/app/(dashboard)/courses/[id]/learn/ExternalCourseViewer.tsx` — embed + completion UI.
-  - `sudar-learn/src/app/(dashboard)/courses/[id]/page.tsx`, `EnrollButton.tsx` — external detail + enroll flow.
-  - `sudar-learn/src/lib/intelligence/nextBestActionEngine.ts` — NBA includes external metadata.
-- **Database**: `courses` columns above; one placeholder `modules` row per seeded open course for progress math.
-- **Flow**: Browse catalog → open course detail → enroll → learn (embed or link-out) → mark complete → progress and gamification update; NBA can recommend open courses from skill gaps.
+  - `sudar-learn/public/icon.svg`, `sudar-studio/public/icon.svg`, `teachwithsudar/public/icon.svg`, `sudar-ecosystem-demo/public/icon.svg` — shared favicon asset.
+  - `sudar-learn/src/app/layout.tsx`, `sudar-studio/src/app/layout.tsx`, `teachwithsudar/src/app/layout.tsx`, `sudar-ecosystem-demo/src/app/layout.tsx` — `metadata.icons` + default titles.
+- **Flow**: User opens any Sudar app or marketing URL → browser tab shows Sudar logo and surface-specific title (e.g. “Sudar Learn — AI-Powered Personalized Learning”).
+
+---
+
+## thesudar.com Premium Application Gateway (Marketing & Gateway)
+
+- **Where**: Marketing site — `thesudar.com` homepage (`teachwithsudar/src/app/page.tsx`).
+- **What**: Redesigned the main homepage of `thesudar.com` into a world-class, premium, animation-driven application gateway that guides users directly into Sudar Learn (for learners) or Sudar Studio (for creators/admins), while delegating deep informational and documentation content to `teachwithsudar.com`.
+- **Key files**:
+  - `teachwithsudar/src/app/page.tsx` — Composed 7 premium gateway sections.
+  - `teachwithsudar/src/components/home/HeroCanvas.tsx` — 2D canvas orbital rings background.
+  - `teachwithsudar/src/components/home/HeroCinematic.tsx` — SplitType headline reveals and magnetic CTAs.
+  - `teachwithsudar/src/components/home/ProductTrinity.tsx` — GSAP ScrollTrigger pinned horizontal scroll.
+  - `teachwithsudar/src/components/home/IntelligenceConstellation.tsx` — Scroll-triggered SVG Digital Learner Twin visualization.
+  - `teachwithsudar/src/components/home/ModalitiesOrbit.tsx` — Interactive 7-modality orbital ring with hover expand and preview panel.
+  - `teachwithsudar/src/components/home/TutorShowcase.tsx` — Auto-playing scripted tutor chat with word-stream animation.
+  - `teachwithsudar/src/components/home/ImpactStrip.tsx` — GSAP counter-up animations on scroll entry.
+  - `teachwithsudar/src/components/home/AccessGate.tsx` — Full-viewport split portal with GSAP hover ratio animation.
+  - `teachwithsudar/src/components/Header.tsx` — Updated navigation with login dropdown and external links.
+  - `teachwithsudar/src/lib/gsap-lenis.ts`, `teachwithsudar/src/components/GsapLenisProvider.tsx` — GSAP + Lenis smooth scroll integration.
+- **Flow**: User visits `thesudar.com` → experiences cinematic, high-fidelity animations showcasing Sudar's capabilities → enters either Sudar Learn or Sudar Studio via direct login CTAs or the split access gate.
+
+---
+
+## Knowledge bases + MarkItDown RAG (Studio + Learn + Intelligence)
+
+- **Where**: Sudar Studio — **Settings → Knowledge bases** (`/settings/knowledge-bases`); Sudar Learn — **Settings → Knowledge** (`/settings/knowledge`, when org allows learner uploads); tutor RAG in `/api/tutor/query`.
+- **What**: Admins and (optionally) learners upload PDFs, Office files, images, and other formats. Files are converted to Markdown via **MarkItDown** on Intelligence, chunked and embedded in Learn, and retrieved alongside course RAG for Sudar tutor answers.
+- **Key files**:
+  - `supabase/migrations/20260603000000_knowledge_bases.sql` — `knowledge_bases`, `kb_ingest_queue`, `content_chunks.kb_id`, RPC `match_content_chunks`.
+  - `sudar-intelligence/src/api/routes/kb.py` — `POST /api/kb/convert-markdown`.
+  - `sudar-learn/src/app/api/cron/process-kb-uploads/route.ts` — async ingest worker.
+  - `sudar-learn/src/lib/knowledge-base/processKbQueueItem.ts`, `resolveOrgKbIds.ts`, `lib/intelligence/kb-convert.ts`.
+  - `sudar-studio/src/app/api/kb/*`, `components/knowledge-base/KnowledgeBaseManager.tsx`.
+  - `sudar-learn/src/app/api/knowledge-base/*`, `lib/rag/retrieve.ts` (`kbIds` filter).
+- **Database**: Tables `knowledge_bases`, `kb_ingest_queue`; `content_chunks.kb_id`.
+- **Env**: `SUDAR_INTELLIGENCE_URL`, `INTELLIGENCE_SERVICE_SECRET`, `CRON_SECRET`, optional `KB_PROCESSING_MAX_CONCURRENCY`, `MARKITDOWN_*` — see [KNOWLEDGE_BASE_SETUP.md](KNOWLEDGE_BASE_SETUP.md), [MARKITDOWN_INTEGRATION.md](MARKITDOWN_INTEGRATION.md).
+- **Flow**: Upload → Storage `course-media` → queue row `pending` → cron calls Intelligence MarkItDown → chunk + embed → `content_chunks` with `kb_id` → tutor query retrieves org KB excerpts.
+
+---
+
+## SudarArt temporary shutdown (Studio)
+
+- **Where**: Sudar Studio — `/tools/sudarart`; API `POST /api/ai/sudarart/generate`.
+- **What**: SudarArt is temporarily disabled while generation quality is reassessed. The feature is hidden from the main sidebar, direct page access shows an unavailable message, and generation API requests return `503` with a clear error payload.
+- **Key files**:
+  - `sudar-studio/src/components/layout/Sidebar.tsx` — removed SudarArt nav entry.
+  - `sudar-studio/src/app/(dashboard)/tools/sudarart/page.tsx` — unavailable state page.
+  - `sudar-studio/src/app/api/ai/sudarart/generate/route.ts` — hard-disabled API response.
+- **Flow**: User opens Studio navigation → no SudarArt entry shown. If user visits `/tools/sudarart` manually, UI explains temporary shutdown. Any programmatic generation call gets a `503` response and does not run generation logic.
+
+---
+
+## SudarArt v2 hybrid generation (Studio)
+
+- **Where**: Sudar Studio — **SudarArt** (`/tools/sudarart`) and API `POST /api/ai/sudarart/generate`.
+- **What**: Rebuilt SudarArt from a single CSS-only flow into a **hybrid engine system**:
+  - `aipencil` (primary): deterministic SVG generation with CLI-first render and automatic fallback SVG renderer.
+  - `llm-css` (legacy-compatible): strict SceneSpec + CSS compiler flow preserved.
+  - `flux` (premium image): Hugging Face model inference path for higher-fidelity image output.
+- **Key files**:
+  - `shared/sudarart/aipencilCompiler.ts` — deterministic scene builder + fallback SVG compiler.
+  - `sudar-studio/src/lib/ai/aipencilClient.ts` — aipencil CLI integration (`AIPENCIL_PATH`) with fallback handling.
+  - `sudar-studio/src/lib/ai/fluxClient.ts` — Flux/HF image generation client (`FLUX_API_KEY`, `FLUX_MODEL`).
+  - `sudar-studio/src/app/api/ai/sudarart/generate/route.ts` — request validation + engine routing + metering metadata.
+  - `sudar-studio/src/app/(dashboard)/tools/sudarart/page.tsx` — engine selector, style controls, runtime/cost display.
+  - `sudar-studio/.env.example` — SudarArt v2 env contracts.
+- **Flow**: User selects engine + style presets → submit prompt → API routes to selected engine → returns render-ready HTML/CSS payload → Studio preview iframe shows output → user can copy/download artifact.
+- **Controls**: UI now exposes **layout style**, **visual style**, and **figure theme** (for full-figure layouts), plus generation metadata (method, time, estimated cost, model/warnings).
+- **Ops**: `aipencil` mode requires optional CLI install and `AIPENCIL_PATH` if binary path differs; `flux` mode requires `FLUX_API_KEY` (or `HUGGINGFACE_API_KEY`) and optional `FLUX_MODEL`.
+
+---
+
+## Course creation experience refresh (Studio)
+
+- **Where**: Sudar Studio — course creation page (`/courses/new`) across AI/manual/document/SCORM entry flows.
+- **What**: The form now uses a more modern, animated interaction model: staged section entrance motion, interactive card hover/tap states, smoother focus transitions, upgraded CTA motion feedback, and an animated Sudar brand mark in the AI header. The AI mode label now reads **Create with Sudar AI**.
+- **Key files**:
+  - `sudar-studio/src/app/(dashboard)/courses/new/page.tsx` — updated UI motion variants, branded header icon/title, interactive controls, and error presentation.
+- **Flow**: Open **New course** → choose a creation mode with animated visual feedback → complete fields with stronger focus/hover cues → submit with motion-enhanced CTA and status transitions.
+
+---
+
+## Notification settings (Studio)
+
+- **Where**: Sudar Studio — **Settings → Notifications** (`/settings/notifications`).
+- **What**: Users configure completion notifications via a dedicated page instead of during course generation. Options: **Desktop notification** (system browser notification when course finishes), **In-tab chime** (subtle sound while tab is active), with volume slider. Browser permission handled transparently.
+- **Persistence**: Preferences stored in `profiles.notification_preferences` (JSON) so settings sync across devices/sessions and persist indefinitely.
+- **Default**: Both notifications are **disabled by default** (opt-in); browser permission requested only when user enables desktop notifications.
+- **Flow**: User visits **Settings → Notifications** → toggles options → saved to Supabase → when course generation completes, notifications fire (if opted in + browser permission granted).
+- **Key files**:
+  - `sudar-studio/prisma/schema.prisma` — `profiles.notification_preferences` JSON field.
+  - `sudar-studio/src/app/(dashboard)/settings/notifications/page.tsx` — Settings UI.
+  - `sudar-studio/src/app/api/user/notification-preferences/route.ts` — GET/PATCH API.
+  - `sudar-studio/src/hooks/useBrowserCompletionNotification.ts` — Hook refactored to read/write Supabase.
+  - `sudar-studio/src/app/(dashboard)/courses/new/page.tsx` — Removed notification prompts from generation overlay and forms.
+- **UX benefit**: Cleaner, less cluttered course generation flow. Notifications are treated as a **preference** (set once in Settings), not a **blocker** (decide every generation).
+
+---
+
+## External open courses — Discover + import (Learn + Studio)
+
+- **Where**: Sudar Learn — **Courses** catalog (`/courses`, **`?tab=discover`**), course detail, learn viewer for external items; Next Best Action on dashboard; Sudar tutor chat and proactive nudges. Sudar Studio — **Settings → External courses**, **External courses → Import**.
+- **What**: Admins import external courses from **YouTube, Udemy, Coursera, edX, Khan Academy, or manual URL** with **org tag** assignment (LLM-suggested + manual). Learners discover open courses on the **Open courses** tab; view in Sudar via **iframe** (with optional consent + sign-in gates for paid providers); **Mark as complete** syncs progress. Sudar tutor uses **ingested metadata + RAG chunks** to discuss topics when `content_access_mode` allows; NBA scores external courses (boost on skill-gap match); proactive nudges can recommend tagged external courses after low quiz scores.
+- **Key files**:
+  - `supabase/migrations/20260601000000_external_open_courses.sql`, `20260602120000_external_courses_extended.sql` — external columns, `external_course_data`, provider config, sync log, `learner_profiles.external_course_engagement`.
+  - `shared/external-courses/types.ts` — shared metadata and policy types.
+  - `sudar-studio/src/lib/providers/` — provider adapters (YouTube, Udemy, Coursera, edX, Khan, manual).
+  - `sudar-studio/src/lib/ai/suggestExternalCourseTags.ts`, `sudar-studio/src/lib/external/importExternalCourse.ts`.
+  - `sudar-studio/src/app/api/org/external-courses/import/route.ts`, `search/route.ts`, `settings/route.ts`.
+  - `sudar-studio/src/app/(dashboard)/external-courses/import/page.tsx`, `settings/external-courses/page.tsx`.
+  - `sudar-learn/src/lib/courses/externalProviders.ts` — extended provider registry.
+  - `sudar-learn/src/lib/rag/ingestExternalCourse.ts`, `extractExternalCourseChunks.ts`, `/api/rag/ingest-external`.
+  - `sudar-learn/src/lib/external/externalCourseContext.ts`, `/api/external-courses/engagement`.
+  - `sudar-learn/src/components/courses/ExternalCourseLabel.tsx`, `ExternalCourseEmbed.tsx` — labelling + iframe + engagement callbacks.
+  - `sudar-learn/src/app/(dashboard)/courses/[id]/learn/ExternalCourseViewer.tsx` — consent, sign-in gate, Ask Sudar.
+  - `sudar-learn/src/app/api/tutor/query/route.ts`, `proactive-nudge/route.ts`, `nextBestActionEngine.ts`.
+- **Database**: `courses` external fields + `external_course_data`, `external_course_providers`, `external_course_sync_log`; `learner_profiles.external_course_engagement`.
+- **Env**: `YOUTUBE_API_KEY`, `UDEMY_CLIENT_ID`, `UDEMY_CLIENT_SECRET` (Studio search); `INTERNAL_SERVICE_SECRET` + `NEXT_PUBLIC_LEARN_URL` (Studio → Learn RAG trigger on import).
+- **Flow**: Studio **Import external course** → tag + publish → Learn **Open courses** / NBA → enroll → iframe viewer (consent/sign-in if configured) → engagement tracked → tutor discusses ingested outline → mark complete.
+
+---
+
+## AI token monitoring & usage estimates (Studio)
+
+- **Where**: Sudar Studio — **Analytics → AI usage** (`/analytics/ai-usage`); APIs under `/api/org/ai-usage/*`.
+- **What**: Records LLM token usage per org/feature/call (tutor chat, course generation, Studio agent, modalities, RAG, etc.) with **estimated marginal USD** from `ai_model_pricing`. Daily rollups for fast dashboards; CSV export for hosters/resellers. Does not invoice — observability only. Optional `organisations.settings.ai_entitlements` (`monthly_token_allowance`, `hard_stop`) blocks LLM calls when exceeded.
+- **Key files**:
+  - `supabase/migrations/20260529120000_ai_usage_monitoring.sql`
+  - `shared/ai/usageTypes.ts`, `shared/ai/parseChatUsage.ts`, `shared/ai/estimateCost.ts`, `shared/ai/entitlements.ts`
+  - `sudar-learn/src/lib/ai/chat.ts`, `sudar-studio/src/lib/ai/chat.ts`, `sudar-studio/src/lib/ai/recordUsage.ts`
+  - `sudar-studio/src/app/api/org/ai-usage/summary/route.ts`, `export/route.ts`, `timeseries/route.ts`
+  - `sudar-studio/src/app/api/cron/ai-usage-rollups/route.ts`
+  - `sudar-studio/src/components/analytics/AiUsageDashboard.tsx`
+- **Database**: `ai_usage_events`, `ai_usage_daily_org`, `ai_model_pricing`; RPC `refresh_ai_usage_rollups`, `increment_usage_token_count`.
+- **Flow**: LLM call → `chatCompletion` with `usageContext` → row in `ai_usage_events` → nightly cron rollups → admin views breakdown and exports CSV.
 
 ---
 
@@ -27,6 +158,34 @@ This document summarizes **shipped** features that are committed and ready for u
   - `sudar-learn/src/app/(dashboard)/courses/[id]/learn/FlashcardsCard.tsx` — UI component.
   - `sudar-learn/src/app/api/ai/generate-flashcards/route.ts` — API that generates cards from content + optional module title.
 - **Flow**: Switch to Cards → API called with module body → cards displayed; retry available. Progress and completion rules (e.g. min time) apply as in other modalities.
+
+---
+
+## Multilingual RAG v2 + Hugging Face providers (Learn + Intelligence)
+
+- **Where**: Sudar Learn — tutor catalog + in-course Q&A; `POST /api/rag/ingest`; Sudar Intelligence — chat (`AI_CHAT_PROVIDER=huggingface`), images (`IMAGE_PROVIDER=huggingface`); Studio — **Settings → AI & API Keys** (HF card).
+- **What**: Multilingual embeddings (`BAAI/bge-m3`, 1024-dim pgvector); module body + SCORM text chunking; optional cross-encoder rerank; HF Inference API with optional `HF_INFERENCE_BASE_URL` for TEI/vLLM swap.
+- **Key files**:
+  - `sudar-learn/src/lib/hf/client.ts`, `sudar-learn/src/lib/embed.ts`, `sudar-learn/src/lib/rag/chunk.ts`, `sudar-learn/src/lib/rag/rerank.ts`, `sudar-learn/src/lib/rag/retrieve.ts`
+  - `sudar-learn/src/app/api/rag/ingest/route.ts`, `sudar-learn/src/app/api/tutor/query/route.ts`
+  - `sudar-intelligence/src/core/hf_client.py`, `sudar-intelligence/src/core/ai_client.py`, `sudar-intelligence/src/api/routes/image.py`, `sudar-intelligence/src/api/routes/health.py`
+  - `docs/HF_INTEGRATION_TEST.md`, `scripts/hf/*.mjs`
+- **Env**: `HUGGINGFACE_API_KEY`, `EMBED_PROVIDER`, `HF_EMBED_MODEL`, `RAG_RERANK_ENABLED`, `HF_RERANK_MODEL`, `HF_INFERENCE_BASE_URL`, `AI_CHAT_PROVIDER`, `IMAGE_PROVIDER`, `HF_CHAT_MODEL`, `HF_IMAGE_MODEL` — see [ENV_REFERENCE.md](ENV_REFERENCE.md).
+- **Flow**: Operator sets HF keys → ingest published courses → floating tutor uses catalog RAG → in-course tutor gets vector excerpts + inline module context → Intelligence can serve HF chat/image for Studio/Learn proxies.
+
+---
+
+## AI course generation quality v2 (Studio + Learn)
+
+- **Where**: Sudar Studio — AI new-course wizard, generation pipeline, per-course **Content quality** page (`/courses/[id]/quality`). Sudar Learn — rich module reader.
+- **What**: Domain-varied module openings (no default “calculator program” scenarios); SME-aware curriculum and module prompts; validated interactives (matching/flipcard/quiz); optional LLM quality scores in `courses.settings.ai_generation.generation_telemetry`; creator **visual identity** controls (domain, theme, brand colors, density); side insights as a **floating hotspot** instead of a permanent sidebar; wider read column; flipcard rendering fix.
+- **Key files**:
+  - `sudar-studio/src/lib/ai/courseGeneration/{introductionStrategies,prompts,pipeline,componentValidation}.ts`
+  - `sudar-studio/src/lib/ai/componentSelector.ts`
+  - `sudar-studio/src/components/generator/BrandSettings.tsx`
+  - `sudar-studio/src/app/(dashboard)/courses/[id]/quality/page.tsx`
+  - `sudar-learn/src/components/learn/RichModuleContent.tsx`, `sudar-learn/src/lib/courseBodyMarkdown.tsx`
+- **Flow**: Studio AI wizard → BrandSettings + blueprint → `generate-course` → `fillEmptyModulesForCourse` (quality telemetry) → Learn applies `content_theme` / brand colors → learner reads full-width content; taps insight bulb for side context.
 
 ---
 
@@ -75,10 +234,15 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ## Production deployment (documented)
 
-- **Where**: Repo docs; no single “deploy” button — step-by-step guides.
-- **What**: Sudar Studio and Sudar Learn deploy to **Vercel** (separate projects, same repo, root dirs `sudar-studio` and `sudar-learn`). Sudar Intelligence (Python FastAPI) is deployed separately to **Railway**, **Render**, or **Fly.io**; its URL is set as `BYTEOS_INTELLIGENCE_URL` in both Vercel projects.
-- **Key files**: [docs/VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) — Studio + Learn on Vercel; [docs/INTELLIGENCE_DEPLOYMENT.md](INTELLIGENCE_DEPLOYMENT.md) — Intelligence on Railway/Render/Fly.io, env vars, CORS, health check.
-- **Flow**: Connect GitHub repo to Vercel (two projects), set root dir and env vars; deploy Intelligence to chosen host, set `CORS_ORIGINS` and `BYTEOS_INTELLIGENCE_URL`; redeploy Studio and Learn.
+- **Where**: Repo docs; Cloudflare Workers/Pages + GitHub Actions; Intelligence on Railway/Render/Fly.
+- **What**: **Primary production domain:** `thesudar.com` — marketing at apex, `learn.thesudar.com` and `studio.thesudar.com` on Cloudflare Workers (OpenNext). Sudar Intelligence (Python FastAPI) deploys separately; URL set as `SUDAR_INTELLIGENCE_URL`. **Vercel** remains documented as an alternative/staging path.
+- **Key files**:
+  - [docs/CLOUDFLARE_PAGES_DEPLOY.md](CLOUDFLARE_PAGES_DEPLOY.md) — Learn + Studio + marketing on Cloudflare
+  - [docs/DNS_THESUDAR_COM.md](DNS_THESUDAR_COM.md) — DNS and custom domains
+  - [docs/DEPLOY_THESUDAR_COM.md](DEPLOY_THESUDAR_COM.md) — production checklist
+  - [docs/VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) — Vercel alternative
+  - `sudar-learn/wrangler.jsonc`, `sudar-studio/wrangler.jsonc`, `workers/sudar-cron-*`
+- **Flow**: Set GitHub secrets → configure Worker env vars → deploy via push to `main` → attach custom domains → deploy cron workers → set Intelligence `CORS_ORIGINS` → smoke test.
 
 ---
 

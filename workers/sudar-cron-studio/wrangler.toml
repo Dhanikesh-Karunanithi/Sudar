@@ -1,0 +1,13 @@
+name = "sudar-cron-studio"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+
+# Secrets (wrangler secret put):
+# CRON_SECRET — same value as Studio CRON_SECRET
+# STUDIO_APP_URL — https://studio.thesudar.com
+
+[triggers]
+crons = ["15 2 * * *", "30 2 * * *"]
+
+[observability]
+enabled = true

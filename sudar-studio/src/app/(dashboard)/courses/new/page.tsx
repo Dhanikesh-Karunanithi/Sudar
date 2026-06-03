@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { ArrowLeft, BookOpen, Sparkles, LayoutList, CheckCircle2, Package, FileText, Upload, Loader2, Bell, Volume2 } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { ArrowLeft, BookOpen, Sparkles, LayoutList, CheckCircle2, Package, FileText, Upload, Loader2, AlertTriangle } from 'lucide-react'
 import { SudarInlineLoader, SudarBrandLoader } from '@/components/branding/SudarBrandLoader'
-import { cn } from '@/lib/utils'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { useBrowserCompletionNotification } from '@/hooks/useBrowserCompletionNotification'
 import type { CourseBlueprintQuestion } from '@/lib/ai/courseGeneration/types'
+import { BrandSettings, DEFAULT_BRAND_SETTINGS, type BrandSettingsValue } from '@/components/generator/BrandSettings'
 import { COURSE_TEMPLATES } from '@/lib/courseTemplates'
+import { cn } from '@/lib/utils'
 
 const COURSE_BUILD_EXIT_MS = 320
 
@@ -36,22 +38,26 @@ const AI_STEPS = [
   'Finalising course...',
 ]
 
+const sectionEntrance = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0 },
+}
+
+const staggerContainer = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.04,
+    },
+  },
+}
+
 export default function NewCoursePage() {
   const router = useRouter()
   const {
-    notifyWhenReady,
-    toggleNotifyWhenReady,
-    soundWhenReady,
-    toggleSoundWhenReady,
-    soundVolume,
-    updateSoundVolume,
-    previewTaskCompleteSound,
     notifyCourseReady,
     notifyCourseFailed,
-    notificationsMissingApi,
-    notificationsNeedSecurePage,
-    notificationsUnavailable,
-    notificationPermissionDenied,
   } = useBrowserCompletionNotification()
   const [mode, setMode] = useState<Mode>('choose')
   const [title, setTitle] = useState('')
@@ -82,6 +88,17 @@ export default function NewCoursePage() {
   const [blueprintQuestions, setBlueprintQuestions] = useState<CourseBlueprintQuestion[]>([])
   const [blueprintAnswers, setBlueprintAnswers] = useState<Record<string, string>>({})
   const [blueprintLoading, setBlueprintLoading] = useState(false)
+  const [brandSettings, setBrandSettings] = useState<BrandSettingsValue>(DEFAULT_BRAND_SETTINGS)
+  const modePanelClass = cn(
+    'space-y-6 rounded-2xl border p-6 backdrop-blur-sm max-h-[80vh] overflow-y-auto',
+    mode === 'ai'
+      ? 'border-zinc-600/80 bg-gradient-to-br from-black via-zinc-950 to-black shadow-[0_28px_70px_-45px_rgba(255,255,255,0.22)]'
+      : mode === 'document'
+        ? 'border-zinc-700/80 bg-gradient-to-br from-zinc-950 via-black to-black shadow-[0_28px_70px_-50px_rgba(255,255,255,0.14)]'
+        : mode === 'scorm'
+          ? 'border-zinc-700/80 bg-gradient-to-br from-zinc-950 via-black to-black shadow-[0_28px_70px_-50px_rgba(255,255,255,0.14)]'
+          : 'border-zinc-700/80 bg-gradient-to-br from-zinc-950 via-black to-black shadow-[0_28px_70px_-50px_rgba(255,255,255,0.14)]'
+  )
 
   useEffect(() => {
     if (mode === 'ai') {
@@ -102,89 +119,6 @@ export default function NewCoursePage() {
       }
     }
     return 'Your imported course'
-  }
-
-  function notifyWhenReadyCheckbox(className?: string) {
-    return (
-      <div className={cn('space-y-3', className)}>
-        <div className="rounded-lg border border-slate-700/80 bg-slate-800/40 px-3.5 py-3">
-          <label className="flex cursor-pointer items-start gap-3 text-left">
-            <input
-              type="checkbox"
-              checked={notifyWhenReady}
-              onChange={(e) => void toggleNotifyWhenReady(e.target.checked)}
-              disabled={notificationsUnavailable}
-              className="mt-0.5 rounded border-slate-600 bg-slate-800 text-violet-600 focus:ring-violet-500/30 disabled:opacity-40"
-              aria-label="Notify me in the browser when generation finishes"
-            />
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2 text-sm font-medium text-slate-200">
-                <Bell className="h-4 w-4 shrink-0 text-violet-400" aria-hidden />
-                Notify me when the course is ready
-              </span>
-              <span className="mt-1 block text-xs text-slate-500">
-                Uses your browser’s permission to show a normal system notification when generation finishes (like other sites), so you can switch tabs or work elsewhere.
-              </span>
-              {notificationsNeedSecurePage && (
-                <span className="mt-2 block text-xs text-amber-400/90">
-                  Open Sudar Studio over HTTPS or localhost so the browser can show notifications.
-                </span>
-              )}
-              {notificationPermissionDenied && (
-                <span className="mt-2 block text-xs text-amber-400/90">
-                  Notifications are blocked for this site. Enable them in your browser settings to use this option.
-                </span>
-              )}
-              {notificationsMissingApi && (
-                <span className="mt-2 block text-xs text-slate-500">This browser does not support notifications.</span>
-              )}
-            </span>
-          </label>
-        </div>
-        <div className="rounded-lg border border-slate-700/80 bg-slate-800/40 px-3.5 py-3">
-          <label className="flex cursor-pointer items-start gap-3 text-left">
-            <input
-              type="checkbox"
-              checked={soundWhenReady}
-              onChange={(e) => toggleSoundWhenReady(e.target.checked)}
-              className="mt-0.5 rounded border-slate-600 bg-slate-800 text-violet-600 focus:ring-violet-500/30"
-              aria-label="Play a subtle chime when generation finishes"
-            />
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-2 text-sm font-medium text-slate-200">
-                <Volume2 className="h-4 w-4 shrink-0 text-violet-400" aria-hidden />
-                Play a chime when the course is ready
-              </span>
-              <span className="mt-1 block text-xs text-slate-500">
-                Soft in-tab sound while Sudar Studio is open (separate from system notifications).
-              </span>
-              {soundWhenReady && (
-                <div className="mt-3 space-y-2">
-                  <label className="block text-xs text-slate-400">
-                    Volume ({soundVolume}%)
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={soundVolume}
-                      onChange={(e) => updateSoundVolume(Number(e.target.value))}
-                      className="mt-1 w-full"
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => previewTaskCompleteSound()}
-                    className="text-xs rounded-md border border-slate-600 px-2 py-1 text-slate-300 hover:bg-slate-700/50"
-                  >
-                    Preview chime
-                  </button>
-                </div>
-              )}
-            </span>
-          </label>
-        </div>
-      </div>
-    )
   }
 
   async function uploadCatalogAsset(file: File): Promise<string> {
@@ -274,6 +208,15 @@ export default function NewCoursePage() {
           no_external_video: noExternalVideo || undefined,
           blueprint_answers,
           blueprint_questions: blueprintQuestions,
+          course_type: brandSettings.course_type,
+          theme_preference: brandSettings.theme_preference,
+          brand_colors: brandSettings.brand_colors,
+          tone_preference: brandSettings.tone_preference,
+          content_density: brandSettings.content_density,
+          vary_introductions: brandSettings.vary_introductions,
+          minimize_sidecards: brandSettings.minimize_sidecards,
+          strict_component_validation: brandSettings.strict_component_validation,
+          apply_quality_filtering: brandSettings.apply_quality_filtering,
         }),
       })
 
@@ -500,14 +443,14 @@ export default function NewCoursePage() {
                 key={i}
                 className={cn(
                   'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors duration-200',
-                  i === aiStep ? 'bg-violet-600/15 border border-violet-500/20 text-violet-200' : 'text-slate-500'
+                  i === aiStep ? 'bg-zinc-800/70 border border-zinc-500/50 text-zinc-100' : 'text-slate-500'
                 )}
               >
                 {i < aiStep ? (
                   <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
                 ) : (
                   <Loader2
-                    className="w-4 h-4 shrink-0 text-violet-400 motion-safe:animate-spin"
+                    className="w-4 h-4 shrink-0 text-zinc-300 motion-safe:animate-spin"
                     aria-hidden
                   />
                 )}
@@ -516,19 +459,14 @@ export default function NewCoursePage() {
             ))}
           </div>
 
-          <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div className="w-full bg-zinc-900 rounded-full h-1.5 overflow-hidden">
             <motion.div
-              className="bg-gradient-to-r from-violet-500 to-indigo-500 h-1.5 rounded-full"
+              className="bg-gradient-to-r from-zinc-300 via-zinc-100 to-zinc-300 h-1.5 rounded-full"
               initial={false}
               animate={{ width: `${Math.min(100, (aiStep / (AI_STEPS.length - 1)) * 100)}%` }}
               transition={{ duration: 0.85, ease: 'easeOut' }}
             />
           </div>
-          {notifyWhenReadyCheckbox(
-            mode === 'document'
-              ? 'border-emerald-500/20 bg-emerald-950/20 text-left'
-              : 'border-violet-500/20 bg-slate-900/80 text-left'
-          )}
           <p className="text-slate-600 text-xs">Do not close this tab</p>
         </div>
       </motion.div>
@@ -536,47 +474,56 @@ export default function NewCoursePage() {
   }
 
   return (
-    <div className="p-8 max-w-2xl mx-auto space-y-8">
+    <div className="relative overflow-hidden p-8 max-w-2xl mx-auto space-y-8 rounded-3xl border border-zinc-800/90 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.08),transparent_40%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.04),transparent_35%),linear-gradient(to_bottom,rgba(0,0,0,0.96),rgba(6,6,6,0.98))]">
       <Link href="/courses" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-200 text-sm transition-colors">
         <ArrowLeft className="w-4 h-4" />Back to courses
       </Link>
 
       {/* Mode selector */}
       {mode === 'choose' && (
-        <div className="space-y-6">
-          <div>
+        <motion.div
+          className="space-y-6"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.div variants={sectionEntrance}>
             <h1 className="text-xl font-semibold text-white">New course</h1>
             <p className="text-slate-400 text-sm mt-1">How would you like to create this course?</p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <motion.div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-2xl border border-zinc-800/90 bg-black/55 p-3" variants={sectionEntrance}>
             {/* AI option */}
-            <button
+            <motion.button
               onClick={() => setMode('ai')}
-              className="group text-left bg-slate-900 border border-violet-500/30 hover:border-violet-400 rounded-xl p-6 space-y-3 transition-all hover:bg-violet-950/20"
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              className="group text-left bg-gradient-to-br from-zinc-900 via-black to-black border border-zinc-700/90 hover:border-zinc-400 rounded-xl p-6 space-y-3 transition-all duration-300 hover:shadow-[0_18px_34px_-22px_rgba(255,255,255,0.28)]"
             >
-              <div className="w-12 h-12 rounded-xl bg-violet-600/15 border border-violet-500/20 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-violet-400" />
+              <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-600/80 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                <SudarLogoMark className="h-6 w-6 text-zinc-100" motion="pulse" />
               </div>
               <div>
-                <h3 className="text-white font-semibold text-sm">Create with AI</h3>
+                <h3 className="text-white font-semibold text-sm">Create with Sudar AI</h3>
                 <p className="text-slate-500 text-xs mt-1 leading-relaxed">
                   Sudar generates the full course outline and writes every module automatically. Ready in ~60 seconds.
                 </p>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {['Outline', 'All modules', 'Full content'].map((t) => (
-                  <span key={t} className="text-[10px] px-2 py-0.5 bg-violet-600/15 text-violet-300 rounded-full border border-violet-500/20">{t}</span>
+                  <span key={t} className="text-[10px] px-2 py-0.5 bg-zinc-900 text-zinc-300 rounded-full border border-zinc-700">{t}</span>
                 ))}
               </div>
-            </button>
+            </motion.button>
 
             {/* Manual option */}
-            <button
+            <motion.button
               onClick={() => setMode('manual')}
-              className="group text-left bg-slate-900 border border-slate-800 hover:border-slate-600 rounded-xl p-6 space-y-3 transition-all"
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              className="group text-left bg-gradient-to-br from-zinc-900 via-black to-black border border-zinc-700/90 hover:border-zinc-400 rounded-xl p-6 space-y-3 transition-all duration-300 hover:shadow-[0_18px_34px_-24px_rgba(255,255,255,0.2)]"
             >
-              <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-black border border-zinc-800 flex items-center justify-center">
                 <LayoutList className="w-6 h-6 text-slate-400" />
               </div>
               <div>
@@ -587,15 +534,17 @@ export default function NewCoursePage() {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {['Template first', 'AI on demand'].map((t) => (
-                  <span key={t} className="text-[10px] px-2 py-0.5 bg-slate-800 text-slate-400 rounded-full border border-slate-700">{t}</span>
+                  <span key={t} className="text-[10px] px-2 py-0.5 bg-black text-zinc-300 rounded-full border border-zinc-800">{t}</span>
                 ))}
               </div>
-            </button>
+            </motion.button>
 
           {/* Import from document */}
-            <button
+            <motion.button
               onClick={() => setMode('document')}
-              className="group text-left bg-slate-900 border border-emerald-500/30 hover:border-emerald-400 rounded-xl p-6 space-y-3 transition-all hover:bg-emerald-950/20"
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              className="group text-left bg-gradient-to-br from-zinc-900 via-black to-black border border-zinc-700/90 hover:border-zinc-400 rounded-xl p-6 space-y-3 transition-all duration-300 hover:shadow-[0_18px_34px_-24px_rgba(255,255,255,0.2)]"
             >
               <div className="w-12 h-12 rounded-xl bg-emerald-600/15 border border-emerald-500/20 flex items-center justify-center">
                 <FileText className="w-6 h-6 text-emerald-400" />
@@ -611,12 +560,14 @@ export default function NewCoursePage() {
                   <span key={t} className="text-[10px] px-2 py-0.5 bg-emerald-600/15 text-emerald-300 rounded-full border border-emerald-500/20">{t}</span>
                 ))}
               </div>
-            </button>
+            </motion.button>
 
             {/* Import SCORM */}
-            <button
+            <motion.button
               onClick={() => setMode('scorm')}
-              className="group text-left bg-slate-900 border border-amber-500/30 hover:border-amber-400 rounded-xl p-6 space-y-3 transition-all hover:bg-amber-950/20"
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              className="group text-left bg-gradient-to-br from-zinc-900 via-black to-black border border-zinc-700/90 hover:border-zinc-400 rounded-xl p-6 space-y-3 transition-all duration-300 hover:shadow-[0_18px_34px_-24px_rgba(255,255,255,0.2)]"
             >
               <div className="w-12 h-12 rounded-xl bg-amber-600/15 border border-amber-500/20 flex items-center justify-center">
                 <Package className="w-6 h-6 text-amber-400" />
@@ -632,43 +583,60 @@ export default function NewCoursePage() {
                   <span key={t} className="text-[10px] px-2 py-0.5 bg-amber-600/15 text-amber-300 rounded-full border border-amber-500/20">{t}</span>
                 ))}
               </div>
-            </button>
-          </div>
-        </div>
+            </motion.button>
+          </motion.div>
+        </motion.div>
       )}
 
       {/* Shared form */}
       {mode !== 'choose' && (
-        <div className="space-y-6">
-          <div className="flex items-center gap-4">
+        <motion.div
+          className={modePanelClass}
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.div className="flex items-center gap-4 pb-2 border-b border-white/10" variants={sectionEntrance}>
             <div className={cn(
-              'w-12 h-12 rounded-xl border flex items-center justify-center',
-              mode === 'ai' ? 'bg-violet-600/15 border-violet-500/20' :
+              'w-14 h-14 rounded-2xl border flex items-center justify-center shadow-[0_0_0_1px_rgba(255,255,255,0.15),0_18px_30px_-24px_rgba(255,255,255,0.28)]',
+              mode === 'ai' ? 'bg-zinc-900 border-zinc-600/80' :
               mode === 'document' ? 'bg-emerald-600/15 border-emerald-500/20' :
-              mode === 'scorm' ? 'bg-amber-600/15 border-amber-500/20' : 'bg-slate-800 border-slate-700'
+              mode === 'scorm' ? 'bg-amber-600/15 border-amber-500/20' : 'bg-black border-zinc-800'
             )}>
-              {mode === 'ai' ? <Sparkles className="w-6 h-6 text-violet-400" /> : mode === 'document' ? <FileText className="w-6 h-6 text-emerald-400" /> : mode === 'scorm' ? <Package className="w-6 h-6 text-amber-400" /> : <BookOpen className="w-6 h-6 text-slate-400" />}
+              {mode === 'ai' ? <SudarLogoMark className="w-6 h-6 text-zinc-100" motion="pulse" /> : mode === 'document' ? <FileText className="w-6 h-6 text-emerald-400" /> : mode === 'scorm' ? <Package className="w-6 h-6 text-amber-400" /> : <BookOpen className="w-6 h-6 text-slate-400" />}
             </div>
             <div>
               <h1 className="text-xl font-semibold text-white">
-                {mode === 'ai' ? 'Create with AI' : mode === 'document' ? 'Import from document' : mode === 'scorm' ? 'Import SCORM' : 'Build manually'}
+                {mode === 'ai' ? 'Create with Sudar AI' : mode === 'document' ? 'Import from document' : mode === 'scorm' ? 'Import SCORM' : 'Build manually'}
               </h1>
               <button onClick={() => setMode('choose')} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
                 ← Change mode
               </button>
             </div>
-          </div>
+          </motion.div>
 
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-red-400 text-sm">
-              {error}
-              {(error.includes('not configured') || error.includes('No AI')) && (
-                <p className="mt-2">
-                  <Link href="/settings/keys" className="text-indigo-400 hover:text-indigo-300 underline">Open AI &amp; API Keys</Link> for step-by-step instructions.
-                </p>
-              )}
-            </div>
-          )}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-red-300 text-sm shadow-[0_10px_20px_-16px_rgba(239,68,68,0.9)]"
+              >
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" />
+                  <div>
+                    {error}
+                    {(error.includes('not configured') || error.includes('No AI')) && (
+                      <p className="mt-2">
+                        <Link href="/settings/keys" className="text-zinc-200 hover:text-white underline">Open AI &amp; API Keys</Link> for step-by-step instructions.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {mode === 'document' && (
             <form onSubmit={handleImportFromDocument} className="space-y-5">
@@ -678,7 +646,7 @@ export default function NewCoursePage() {
                   type="file"
                   accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
                   onChange={(e) => setDocumentFile(e.target.files?.[0] ?? null)}
-                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-emerald-600/20 file:text-emerald-300 file:text-sm text-sm"
+                  className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-white file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-emerald-600/20 file:text-emerald-300 file:text-sm text-sm"
                 />
               </div>
               <div className="space-y-1.5">
@@ -688,7 +656,7 @@ export default function NewCoursePage() {
                   value={documentUrl}
                   onChange={(e) => setDocumentUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 text-sm"
+                  className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 text-sm"
                 />
               </div>
               <div className="space-y-1.5">
@@ -697,7 +665,7 @@ export default function NewCoursePage() {
                   type="text"
                   value={targetAudience}
                   onChange={(e) => setTargetAudience(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 text-sm"
+                  className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 text-sm"
                   placeholder="Who will take this course?"
                 />
               </div>
@@ -707,18 +675,18 @@ export default function NewCoursePage() {
                   value={learningOutcomes}
                   onChange={(e) => setLearningOutcomes(e.target.value)}
                   rows={2}
-                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 text-sm resize-none"
+                  className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 text-sm resize-none"
                   placeholder="One outcome per line"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-slate-300">Tone</label>
-                  <input type="text" value={tone} onChange={(e) => setTone(e.target.value)} className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm" placeholder="Optional" />
+                  <input type="text" value={tone} onChange={(e) => setTone(e.target.value)} className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-white text-sm" placeholder="Optional" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-slate-300">Industry</label>
-                  <input type="text" value={industry} onChange={(e) => setIndustry(e.target.value)} className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm" placeholder="Optional" />
+                  <input type="text" value={industry} onChange={(e) => setIndustry(e.target.value)} className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-white text-sm" placeholder="Optional" />
                 </div>
               </div>
               <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
@@ -726,17 +694,18 @@ export default function NewCoursePage() {
                   type="checkbox"
                   checked={noExternalVideo}
                   onChange={(e) => setNoExternalVideo(e.target.checked)}
-                  className="rounded border-slate-600 bg-slate-800 text-emerald-600 focus:ring-emerald-500/30"
+                  className="rounded border-zinc-700 bg-black text-emerald-600 focus:ring-emerald-500/30"
                 />
                 Do not embed external videos
               </label>
-              {notifyWhenReadyCheckbox('border-emerald-500/15 bg-emerald-950/10')}
               <div className="flex items-center gap-3 pt-2">
-                <button type="submit" disabled={loading || (!documentFile && !documentUrl.trim())}
-                  className="flex-1 py-2.5 font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-sm flex items-center justify-center gap-2">
+                <motion.button type="submit" disabled={loading || (!documentFile && !documentUrl.trim())}
+                  whileHover={{ scale: loading ? 1 : 1.01 }}
+                  whileTap={{ scale: loading ? 1 : 0.99 }}
+                  className="flex-1 py-2.5 font-medium rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-sm flex items-center justify-center gap-2 transition-all duration-200">
                   {loading ? <SudarInlineLoader size="sm" className="text-slate-500" starFill="var(--background)" /> : <Upload className="w-4 h-4" />}
                   {loading ? 'Generating course...' : 'Generate course from document'}
-                </button>
+                </motion.button>
                 <Link href="/courses" className="px-4 py-2.5 text-slate-400 hover:text-slate-200 text-sm font-medium rounded-lg hover:bg-slate-800 transition-all">Cancel</Link>
               </div>
             </form>
@@ -750,16 +719,18 @@ export default function NewCoursePage() {
                   type="file"
                   accept=".zip,application/zip"
                   onChange={(e) => setScormFile(e.target.files?.[0] ?? null)}
-                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-amber-600/20 file:text-amber-300 file:text-sm text-sm"
+                  className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-white file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-amber-600/20 file:text-amber-300 file:text-sm text-sm"
                 />
                 <p className="text-xs text-slate-500">We create a course and modules. You can edit it like any other course after import.</p>
               </div>
               <div className="flex items-center gap-3 pt-2">
-                <button type="submit" disabled={loading || !scormFile}
-                  className="flex-1 py-2.5 font-medium rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-sm flex items-center justify-center gap-2">
+                <motion.button type="submit" disabled={loading || !scormFile}
+                  whileHover={{ scale: loading ? 1 : 1.01 }}
+                  whileTap={{ scale: loading ? 1 : 0.99 }}
+                  className="flex-1 py-2.5 font-medium rounded-lg bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-sm flex items-center justify-center gap-2 transition-all duration-200">
                   {loading ? <SudarInlineLoader size="sm" className="text-slate-500" starFill="var(--background)" /> : <Package className="w-4 h-4" />}
                   {loading ? 'Importing...' : 'Import SCORM'}
-                </button>
+                </motion.button>
                 <Link href="/courses" className="px-4 py-2.5 text-slate-400 hover:text-slate-200 text-sm font-medium rounded-lg hover:bg-slate-800 transition-all">Cancel</Link>
               </div>
             </form>
@@ -768,7 +739,7 @@ export default function NewCoursePage() {
           {mode !== 'document' && mode !== 'scorm' && (
           <form onSubmit={submitAIOrManual} className="space-y-5">
             {mode === 'ai' && aiWizardStep === 'blueprint' && (
-              <div className="rounded-xl border border-violet-500/20 bg-violet-950/20 p-4 space-y-4">
+              <div className="rounded-xl border border-zinc-700/80 bg-zinc-950/60 p-4 space-y-4">
                 <div>
                   <p className="text-sm font-medium text-white">Lesson design</p>
                   <p className="text-xs text-slate-500 mt-1">
@@ -782,19 +753,21 @@ export default function NewCoursePage() {
                       {q.options.map((opt) => {
                         const selected = blueprintAnswers[q.id] === opt.id
                         return (
-                          <button
+                          <motion.button
                             key={opt.id}
                             type="button"
                             onClick={() => setBlueprintAnswers((prev) => ({ ...prev, [q.id]: opt.id }))}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                             className={cn(
-                              'rounded-full border px-3 py-1.5 text-left text-xs leading-snug transition-colors max-w-full',
+                              'rounded-full border px-3 py-1.5 text-left text-xs leading-snug transition-all duration-200 max-w-full',
                               selected
-                                ? 'border-violet-500 bg-violet-600/25 text-white'
+                                ? 'border-zinc-400 bg-zinc-800 text-white shadow-[0_8px_18px_-14px_rgba(255,255,255,0.28)]'
                                 : 'border-slate-600 bg-slate-800/80 text-slate-300 hover:border-slate-500'
                             )}
                           >
                             {opt.label}
-                          </button>
+                          </motion.button>
                         )
                       })}
                     </div>
@@ -810,7 +783,7 @@ export default function NewCoursePage() {
               <input
                 type="text" value={title} onChange={(e) => setTitle(e.target.value)} required
                 placeholder="e.g. Introduction to Cybersecurity"
-                className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 text-sm"
+                className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-500/40 text-sm transition-all duration-200"
               />
             </div>
 
@@ -819,7 +792,7 @@ export default function NewCoursePage() {
                 {mode === 'ai' ? (
                   <>
                     Author brief{' '}
-                    <span className="text-violet-400 text-xs font-normal">
+                    <span className="text-zinc-300 text-xs font-normal">
                       (your intent — Sudar writes the catalog description and tags)
                     </span>
                   </>
@@ -839,19 +812,21 @@ export default function NewCoursePage() {
                     ? 'What should this course cover? Who is it for? The more detail, the better the outline and catalog copy.'
                     : 'Learner-facing course summary for the catalog…'
                 }
-                className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm resize-none"
+                className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-500/35 text-sm resize-none transition-all duration-200"
               />
               {mode === 'manual' && (
                 <div className="flex flex-wrap items-center gap-2">
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() => void handleGenerateMetadata()}
                     disabled={generatingMeta || !title.trim()}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-500/40 bg-indigo-600/15 px-3 py-1.5 text-xs font-medium text-indigo-200 hover:bg-indigo-600/25 disabled:opacity-50"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-500/60 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-100 hover:bg-zinc-700 disabled:opacity-50 transition-all duration-200"
                   >
-                    {generatingMeta ? <SudarInlineLoader size="sm" className="text-indigo-300" starFill="#818cf8" /> : <Sparkles className="w-3.5 h-3.5" />}
+                    {generatingMeta ? <SudarInlineLoader size="sm" className="text-zinc-200" starFill="#f4f4f5" /> : <Sparkles className="w-3.5 h-3.5" />}
                     Generate description &amp; tags with AI
-                  </button>
+                  </motion.button>
                   {previewTagLabels.length > 0 && (
                     <span className="text-[10px] text-slate-500">
                       Tags: {previewTagLabels.join(', ')}
@@ -865,19 +840,25 @@ export default function NewCoursePage() {
               <label className="text-sm font-medium text-slate-300">Difficulty</label>
               <div className="grid grid-cols-3 gap-3">
                 {difficulties.map((d) => (
-                  <button key={d.value} type="button" onClick={() => setDifficulty(d.value)}
-                    className={cn('p-3 rounded-lg border text-left transition-all',
-                      difficulty === d.value ? 'border-indigo-500 bg-indigo-600/10 text-white' : 'border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-600'
+                  <motion.button key={d.value} type="button" onClick={() => setDifficulty(d.value)}
+                    whileHover={{ y: -1, scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    className={cn('p-3 rounded-lg border text-left transition-all duration-200',
+                      difficulty === d.value ? 'border-zinc-400 bg-zinc-800 text-white shadow-[0_10px_18px_-14px_rgba(255,255,255,0.28)]' : 'border-zinc-800 bg-black text-zinc-400 hover:border-zinc-600'
                     )}>
                     <p className="text-sm font-medium">{d.label}</p>
                     <p className="text-xs text-slate-500 mt-0.5">{d.desc}</p>
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>
 
+            {mode === 'ai' && aiWizardStep === 'details' && (
+              <BrandSettings value={brandSettings} onChange={setBrandSettings} />
+            )}
+
             {mode === 'manual' && (
-              <div className="space-y-3 rounded-xl border border-slate-700/80 bg-slate-800/30 p-4">
+              <div className="space-y-3 rounded-xl border border-zinc-800 bg-black/70 p-4">
                 <div>
                   <p className="text-sm font-medium text-slate-300">Starter template</p>
                   <p className="mt-1 text-xs text-slate-500">
@@ -890,11 +871,11 @@ export default function NewCoursePage() {
                       key={template.id}
                       type="button"
                       onClick={() => setManualTemplateId(template.id)}
-                      className={cn(
-                        'rounded-lg border px-3 py-2 text-left transition-colors',
+                    className={cn(
+                        'rounded-lg border px-3 py-2 text-left transition-all duration-200',
                         manualTemplateId === template.id
-                          ? 'border-indigo-500 bg-indigo-500/10 text-indigo-100'
-                          : 'border-slate-700 bg-slate-900/50 text-slate-300 hover:border-slate-500'
+                          ? 'border-zinc-400 bg-zinc-800 text-zinc-100'
+                          : 'border-zinc-800 bg-black text-slate-300 hover:border-zinc-600'
                       )}
                     >
                       <p className="text-xs font-semibold">{template.label}</p>
@@ -906,7 +887,7 @@ export default function NewCoursePage() {
             )}
 
             {mode === 'manual' && (
-              <div className="space-y-3 rounded-xl border border-slate-700/80 bg-slate-800/30 p-4">
+              <div className="space-y-3 rounded-xl border border-zinc-800 bg-black/70 p-4">
                 <div>
                   <p className="text-sm font-medium text-slate-300">
                     Catalog images{' '}
@@ -954,7 +935,7 @@ export default function NewCoursePage() {
                     value={targetAudience}
                     onChange={(e) => setTargetAudience(e.target.value)}
                     placeholder="e.g. New managers, engineers without prior security training"
-                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm"
+                    className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-500/35 text-sm transition-all duration-200"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -964,7 +945,7 @@ export default function NewCoursePage() {
                     onChange={(e) => setLearningOutcomes(e.target.value)}
                     rows={3}
                     placeholder={'After this course, learners can…\n…'}
-                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm resize-none"
+                    className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-500/35 text-sm resize-none transition-all duration-200"
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -975,7 +956,7 @@ export default function NewCoursePage() {
                       value={tone}
                       onChange={(e) => setTone(e.target.value)}
                       placeholder="e.g. Professional, conversational"
-                      className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm"
+                      className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-500/35 text-sm transition-all duration-200"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -985,7 +966,7 @@ export default function NewCoursePage() {
                       value={industry}
                       onChange={(e) => setIndustry(e.target.value)}
                       placeholder="e.g. Healthcare, SaaS, manufacturing"
-                      className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 text-sm"
+                      className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-500/35 text-sm transition-all duration-200"
                     />
                   </div>
                 </div>
@@ -994,7 +975,7 @@ export default function NewCoursePage() {
                     type="checkbox"
                     checked={noExternalVideo}
                     onChange={(e) => setNoExternalVideo(e.target.checked)}
-                    className="rounded border-slate-600 bg-slate-800 text-violet-600 focus:ring-violet-500/30"
+                    className="rounded border-zinc-700 bg-black text-zinc-200 focus:ring-zinc-400/30"
                   />
                   Do not embed external videos (YouTube, etc.)
                 </label>
@@ -1002,17 +983,18 @@ export default function NewCoursePage() {
                   <label className="text-sm font-medium text-slate-300">Number of modules</label>
                   <div className="flex gap-2">
                     {numModulesOptions.map((n) => (
-                      <button key={n} type="button" onClick={() => setNumModules(n)}
-                        className={cn('px-4 py-2 rounded-lg border text-sm font-medium transition-all',
-                          numModules === n ? 'border-indigo-500 bg-indigo-600/10 text-white' : 'border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-600'
+                      <motion.button key={n} type="button" onClick={() => setNumModules(n)}
+                        whileHover={{ y: -1, scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={cn('px-4 py-2 rounded-lg border text-sm font-medium transition-all duration-200',
+                          numModules === n ? 'border-zinc-400 bg-zinc-800 text-white shadow-[0_10px_18px_-14px_rgba(255,255,255,0.28)]' : 'border-zinc-800 bg-black text-zinc-400 hover:border-zinc-600'
                         )}>
                         {n}
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
                   <p className="text-xs text-slate-600">Sudar builds a curriculum-aware lesson for each module (varied structure and activities).</p>
                 </div>
-                {notifyWhenReadyCheckbox()}
               </>
             )}
               </>
@@ -1020,32 +1002,36 @@ export default function NewCoursePage() {
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
               {mode === 'ai' && aiWizardStep === 'blueprint' && (
-                <button
+                <motion.button
                   type="button"
                   onClick={() => setAiWizardStep('details')}
-                  className="px-4 py-2.5 text-slate-300 hover:text-white text-sm font-medium rounded-lg border border-slate-600 hover:bg-slate-800 transition-all"
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  className="px-4 py-2.5 text-slate-300 hover:text-white text-sm font-medium rounded-lg border border-zinc-700 hover:bg-black transition-all"
                 >
                   Back
-                </button>
+                </motion.button>
               )}
-              <button
+              <motion.button
                 type="submit"
                 disabled={
                   loading ||
                   !title.trim() ||
                   (mode === 'ai' && aiWizardStep === 'details' && blueprintLoading)
                 }
+                whileHover={{ scale: loading || blueprintLoading ? 1 : 1.01 }}
+                whileTap={{ scale: loading || blueprintLoading ? 1 : 0.99 }}
                 className={cn(
-                  'flex-1 min-w-[12rem] py-2.5 font-medium rounded-lg transition-colors text-sm flex items-center justify-center gap-2',
+                  'flex-1 min-w-[12rem] py-2.5 font-medium rounded-lg transition-all duration-200 text-sm flex items-center justify-center gap-2',
                   mode === 'ai'
-                    ? 'bg-violet-600 hover:bg-violet-500 disabled:bg-slate-800 disabled:text-slate-600 text-white'
-                    : 'bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white'
+                    ? 'bg-zinc-100 hover:bg-white disabled:bg-slate-800 disabled:text-slate-600 text-black shadow-[0_14px_28px_-20px_rgba(255,255,255,0.45)]'
+                    : 'bg-zinc-100 hover:bg-white disabled:bg-slate-800 disabled:text-slate-600 text-black shadow-[0_14px_28px_-20px_rgba(255,255,255,0.45)]'
                 )}
               >
                 {loading || blueprintLoading ? (
                   <SudarInlineLoader size="sm" className="text-white" starFill="#4f46e5" />
                 ) : mode === 'ai' ? (
-                  <Sparkles className="w-4 h-4" />
+                  <SudarLogoMark className="h-4 w-4 text-current" motion="none" />
                 ) : (
                   <BookOpen className="w-4 h-4" />
                 )}
@@ -1060,14 +1046,14 @@ export default function NewCoursePage() {
                         : mode === 'ai'
                           ? `Generate ${numModules}-module course`
                           : 'Create course'}
-              </button>
+              </motion.button>
               <Link href="/courses" className="px-4 py-2.5 text-slate-400 hover:text-slate-200 text-sm font-medium rounded-lg hover:bg-slate-800 transition-all">
                 Cancel
               </Link>
             </div>
           </form>
           )}
-        </div>
+        </motion.div>
       )}
     </div>
   )

@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Microlearning Course - Sudar Intelligence</title>
+    <style>
+        :root {
+            --primary: #4a4af9;
+            --primary-dark: #09092d;
+            --white: #ffffff;
+            --light-bg: #f3f3f7;
+            --accent-yellow: #f9ef77;
+            --accent-green: #8bf0bb;
+            --accent-pink: #ff8d96;
+            --accent-purple: #bfa1ff;
+            --accent-blue: #82d4ff;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f3f3f7 0%, #f9f5ff 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--primary-dark);
+        }
+        
+        .course-container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+        }
+        
+        .course-header {
+            background: linear-gradient(135deg, #4a4af9 0%, #6b6bff 100%);
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .course-icon {
+            background: rgba(255,255,255,0.25);
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 15px;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-text h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+        
+        .header-text p {
+            font-size: 0.95rem;
+            opacity: 0.95;
+        }
+        
+        .completion-badge {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .header-bg-pattern {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 200px;
+            background: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .course-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .course-sidebar {
+            width: 280px;
+            background: var(--light-bg);
+            padding: 25px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(0,0,0,0.08);
+        }
+        
+        .sidebar-header {
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-title {
+            font-size: 0.85rem;
+            color: var(--primary-dark);
+            margin-bottom: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .course-progress {
+            height: 6px;
+            background: rgba(74,74,249,0.15);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent-purple) 100%);
+            width: 60%;
+            transition: width 0.3s ease;
+        }
+        
+        .section-nav {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .section-nav-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+        
+        .section-nav-item:hover {
+            background-color: rgba(74,74,249,0.1);
+        }
+        
+        .section-nav-item.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent-purple) 100%);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(74,74,249,0.3);
+        }
+        
+        .section-num {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(74,74,249,0.15);
+            border-radius: 50%;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        
+        .section-nav-item.active .section-num {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .course-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .content-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+        }
+        
+        .section-container {
+            animation: fadeIn 0.4s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .section-badge {
+            background: linear-gradient(135deg, var(--accent-yellow) 0%, #ffd700 100%);
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            box-shadow: 0 4px 12px rgba(249,239,119,0.3);
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+        }
+        
+        .section-subtitle {
+            font-size: 0.95rem;
+            color: rgba(0,0,0,0.6);
+            margin-top: 5px;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .content-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        
+        .content-card h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--primary-dark);
+        }
+        
+        .content-card p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: rgba(0,0,0,0.7);
+            margin-bottom: 15px;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(139,240,187,0.1) 0%, rgba(130,212,255,0.1) 100%);
+            border-left: 4px solid var(--accent-green);
+            padding: 18px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .highlight-box strong {
+            color: var(--primary);
+        }
+        
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .grid-item {
+            background: linear-gradient(135deg, #f3f3f7 0%, #faf8ff 100%);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(74,74,249,0.1);
+        }
+        
+        .grid-item-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .grid-item h4 {
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--primary-dark);
+        }
+        
+        .grid-item p {
+            font-size: 0.85rem;
+            color: rgba(0,0,0,0.6);
+        }
+        
+        .interactive-quiz {
+            background: linear-gradient(135deg, rgba(74,74,249,0.05) 0%, rgba(191,161,255,0.05) 100%);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid rgba(74,74,249,0.1);
+        }
+        
+        .quiz-question {
+            font-weight: 600;
+            margin-bottom: 18px;
+            font-size: 1.05rem;
+            color: var(--primary-dark);
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .quiz-option {
+            background: white;
+            border: 2px solid rgba(0,0,0,0.08);
+            border-radius: 10px;
+            padding: 14px 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .quiz-option:hover {
+            border-color: var(--primary);
+            background: rgba(74,74,249,0.02);
+            transform: translateX(5px);
+        }
+        
+        .quiz-option.selected {
+            background: rgba(74,74,249,0.1);
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .quiz-option.correct {
+            background: rgba(139,240,187,0.2);
+            border-color: var(--accent-green);
+        }
+        
+        .quiz-option.incorrect {
+            background: rgba(255,141,150,0.2);
+            border-color: var(--accent-pink);
+        }
+        
+        .quiz-checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 2px solid rgba(74,74,249,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+        
+        .quiz-option.selected .quiz-checkbox,
+        .quiz-option.correct .quiz-checkbox {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .quiz-option.correct .quiz-checkbox {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+        
+        .quiz-feedback {
+            margin-top: 15px;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            display: none;
+        }
+        
+        .quiz-feedback.show {
+            display: block;
+        }
+        
+        .quiz-feedback.correct {
+            background: rgba(139,240,187,0.15);
+            border-left: 4px solid var(--accent-green);
+            color: #10803e;
+        }
+        
+        .quiz-feedback.incorrect {
+            background: rgba(255,141,150,0.15);
+            border-left: 4px solid var(--accent-pink);
+            color: #a63c4d;
+        }
+        
+        .flashcard-container {
+            perspective: 1000px;
+            margin: 20px 0;
+        }
+        
+        .flashcard {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+        
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            text-align: center;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 1.3rem;
+        }
+        
+        .flashcard-front {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent-purple) 100%);
+            color: white;
+            box-shadow: 0 8px 24px rgba(74,74,249,0.3);
+        }
+        
+        .flashcard-back {
+            background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-blue) 100%);
+            color: white;
+            transform: rotateY(180deg);
+            font-size: 1rem;
+            font-weight: 500;
+            box-shadow: 0 8px 24px rgba(139,240,187,0.3);
+        }
+        
+        .image-container {
+            margin: 20px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        }
+        
+        .image-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .video-container {
+            margin: 20px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            aspect-ratio: 16/9;
+            background: #000;
+        }
+        
+        .section-nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            background: white;
+            gap: 15px;
+        }
+        
+        .nav-button {
+            padding: 12px 24px;
+            border: 2px solid var(--primary);
+            background: white;
+            color: var(--primary);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .nav-button:hover:not(:disabled) {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(74,74,249,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .nav-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .nav-button.next-btn {
+            margin-left: auto;
+        }
+        
+        .progress-dots {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .dot.active {
+            background: var(--primary);
+            width: 24px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(74,74,249,0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .course-body {
+                flex-direction: column;
+            }
+            
+            .course-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid rgba(0,0,0,0.08);
+                max-height: 120px;
+            }
+            
+            .content-scroll {
+                padding: 20px;
+            }
+            
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-title {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="course-container">
+        <!-- Header -->
+        <div class="course-header">
+            <div class="header-bg-pattern"></div>
+            <div class="header-content">
+                <div class="course-icon">🧠</div>
+                <div class="header-text">
+                    <h1>AI-Powered Learning</h1>
+                    <p>Master the fundamentals of artificial intelligence in your daily life</p>
+                </div>
+            </div>
+            <div class="completion-badge">
+                <span>✓</span> <span id="completion">40%</span> Complete
+            </div>
+        </div>
+        
+        <!-- Main Body -->
+        <div class="course-body">
+            <!-- Sidebar Navigation -->
+            <div class="course-sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-title">Your Progress</div>
+                    <div class="course-progress">
+                        <div class="progress-bar"></div>
+                    </div>
+                </div>
+                <div class="section-nav">
+                    <div class="section-nav-item active" onclick="switchSection(0)">
+                        <div class="section-num">1</div>
+                        <span>What is AI?</span>
+                    </div>
+                    <div class="section-nav-item" onclick="switchSection(1)">
+                        <div class="section-num">2</div>
+                        <span>Machine Learning</span>
+                    </div>
+                    <div class="section-nav-item" onclick="switchSection(2)">
+                        <div class="section-num">3</div>
+                        <span>Real-World Apps</span>
+                    </div>
+                    <div class="section-nav-item" onclick="switchSection(3)">
+                        <div class="section-num">4</div>
+                        <span>The Future</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="course-content">
+                <div class="content-scroll">
+                    <!-- Section 1: What is AI? -->
+                    <div class="section-container" id="section-0" style="display: block;">
+                        <div class="section-header">
+                            <div class="section-badge">🤖</div>
+                            <div>
+                                <h2 class="section-title">What is Artificial Intelligence?</h2>
+                                <p class="section-subtitle">Understanding the basics and history of AI technology</p>
+                            </div>
+                        </div>
+                        
+                        <div class="content-card">
+                            <h3>The Simple Definition</h3>
+                            <p>Artificial Intelligence (AI) is the simulation of human intelligence by machines, especially computer systems. It's about creating systems that can think, learn, and make decisions.</p>
+                            <div class="highlight-box">
+                                <strong>💡 Key Insight:</strong> AI doesn't require consciousness or true understanding—it processes patterns in data to make predictions and decisions.
+                            </div>
+                        </div>
+                        
+                        <div class="content-card">
+                            <h3>Core Capabilities</h3>
+                            <div class="grid-layout">
+                                <div class="grid-item">
+                                    <div class="grid-item-icon">🧠</div>
+                                    <h4>Learning</h4>
+                                    <p>Systems improve through data and experience</p>
+                                </div>
+                                <div class="grid-item">
+                                    <div class="grid-item-icon">👁️</div>
+                                    <h4>Perception</h4>
+                                    <p>Understanding images, voice, and text</p>
+                                </div>
+                                <div class="grid-item">
+                                    <div class="grid-item-icon">🎯</div>
+                                    <h4>Decision Making</h4>
+                                    <p>Choosing optimal actions based on goals</p>
+                                </div>
+                                <div class="grid-item">
+                                    <div class="grid-item-icon">🔮</div>
+                                    <h4>Prediction</h4>
+                                    <p>Forecasting future outcomes</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Interactive Quiz -->
+                        <div class="interactive-quiz">
+                            <div class="quiz-question">✓ Quick Check: What best describes AI?</div>
+                            <div class="quiz-options">
+                                <div class="quiz-option" onclick="checkAnswer(this, true)">
+                                    <div class="quiz-checkbox"></div>
+                                    <span>Machine systems that learn from data and make intelligent decisions</span>
+                                </div>
+                                <div class="quiz-option" onclick="checkAnswer(this, false)">
+                                    <div class="quiz-checkbox"></div>
+                                    <span>Only advanced robots that can move and speak</span>
+                                </div>
+                                <div class="quiz-option" onclick="checkAnswer(this, false)">
+                                    <div class="quiz-checkbox"></div>
+                                    <span>A replacement for human thinking in all scenarios</span>
+                                </div>
+                            </div>
+                            <div class="quiz-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section 2: Machine Learning -->
+                    <div class="section-container" id="section-1" style="display: none;">
+                        <div class="section-header">
+                            <div class="section-badge">⚙️</div>
+                            <div>
+                                <h2 class="section-title">Machine Learning Essentials</h2>
+                                <p class="section-subtitle">How systems learn without explicit programming</p>
+                            </div>
+                        </div>
+                        
+                        <div class="content-card">
+                            <h3>Three Types of Machine Learning</h3>
+                            <div class="grid-layout">
+                                <div class="grid-item">
+                                    <div class="grid-item-icon">📚</div>
+                                    <h4>Supervised Learning</h4>
+                                    <p>Learning from labeled examples (like learning with a teacher)</p>
+                                </div>
+                                <div class="grid-item">
+                                    <div class="grid-item-icon">🔍</div>
+                                    <h4>Unsupervised Learning</h4>
+                                    <p>Finding patterns without labels (exploring on your own)</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Flashcard -->
+                        <div class="flashcard-container">
+                            <div class="flashcard" onclick="this.classList.toggle('flipped')">
+                                <div class="flashcard-face flashcard-front">
+                                    Click to Learn: What is Neural Networks?
+                                </div>
+                                <div class="flashcard-face flashcard-back">
+                                    Inspired by the brain, neural networks are interconnected layers of artificial neurons that learn patterns by adjusting connection weights. They power modern AI!
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="interactive-quiz">
+                            <div class="quiz-question">✓ Scenario: Identifying Spam Emails</div>
+                            <div class="quiz-options">
+                                <div class="quiz-option" onclick="checkAnswer(this, true)">
+                                    <div class="quiz-checkbox"></div>
+                                    <span>Train on thousands of labeled spam/non-spam emails (Supervised)</span>
+                                </div>
+                                <div class="quiz-option" onclick="checkAnswer(this, false)">
+                                    <div class="quiz-checkbox"></div>
+                                    <span>Let the system find patterns without any labeled examples (Unsupervised)</span>
+                                </div>
+                            </div>
+                            <div class="quiz-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section 3: Real-World Applications -->
+                    <div class="section-container" id="section-2" style="display: none;">
+                        <div class="section-header">
+                            <div class="section-badge">🌍</div>
+                            <div>
+                                <h2 class="section-title">AI in Real-World Applications</h2>
+                                <p class="section-subtitle">How AI transforms industries and everyday life</p>
+                            </div>
+                        </div>
+                        
+                        <div class="content-card">
+                            <h3>Industries Transformed by AI</h3>
+                            <div class="grid-layout">
+                                <div class="grid-item">
+                                    <div class="grid-item-icon">🏥</div>
+                                    <h4>Healthcare</h4>
+                                    <p>Diagnosis support, drug discovery, personalized medicine</p>
+                                </div>
+                                <div class="grid-item">
+                                    <div class="grid-item-icon">🚗</div>
+                                    <h4>Transportation</h4>
+                                    <p>Autonomous vehicles, route optimization, traffic management</p>
+                                </div>
+                                <div class="grid-item">
+                                    <div class="grid-item-icon">🏦</div>
+                                    <h4>Finance</h4>
+                                    <p>Fraud detection, algorithmic trading, risk assessment</p>
+                                </div>
+                                <div class="grid-item">
+                                    <div class="grid-item-icon">🎬</div>
+                                    <h4>Entertainment</h4>
+                                    <p>Personalized recommendations, content creation, gaming</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="highlight-box">
+                            <strong>📊 Real Example:</strong> Netflix uses AI to recommend movies—processing billions of viewing patterns to predict what you'll enjoy next, resulting in 30% of watch time coming from recommendations.
+                        </div>
+                        
+                        <div class="interactive-quiz">
+                            <div class="quiz-question">✓ Which is NOT a common AI application today?</div>
+                            <div class="quiz-options">
+                                <div class="quiz-option" onclick="checkAnswer(this, false)">
+                                    <div class="quiz-checkbox"></div>
+                                    <span>Virtual assistants (Siri, Alexa)</span>
+                                </div>
+                                <div class="quiz-option" onclick="checkAnswer(this, false)">
+                                    <div class="quiz-checkbox"></div>
+                                    <span>Social media content feeds</span>
+                                </div>
+                                <div class="quiz-option" onclick="checkAnswer(this, true)">
+                                    <div class="quiz-checkbox"></div>
+                                    <span>Controlling weather patterns</span>
+                                </div>
+                            </div>
+                            <div class="quiz-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section 4: The Future -->
+                    <div class="section-container" id="section-3" style="display: none;">
+                        <div class="section-header">
+                            <div class="section-badge">🚀</div>
+                            <div>
+                                <h2 class="section-title">The Future of AI</h2>
+                                <p class="section-subtitle">Trends, challenges, and opportunities ahead</p>
+                            </div>
+                        </div>
+                        
+                        <div class="content-card">
+                            <h3>Emerging Trends</h3>
+                            <div class="grid-layout">
+                                <div class="grid-item">
+                                    <div class="grid-item-icon">🧬</div>
+                                    <h4>Generative AI</h4>
+                                    <p>Creating new content (text, images, code)</p>
+                                </div>
+                                <div class="grid-item">
+                                    <div class="grid-item-icon">🌐</div>
+                                    <h4>Edge AI</h4>
+                                    <p>AI running on devices, not in the cloud</p>
+                                </div>
+                                <div class="grid-item">
+                                    <div class="grid-item-icon">💚</div>
+                                    <h4>Responsible AI</h4>
+                                    <p>Ethical, transparent, and fair AI systems</p>
+                                </div>
+                                <div class="grid-item">
+                                    <div class="grid-item-icon">🔗</div>
+                                    <h4>Multimodal AI</h4>
+                                    <p>Processing text, images, audio simultaneously</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="content-card">
+                            <h3>Key Challenges Ahead</h3>
+                            <div class="highlight-box">
+                                <strong>⚠️ Ethics & Bias:</strong> Ensuring AI systems are fair and don't discriminate against any group. This requires diverse training data and careful monitoring.
+                            </div>
+                            <div class="highlight-box">
+                                <strong>🔒 Privacy & Security:</strong> Protecting personal data used to train AI systems while preventing malicious use.
+                            </div>
+                            <div class="highlight-box">
+                                <strong>👨‍💼 Job Displacement:</strong> As AI automates tasks, society must adapt through reskilling and new opportunities.
+                            </div>
+                        </div>
+                        
+                        <div class="interactive-quiz">
+                            <div class="quiz-question">✓ What's the most critical challenge for AI's future?</div>
+                            <div class="quiz-options">
+                                <div class="quiz-option" onclick="checkAnswer(this, true)">
+                                    <div class="quiz-checkbox"></div>
+                                    <span>All of the above—ethics, privacy, and societal impact are equally important</span>
+                                </div>
+                                <div class="quiz-option" onclick="checkAnswer(this, false)">
+                                    <div class="quiz-checkbox"></div>
+                                    <span>Making AI faster and more powerful</span>
+                                </div>
+                            </div>
+                            <div class="quiz-feedback"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Navigation Footer -->
+                <div class="section-nav-buttons">
+                    <button class="nav-button" onclick="previousSection()" id="prev-btn" disabled>
+                        ← Previous
+                    </button>
+                    <div class="progress-dots">
+                        <div class="dot active" onclick="switchSection(0)"></div>
+                        <div class="dot" onclick="switchSection(1)"></div>
+                        <div class="dot" onclick="switchSection(2)"></div>
+                        <div class="dot" onclick="switchSection(3)"></div>
+                    </div>
+                    <button class="nav-button next-btn" onclick="nextSection()" id="next-btn">
+                        Next →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentSection = 0;
+        const totalSections = 4;
+        
+        function switchSection(index) {
+            document.getElementById(`section-${currentSection}`).style.display = 'none';
+            document.querySelectorAll('.section-nav-item')[currentSection].classList.remove('active');
+            document.querySelectorAll('.dot')[currentSection].classList.remove('active');
+            
+            currentSection = index;
+            
+            document.getElementById(`section-${currentSection}`).style.display = 'block';
+            document.querySelectorAll('.section-nav-item')[currentSection].classList.add('active');
+            document.querySelectorAll('.dot')[currentSection].classList.add('active');
+            
+            updateNavButtons();
+        }
+        
+        function nextSection() {
+            if (currentSection < totalSections - 1) {
+                switchSection(currentSection + 1);
+            }
+        }
+        
+        function previousSection() {
+            if (currentSection > 0) {
+                switchSection(currentSection - 1);
+            }
+        }
+        
+        function updateNavButtons() {
+            document.getElementById('prev-btn').disabled = currentSection === 0;
+            document.getElementById('next-btn').disabled = currentSection === totalSections - 1;
+        }
+        
+        function checkAnswer(element, isCorrect) {
+            const parent = element.parentElement;
+            const feedback = parent.nextElementSibling;
+            
+            parent.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('selected', 'correct', 'incorrect');
+            });
+            
+            if (isCorrect) {
+                element.classList.add('correct');
+                feedback.className = 'quiz-feedback show correct';
+                feedback.innerHTML = '✅ Correct! Well done. This is the right understanding.';
+            } else {
+                element.classList.add('incorrect');
+                feedback.className = 'quiz-feedback show incorrect';
+                feedback.innerHTML = '❌ Not quite. Try to think about this differently or review the concept.';
+            }
+        }
+        
+        updateNavButtons();
+    </script>
+</body>
+</html>

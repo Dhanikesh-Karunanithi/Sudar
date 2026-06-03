@@ -21,6 +21,7 @@ import {
 } from '@/lib/courseTags'
 import { suggestExperiencePackFromText } from '@/lib/themes/experiencePacks'
 import { fillEmptyModulesForCourse } from '@/lib/ai/courseGeneration'
+import { buildStudioUsageChatCtx, withUsageMetadata } from '@/lib/ai/studioUsageContext'
 
 /** Strip markdown code fences and extract/repair JSON for parsing. */
 function extractJson(raw: string): string {
@@ -95,6 +96,15 @@ export async function POST(request: NextRequest) {
     no_external_video,
     blueprint_answers,
     blueprint_questions,
+    course_type,
+    theme_preference,
+    brand_colors,
+    tone_preference,
+    content_density,
+    vary_introductions,
+    minimize_sidecards,
+    strict_component_validation,
+    apply_quality_filtering,
   } = body as {
     title?: string
     /** @deprecated use `brief` — kept for API compatibility; treated as author intent, not final copy */
@@ -110,6 +120,15 @@ export async function POST(request: NextRequest) {
     no_external_video?: boolean
     blueprint_answers?: { question_id: string; option_id: string }[]
     blueprint_questions?: CourseBlueprintQuestion[]
+    course_type?: string
+    theme_preference?: string
+    brand_colors?: { primary: string; accent: string; secondary?: string }
+    tone_preference?: string
+    content_density?: 'concise' | 'balanced' | 'detailed'
+    vary_introductions?: boolean
+    minimize_sidecards?: boolean
+    strict_component_validation?: boolean
+    apply_quality_filtering?: boolean
   }
 
   if (!title) return NextResponse.json({ error: 'title required' }, { status: 400 })
@@ -118,7 +137,15 @@ export async function POST(request: NextRequest) {
   const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
   const configError = resolveChatConfigError(orgSettings, privateRuntime)
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })
-  const chatAiCtx = { privateOpenAi: privateRuntime }
+  const chatAiCtx = buildStudioUsageChatCtx({
+    admin,
+    orgId,
+    userId: user.id,
+    feature: 'course_generation',
+    route: '/api/ai/generate-course',
+    privateRuntime,
+    orgSettings,
+  })
 
   let aiGeneration: AiGenerationCourseSettings = {
     source: 'prompt',
@@ -129,6 +156,19 @@ export async function POST(request: NextRequest) {
     ...(tone?.trim() ? { tone: tone.trim() } : {}),
     ...(industry?.trim() ? { industry: industry.trim() } : {}),
     ...(no_external_video === true ? { no_external_video: true } : {}),
+    ...(course_type?.trim() ? { course_type: course_type.trim() } : {}),
+    ...(theme_preference?.trim() ? { theme_preference: theme_preference.trim() } : {}),
+    ...(brand_colors?.primary && brand_colors?.accent ? { brand_colors } : {}),
+    ...(tone_preference?.trim() ? { tone_preference: tone_preference.trim() } : {}),
+    ...(content_density ? { content_density } : {}),
+    ...(vary_introductions === false ? { vary_introductions: false } : { vary_introductions: true }),
+    ...(minimize_sidecards === false ? { minimize_sidecards: false } : { minimize_sidecards: true }),
+    ...(strict_component_validation === false
+      ? { strict_component_validation: false }
+      : { strict_component_validation: true }),
+    ...(apply_quality_filtering === false
+      ? { apply_quality_filtering: false }
+      : { apply_quality_filtering: true }),
   }
 
   if (
@@ -179,7 +219,13 @@ export async function POST(request: NextRequest) {
 
   const suggestedPack = suggestExperiencePackFromText(title, tagLabels)
   const settingsPayload: Record<string, unknown> = { ai_generation: aiGeneration }
-  if (suggestedPack !== 'none') {
+  if (theme_preference?.trim()) {
+    settingsPayload.content_theme = theme_preference.trim()
+  }
+  if (brand_colors?.primary) {
+    settingsPayload.brand_colors = brand_colors
+  }
+  if (suggestedPack !== 'none' && !theme_preference?.trim()) {
     settingsPayload.experiencePack = suggestedPack
     settingsPayload.experiencePackSource = 'ai_suggested'
   }
@@ -266,7 +312,7 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
       settings: settingsPayload as Record<string, unknown>,
     },
     modules: moduleRows ?? [],
-    chatAiCtx,
+    chatAiCtx: withUsageMetadata(chatAiCtx, { course_id: course.id }),
   })
 
   if (fillResult.error || !fillResult.completed) {

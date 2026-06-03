@@ -43,7 +43,7 @@ export default async function CourseLearnPage({
   const { data: course } = await admin
     .from('courses')
     .select(
-      'id, title, description, template, settings, is_external, external_provider, external_url, embed_url, modules(id, title, content, modality_variants, order_index, quiz, sudarplay_map_url, sudarplay_map_id)',
+      'id, title, description, template, settings, is_external, external_provider, external_url, embed_url, allow_tutor_discussion, org_id, modules(id, title, content, modality_variants, order_index, quiz, sudarplay_map_url, sudarplay_map_id)',
     )
     .eq('id', id)
     .eq('status', 'published')
@@ -51,6 +51,28 @@ export default async function CourseLearnPage({
     .single()
 
   if (!course) notFound()
+
+  let externalCourseData: {
+    requires_sign_in?: boolean
+    sign_in_instructions?: string | null
+  } | null = null
+
+  if (course.is_external) {
+    const { data: extData } = await admin
+      .from('external_course_data' as 'courses')
+      .select('requires_sign_in, sign_in_instructions')
+      .eq('course_id', id)
+      .maybeSingle()
+    externalCourseData = extData as typeof externalCourseData
+  }
+
+  const { data: orgRow } = course.org_id
+    ? await admin.from('organisations').select('settings').eq('id', course.org_id).maybeSingle()
+    : { data: null }
+
+  const orgSettings = (orgRow?.settings as Record<string, unknown>) ?? {}
+  const externalPolicy = (orgSettings.external_courses as { require_learner_consent?: boolean }) ?? {}
+  const requireLearnerConsent = Boolean(externalPolicy.require_learner_consent)
 
   const isExternal = Boolean(course.is_external)
   if (!isExternal && !course.modules?.length) notFound()
@@ -87,6 +109,10 @@ export default async function CourseLearnPage({
         enrollmentProgress={Math.round(enrollment.progress_pct)}
         enrollmentStatus={enrollment.status}
         isModuleComplete={completedModuleIds.has(externalModuleId)}
+        allowTutorDiscussion={course.allow_tutor_discussion !== false}
+        requiresSignIn={externalCourseData?.requires_sign_in}
+        signInInstructions={externalCourseData?.sign_in_instructions}
+        requireLearnerConsent={requireLearnerConsent}
       />
     )
   }

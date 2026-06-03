@@ -19,9 +19,9 @@ import {
   HelpCircle,
   ShieldCheck,
   GraduationCap,
-  Sparkles,
   Trophy,
   Bot,
+  Cpu,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -42,11 +42,11 @@ interface SidebarProps {
 const contentNavItems = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Courses', href: '/courses', icon: BookOpen },
-  { label: 'SudarArt', href: '/tools/sudarart', icon: Sparkles },
   { label: 'Gamification', href: '/tools/gamification', icon: Trophy },
   { label: 'Tag library', href: '/settings/tags', icon: Tags },
   { label: 'Learning Paths', href: '/paths', icon: Route },
   { label: 'Analytics', href: '/analytics', icon: BarChart2 },
+  { label: 'AI usage', href: '/analytics/ai-usage', icon: Cpu },
   { label: 'Training compliance', href: '/compliance', icon: Shield },
 ]
 

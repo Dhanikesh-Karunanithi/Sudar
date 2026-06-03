@@ -198,7 +198,7 @@ export const platformCapabilities: PlatformCapability[] = [
     summary: "stdio package, Cloudflare remote OAuth worker, creator tools for course generation.",
     details: [
       "@sudar/mcp-server on npm",
-      "mcp.thesudar.app for ChatGPT connector",
+      "mcp.thesudar.com for ChatGPT connector",
       "Toolsets: integrator, creator, admin, learner",
     ],
     guideSlug: "mcp-chatgpt-studio",

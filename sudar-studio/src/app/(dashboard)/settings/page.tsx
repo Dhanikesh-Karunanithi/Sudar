@@ -364,6 +364,15 @@ export default function SettingsPage() {
   return (
     <div className="p-8 max-w-3xl mx-auto space-y-6">
       <ProfilePhotoSettingsCard />
+      <div className="rounded-xl border border-border bg-card p-4">
+        <p className="text-sm text-muted-foreground">
+          Build org-wide reference libraries (PDFs, Office docs) for Sudar tutor RAG on the{' '}
+          <Link href="/settings/knowledge-bases" className="text-primary hover:underline font-medium">
+            Knowledge bases
+          </Link>{' '}
+          page.
+        </p>
+      </div>
       <StudioLocalizationCard
         orgDefaultLearnerUi={orgDefaultLearnerUi}
         onOrgDefaultLearnerUiChange={setOrgDefaultLearnerUi}

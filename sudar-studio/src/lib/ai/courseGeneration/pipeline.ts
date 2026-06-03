@@ -13,6 +13,8 @@ import {
 } from '@/lib/ai/componentSelector'
 import type { LessonArchetype } from '@/lib/ai/archetypeSelector'
 import { chatCompletion, type ChatCompletionContext } from '@/lib/ai/chat'
+import { withUsageCallKind } from '@/lib/ai/studioUsageContext'
+import type { AiUsageCallKind } from '../../../../../shared/ai/usageTypes'
 import { getModuleBodyText } from '@/lib/contentBlocks'
 import { curriculumPlanSchema } from './schemas'
 import type {
@@ -31,11 +33,19 @@ import {
 import { normalizeCurriculumToModules } from './curriculumResolve'
 import { extractSummary, parseEnvelope, parseMarkdownSections } from './parse'
 import { getAiGenerationSettings } from './settings'
+import { validateContentQuality, runPedagogicalChecklist } from './qualityValidator'
+import {
+  contentHasBannedOpening,
+  contentHasGenericScenarioDuplication,
+  inferCourseTypeFromSettings,
+} from './introductionStrategies'
+import type { ModuleQualityRecord } from './types'
 
 async function callAI(
   messages: { role: string; content: string }[],
   maxTokens = 1500,
-  ctx?: ChatCompletionContext
+  ctx?: ChatCompletionContext,
+  callKind: AiUsageCallKind = 'main'
 ): Promise<string> {
   const { content } = await chatCompletion(
     {
@@ -44,7 +54,7 @@ async function callAI(
       temperature: 0.7,
       top_p: 0.9,
     },
-    ctx
+    withUsageCallKind(ctx, callKind)
   )
   if (!content) throw new Error('AI returned empty response')
   return content
@@ -84,6 +94,14 @@ export async function fillEmptyModulesForCourse(
 ): Promise<FillEmptyModulesResult> {
   const { course, modules: allModules, chatAiCtx } = input
   const gen = getAiGenerationSettings(course.settings) as AiGenerationCourseSettings | undefined
+  const courseType = inferCourseTypeFromSettings(
+    gen?.course_type,
+    gen?.industry,
+    course.title
+  )
+  const genWithType: AiGenerationCourseSettings | undefined = gen
+    ? { ...gen, course_type: gen.course_type ?? courseType }
+    : { course_type: courseType, source: 'prompt' }
 
   if (allModules.length === 0) {
     return { completed: true, modules_generated: 0 }
@@ -106,9 +124,10 @@ export async function fillEmptyModulesForCourse(
       course.description,
       difficulty,
       allTitles,
-      gen
+      genWithType,
+      { courseType }
     )
-    const raw = await callAI(planMessages, 2000, chatAiCtx)
+    const raw = await callAI(planMessages, 2000, chatAiCtx, 'outline')
     const match = raw.match(/\[[\s\S]*\]/)
     if (!match) throw new Error('Curriculum plan response did not contain a JSON array')
     const parsed = JSON.parse(match[0]) as unknown
@@ -133,6 +152,10 @@ export async function fillEmptyModulesForCourse(
   const telemetryArchetypes: string[] = []
   const telemetryComponents: string[] = []
   let critiquePasses = 0
+  const moduleQualityRecords: ModuleQualityRecord[] = []
+  let qualityScoreSum = 0
+  let qualityScoreCount = 0
+  let totalQualityIssues = 0
 
   const validTypes = new Set(COMPONENT_PROFILES.map((p) => p.type))
   const forbiddenDisallowed: ComponentType[] | undefined = (() => {
@@ -172,7 +195,7 @@ export async function fillEmptyModulesForCourse(
     )
 
     try {
-      let content = await callAI(contentMessages, 1800, chatAiCtx)
+      let content = await callAI(contentMessages, 1800, chatAiCtx, 'module_fill')
 
       const isCapstone = modIndex >= modulesOrdered.length - 1
       if (isCapstone) {
@@ -183,7 +206,7 @@ export async function fillEmptyModulesForCourse(
             gen?.learning_outcomes,
             content
           )
-          const refined = await callAI(critiqueMessages, 2200, chatAiCtx)
+          const refined = await callAI(critiqueMessages, 2200, chatAiCtx, 'critique')
           if (refined.trim()) {
             content = refined
             critiquePasses++
@@ -228,6 +251,7 @@ export async function fillEmptyModulesForCourse(
         courseTypeCounts: { ...courseComponentCounts },
         moduleIndex: modIndex,
         totalModules: modulesOrdered.length,
+        courseType,
       })
 
       selected = sanitizeVideoComponents(selected, {
@@ -267,22 +291,72 @@ export async function fillEmptyModulesForCourse(
 
       let entryState: { type: string; content: string } | undefined
       let exitState: { type: string; content: string } | undefined
-      let sideCard: { title: string; content: string; tips?: string[]; noteType?: string } | undefined
+      let sideCard:
+        | {
+            title: string
+            content: string
+            tips?: string[]
+            noteType?: string
+            visibility?: 'hidden' | 'floating' | 'visible'
+          }
+        | undefined
       try {
+        const moduleOpeningPreview = content.split('\n').slice(0, 8).join('\n')
         const envelopeMessages = buildEnvelopePrompt(
           mod.title,
           content,
-          (resolvedEntry.archetype ?? 'cold-open') as string
+          (resolvedEntry.archetype ?? 'cold-open') as string,
+          {
+            minimizeSideCard: genWithType?.minimize_sidecards !== false,
+            moduleOpeningPreview,
+          }
         )
-        const envelopeRaw = await callAI(envelopeMessages, 800, chatAiCtx)
+        const envelopeRaw = await callAI(envelopeMessages, 800, chatAiCtx, 'other')
         const envelope = parseEnvelope(envelopeRaw)
         if (envelope) {
-          entryState = envelope.entryState
+          if (
+            envelope.entryState &&
+            !contentHasGenericScenarioDuplication(envelope.entryState.content, content)
+          ) {
+            entryState = envelope.entryState
+          }
           exitState = envelope.exitState
-          sideCard = envelope.sideCard
+          if (envelope.sideCard) {
+            sideCard = {
+              ...envelope.sideCard,
+              visibility: envelope.sideCard.visibility ?? 'hidden',
+            }
+          }
         }
       } catch {
         // envelope optional
+      }
+
+      if (genWithType?.apply_quality_filtering !== false) {
+        try {
+          const quality = await validateContentQuality(
+            {
+              moduleTitle: mod.title,
+              moduleContent: content,
+              courseContext: course.title,
+              learningOutcomes: genWithType?.learning_outcomes,
+            },
+            chatAiCtx
+          )
+          const checklistIssues = runPedagogicalChecklist(content)
+          const issuesCount = quality.issues.length + checklistIssues.length
+          qualityScoreSum += quality.overall
+          qualityScoreCount++
+          totalQualityIssues += issuesCount
+          moduleQualityRecords.push({
+            module_id: mod.id,
+            module_title: mod.title,
+            quality_score: quality.overall,
+            issues_count: issuesCount,
+          })
+        } catch {
+          // quality optional
+        }
       }
 
       const richContent = {
@@ -326,7 +400,9 @@ export async function fillEmptyModulesForCourse(
     baseSettings.ai_generation && typeof baseSettings.ai_generation === 'object'
       ? { ...(baseSettings.ai_generation as Record<string, unknown>) }
       : {}
-  const mergedGen = { ...prevAg, ...(gen ?? {}) }
+  const mergedGen = { ...prevAg, ...(genWithType ?? {}) }
+  const avgQuality =
+    qualityScoreCount > 0 ? Math.round((qualityScoreSum / qualityScoreCount) * 10) / 10 : undefined
   await admin
     .from('courses')
     .update({
@@ -339,6 +415,14 @@ export async function fillEmptyModulesForCourse(
             archetypes_used: telemetryArchetypes,
             component_types_used: telemetryComponents,
             critique_passes: critiquePasses,
+            ...(avgQuality != null
+              ? {
+                  quality_score: avgQuality,
+                  quality_issues_found: totalQualityIssues,
+                  average_quality_score: avgQuality,
+                  module_quality: moduleQualityRecords,
+                }
+              : {}),
           },
         },
       } as unknown as Json,

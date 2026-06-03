@@ -1,8 +1,20 @@
 export const SITE_NAME = "Teach with Sudar";
 export const GITHUB_URL = "https://github.com/Dhanikesh-Karunanithi/Sudar";
 export const CONTACT_EMAIL = "connect@dhanikeshkarunanithi.com";
-export const STUDIO_APP_URL = "https://sudar-studio.vercel.app";
-export const LEARN_APP_URL = "https://sudar-learn.vercel.app";
+
+/** Production Sudar Studio — override at build time via NEXT_PUBLIC_STUDIO_APP_URL */
+export const STUDIO_APP_URL =
+  process.env.NEXT_PUBLIC_STUDIO_APP_URL?.replace(/\/$/, "") ||
+  "https://studio.thesudar.com";
+
+/** Production Sudar Learn — override at build time via NEXT_PUBLIC_LEARN_APP_URL */
+export const LEARN_APP_URL =
+  process.env.NEXT_PUBLIC_LEARN_APP_URL?.replace(/\/$/, "") ||
+  "https://learn.thesudar.com";
+
+/** Marketing site (this app) */
+export const MARKETING_SITE_URL = "https://thesudar.com";
+export const LEGACY_MARKETING_SITE_URL = "https://teachwithsudar.com";
 
 export interface NavLink {
   href: string;

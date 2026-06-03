@@ -27,7 +27,7 @@ class ContentGenerateRequest(BaseModel):
     include_quiz: bool = True
     provider: str = "together"  # 'together' | 'openai' | 'anthropic'
     org_settings: dict[str, Any] | None = None
-    /** BCP-47 / ISO-style language for generated titles and module copy (e.g. en, es, hi-IN). */
+    # BCP-47 / ISO-style language for generated titles and module copy (e.g. en, es, hi-IN).
     language: str = "en"
 
 

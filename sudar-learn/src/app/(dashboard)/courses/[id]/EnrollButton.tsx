@@ -31,6 +31,12 @@ export function EnrollButton({
   const isCompleted = enrollmentStatus === 'completed' || progressPct >= 100
 
   function getCtaLabel(): string {
+    if (isExternal) {
+      if (!isEnrolled) return 'Enrol & learn in Sudar'
+      if (progressPct >= 100) return 'Review in Sudar'
+      if (progressPct > 0) return 'Continue in Sudar'
+      return 'Open in Sudar'
+    }
     if (!isEnrolled) return 'Enrol & Start Course'
     if (progressPct >= 100) return 'Review Course'
     if (progressPct > 0) return 'Continue Learning'

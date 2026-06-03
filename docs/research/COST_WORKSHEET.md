@@ -38,3 +38,4 @@ Sum extended column → **$/month** for the scenario, then divide by **active le
 
 - Pilot outcomes: [PILOT_PROTOCOL.md](./PILOT_PROTOCOL.md)
 - Paper text: keep numbers in `paper.tex` aligned with the latest filled worksheet (date the run in a footnote or appendix).
+- **Measured usage (production)**: Sudar Studio → **Analytics → AI usage** exports CSV from `ai_usage_daily_org` rollups; raw events in `ai_usage_events` (90-day retention by default). Apply migration `supabase/migrations/20260529120000_ai_usage_monitoring.sql` and run `POST /api/cron/ai-usage-rollups` daily.

@@ -33,11 +33,47 @@ export interface CourseBlueprintQuestion {
 }
 
 /** Recorded after a successful generation run for analytics and drift detection. */
+export interface ModuleQualityRecord {
+  module_id: string
+  module_title: string
+  quality_score: number
+  issues_count: number
+}
+
 export interface GenerationTelemetry {
   completed_at: string
   archetypes_used: string[]
   component_types_used: string[]
   critique_passes: number
+  quality_score?: number
+  quality_issues_found?: number
+  /** Average quality across modules in this run. */
+  average_quality_score?: number
+  module_quality?: ModuleQualityRecord[]
+}
+
+export type ThemePreference =
+  | 'calora_editorial'
+  | 'minimal_modern'
+  | 'vibrant_interactive'
+  | 'data_visualization'
+  | 'dark_academic'
+  | 'immersive_storytelling'
+
+export type ContentDensity = 'concise' | 'balanced' | 'detailed'
+
+export type CourseTypeSlug =
+  | 'programming'
+  | 'product_strategy'
+  | 'data_science'
+  | 'compliance'
+  | 'soft_skills'
+  | 'general'
+
+export interface BrandColors {
+  primary: string
+  accent: string
+  secondary?: string
 }
 
 export interface AiGenerationCourseSettings {
@@ -45,6 +81,16 @@ export interface AiGenerationCourseSettings {
   learning_outcomes?: string[]
   tone?: string | null
   industry?: string | null
+  /** Domain for SME context and introduction variety. */
+  course_type?: CourseTypeSlug | string | null
+  theme_preference?: ThemePreference | null
+  brand_colors?: BrandColors | null
+  tone_preference?: string | null
+  content_density?: ContentDensity | null
+  vary_introductions?: boolean
+  minimize_sidecards?: boolean
+  strict_component_validation?: boolean
+  apply_quality_filtering?: boolean
   /** When true, never embed external video blocks from the LLM. */
   no_external_video?: boolean
   /** Full document text for document-sourced courses (capped when stored). */
