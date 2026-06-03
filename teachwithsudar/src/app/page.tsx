@@ -1,23 +1,7 @@
-"use client";
-
-import { HeroCinematic } from "@/components/home/HeroCinematic";
-import { ProductTrinity } from "@/components/home/ProductTrinity";
-import { IntelligenceConstellation } from "@/components/home/IntelligenceConstellation";
-import { ModalitiesOrbit } from "@/components/home/ModalitiesOrbit";
-import { TutorShowcase } from "@/components/home/TutorShowcase";
-import { ImpactStrip } from "@/components/home/ImpactStrip";
-import { AccessGate } from "@/components/home/AccessGate";
+import { IS_GATEWAY_SITE } from "@/lib/site-variant";
+import { GatewayHomePage } from "@/components/home/GatewayHomePage";
+import { MarketingHomePage } from "@/components/home/MarketingHomePage";
 
 export default function HomePage() {
-  return (
-    <div className="w-full bg-[#050505]">
-      <HeroCinematic />
-      <ProductTrinity />
-      <IntelligenceConstellation />
-      <ModalitiesOrbit />
-      <TutorShowcase />
-      <ImpactStrip />
-      <AccessGate />
-    </div>
-  );
+  return IS_GATEWAY_SITE ? <GatewayHomePage /> : <MarketingHomePage />;
 }

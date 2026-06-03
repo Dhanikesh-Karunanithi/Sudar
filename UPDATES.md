@@ -16,6 +16,15 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-03 — Split thesudar.com gateway from teachwithsudar.com marketing
+
+- **Theme**: Web presence — restore teachwithsudar.com as the docs/marketing site; keep thesudar.com as the app gateway only.
+- **Shipped**:
+  - Build flag `NEXT_PUBLIC_SITE_VARIANT` (`gateway` | `marketing`) selects homepage, header, metadata, and smooth-scroll shell.
+  - GitHub Action deploys **two** Cloudflare Pages projects: `thesudar` (gateway) and `teachwithsudar` (marketing).
+  - Restored marketing homepage (`MarketingHomePage`) and nav (Platform, Guides, Research, …) from pre-gateway design.
+- **Operator**: Attach `thesudar.com` only to Pages project **thesudar**; `teachwithsudar.com` only to **teachwithsudar** — see `docs/DNS_THESUDAR_COM.md`.
+
 ### 2026-06-03 — Unified browser favicon and tab titles (Learn + Studio + marketing)
 
 - **Theme**: Brand — Sudar logo in browser tabs; professional page titles across apps.

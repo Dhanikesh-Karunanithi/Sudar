@@ -12,9 +12,14 @@ export const LEARN_APP_URL =
   process.env.NEXT_PUBLIC_LEARN_APP_URL?.replace(/\/$/, "") ||
   "https://learn.thesudar.com";
 
-/** Marketing site (this app) */
-export const MARKETING_SITE_URL = "https://thesudar.com";
-export const LEGACY_MARKETING_SITE_URL = "https://teachwithsudar.com";
+/** Primary docs/marketing site (teachwithsudar.com). */
+export const MARKETING_SITE_URL = "https://teachwithsudar.com";
+
+/** Application gateway (thesudar.com). */
+export const GATEWAY_SITE_URL = "https://thesudar.com";
+
+/** @deprecated Use MARKETING_SITE_URL or GATEWAY_SITE_URL */
+export const LEGACY_MARKETING_SITE_URL = MARKETING_SITE_URL;
 
 export interface NavLink {
   href: string;

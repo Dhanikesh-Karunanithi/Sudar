@@ -1,6 +1,8 @@
 # Teach with Sudar | Marketing & Documentation Site
 
-Dedicated website for **thesudar.com** (primary) and **teachwithsudar.com**: research, story, mission, self-host guides, plugins, help, legal, and community. Home page links learners to **Learn** and creators to **Studio**.
+**teachwithsudar.com** — research, story, mission, self-host guides, plugins, help, legal, and community (original marketing site).
+
+**thesudar.com** — separate Cloudflare Pages deploy (`NEXT_PUBLIC_SITE_VARIANT=gateway`): cinematic app gateway into Learn and Studio. Docs stay on teachwithsudar.com.
 
 ## Stack
 
@@ -23,9 +25,16 @@ npm run build
 npm start
 ```
 
-## Deploy to Cloudflare Pages (thesudar.com)
+## Deploy to Cloudflare Pages
 
-Production hosts: **thesudar.com** (primary), optionally **teachwithsudar.com** on the same Pages project **thesudar**. Preview URL: `https://thesudar.pages.dev`.
+Two production hosts from the same `teachwithsudar/` source, **different builds**:
+
+| Domain | Pages project | Env |
+|--------|---------------|-----|
+| `thesudar.com` | **thesudar** | `NEXT_PUBLIC_SITE_VARIANT=gateway` |
+| `teachwithsudar.com` | **teachwithsudar** | default (marketing) |
+
+Attach each custom domain only to its project (see [docs/DNS_THESUDAR_COM.md](../docs/DNS_THESUDAR_COM.md)).
 
 ### One-time CLI setup
 

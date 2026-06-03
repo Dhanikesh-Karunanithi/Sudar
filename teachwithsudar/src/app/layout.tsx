@@ -3,6 +3,7 @@ import { Inter, Playfair_Display, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import { PageLayout } from "@/components/PageLayout";
 import { GsapLenisProvider } from "@/components/GsapLenisProvider";
+import { IS_GATEWAY_SITE, SITE_URL } from "@/lib/site-variant";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,20 +24,26 @@ const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
 });
 
+const gatewayTitle = "Sudar — Learns with you, for you.";
+const marketingTitle = "Teach with Sudar | The Operating System for Learning";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://thesudar.com"),
-  title: { default: "Teach with Sudar — The Operating System for Learning", template: "%s | Teach with Sudar" },
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: IS_GATEWAY_SITE ? gatewayTitle : marketingTitle,
+    template: IS_GATEWAY_SITE ? "%s | Sudar" : "%s | Teach with Sudar",
+  },
   description:
     "Sudar combines Studio (authoring), Learn (delivery), and Intelligence (adaptive tutoring). Self-host on free tiers or extend your LMS with ALP.",
   openGraph: {
-    title: "Teach with Sudar — The Operating System for Learning",
+    title: IS_GATEWAY_SITE ? gatewayTitle : marketingTitle,
     description: "Open-source courses, multimodal delivery, and a tutor that keeps context across sessions.",
-    url: "https://thesudar.com",
+    url: SITE_URL,
   },
   icons: {
-    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
-    shortcut: '/icon.svg',
-    apple: '/icon.svg',
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
   },
 };
 
@@ -45,16 +52,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const shell = <PageLayout>{children}</PageLayout>;
+
   return (
     <html
       lang="en"
-      className={`scroll-smooth ${inter.variable} ${playfair.variable} ${bricolage.variable}`}
+      className={`scroll-smooth ${inter.variable} ${playfair.variable}${IS_GATEWAY_SITE ? ` ${bricolage.variable}` : ""}`}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-[var(--bg)] font-sans text-foreground antialiased" suppressHydrationWarning>
-        <GsapLenisProvider>
-          <PageLayout>{children}</PageLayout>
-        </GsapLenisProvider>
+        {IS_GATEWAY_SITE ? <GsapLenisProvider>{shell}</GsapLenisProvider> : shell}
       </body>
     </html>
   );

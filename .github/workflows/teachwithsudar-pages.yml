@@ -1,4 +1,4 @@
-# Deploy teachwithsudar.com + thesudar.com (Cloudflare Pages) when marketing site or help-center sources change.
+# Deploy thesudar.com (gateway) and teachwithsudar.com (marketing) as separate Cloudflare Pages projects.
 name: Deploy teachwithsudar
 
 on:
@@ -7,6 +7,7 @@ on:
     paths:
       - "teachwithsudar/**"
       - "help-center/**"
+      - "scripts/copy-launch-demo.mjs"
       - ".github/workflows/teachwithsudar-pages.yml"
   workflow_dispatch:
 
@@ -16,7 +17,17 @@ jobs:
     permissions:
       contents: read
       deployments: write
-    name: Cloudflare Pages
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: gateway
+            project: thesudar
+            label: thesudar.com gateway
+          - variant: marketing
+            project: teachwithsudar
+            label: teachwithsudar.com marketing
+    name: Cloudflare Pages (${{ matrix.label }})
     steps:
       - uses: actions/checkout@v4
 
@@ -34,9 +45,10 @@ jobs:
         working-directory: sudar-ecosystem-demo
         run: npm ci
 
-      - name: Build static export (includes /launch-demo from sudar-ecosystem-demo)
+      - name: Build static export
         working-directory: teachwithsudar
         env:
+          NEXT_PUBLIC_SITE_VARIANT: ${{ matrix.variant }}
           NEXT_PUBLIC_STUDIO_APP_URL: https://studio.thesudar.com
           NEXT_PUBLIC_LEARN_APP_URL: https://learn.thesudar.com
           NEXT_PUBLIC_ECOSYSTEM_DEMO_URL: https://demo.thesudar.com
@@ -49,10 +61,10 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: teachwithsudar
-          command: pages deploy out --project-name=teachwithsudar --branch=main
+          command: pages deploy out --project-name=${{ matrix.project }} --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print deployment URL
         env:
           DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
-        run: echo "Deployed to ${DEPLOYMENT_URL}"
+        run: echo "Deployed ${{ matrix.label }} to ${DEPLOYMENT_URL}"

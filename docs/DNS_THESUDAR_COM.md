@@ -30,10 +30,19 @@ After the first OpenNext deploy (see [CLOUDFLARE_PAGES_DEPLOY.md](CLOUDFLARE_PAG
 2. Repeat for **sudar-studio** → `studio.thesudar.com`
 3. Cloudflare creates proxied DNS records automatically when the zone is on the same account.
 
-### Landing (thesudar.com)
+### Landing (thesudar.com + teachwithsudar.com)
 
-1. Cloudflare Dashboard → **Workers & Pages** → project **thesudar** → **Custom domains** → add `thesudar.com` and optionally `www.thesudar.com`
-2. Optionally add **teachwithsudar.com** as a second custom domain on the same Pages project (same static export).
+Use **two** Cloudflare Pages projects (same repo build, different `NEXT_PUBLIC_SITE_VARIANT`):
+
+| Domain | Pages project | Build variant |
+|--------|---------------|---------------|
+| `thesudar.com` | **thesudar** | `gateway` — app entry (Learn / Studio) |
+| `teachwithsudar.com` | **teachwithsudar** | `marketing` — docs, research, guides |
+
+1. **thesudar** → Custom domains → `thesudar.com` (and optional `www.thesudar.com`)
+2. **teachwithsudar** → Custom domains → `teachwithsudar.com` only
+
+Do **not** attach both apex domains to one project; the last deploy would overwrite both sites.
 
 ## 3. MCP worker route
 
