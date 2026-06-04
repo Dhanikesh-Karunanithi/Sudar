@@ -8,7 +8,7 @@ export type SudarLogoMarkVariant = "on-light" | "on-dark";
 export type SudarLogoMarkProps = {
   /** Square canvas edge length (viewBox is 210×210). */
   size?: number;
-  /** on-light: black pills, white star (default file). on-dark: white pills, star matches #050505 hero. */
+  /** on-light: black pills, white star. on-dark: white pills, star matches deep-night surface (#0D1026). */
   variant?: SudarLogoMarkVariant;
   className?: string;
 };
@@ -25,7 +25,7 @@ export function SudarLogoMark({
   className,
 }: SudarLogoMarkProps) {
   const pillFill = variant === "on-light" ? "#000000" : "#ffffff";
-  const starFill = variant === "on-light" ? "#ffffff" : "#050505";
+  const starFill = variant === "on-light" ? "#ffffff" : "#000000";
 
   return (
     <svg

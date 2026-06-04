@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
-  <!-- Rounded background square with brand primary color -->
-  <rect width="512" height="512" rx="112" fill="#2f2a8a" />
+  <!-- Rounded background square -->
+  <rect width="512" height="512" rx="112" fill="#000000" />
 
   <!-- Centered logo mark -->
   <g transform="translate(96, 96) scale(1.5238095) translate(-407, 5)">
@@ -14,7 +14,7 @@
     </g>
     <!-- Star cut-out -->
     <g transform="matrix(0.9,0,0,0.9,467,55)">
-      <path d="M50,2 C51,49 51,49 98,50 C51,51 51,51 50,98 C49,51 49,51 2,50 C49,49 49,49 50,2" fill="#2f2a8a" />
+      <path d="M50,2 C51,49 51,49 98,50 C51,51 51,51 50,98 C49,51 49,51 2,50 C49,49 49,49 50,2" fill="#000000" />
     </g>
   </g>
 </svg>

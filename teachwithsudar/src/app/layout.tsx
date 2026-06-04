@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display, Bricolage_Grotesque } from "next/font/google";
+import { Inter, Playfair_Display, Manrope } from "next/font/google";
 import "./globals.css";
+import "../styles/gateway-theme.css";
 import { PageLayout } from "@/components/PageLayout";
 import { GsapLenisProvider } from "@/components/GsapLenisProvider";
 import { IS_GATEWAY_SITE, SITE_URL } from "@/lib/site-variant";
@@ -18,10 +19,10 @@ const playfair = Playfair_Display({
   variable: "--font-playfair",
 });
 
-const bricolage = Bricolage_Grotesque({
+const manrope = Manrope({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-bricolage",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-manrope",
 });
 
 const gatewayTitle = "Sudar — Learns with you, for you.";
@@ -57,7 +58,8 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`scroll-smooth ${inter.variable} ${playfair.variable}${IS_GATEWAY_SITE ? ` ${bricolage.variable}` : ""}`}
+      data-site-variant={IS_GATEWAY_SITE ? "gateway" : "marketing"}
+      className={`scroll-smooth ${inter.variable} ${playfair.variable}${IS_GATEWAY_SITE ? ` ${manrope.variable}` : ""}`}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-[var(--bg)] font-sans text-foreground antialiased" suppressHydrationWarning>

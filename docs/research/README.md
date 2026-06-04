@@ -15,7 +15,7 @@ This folder contains the scientific paper draft and submission materials for the
 - [COST_WORKSHEET.md](COST_WORKSHEET.md) — marginal AI cost assumptions (vs TCO).  
 - [EVALUATION_APPENDIX.md](EVALUATION_APPENDIX.md) — what is claimed today vs after pilots.  
 - [PILOT_PROTOCOL.md](PILOT_PROTOCOL.md) — template for institutional pilots.  
-- Repo root: `scripts/benchmark-sudar.mjs` — benchmark harness stub (`npm run benchmark:sudar` from monorepo root).
+- Repo root: `scripts/benchmark-sudar.mjs` — latency harness (`npm run benchmark:sudar`) → `benchmark-results.json`.
 
 ## Build
 

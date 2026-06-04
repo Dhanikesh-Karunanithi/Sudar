@@ -16,7 +16,31 @@ npm install
 npm run dev
 ```
 
-Runs at [http://localhost:3002](http://localhost:3002).
+Runs at [http://localhost:3002](http://localhost:3002) (marketing site by default).
+
+### Preview thesudar.com (gateway) locally
+
+PowerShell:
+
+```powershell
+$env:NEXT_PUBLIC_SITE_VARIANT="gateway"
+npm run dev
+```
+
+Bash:
+
+```bash
+NEXT_PUBLIC_SITE_VARIANT=gateway npm run dev
+```
+
+Open [http://localhost:3002](http://localhost:3002) — same port, gateway homepage with Option A brand tokens (deep night `#0D1026`, indigo + ember accents, Manrope headings).
+
+Gateway build before deploy:
+
+```powershell
+$env:NEXT_PUBLIC_SITE_VARIANT="gateway"
+npm run build
+```
 
 ## Build
 

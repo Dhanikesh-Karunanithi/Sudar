@@ -24,10 +24,14 @@ This file supports honest framing in the paper (`paper.tex`) and in procurement 
 
 ## Benchmark harness (automatable)
 
-Run the stub script from repo root (extend with real HTTP calls when ready):
+From repo root:
 
 ```bash
-node scripts/benchmark-sudar.mjs
+npm run benchmark:sudar
+# or: node scripts/benchmark-sudar.mjs
 ```
 
-The script documents which env vars and endpoints to time for tutor, generation, and TTS.
+Writes `docs/research/benchmark-results.json` (health RTT, optional tutor E2E with
+`INTELLIGENCE_SERVICE_SECRET`, in-process next-action ranking for catalog size N).
+Start Intelligence locally or set `SUDAR_INTELLIGENCE_URL` before expecting health/tutor rows.
+Paper Table~\ref{tab:perf} in `paper.tex` should match the latest artefact.

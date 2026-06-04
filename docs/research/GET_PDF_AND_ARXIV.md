@@ -21,10 +21,11 @@ You have two options. **Option A (Overleaf)** requires no installation and works
    - Click **New File** and create a file named **`paper.tex`**. Paste in the full contents of your repo’s `docs/research/paper.tex`.
    - Click **New File** and create **`references.bib`**. Paste in the full contents of `docs/research/references.bib`.
 
-4. **Set the main file**
-   - In the left sidebar, click the **Menu** (☰) next to the project name.
-   - Under **Main document**, choose **`paper.tex`**.
-   - Close the menu.
+4. **Set the main file** (required if you see `Emergency stop` on `main.tex`)
+   - Click the **gear icon** (bottom-left of the editor) → **Settings**.
+   - Open the **Compiler** tab.
+   - **Main document** must be **`paper.tex`**, not **None**. If it is **None**, Overleaf tries to compile missing `main.tex` and fails with “No PDF”.
+   - Close Settings, then **Clear cached files** → **Recompile**.
 
 5. **Compile**
    - Click **Recompile** (or the green **Recompile** button). The first run may take a minute.
@@ -33,6 +34,29 @@ You have two options. **Option A (Overleaf)** requires no installation and works
 
 6. **Download the PDF**
    - Click the **PDF** icon (download arrow) above the PDF viewer, or use the **Menu** → **Download PDF**. Save `paper.pdf` for your records and for checking before you submit to arXiv.
+
+### “No PDF” / compiles `main.tex` / Emergency stop
+
+Overleaf defaults to **`main.tex`**. This project uses **`paper.tex`** as the full document.
+
+1. In the file list, confirm **`paper.tex`** exists and is large (~900+ lines), starting with `\documentclass` and ending with `\end{document}`.
+2. If **`main.tex`** exists and is empty or tiny, **delete** it (or rename to `main.tex.bak`).
+3. If **`output.pdf`** appears in the file list, **rename or delete** it (Overleaf blocks compile when that name exists).
+4. Set **Main document** to **`paper.tex`** (menu → Settings → Main document, or right-click `paper.tex` → Set as main file).
+5. **Clear cached files** → **Recompile** twice.
+
+Uploading only `references.bib` does not replace `paper.tex`—keep both files in the project.
+
+### Common Overleaf warnings (safe to ignore or fixed in repo)
+
+| Warning | Meaning | Action |
+|---------|---------|--------|
+| `fixltx2e` not required | Overleaf default package; harmless on modern LaTeX | Ignore, or disable in project settings if offered |
+| BibTeX: `unesco2024` / `itu2024` entry type | `@report` is not in plain BibTeX | Use latest `references.bib` (`@misc` entries) |
+| BibTeX: empty `booktitle` on `gagne1985` | Wrong entry type (`@incollection` without booktitle) | Use latest `references.bib` (`@book`) |
+| **0 Errors** | PDF built successfully | You can download and submit |
+
+After updating `references.bib`, click **Recompile** **twice** (or **Clear cached files** → Recompile) so citations refresh.
 
 You will use the **same Overleaf project** (or the same `paper.tex` and `references.bib` on your machine) to prepare the files you upload to arXiv. arXiv will compile the LaTeX itself; you do **not** upload the PDF to arXiv (you upload the `.tex` and `.bib`).
 
@@ -142,11 +166,15 @@ Do this **after** you have confirmed the PDF compiles (e.g. in Overleaf or local
 ## Quick checklist before you submit to arXiv
 
 - [ ] PDF compiles (e.g. in Overleaf) and looks correct.
+- [ ] `paper.tex` tone pass done (Section 5 economics, conclusion, appendix vendor caveat).
+- [ ] Cost numbers match [COST_WORKSHEET.md](COST_WORKSHEET.md) (headline **$0.021/learner/month**).
+- [ ] Run `npm run benchmark:sudar`; refresh Table perf in `paper.tex` if `benchmark-results.json` changed.
 - [ ] Only `paper.tex` and `references.bib` uploaded (no build artifacts, no PDF).
 - [ ] Main file set to `paper.tex`.
-- [ ] Title, authors, and abstract filled in.
-- [ ] At least one category selected (e.g. cs.CY).
-- [ ] License selected.
+- [ ] Title, authors, abstract, and **Keywords** filled in (copy from `paper.tex`).
+- [ ] Primary category **cs.CY**; cross-list **cs.HC** or **cs.AI** (optional).
+- [ ] License selected (e.g. CC BY 4.0).
+- [ ] Author name and GitHub URL visible (arXiv is not double-blind).
 
 ---
 

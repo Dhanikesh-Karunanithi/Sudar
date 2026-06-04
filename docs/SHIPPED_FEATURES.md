@@ -7,7 +7,7 @@ This document summarizes **shipped** features that are committed and ready for u
 ## Unified ecosystem branding — browser favicon and tab titles
 
 - **Where**: Sudar Learn, Sudar Studio, marketing site (`teachwithsudar/`), and ecosystem demo — browser tab icon and default `<title>`.
-- **What**: Replaces default/Vercel globe favicon with a high-visibility Sudar mark (white logo on brand primary `#2f2a8a`, rounded square). Root layouts declare explicit `icons` metadata and professional default titles per surface.
+- **What**: Replaces default/Vercel globe favicon with a high-visibility Sudar mark (white logo on black `#000000`, rounded square). Root layouts declare explicit `icons` metadata and professional default titles per surface.
 - **Key files**:
   - `sudar-learn/public/icon.svg`, `sudar-studio/public/icon.svg`, `teachwithsudar/public/icon.svg`, `sudar-ecosystem-demo/public/icon.svg` — shared favicon asset.
   - `sudar-learn/src/app/layout.tsx`, `sudar-studio/src/app/layout.tsx`, `teachwithsudar/src/app/layout.tsx`, `sudar-ecosystem-demo/src/app/layout.tsx` — `metadata.icons` + default titles.
@@ -15,23 +15,21 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
-## thesudar.com Premium Application Gateway (Marketing & Gateway)
+## thesudar.com Application Gateway (black canvas, v2)
 
-- **Where**: Marketing site — `thesudar.com` homepage (`teachwithsudar/src/app/page.tsx`).
-- **What**: Redesigned the main homepage of `thesudar.com` into a world-class, premium, animation-driven application gateway that guides users directly into Sudar Learn (for learners) or Sudar Studio (for creators/admins), while delegating deep informational and documentation content to `teachwithsudar.com`.
+- **Where**: `thesudar.com` homepage — `teachwithsudar` with `NEXT_PUBLIC_SITE_VARIANT=gateway` (`teachwithsudar/src/app/page.tsx` → `GatewayHomePage`).
+- **What**: Entry gateway on **pure black** (`#000`) with ember CTAs and indigo structure accents only. Hero uses an enlarged CSS pill-morph + star-pop that **holds on the Sudar S mark** (loops every 30s); tagline—“Equal opportunity for all.” On scroll, the held mark **flies and scales into the fixed nav logo** (`#nav-logo-anchor`) while the header link stays hidden until settled. Product section uses horizontal pin-scroll with rich mockups; Digital Learner Twin uses an **interactive 3D constellation** (mouse tilt, orbital rings, hoverable signal nodes with sample metrics). Modalities marketing removed from homepage—link to `teachwithsudar.com/modalities`.
 - **Key files**:
-  - `teachwithsudar/src/app/page.tsx` — Composed 7 premium gateway sections.
-  - `teachwithsudar/src/components/home/HeroCanvas.tsx` — 2D canvas orbital rings background.
-  - `teachwithsudar/src/components/home/HeroCinematic.tsx` — SplitType headline reveals and magnetic CTAs.
-  - `teachwithsudar/src/components/home/ProductTrinity.tsx` — GSAP ScrollTrigger pinned horizontal scroll.
-  - `teachwithsudar/src/components/home/IntelligenceConstellation.tsx` — Scroll-triggered SVG Digital Learner Twin visualization.
-  - `teachwithsudar/src/components/home/ModalitiesOrbit.tsx` — Interactive 7-modality orbital ring with hover expand and preview panel.
-  - `teachwithsudar/src/components/home/TutorShowcase.tsx` — Auto-playing scripted tutor chat with word-stream animation.
-  - `teachwithsudar/src/components/home/ImpactStrip.tsx` — GSAP counter-up animations on scroll entry.
-  - `teachwithsudar/src/components/home/AccessGate.tsx` — Full-viewport split portal with GSAP hover ratio animation.
-  - `teachwithsudar/src/components/Header.tsx` — Updated navigation with login dropdown and external links.
-  - `teachwithsudar/src/lib/gsap-lenis.ts`, `teachwithsudar/src/components/GsapLenisProvider.tsx` — GSAP + Lenis smooth scroll integration.
-- **Flow**: User visits `thesudar.com` → experiences cinematic, high-fidelity animations showcasing Sudar's capabilities → enters either Sudar Learn or Sudar Studio via direct login CTAs or the split access gate.
+  - `teachwithsudar/src/styles/gateway-theme.css` — Black surfaces; no indigo page wash.
+  - `teachwithsudar/src/components/gateway/SudarLogoMotion.tsx` — Hero logo (= → S + ★, 30s loop, holds on S).
+  - `teachwithsudar/src/components/gateway/SudarLogoAnimatedMark.tsx` — Shared animated mark DOM (hero + scroll clone).
+  - `teachwithsudar/src/components/home/HeroScrollAnimatedLogo.tsx` — Framer scroll flight to nav (`useHeroLogoScroll`).
+  - `teachwithsudar/src/hooks/useHeroLogoScroll.ts` — Scroll progress + nav compact threshold.
+  - `teachwithsudar/src/styles/sudar-logo-animated.css` — Logo keyframes + `is-holding` lock state.
+  - `teachwithsudar/src/components/home/HeroCinematic.tsx`, `ProductTrinity.tsx`, `IntelligenceConstellation.tsx`, `LearnerTwinVisualization.tsx`, `TutorShowcase.tsx`, `ImpactStrip.tsx`, `AccessGate.tsx`.
+  - `teachwithsudar/src/components/home/ModalitiesOrbit.tsx` — Used on marketing site only (not gateway home).
+- **Env**: `NEXT_PUBLIC_SITE_VARIANT=gateway` for local preview and Cloudflare Pages project **thesudar** (see `teachwithsudar/README.md`).
+- **Flow**: User visits `thesudar.com` → hero + product beats + twin + tutor proof → Learn or Studio via CTAs or access gate.
 
 ---
 

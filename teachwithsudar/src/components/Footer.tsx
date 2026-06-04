@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { navSections, GITHUB_URL, CONTACT_EMAIL, SITE_NAME } from "@/lib/site-nav";
+import { IS_GATEWAY_SITE } from "@/lib/site-variant";
 
 export function Footer() {
   const allLinks = [
@@ -12,11 +13,21 @@ export function Footer() {
   ];
 
   return (
-    <footer className="py-16 md:py-20 border-t border-white/5 bg-[#050505] relative overflow-hidden">
+    <footer
+      className={`py-16 md:py-20 border-t relative overflow-hidden ${
+        IS_GATEWAY_SITE
+          ? "border-[var(--border)] bg-black"
+          : "border-white/5 bg-[#050505]"
+      }`}
+    >
       <div className="mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-10 md:gap-12">
           <div className="min-w-0">
-            <h2 className="text-[clamp(2.5rem,10vw,6rem)] leading-[0.85] tracking-tighter text-white/10 font-bold select-none pointer-events-none font-serif">
+            <h2
+              className={`text-[clamp(2.5rem,10vw,6rem)] leading-[0.85] tracking-tighter text-white/10 font-bold select-none pointer-events-none ${
+                IS_GATEWAY_SITE ? "font-heading" : "font-serif"
+              }`}
+            >
               Sudar.
             </h2>
           </div>

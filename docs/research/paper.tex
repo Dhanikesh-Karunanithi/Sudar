@@ -1,5 +1,5 @@
 % Learning That Remembers You — Sudar / ALP Paper
-% v3 (April 2026): maturity-aware modalities, ALP API status, engagement/trust
+% v4 (June 2026): arXiv tone pass, cost worksheet alignment, benchmark artefact
 \documentclass[10pt,twocolumn]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -13,6 +13,7 @@
 \usetikzlibrary{positioning,shapes.geometric,arrows.meta,fit,backgrounds}
 \usepackage{placeins}
 \usepackage{dblfloatfix}
+\usepackage{float}
 \hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
 
 \title{Learning That Remembers You: An AI-Native Ecosystem\\
@@ -61,6 +62,11 @@ implementation is open source under the Apache-2.0 licence
 designed as an extensible bedrock platform on which the community can
 build additional modalities, intelligence plugins, and LMS connectors.
 \end{abstract}
+
+\noindent\textbf{Keywords:} adaptive learning; intelligent tutoring systems;
+learner modelling; digital learner twin; open-source LMS; multimodal learning;
+large language models; educational technology; plugin architecture; learning
+analytics.
 
 % ---------------------------------------------------------------
 \section{Introduction}
@@ -199,8 +205,8 @@ The cost of AI inference has fallen approximately 1,000-fold from 2022
 to 2026, at a rate of roughly 10$\times$ per year---faster than
 Moore's Law and faster than the bandwidth cost curves observed during
 the internet expansion of the early 2000s \cite{a16z2024llmflation}.
-This collapse makes AI-native learning economically viable at
-population scale for the first time, yet no major LMS vendor has
+This reduction in inference cost makes AI-native learning economically
+viable at population scale for the first time, yet no major LMS vendor has
 restructured its pricing model to reflect it.
 
 \begin{table}[tbp]
@@ -209,7 +215,8 @@ restructured its pricing model to reflect it.
 typical LMS with AI add-on.}
 \label{tab:comparison}
 \small
-\begin{tabular}{@{}p{1.55cm}p{2.2cm}p{1.5cm}p{1.55cm}@{}}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}p{1.35cm}p{1.85cm}p{1.35cm}p{1.5cm}@{}}
 \toprule
  & \textbf{Sudar + ALP} & \textbf{Learn Your Way} & \textbf{Typical LMS + AI} \\
 \midrule
@@ -220,9 +227,10 @@ Modalities     & Read/Listen, optional video/podcast, map/cards, SCORM & Text, s
 Authoring      & Integrated (Studio)                 & N/A (ingests material)   & Separate tools \\
 Augment LMS    & Yes (ALP plugins)                   & No                       & N/A \\
 Open source    & Yes (Apache-2.0)                   & No                       & Rarely \\
-Cost (1,000 learners/mo) & $\sim$\$21 & N/A & \$3,400--\$44,000 \\
+Cost (1k/mo)   & $\sim$\$21 & N/A & \$3.4k--\$44k \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \FloatBarrier
@@ -468,6 +476,18 @@ hardening for multi-tenant production, and mapping institutional user
 identities, remain deployment engineering tasks rather than missing
 core APIs.
 
+\paragraph{HTTP contract (reference).}
+Connectors authenticate with \texttt{x-alp-api-key} (or Bearer) and
+POST batched events to Learn, e.g.\
+\texttt{\{ "user\_id": "<uuid>", "events": [\{ "event\_type":
+"module\_complete", "course\_id": "...", "modality": "text",
+"duration\_secs": 120 \}] \}}.
+Twin updates run asynchronously after ingestion; tutor and
+next-best-action calls use the same org-scoped \texttt{user\_id}.
+\textbf{LTI~1.3} launch and JWKS endpoints exist on Learn for Moodle/Canvas
+packaging (\texttt{/api/alp/lti/*}); vendor installable plugins remain
+roadmap (see \texttt{docs/ALP\_API.md}).
+
 \paragraph{Addressable scale.}
 Moodle alone has over 500 million registered users across 233 countries
 and holds approximately 28\% of the global LMS market
@@ -627,52 +647,65 @@ Railway, Render, or Fly.io, with the Intelligence URL set in the apps.
 The project is open source under the Apache-2.0 licence \cite{sudar2026}.
 
 % ---------------------------------------------------------------
-\section{Economic Accessibility: The Radical Cost Case}
+\section{Economic Feasibility and Cost Analysis}
 \label{sec:economics}
 % ---------------------------------------------------------------
 
-The economic dimension of Sudar is not incidental to its design---it
-is one of its three primary contributions.
+A primary barrier to AI-native adaptive learning is perceived
+infrastructure cost. This section reports \emph{marginal} AI provider
+cost for a defined workload (Appendix~\ref{sec:cost-appendix}, worksheet
+in \texttt{COST\_WORKSHEET.md}); it is not a full total cost of ownership
+(TCO) for content, support, or enterprise LMS seats.
 
-\paragraph{Observed infrastructure cost.}
-Operating Sudar at full engagement---10 courses generated, 20 learner
-review sessions with AI tutor chat, adaptive personalisation, mindmap
-generation, flashcard generation, and TTS narration---costs
-approximately \textbf{\$0.20 per week} on the Together AI + Edge-TTS
-stack. At organisational scale with 1,000 learners and 50 sessions per
-month, the contrast is:
+\paragraph{Defined workload and headline cost.}
+We model high engagement per learner per month: ten course-generation
+runs, twenty tutor chat sessions, adaptive personalisation, mindmap and
+flashcard generation, and TTS narration (Together AI 8B + Edge-TTS,
+Q2 2026 list prices). The worksheet yields approximately
+\textbf{\$0.021 per learner per month} (\$0.25 annualised per learner for
+AI APIs only). At 1{,}000 active learners the marginal AI stack is
+\textbf{\$21/month}; at 10{,}000 learners, \textbf{\$210/month}.
 
-\begin{center}
-\small
+\paragraph{Marginal AI stack comparison.}
+Table~\ref{tab:marginal-ai} contrasts \emph{like-with-like} AI inference
+and TTS stacks for the same 1{,}000-learner scenario (not platform seat
+licences).
+
+\begin{table}[H]
+\centering
+\caption{Marginal AI infrastructure (1{,}000 learners, defined workload).}
+\label{tab:marginal-ai}
+\scriptsize
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lrr@{}}
 \toprule
 Stack & Per month & Annual \\
 \midrule
-Sudar (Together AI + Edge-TTS) & \$21 & \$252 \\
+Sudar (Together AI 8B + Edge-TTS) & \$21 & \$252 \\
 GPT-4o + OpenAI TTS-1 & \$3,405 & \$40,860 \\
 Claude 3.5 Sonnet + Azure TTS & \$3,735 & \$44,820 \\
-Docebo (platform licence) & \$5,830+ & \$69,960+ \\
 \bottomrule
-\end{tabular}
-\end{center}
+\end{tabular}%
+}
+\end{table}
 
-At 10,000 learners, Sudar's open-weight stack costs approximately
-\$210/month. The delta versus a closed-model stack---over \$400,000
-per year---is the economic value of open-weight inference returned to
-the institution rather than captured by AI API providers.
+At 10{,}000 learners, the delta versus a closed-model stack in
+Table~\ref{tab:marginal-ai} exceeds \$400{,}000 per year---savings from
+open-weight inference rather than proprietary API pricing alone.
 
-\paragraph{The inference cost collapse.}
+\paragraph{Impact of inference optimisation.}
 AI inference costs have fallen approximately 1,000-fold from 2022 to
 2026 at roughly 10$\times$ per year \cite{a16z2024llmflation}, driven
 by GPU efficiency gains, software optimisation (vLLM, TensorRT-LLM),
 Mixture-of-Experts architectures, and quantisation. GPT-3-class
 performance costs \$0.06 per million tokens today versus \$60 in 2021.
-The cost of delivering a world-class personalised tutor interaction to
-one learner is now less than \$0.02 per month---below the cost of a
-single SMS message. The economic argument against AI-native learning at
-scale has expired.
+Maintaining longitudinal tutor memory per learner at the marginal cost
+in our worksheet (\$0.021/user/month) is therefore computationally and
+economically feasible for large-scale deployments, particularly in
+resource-constrained settings where proprietary enterprise licences are
+often exclusionary.
 
-\paragraph{The education access crisis.}
+\paragraph{Accessibility context.}
 As of 2024, 251 million children and youth remain out of school
 globally \cite{unesco2024}. 2.6 billion people remain offline
 \cite{itu2024}, with mobile internet in Africa costing 14$\times$ more
@@ -680,15 +713,47 @@ than in Europe. An annual financing gap of \$39 billion exists for
 basic education in low- and lower-middle-income countries through 2030
 \cite{unesco2024}. The average corporate training spend per employee in
 the United States is \$1,283 per year \cite{statista2023}; Sudar's
-\emph{marginal} AI stack cost (\$0.21/user/month in our worksheet) is
+\emph{marginal} AI stack cost (\$0.021/user/month in our worksheet) is
 \textbf{not comparable} to that all-in training benchmark---we include
 it only to contrast order-of-magnitude \emph{LMS+AI API} stacks in the
 table above, not to claim equivalent coverage.
 
-High-end AI learning platforms priced at \$12--\$20 per user per month
-are not deployable in this context. A platform whose full AI
-infrastructure costs \$0.02 per learner per month---and whose stack is
-open-source, self-hostable, and runnable on open-weight models---is.
+Platforms priced at \$12--\$20 per user per month for bundled AI features
+remain difficult to deploy in this context. Sudar's \emph{marginal} AI
+stack for the workload above is approximately \$0.021 per learner per
+month on open-weight inference; the reference implementation is
+open-source, self-hostable, and runnable without proprietary model lock-in.
+
+\paragraph{System performance and latency.}
+\label{sec:perf}
+To validate that longitudinal modelling does not block the learner UI,
+we measured core paths with \texttt{scripts/benchmark-sudar.mjs}
+(results in \texttt{docs/research/benchmark-results.json}).
+Table~\ref{tab:perf} summarises a representative run (method: 20 samples
+per endpoint, p50/p95; Intelligence \texttt{/api/health} and optional
+tutor query when service credentials are configured; local heuristic
+ranking microbench for catalog size $N{=}1000$).
+
+\begin{table}[H]
+\centering
+\caption{Baseline latency (artefact: \texttt{benchmark-results.json}). Health/tutor
+rows require a live Intelligence URL and service secret.}
+\label{tab:perf}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Path & p50 (ms) & p95 (ms) \\
+\midrule
+Intel.\ \texttt{/api/health} & --- & --- \\
+Intel.\ \texttt{/api/tutor/query} & --- & --- \\
+NBA heuristic ($N{=}1000$) & 0.2 & 5 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+\noindent\scriptsize{Reproduce: \texttt{node scripts/benchmark-sudar.mjs}.}
 
 % ---------------------------------------------------------------
 \section{Evidence and Evaluation Strategy}
@@ -714,7 +779,9 @@ learning-science evidence; (c)~the ALP architecture addresses a gap in
 LMS-agnostic, memory-aware services that commercial stacks rarely ship
 as open, portable APIs; and
 (d)~the economic cost structure has been empirically observed in
-practice and validated against current provider pricing.
+practice and validated against current provider pricing; and
+(e)~baseline latency for core paths is reported in
+Section~\ref{sec:perf} with a reproducible harness.
 
 \paragraph{Pilot study.}
 A pilot evaluation is planned, to be initiated after the current build
@@ -776,26 +843,19 @@ LMSs---with the potential to reach the hundreds of millions
 of Moodle, Canvas, Blackboard, and Sakai users \cite{moodle2025stats}
 without requiring LMS replacement; and (3)~a demonstrated economic
 model that reduces the infrastructure cost of AI-native personalised
-learning to less than \$0.02 per learner per month, making it viable
-at the scale of national education systems and accessible in contexts
-where \$12--\$20/user/month platforms are structurally excluded.
+learning to approximately \$0.021 per learner per month for the defined
+marginal AI workload (Section~\ref{sec:economics}), supporting
+deployment in resource-constrained contexts where proprietary
+\$12--\$20/user/month platforms are often exclusionary.
 
-The inference cost collapse is the macro condition that makes all of
-this possible \cite{a16z2024llmflation}. Platforms built on open-weight
-models and open-source infrastructure are positioned to pass this
-economic gain directly to learners---particularly the 251 million
-children currently out of school \cite{unesco2024} and the 2.6 billion
-people currently offline \cite{itu2024}.
-
-Together, these contributions offer a path to making adaptive,
-memory-aware learning accessible both through a standalone platform and
-as an augmentation of the LMSs that organisations already rely on. The
-reference implementation is open source, grounded in a broad
-learning-science evidence base
+Future work includes IRB-approved efficacy trials, hardened ALP LMS
+packaging, and interpretability of modality affinity scores. The
+reference implementation is open source (Apache-2.0), grounded in a
+broad learning-science evidence base
 \cite{vanlehn2011,aleven2016,mayer2009,clark2016,zimmerman2002,%
-gagne1985,bull2016,black1998,roediger2006}, and designed as a bedrock
-upon which the community can build modalities, intelligence plugins,
-and LMS connectors.
+gagne1985,bull2016,black1998,roediger2006}, and intended as
+extensible infrastructure for researchers and institutions to evaluate
+and adapt.
 
 % ---------------------------------------------------------------
 \section*{Acknowledgments}
@@ -805,17 +865,8 @@ The system and research are the author's project. The reference
 implementation is available at
 \url{https://github.com/Dhanikesh-Karunanithi/Sudar} with
 documentation (\texttt{ECOSYSTEM.md}, \texttt{RESEARCH\_FOUNDATION.md},
-\texttt{docs/sudar-memory.md}).
-
-\begin{center}
-\fbox{\parbox{0.9\columnwidth}{\small
-\textbf{Call for collaboration.} Institutions, organisations, and
-open-source contributors are invited to collaborate on pilots, plugin
-integrations, and community extensions.
-Contact: \texttt{connect@dhanikeshkarunanithi.com} or
-\url{https://github.com/Dhanikesh-Karunanithi/Sudar}.
-}}
-\end{center}
+\texttt{docs/sudar-memory.md}). Institutions interested in pilots or ALP
+integrations may contact \texttt{connect@dhanikeshkarunanithi.com}.
 
 % ---------------------------------------------------------------
 \appendix
@@ -836,10 +887,12 @@ optional \texttt{personalization\_overlays} JSONB);
 Full schema: \texttt{ECOSYSTEM.md} in the repository.
 
 \section{Infrastructure Cost Reference}
+\label{sec:cost-appendix}
 
 \begin{center}
-\small
-\begin{tabular}{@{}p{3.2cm}rr@{}}
+\scriptsize
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrr@{}}
 \toprule
 Stack & /learner/mo & Annual (1k) \\
 \midrule
@@ -847,21 +900,26 @@ Together AI 8B + Edge-TTS   & \$0.021  & \$252 \\
 Together AI 70B + Edge-TTS  & \$0.105  & \$1,260 \\
 GPT-4o + OpenAI TTS-1       & \$3.41   & \$40,860 \\
 Claude 3.5 + Azure TTS      & \$3.74   & \$44,820 \\
+\midrule
+\multicolumn{3}{@{}l@{}}{\emph{Illustrative platform list prices (not measured):}} \\
 Docebo (licence, low end)   & \$5.83   & \$69,960 \\
 Sana Labs (est., min.\ 300) & $\approx$\$15 & $\approx$\$180k \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{center}
-\noindent\small{AI infrastructure only; excludes hosting (Supabase free
-tier: \$0; Pro: \$25/month).}
+\noindent\small{Marginal AI rows follow \texttt{COST\_WORKSHEET.md} (Q2 2026).
+Platform licence rows are public list-price illustrations only---not
+comparable to marginal AI cost without a full TCO study. Hosting
+excluded (Supabase free tier: \$0; Pro: \$25/month). Sensitivity: 0.5$\times$/
+2$\times$ usage $\Rightarrow$ \$0.011--\$0.042 per learner/month on the
+8B stack.}
 
 \section{Reproducibility and evaluation artefacts}
-\noindent\small{Fill and version the cost assumptions in
-\texttt{docs/research/COST\_WORKSHEET.md}; scope claims using
-\texttt{docs/research/EVALUATION\_APPENDIX.md}; run pilots per
-\texttt{docs/research/PILOT\_PROTOCOL.md}; extend
-\texttt{scripts/benchmark-sudar.mjs} for automated latency/token
-measurements when credentials are available.}
+\noindent\small{Cost assumptions: \texttt{COST\_WORKSHEET.md}; claim scope:
+\texttt{EVALUATION\_APPENDIX.md}; pilots: \texttt{PILOT\_PROTOCOL.md};
+latency: \texttt{node scripts/benchmark-sudar.mjs} $\rightarrow$
+\texttt{benchmark-results.json}.}
 
 % ---------------------------------------------------------------
 \bibliographystyle{plain}

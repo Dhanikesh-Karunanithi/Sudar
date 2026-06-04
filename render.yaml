@@ -1,0 +1,33 @@
+# Render Blueprint — Sudar Intelligence (Python FastAPI)
+# Dashboard: New → Blueprint → connect repo, or set Root Directory to sudar-intelligence manually.
+#
+# Requires env vars in Render dashboard (see docs/INTELLIGENCE_DEPLOYMENT.md).
+
+services:
+  - type: web
+    name: sudar-intelligence
+    runtime: python
+    rootDir: sudar-intelligence
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: https://learn.thesudar.com,https://studio.thesudar.com
+      - key: LEARN_INTERNAL_URL
+        value: https://learn.thesudar.com
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: TOGETHER_API_KEY
+        sync: false
+      - key: INTELLIGENCE_SERVICE_SECRET
+        sync: false

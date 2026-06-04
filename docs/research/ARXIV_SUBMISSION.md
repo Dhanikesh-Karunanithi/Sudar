@@ -44,11 +44,9 @@ You need: `pdflatex`, `bibtex`, and standard packages (`tikz`, `booktabs`, `hype
    - arXiv will run pdflatex and bibtex; ensure the project compiles with those.
 
 3. **Categories (suggested)**
-   - **cs.CY** (Computers and Society) — education, learning systems.
-   - **cs.HC** (Human-Computer Interaction) — if emphasizing learner experience.
-   - **cs.LG** (Machine Learning) — if emphasizing AI/ML components.
-   - **cs.AI** (Artificial Intelligence) — AI for education.
-   - Primary suggestion: **cs.CY** or **cs.HC**.
+   - **Primary: cs.CY** (Computers and Society) — education, learning systems.
+   - **Cross-list (pick one): cs.HC** (Human-Computer Interaction) or **cs.AI** (AI for education).
+   - Optional tertiary: **cs.LG** only if you add ML evaluation content.
 
 4. **License**
    - Choose a license (e.g. CC BY 4.0) when prompted.

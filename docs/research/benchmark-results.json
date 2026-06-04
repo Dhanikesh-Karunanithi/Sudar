@@ -1,0 +1,35 @@
+{
+  "generated_at": "2026-06-03T19:33:26.068Z",
+  "environment": {
+    "node": "v22.22.0",
+    "intelligence_base": "http://127.0.0.1:8001",
+    "samples": 20,
+    "catalog_n": 1000
+  },
+  "results": {
+    "health": {
+      "endpoint": "/api/health",
+      "base_url": "http://127.0.0.1:8001",
+      "n": 0,
+      "p50_ms": null,
+      "p95_ms": null,
+      "min_ms": null,
+      "max_ms": null,
+      "error": "fetch failed"
+    },
+    "tutor": {
+      "endpoint": "/api/tutor/query",
+      "skipped": true,
+      "reason": "INTELLIGENCE_SERVICE_SECRET not set"
+    },
+    "ranking": {
+      "component": "next_action_ranking_heuristic",
+      "catalog_n": 1000,
+      "n": 20,
+      "p50_ms": 2.517500000016298,
+      "p95_ms": 7.2620999999926426,
+      "min_ms": 0.04609999997774139,
+      "max_ms": 8.347200000018347
+    }
+  }
+}

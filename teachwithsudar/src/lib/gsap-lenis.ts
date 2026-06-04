@@ -44,3 +44,10 @@ export function destroyGsapLenis(): void {
 export function getLenis(): Lenis | null {
   return lenisInstance;
 }
+
+/** Scroll offset for ScrollTrigger / hero logo flight (Lenis when active, else native). */
+export function getScrollY(): number {
+  const lenis = getLenis();
+  if (lenis) return lenis.scroll;
+  return window.scrollY;
+}

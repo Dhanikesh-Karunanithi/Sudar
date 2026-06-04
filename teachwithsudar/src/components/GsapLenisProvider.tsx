@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import { destroyGsapLenis, initGsapLenis } from "@/lib/gsap-lenis";
 
 export function GsapLenisProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
+  useLayoutEffect(() => {
     initGsapLenis();
     return () => destroyGsapLenis();
   }, []);

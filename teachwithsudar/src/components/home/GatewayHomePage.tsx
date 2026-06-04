@@ -3,7 +3,6 @@
 import { HeroCinematic } from "@/components/home/HeroCinematic";
 import { ProductTrinity } from "@/components/home/ProductTrinity";
 import { IntelligenceConstellation } from "@/components/home/IntelligenceConstellation";
-import { ModalitiesOrbit } from "@/components/home/ModalitiesOrbit";
 import { TutorShowcase } from "@/components/home/TutorShowcase";
 import { ImpactStrip } from "@/components/home/ImpactStrip";
 import { AccessGate } from "@/components/home/AccessGate";
@@ -11,11 +10,10 @@ import { AccessGate } from "@/components/home/AccessGate";
 /** thesudar.com — application gateway into Learn / Studio. */
 export function GatewayHomePage() {
   return (
-    <div className="w-full bg-[#050505]">
+    <div className="w-full bg-black">
       <HeroCinematic />
       <ProductTrinity />
       <IntelligenceConstellation />
-      <ModalitiesOrbit />
       <TutorShowcase />
       <ImpactStrip />
       <AccessGate />

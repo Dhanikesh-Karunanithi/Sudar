@@ -10,7 +10,9 @@ export function PageLayout({ children }: { children: ReactNode }) {
   const Header = IS_GATEWAY_SITE ? GatewayHeader : MarketingHeader;
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#050505]">
+    <div
+      className={`flex min-h-screen flex-col ${IS_GATEWAY_SITE ? "bg-[var(--surface)]" : "bg-[#050505]"}`}
+    >
       <NoiseOverlay />
       <RevealObserver />
       <Header />

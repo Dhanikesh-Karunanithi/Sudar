@@ -1,0 +1,236 @@
+/* Hero Sudar mark: = → S + ★, then hold on the S logo */
+
+.sudar-logo-scroll-clone .sudar-logo-canvas {
+  margin-inline: 0;
+}
+
+.sudar-logo-scroll-clone .sudar-logo-stage:hover,
+.sudar-logo-scroll-clone .sudar-logo-stage:focus-visible {
+  transform: none;
+}
+
+.sudar-logo-stage {
+  --sudar-logo-scale: 1.32;
+  --sudar-logo-scene-w: calc(360px * var(--sudar-logo-scale));
+  --sudar-logo-scene-h: calc(220px * var(--sudar-logo-scale));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  cursor: default;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sudar-logo-stage:hover,
+.sudar-logo-stage:focus-visible {
+  transform: scale(1.02);
+}
+
+.sudar-logo-stage:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand-accent) 45%, transparent);
+  outline-offset: 14px;
+  border-radius: 12px;
+}
+
+.sudar-logo-canvas {
+  position: relative;
+  width: var(--sudar-logo-scene-w);
+  height: var(--sudar-logo-scene-h);
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.sudar-logo-canvas.is-resting::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 72%;
+  height: 68%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 122, 69, 0.09) 0%,
+    transparent 68%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sudar-logo-animated {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  transition: filter 0.5s ease;
+}
+
+.sudar-logo-stage:hover .sudar-logo-canvas.is-resting .sudar-logo-animated,
+.sudar-logo-stage:focus-visible .sudar-logo-canvas.is-resting .sudar-logo-animated {
+  filter: drop-shadow(0 0 40px rgba(255, 130, 70, 0.14));
+}
+
+/* ── Pills (= start → S lock) ── */
+.sudar-logo-animated .pill {
+  position: absolute;
+  border-radius: 999px;
+  background: #fff;
+  height: calc(64px * var(--sudar-logo-scale));
+}
+
+.sudar-logo-animated .pill--top {
+  width: calc(170px * var(--sudar-logo-scale));
+  top: calc(35px * var(--sudar-logo-scale));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.sudar-logo-animated .pill--bottom {
+  width: calc(170px * var(--sudar-logo-scale));
+  top: calc(121px * var(--sudar-logo-scale));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.sudar-logo-animated.is-playing .pill--top {
+  animation: sudar-logo-topMorph 1.8s cubic-bezier(0.4, 0, 0.2, 1) 0.8s forwards;
+}
+
+.sudar-logo-animated.is-playing .pill--bottom {
+  animation: sudar-logo-botMorph 1.8s cubic-bezier(0.4, 0, 0.2, 1) 0.8s forwards;
+}
+
+/* Lock final Sudar S — survives removal of is-playing */
+.sudar-logo-animated.is-holding .pill--top {
+  top: calc(36px * var(--sudar-logo-scale));
+  transform: translateX(calc(-50% + 20px * var(--sudar-logo-scale)));
+}
+
+.sudar-logo-animated.is-holding .pill--bottom {
+  top: calc(100px * var(--sudar-logo-scale));
+  transform: translateX(calc(-50% - 20px * var(--sudar-logo-scale)));
+}
+
+@keyframes sudar-logo-topMorph {
+  0% {
+    top: calc(35px * var(--sudar-logo-scale));
+    transform: translateX(-50%);
+  }
+  100% {
+    top: calc(36px * var(--sudar-logo-scale));
+    transform: translateX(calc(-50% + 20px * var(--sudar-logo-scale)));
+  }
+}
+
+@keyframes sudar-logo-botMorph {
+  0% {
+    top: calc(121px * var(--sudar-logo-scale));
+    transform: translateX(-50%);
+  }
+  100% {
+    top: calc(100px * var(--sudar-logo-scale));
+    transform: translateX(calc(-50% - 20px * var(--sudar-logo-scale)));
+  }
+}
+
+/* ── Star ── */
+.sudar-logo-animated .star {
+  position: absolute;
+  left: 50%;
+  top: calc(100px * var(--sudar-logo-scale));
+  width: calc(90px * var(--sudar-logo-scale));
+  height: calc(90px * var(--sudar-logo-scale));
+  transform: translate(-50%, -50%) scale(0) rotate(-15deg);
+  opacity: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.sudar-logo-animated.is-playing .star {
+  animation: sudar-logo-starPop 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) 2.4s forwards;
+}
+
+.sudar-logo-animated.is-holding .star {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  animation: sudar-logo-starBreathe 3.5s ease-in-out infinite;
+}
+
+@keyframes sudar-logo-starPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.05) rotate(-15deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes sudar-logo-starBreathe {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.03) rotate(0deg);
+  }
+}
+
+.sudar-logo-animated .star svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Tagline (story lives here, not on the mark) ── */
+.sudar-logo-whisper {
+  margin-top: 1.5rem;
+  font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: rgba(250, 250, 250, 0.55);
+  text-align: center;
+  line-height: 1.4;
+  max-width: 20rem;
+}
+
+.sudar-logo-whisper__accent {
+  color: var(--brand-accent);
+  font-style: italic;
+}
+
+.sudar-logo-stage:hover .sudar-logo-whisper,
+.sudar-logo-stage:focus-visible .sudar-logo-whisper {
+  color: rgba(250, 250, 250, 0.72);
+  transition: color 0.4s ease;
+}
+
+@media (min-width: 1024px) {
+  .sudar-logo-stage {
+    --sudar-logo-scale: 1.38;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sudar-logo-stage:hover,
+  .sudar-logo-stage:focus-visible {
+    transform: none;
+  }
+
+  .sudar-logo-animated.is-playing .pill--top,
+  .sudar-logo-animated.is-playing .pill--bottom,
+  .sudar-logo-animated.is-playing .star,
+  .sudar-logo-animated.is-holding .star {
+    animation: none;
+  }
+
+  .sudar-logo-animated.is-holding .star {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}

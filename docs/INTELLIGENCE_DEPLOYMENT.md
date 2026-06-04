@@ -75,10 +75,13 @@ Sudar Intelligence is a **Python FastAPI** service. It cannot run on Vercel (Nod
    - **Root Directory:** `sudar-intelligence`.
 
 3. **Build & start**:
-   - **Runtime:** Python 3.
+   - **Runtime:** Python **3.11** (required — do **not** use 3.13+; `pydantic-core` has no wheels and the build fails compiling Rust).
+   - Set **Environment** → `PYTHON_VERSION` = `3.11.9`, or rely on repo `sudar-intelligence/runtime.txt`.
+   - **Root Directory:** `sudar-intelligence`
    - **Build Command:** `pip install -r requirements.txt`
    - **Start Command:** `uvicorn src.api.main:app --host 0.0.0.0 --port $PORT`
    - Render sets `PORT` (often 10000).
+   - Optional: deploy from repo **`render.yaml`** (Blueprint) at repo root for the same settings.
 
 4. **Environment**: Add the same variables as in Railway (see table above), including `CORS_ORIGINS` and `ENVIRONMENT=production`.
 
@@ -138,6 +141,7 @@ Sudar Intelligence is a **Python FastAPI** service. It cannot run on Vercel (Nod
 |------|-----|
 | CORS errors in browser | Ensure `CORS_ORIGINS` includes the exact Studio/Learn URLs (no trailing slash). Redeploy Intelligence after changing env. |
 | 502 / connection refused | Check start command uses `--host 0.0.0.0` and the platform’s `PORT`. |
+| Build fails on `pydantic-core` / `maturin` / read-only filesystem | Render picked Python 3.13+. Set **`PYTHON_VERSION=3.11.9`** or add `sudar-intelligence/runtime.txt`, then redeploy. Alternative: use **Docker** (`sudar-intelligence/Dockerfile`). |
 | Health OK but AI features fail | Verify `SUPABASE_*` and at least one of `TOGETHER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` are set. |
 | Cold starts (Render free) | First request after idle can take 30–60 s. Use Railway or Render paid for always-on. |
 

@@ -3,32 +3,13 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { GatewaySection } from "@/components/gateway/GatewaySection";
 
 const stats = [
-  {
-    value: 7,
-    suffix: "",
-    label: "Modalities",
-    desc: "Text, Video, Audio, MindMap, Flashcards, Feed, Play",
-  },
-  {
-    value: 30,
-    suffix: "+",
-    label: "Languages",
-    desc: "Full-stack localization & multilingual TTS",
-  },
-  {
-    value: 14,
-    suffix: "",
-    label: "Visual Templates",
-    desc: "Beautiful, pedagogically sound styles",
-  },
-  {
-    value: 100,
-    suffix: "%",
-    label: "Adaptive",
-    desc: "Real-time Next-Best-Action engine",
-  },
+  { value: 7, suffix: "", label: "Modalities", desc: "Text, video, audio, mind map, flashcards, feed, play" },
+  { value: 30, suffix: "+", label: "Languages", desc: "Full-stack localization and multilingual TTS" },
+  { value: 14, suffix: "", label: "Visual templates", desc: "Pedagogically sound Studio styles" },
+  { value: 100, suffix: "%", label: "Adaptive", desc: "Real-time next-best-action engine" },
 ];
 
 export function ImpactStrip() {
@@ -40,14 +21,13 @@ export function ImpactStrip() {
 
     counterRefs.current.forEach((ref, idx) => {
       if (!ref) return;
-
       const stat = stats[idx];
       const obj = { val: 0 };
 
       gsap.to(obj, {
         val: stat.value,
-        duration: 2,
-        ease: "power3.out",
+        duration: 1.5,
+        ease: "power2.out",
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top 85%",
@@ -61,20 +41,12 @@ export function ImpactStrip() {
   }, []);
 
   return (
-    <section
-      ref={containerRef}
-      className="relative z-10 py-16 bg-[#050505] border-y border-white/5 backdrop-blur-md overflow-hidden"
-    >
-      <div className="absolute inset-0 pointer-events-none opacity-30">
-        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-20 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-3/4 -translate-y-1/2 w-96 h-20 bg-violet-500/5 rounded-full blur-3xl" />
-      </div>
-
-      <div className="max-w-content-wide mx-auto px-6 relative z-10">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 items-center text-center mb-14">
+    <GatewaySection bordered className="py-16 md:py-20">
+      <div ref={containerRef}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 text-center mb-14">
           {stats.map((stat, idx) => (
-            <div key={stat.label} className="flex flex-col gap-2">
-              <div className="text-4xl md:text-6xl font-black text-white font-bricolage tracking-tight flex items-center justify-center">
+            <div key={stat.label}>
+              <div className="text-3xl md:text-5xl font-heading font-bold text-[var(--text-primary)] tracking-tight">
                 <span
                   ref={(el) => {
                     counterRefs.current[idx] = el;
@@ -82,37 +54,39 @@ export function ImpactStrip() {
                 >
                   0
                 </span>
-                <span className="text-primary">{stat.suffix}</span>
+                <span className="text-[var(--brand-accent)]">{stat.suffix}</span>
               </div>
-              <div className="text-sm font-semibold text-white/90 font-mono tracking-wider uppercase">
+              <div className="mt-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-primary)]">
                 {stat.label}
               </div>
-              <div className="text-xs text-foreground-muted font-light max-w-[180px] mx-auto leading-relaxed">
+              <p className="mt-1 text-xs text-[var(--text-secondary)] max-w-[180px] mx-auto leading-relaxed">
                 {stat.desc}
-              </div>
+              </p>
             </div>
           ))}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <blockquote className="rounded-2xl border border-white/5 bg-white/[0.02] p-6 text-left">
-            <p className="text-sm text-white/80 font-light leading-relaxed italic">
-              &ldquo;Sudar finally feels like a learning OS—not another LMS bolt-on. Our team ships courses in Studio and learners switch modalities without us rebuilding content.&rdquo;
+          <blockquote className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-6 text-left">
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+              &ldquo;Sudar finally feels like a learning OS—not another LMS bolt-on. Our team ships in Studio and
+              learners switch modalities without rebuilding content.&rdquo;
             </p>
-            <footer className="mt-4 text-[11px] font-mono text-foreground-muted uppercase tracking-wider">
-              L&amp;D Lead · Enterprise pilot
+            <footer className="mt-4 text-[11px] text-[var(--text-secondary)] uppercase tracking-wider">
+              L&amp;D lead · Enterprise pilot
             </footer>
           </blockquote>
-          <blockquote className="rounded-2xl border border-white/5 bg-white/[0.02] p-6 text-left">
-            <p className="text-sm text-white/80 font-light leading-relaxed italic">
-              &ldquo;The tutor remembers context across sessions. That longitudinal memory is the difference between a chatbot and a study buddy.&rdquo;
+          <blockquote className="rounded-xl border border-[var(--border)] bg-[var(--surface-elevated)] p-6 text-left">
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+              &ldquo;The tutor remembers context across sessions. That longitudinal memory is the difference between a
+              chatbot and a study buddy.&rdquo;
             </p>
-            <footer className="mt-4 text-[11px] font-mono text-foreground-muted uppercase tracking-wider">
+            <footer className="mt-4 text-[11px] text-[var(--text-secondary)] uppercase tracking-wider">
               Instructional designer · Higher ed
             </footer>
           </blockquote>
         </div>
       </div>
-    </section>
+    </GatewaySection>
   );
 }

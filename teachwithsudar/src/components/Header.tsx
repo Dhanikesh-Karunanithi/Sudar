@@ -8,7 +8,9 @@ import {
   HERO_NAV_COMPACT_THRESHOLD,
   useHeroLogoScroll,
 } from "@/hooks/useHeroLogoScroll";
+import { getScrollY } from "@/lib/gsap-lenis";
 import { GITHUB_URL } from "@/lib/site-nav";
+import { IS_GATEWAY_SITE } from "@/lib/site-variant";
 
 const NAV_LINKS = [
   { href: "https://learn.thesudar.com/login", label: "Sudar Learn", external: true },
@@ -27,7 +29,7 @@ export function Header() {
 
   useEffect(() => {
     const onScroll = () => {
-      const y = window.scrollY;
+      const y = getScrollY();
       setScrolled(
         heroLogoActive ? y > HERO_NAV_COMPACT_THRESHOLD : y > 50
       );
@@ -59,7 +61,7 @@ export function Header() {
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           scrolled
-            ? "py-4 bg-[#050505]/80 backdrop-blur-md border-b border-white/5"
+            ? `py-4 backdrop-blur-md border-b ${IS_GATEWAY_SITE ? "bg-black/90 border-[var(--border)]" : "bg-[#050505]/80 border-white/5"}`
             : "py-6 sm:py-8 bg-transparent"
         }`}
       >
@@ -67,7 +69,7 @@ export function Header() {
           <Link
             id="nav-logo-anchor"
             href="/"
-            className={`flex items-center gap-2.5 sm:gap-3 text-xl sm:text-2xl font-bold tracking-tighter font-serif text-white shrink-0 ${
+            className={`flex items-center gap-2.5 sm:gap-3 text-xl sm:text-2xl font-bold tracking-tighter ${IS_GATEWAY_SITE ? "font-heading" : "font-serif"} text-white shrink-0 ${
               heroLogoActive && !heroLogoSettled ? "invisible" : ""
             }`}
             onClick={() => setMobileOpen(false)}
@@ -114,7 +116,11 @@ export function Header() {
             <div ref={dropdownRef} className="relative hidden sm:inline-block">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 rounded-full text-sm font-semibold bg-white text-black hover:bg-gray-100 transition-all duration-300"
+                className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 rounded-full text-sm font-semibold transition-all duration-300 ${
+                  IS_GATEWAY_SITE
+                    ? "bg-[var(--brand-accent)] text-white hover:bg-[var(--primary-hover)]"
+                    : "bg-white text-black hover:bg-gray-100"
+                }`}
               >
                 Open Sudar
                 <svg className={`w-4 h-4 transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,7 +129,13 @@ export function Header() {
               </button>
 
               {dropdownOpen && (
-                <div className="absolute right-0 mt-3 w-64 rounded-2xl border border-white/5 bg-[#0d0d0d] p-3 shadow-2xl backdrop-blur-md animate-fade-up-in">
+                <div
+                  className={`absolute right-0 mt-3 w-64 rounded-2xl border p-3 shadow-2xl backdrop-blur-md animate-fade-up-in ${
+                    IS_GATEWAY_SITE
+                      ? "border-[var(--border)] bg-[var(--surface-elevated)]"
+                      : "border-white/5 bg-[#0d0d0d]"
+                  }`}
+                >
                   <div className="flex flex-col gap-1">
                     <a
                       href="https://learn.thesudar.com/login"
@@ -167,7 +179,9 @@ export function Header() {
 
       {/* Mobile menu overlay */}
       <div
-        className={`fixed inset-0 z-40 lg:hidden bg-[#050505]/95 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 lg:hidden backdrop-blur-sm transition-opacity duration-300 ${
+          IS_GATEWAY_SITE ? "bg-black/95" : "bg-[#050505]/95"
+        } ${
           mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         aria-hidden={!mobileOpen}
@@ -202,14 +216,22 @@ export function Header() {
           <div className="flex flex-col gap-4 w-full max-w-[280px] mt-4">
             <a
               href="https://learn.thesudar.com/login"
-              className="inline-flex items-center justify-center w-full px-6 py-3.5 rounded-full text-base font-semibold bg-indigo-600 text-white hover:bg-indigo-500 transition-all text-center"
+              className={`inline-flex items-center justify-center w-full px-6 py-3.5 rounded-full text-base font-semibold text-white transition-all text-center ${
+                IS_GATEWAY_SITE
+                  ? "bg-brand-secondary hover:opacity-90"
+                  : "bg-indigo-600 hover:bg-indigo-500"
+              }`}
               onClick={() => setMobileOpen(false)}
             >
               Open Sudar Learn
             </a>
             <a
               href="https://studio.thesudar.com/login"
-              className="inline-flex items-center justify-center w-full px-6 py-3.5 rounded-full text-base font-semibold bg-white text-black hover:bg-gray-100 transition-all text-center"
+              className={`inline-flex items-center justify-center w-full px-6 py-3.5 rounded-full text-base font-semibold transition-all text-center ${
+                IS_GATEWAY_SITE
+                  ? "bg-[var(--brand-accent)] text-white hover:bg-[var(--primary-hover)]"
+                  : "bg-white text-black hover:bg-gray-100"
+              }`}
               onClick={() => setMobileOpen(false)}
             >
               Open Sudar Studio

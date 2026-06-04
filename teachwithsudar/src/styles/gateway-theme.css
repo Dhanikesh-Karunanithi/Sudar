@@ -1,0 +1,51 @@
+/**
+ * thesudar.com gateway — black canvas + ember/indigo accents only on controls
+ */
+
+html[data-site-variant="gateway"] {
+  --site-header-offset: 7.75rem;
+  --bg: #000000;
+  --background: #000000;
+  --background-muted: #0a0a0a;
+  --foreground: #fafafa;
+  --foreground-muted: #a1a1aa;
+  --border: rgba(255, 255, 255, 0.08);
+  --primary: #ff7a45;
+  --primary-hover: #ff9060;
+  --accent: #ff7a45;
+  --card-bg: #0a0a0a;
+  --card-border: rgba(255, 255, 255, 0.1);
+  --link: #5e5ad7;
+  --design-accent: #ff7a45;
+  --card: #0a0a0a;
+
+  --brand-primary: #2f2a8a;
+  --brand-primary-strong: #26216f;
+  --brand-secondary: #5e5ad7;
+  --brand-accent: #ff7a45;
+  --brand-accent-soft: #ffd166;
+  --surface: #000000;
+  --surface-elevated: #111111;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+}
+
+html[data-site-variant="gateway"] body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+html[data-site-variant="gateway"] .font-heading {
+  font-family: var(--font-manrope), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+html[data-site-variant="gateway"] .gateway-accent-word {
+  color: var(--brand-accent);
+}
+
+html[data-site-variant="gateway"] .gateway-accent-underline {
+  text-decoration: underline;
+  text-decoration-color: var(--brand-accent);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 0.12em;
+}

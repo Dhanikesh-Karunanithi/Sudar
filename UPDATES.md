@@ -16,6 +16,69 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-05 — Gateway hero: scroll logo flies into nav
+
+- **Theme**: Web — animated Sudar mark in the hero transforms and travels to `#nav-logo-anchor` as the user scrolls; nav link reveals when settled.
+- **Shipped**: `HeroScrollAnimatedLogo.tsx`, `SudarLogoAnimatedMark.tsx`, `HeroCinematic.tsx`, `SudarLogoMotion.tsx`; `docs/SHIPPED_FEATURES.md` gateway section updated.
+
+### 2026-06-05 — Gateway Digital Learner Twin: interactive 3D constellation
+
+- **Theme**: Web — learner-twin visualization with mouse-tilt depth, orbital rings, hoverable signal nodes (live metric labels), and scroll-draw entrance.
+- **Shipped**: `LearnerTwinVisualization.tsx`; `IntelligenceConstellation.tsx` delegates to the new component.
+
+### 2026-06-05 — Gateway hero: clean Sudar S hold (fix = freeze)
+
+- **Theme**: Web — remove sketch overlay; fix CSS so rest state locks **S + star** (not =); 30s loop; tagline only for “equal opportunity” story.
+- **Shipped**: `SudarLogoMotion.tsx`, `sudar-logo-animated.css` (removed `SudarLogoSketch.tsx`).
+
+### 2026-06-05 — Gateway hero: hand-drawn logo annotations
+
+- **Theme**: Web — replace rotating story blocks with SVG sketch overlay (= brackets → S-curve → star rays) + one-line Playfair whisper: “Equal opportunity for all.”
+- **Shipped**: `SudarLogoSketch.tsx`, `SudarLogoMotion.tsx`, `sudar-logo-animated.css`, Caveat font on gateway layout.
+
+### 2026-06-05 — Gateway hero logo: larger, looping, story beats
+
+- **Theme**: Web — enlarged canonical CSS logo (~1.32–1.38×), infinite loop, hover replay + glow; synced “= → S → ★” copy on democratizing AI education.
+- **Shipped**: `SudarLogoMotion.tsx`, `sudar-logo-animated.css`, `HeroCinematic.tsx` (wider visual column).
+
+### 2026-06-05 — Gateway hero logo uses canonical CSS animation
+
+- **Theme**: Web — replace GSAP SVG logo loop with CSS keyframes from reference `sudar_animated.html` (pill morph + star pop).
+- **Shipped**: `teachwithsudar/src/components/gateway/SudarLogoMotion.tsx`, `teachwithsudar/src/styles/sudar-logo-animated.css`.
+- **Docs**: `docs/SHIPPED_FEATURES.md` gateway section updated.
+
+### 2026-06-04 — thesudar.com gateway v2 (black canvas, logo fix, less clutter)
+
+- **Theme**: Web — pure black gateway (`#000`), canonical logo loop (= → S → star), restored product pin-scroll mockups + constellation twin; modalities section removed (link to teachwithsudar.com/modalities).
+- **Key files**: `gateway-theme.css`, `SudarLogoMotion.tsx`, `ProductTrinity.tsx`, `IntelligenceConstellation.tsx`, `GatewayHomePage.tsx`.
+- **Operator**: Preview with `NEXT_PUBLIC_SITE_VARIANT=gateway` on port 3002.
+
+### 2026-06-04 — thesudar.com gateway brand redesign (Option A, no Spline)
+
+- **Theme**: Web — align `thesudar.com` gateway with `docs/brand/design-tokens-v1.md` (deep night, indigo + ember, Manrope); remove violet gradient / Playfair accent patterns and generic particle hero.
+- **Shipped**:
+  - `teachwithsudar/src/styles/gateway-theme.css` + `data-site-variant="gateway"` on `<html>`.
+  - Shared gateway primitives: `GatewayHeadline`, `GatewaySection`, `GatewayCta`; hero `SudarLogoMotion` (logo loop) replaces `HeroCanvas`.
+  - Full `GatewayHomePage` sections refactored: editorial product stack, learner-twin grid, modality grid + preview, calmer tutor mock, tokenized impact strip and access gate.
+  - Header/footer gateway styling; README local preview for `NEXT_PUBLIC_SITE_VARIANT=gateway`.
+- **Operator**: Preview at `http://localhost:3002` with gateway env; deploy via existing `teachwithsudar-pages.yml` matrix job **thesudar**.
+
+### 2026-06-04 — LAMP / arXiv paper prep (tone, cost, benchmarks)
+
+- **Theme**: Research — `docs/research/paper.tex` ready for arXiv moderation (academic tone, reconciled economics, system latency table).
+- **Shipped**:
+  - Section 5 renamed *Economic Feasibility and Cost Analysis*; marginal AI table without vendor rows in main text; appendix labels Docebo/Sana as illustrative list prices.
+  - ALP HTTP contract paragraph + LTI roadmap wording; Keywords block; conclusion de-manifestoed.
+  - `COST_WORKSHEET.md` filled (headline **$0.021/learner/month**, sensitivity range).
+  - `scripts/benchmark-sudar.mjs` implemented → `docs/research/benchmark-results.json`; performance subsection in paper.
+  - arXiv checklists updated in `GET_PDF_AND_ARXIV.md` / `ARXIV_SUBMISSION.md`.
+- **Operator**: Recompile PDF in Overleaf; run benchmark with Intelligence up + `INTELLIGENCE_SERVICE_SECRET` before final Table perf numbers.
+
+### 2026-06-03 — Favicon background black (was brand blue)
+
+- **Theme**: Brand — tab icon rounded square now `#000000` with white Sudar mark (all surfaces).
+- **Key files**: `*/public/icon.svg` in `teachwithsudar`, `sudar-learn`, `sudar-studio`, `sudar-ecosystem-demo`.
+
 ### 2026-06-03 — Split thesudar.com gateway from teachwithsudar.com marketing
 
 - **Theme**: Web presence — restore teachwithsudar.com as the docs/marketing site; keep thesudar.com as the app gateway only.

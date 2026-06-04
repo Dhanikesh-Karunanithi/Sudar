@@ -37,13 +37,18 @@ const existing = String(current.uri_allow_list ?? '')
   .filter(Boolean)
 
 const merged = [...new Set([...existing, ...ADDITIONAL])]
+const SITE_URL = process.env.SUPABASE_SITE_URL ?? 'https://learn.thesudar.com'
+
 const patchRes = await fetch(base, {
   method: 'PATCH',
   headers: {
     Authorization: `Bearer ${TOKEN}`,
     'Content-Type': 'application/json',
   },
-  body: JSON.stringify({ uri_allow_list: merged.join(',') }),
+  body: JSON.stringify({
+    site_url: SITE_URL,
+    uri_allow_list: merged.join(','),
+  }),
 })
 
 if (!patchRes.ok) {
@@ -51,4 +56,5 @@ if (!patchRes.ok) {
   process.exit(1)
 }
 
+console.log('Updated site_url:', SITE_URL)
 console.log('Updated uri_allow_list with:', ADDITIONAL.join(', '))
