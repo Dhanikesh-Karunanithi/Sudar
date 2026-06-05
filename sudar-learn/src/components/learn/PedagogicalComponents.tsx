@@ -99,7 +99,7 @@ export function KeyTakeawaysBlock({ data }: { data: KeyTakeaways }) {
 export function ExpertVoiceBlock({ data }: { data: ExpertVoice }) {
   return (
     <div className="pedagogical-component expert-voice-block">
-      <div className="expert-quote-mark">"</div>
+      <div className="expert-quote-mark">&ldquo;</div>
       <p className="expert-quote">{data.quote}</p>
       <div className="expert-attribution">
         {data.image && <img src={data.image} alt={data.attribution} className="expert-image" />}
