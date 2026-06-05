@@ -11,7 +11,7 @@ export async function resolveOrgKbIdsForRag(
   orgId: string,
   courseId?: string | null,
 ): Promise<string[]> {
-  let query = admin
+  const query = admin
     .from('knowledge_bases')
     .select('id, scope, course_id')
     .eq('org_id', orgId)

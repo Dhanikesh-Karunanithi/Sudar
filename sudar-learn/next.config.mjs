@@ -72,5 +72,8 @@ const nextConfig = {
 
 export default withNextIntl(nextConfig)
 
-import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
-initOpenNextCloudflareForDev()
+// Cloudflare dev bindings only — skip on Vercel/CI builds (see opennextjs/opennextjs-cloudflare#1154).
+if (process.env.NODE_ENV === 'development' && !process.env.VERCEL && !process.env.CI) {
+  const { initOpenNextCloudflareForDev } = await import('@opennextjs/cloudflare')
+  initOpenNextCloudflareForDev()
+}
