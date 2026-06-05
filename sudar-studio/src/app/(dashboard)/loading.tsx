@@ -1,4 +1,5 @@
 import { SudarLoadingFrost } from '@/components/branding/SudarBrandLoader'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
 
 export default function DashboardLoading() {
   return (
@@ -11,12 +12,13 @@ export default function DashboardLoading() {
           <div className="h-24 bg-slate-800/80 rounded-lg border border-slate-800" />
         </div>
       </div>
-      <SudarLoadingFrost
-        variant="fixed"
-        visual="fullpage"
-        label="Loading Studio…"
-        className="rounded-none"
-      />
+      <SudarLoadingFrost variant="fixed" label="Loading Studio…" className="rounded-none">
+        <SudarLogoMark
+          className="h-20 w-auto text-primary"
+          starFill="var(--background)"
+          motion="loading"
+        />
+      </SudarLoadingFrost>
     </div>
   )
 }

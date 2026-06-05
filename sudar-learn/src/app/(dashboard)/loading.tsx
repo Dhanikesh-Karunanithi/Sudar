@@ -1,5 +1,6 @@
 import { BookOpen, BarChart2, Route } from 'lucide-react'
-import { SudarLogoMorphLoaderHost } from '@/components/branding/SudarLogoMorphLoader'
+import { SudarLoadingFrost } from '@/components/branding/SudarBrandLoader'
+import { SudarLogoMark } from '@/components/branding/SudarLogo'
 
 export default function DashboardLoading() {
   return (
@@ -104,7 +105,13 @@ export default function DashboardLoading() {
       </aside>
     </div>
       </div>
-      <SudarLogoMorphLoaderHost label="Loading your space…" />
+      <SudarLoadingFrost variant="fixed" label="Loading your space…" className="rounded-none">
+        <SudarLogoMark
+          className="h-20 w-auto text-primary"
+          starFill="var(--card)"
+          motion="loading"
+        />
+      </SudarLoadingFrost>
     </div>
   )
 }

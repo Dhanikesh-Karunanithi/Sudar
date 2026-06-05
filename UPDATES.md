@@ -16,6 +16,11 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-06 — Learn + Studio: clean dashboard loading logo
+
+- **Theme**: Learn and Studio — replace stretched warp/morph loaders with centered `SudarLogoMark` (`h-20 w-auto`, no rectangle box).
+- **Shipped**: `sudar-learn/src/app/(dashboard)/loading.tsx`, `sudar-studio/src/app/(dashboard)/loading.tsx`, `SudarLogoMorphLoader.tsx` (aspect-safe morph if reused).
+
 ### 2026-06-05 — Gateway hero: scroll logo flies into nav
 
 - **Theme**: Web — animated Sudar mark in the hero transforms and travels to `#nav-logo-anchor` as the user scrolls; nav link reveals when settled.

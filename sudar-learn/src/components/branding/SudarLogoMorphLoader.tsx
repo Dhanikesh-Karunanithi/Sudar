@@ -82,20 +82,6 @@ function LogoMorphOverlay({ phase, label }: { phase: Phase; label?: string }) {
   const { fromRect, centerX, centerY, centerSize } = metrics
   const atCenter = phase === 'enter' || phase === 'loading'
 
-  const box = atCenter
-    ? {
-        left: centerX - centerSize / 2,
-        top: centerY - centerSize / 2,
-        width: centerSize,
-        height: centerSize,
-      }
-    : {
-        left: fromRect.left,
-        top: fromRect.top,
-        width: fromRect.width,
-        height: fromRect.height,
-      }
-
   const enterSpring = { type: 'spring' as const, stiffness: 300, damping: 30, mass: 0.92 }
   const exitSpring = { type: 'spring' as const, stiffness: 360, damping: 32, mass: 0.88 }
 
@@ -130,18 +116,35 @@ function LogoMorphOverlay({ phase, label }: { phase: Phase; label?: string }) {
       />
 
       <motion.div
-        className="fixed z-[101] sudar-logo-morph-glow"
+        className="fixed z-[101] flex items-center justify-center sudar-logo-morph-glow pointer-events-none"
         initial={{
-          left: fromRect.left,
-          top: fromRect.top,
-          width: fromRect.width,
-          height: fromRect.height,
+          left: fromRect.left + fromRect.width / 2,
+          top: fromRect.top + fromRect.height / 2,
+          x: '-50%',
+          y: '-50%',
+          scale: Math.min(fromRect.width, fromRect.height) / centerSize,
         }}
-        animate={box}
+        animate={
+          atCenter
+            ? {
+                left: centerX,
+                top: centerY,
+                x: '-50%',
+                y: '-50%',
+                scale: 1,
+              }
+            : {
+                left: fromRect.left + fromRect.width / 2,
+                top: fromRect.top + fromRect.height / 2,
+                x: '-50%',
+                y: '-50%',
+                scale: Math.min(fromRect.width, fromRect.height) / centerSize,
+              }
+        }
         transition={phase === 'exit' ? exitSpring : enterSpring}
       >
         <SudarLogoMark
-          className="h-full w-full text-primary"
+          className="h-20 w-auto text-primary"
           starFill="var(--card)"
           motion={phase === 'loading' ? 'loading' : 'none'}
         />
