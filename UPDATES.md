@@ -16,6 +16,11 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-06 — Learn Cloudflare: Supabase client + CSP fix
+
+- **Theme**: Ops — `learn.thesudar.com` client crash (`NEXT_PUBLIC_SUPABASE_*` missing from OpenNext build) and CSP blocking Cloudflare analytics / Google Fonts.
+- **Shipped**: GitHub Actions pass Supabase public env at build time; shared `contentSecurityPolicy.mjs`; docs note on build vs Worker secrets.
+
 ### 2026-06-06 — Learn/Studio domains: auth paths + trusted origins
 
 - **Theme**: Ops + Learn — production domains (`learn.thesudar.com`, `studio.thesudar.com`) verified; password recovery and origin guards hardened.

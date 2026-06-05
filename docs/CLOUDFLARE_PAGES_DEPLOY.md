@@ -37,6 +37,10 @@ Repository → **Settings** → **Secrets and variables** → **Actions**:
 |--------|-------------|
 | `CLOUDFLARE_API_TOKEN` | Token with **Account → Cloudflare Workers/Pages → Edit** |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL — **required at OpenNext build time** (client bundle) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key — **required at OpenNext build time** |
+
+`NEXT_PUBLIC_*` values must also exist on the Worker (Dashboard secrets or `wrangler secret put`) for SSR/middleware, but the **GitHub secrets above are mandatory** so CI embeds them into the browser bundle. Without them, Learn/Studio show `@supabase/ssr: Your project's URL and API key are required`.
 
 ### 2. Cloudflare Workers — environment variables
 

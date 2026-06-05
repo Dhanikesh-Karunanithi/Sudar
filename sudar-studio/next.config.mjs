@@ -1,6 +1,7 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import createNextIntlPlugin from 'next-intl/plugin'
+import { sudarContentSecurityPolicy } from '../shared/security/contentSecurityPolicy.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
@@ -59,15 +60,7 @@ const nextConfig = {
             : []),
           {
             key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.together.xyz https://api.openai.com https://api.anthropic.com",
-              "img-src 'self' data: https: blob:",
-              "frame-ancestors 'self'",
-            ].join('; '),
+            value: sudarContentSecurityPolicy(),
           },
         ],
       },
