@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-export function ChangePasswordForm() {
+export function ChangePasswordForm({ recovery = false }: { recovery?: boolean }) {
   const router = useRouter()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -30,11 +30,13 @@ export function ChangePasswordForm() {
       setLoading(false)
       return
     }
-    const res = await fetch('/api/auth/complete-password-change', { method: 'POST' })
-    if (!res.ok) {
-      setError('Failed to complete. Please try again.')
-      setLoading(false)
-      return
+    if (!recovery) {
+      const res = await fetch('/api/auth/complete-password-change', { method: 'POST' })
+      if (!res.ok) {
+        setError('Failed to complete. Please try again.')
+        setLoading(false)
+        return
+      }
     }
     router.push('/')
     router.refresh()

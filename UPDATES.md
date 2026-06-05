@@ -16,6 +16,11 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-06 — Learn/Studio domains: auth paths + trusted origins
+
+- **Theme**: Ops + Learn — production domains (`learn.thesudar.com`, `studio.thesudar.com`) verified; password recovery and origin guards hardened.
+- **Shipped**: `/forgot-password` public in middleware; email reset via `/auth/callback?next=/reset-password`; `shared/security/trustedAppOrigins.ts`; `scripts/verify-production-domains.mjs`; Supabase redirect checklist in `docs/DNS_THESUDAR_COM.md` and Vercel/Cloudflare env table in `docs/VERCEL_DEPLOYMENT.md`.
+
 ### 2026-06-06 — Vercel staging: Studio + Learn production restored
 
 - **Theme**: Ops — fix Vercel builds for `sudar-studio.vercel.app` and `sudar-learn.vercel.app` (Cloudflare remains primary production).

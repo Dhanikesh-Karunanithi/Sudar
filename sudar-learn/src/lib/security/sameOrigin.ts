@@ -1,23 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { collectTrustedOrigins } from '../../../../shared/security/trustedAppOrigins'
+
 function allowedOrigins(request: NextRequest): Set<string> {
-  const origins = new Set<string>()
-  const requestOrigin = request.nextUrl.origin
-  if (requestOrigin) origins.add(requestOrigin)
-
-  for (const value of [
-    process.env.NEXT_PUBLIC_APP_URL,
-    process.env.NEXT_PUBLIC_LEARN_APP_URL,
-  ]) {
-    if (!value?.trim()) continue
-    try {
-      origins.add(new URL(value).origin)
-    } catch {
-      // Ignore malformed optional env values.
-    }
-  }
-
-  return origins
+  return collectTrustedOrigins(request.nextUrl.origin, [
+    'NEXT_PUBLIC_APP_URL',
+    'NEXT_PUBLIC_LEARN_APP_URL',
+    'NEXTAUTH_URL',
+    'NEXT_PUBLIC_STUDIO_APP_URL',
+  ])
 }
 
 export function rejectCrossSiteRequest(request: NextRequest): NextResponse | null {

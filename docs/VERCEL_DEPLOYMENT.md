@@ -95,8 +95,31 @@ Then set **BYTEOS_INTELLIGENCE_URL** in both Vercel projects to that URL (e.g. `
 
 ## 6. Custom domains (optional)
 
-- In each Vercel project → **Settings** → **Domains**, add your domain (e.g. `studio.yourdomain.com`, `learn.yourdomain.com`).
-- Update `NEXTAUTH_URL`, `NEXT_PUBLIC_LEARN_APP_URL`, and `NEXT_PUBLIC_APP_URL` to use these domains and redeploy.
+**Production** Learn and Studio run on **Cloudflare Workers** at `learn.thesudar.com` and `studio.thesudar.com` (see [CLOUDFLARE_PAGES_DEPLOY.md](CLOUDFLARE_PAGES_DEPLOY.md)). Do **not** attach those hostnames to Vercel — DNS routes them to Cloudflare.
+
+Vercel projects keep **`sudar-learn.vercel.app`** and **`sudar-studio.vercel.app`** as staging fallbacks.
+
+### Cloudflare Worker env (production)
+
+Set on each Worker (Dashboard → Settings → Variables):
+
+| Worker | Variable | Value |
+|--------|----------|-------|
+| sudar-learn | `NEXTAUTH_URL`, `NEXT_PUBLIC_APP_URL` | `https://learn.thesudar.com` |
+| sudar-studio | `NEXTAUTH_URL` | `https://studio.thesudar.com` |
+| sudar-studio | `NEXT_PUBLIC_LEARN_APP_URL` | `https://learn.thesudar.com` |
+
+### Vercel env (staging)
+
+| Project | Variable | Value |
+|---------|----------|-------|
+| sudar-learn | `NEXTAUTH_URL`, `NEXT_PUBLIC_APP_URL` | `https://sudar-learn.vercel.app` |
+| sudar-studio | `NEXTAUTH_URL` | `https://sudar-studio.vercel.app` |
+| sudar-studio | `NEXT_PUBLIC_LEARN_APP_URL` | `https://sudar-learn.vercel.app` |
+
+Also add **Supabase redirect URLs** for both `.com` and `.vercel.app` origins — see [DNS_THESUDAR_COM.md](DNS_THESUDAR_COM.md) §6.
+
+Smoke test: `node scripts/verify-production-domains.mjs`
 
 ---
 

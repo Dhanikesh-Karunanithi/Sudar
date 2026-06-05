@@ -183,7 +183,8 @@ Key vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, **`SUPABASE_JWT_SECRET` (
 
 Security hardening vars:
 
-- `CORS_ORIGINS` (Intelligence): comma-separated browser origins allowed to call Intelligence (e.g. `https://learn.thesudar.com,https://studio.thesudar.com`). **Required in production:** if `ENV`/`ENVIRONMENT` is `production` and this is unset/empty, the Intelligence process exits at startup.
+- `TRUSTED_APP_ORIGINS` (Studio, Learn): optional comma-separated extra origins allowed on mutating API routes (same-origin guard). Production and Vercel staging origins are always included in code (`shared/security/trustedAppOrigins.ts`).
+- `CORS_ORIGINS` (Intelligence): comma-separated browser origins allowed to call Intelligence (e.g. `https://learn.thesudar.com,https://studio.thesudar.com,https://sudar-learn.vercel.app,https://sudar-studio.vercel.app`). **Required in production:** if `ENV`/`ENVIRONMENT` is `production` and this is unset/empty, the Intelligence process exits at startup.
 - `SUPABASE_JWT_SECRET` (Intelligence): **HS256 secret from Supabase** (Dashboard → Project Settings → API → JWT Secret). Without it, routes that verify `Authorization: Bearer <access_token>` return **503** with message `JWT validation not configured (SUPABASE_JWT_SECRET)`.
 - `INTELLIGENCE_SERVICE_SECRET` (Intelligence + Learn + Studio): optional shared secret used for ALP, Studio TTS server-to-server proxy calls, Sudar Agents **internal** Learn helpers (`POST /api/internal/agent-tools/*`), and similar paths via `X-Intelligence-Service-Secret`. **Must match** on Intelligence and Learn when those routes are enabled.
 - `LEARN_INTERNAL_URL` (Intelligence): base URL of the **Sudar Learn** deployment (server-only). Used by the agents orchestrator when calling **`/api/internal/agent-tools/next-best-action`** so Intelligence reuses Learn’s canonical next-best-action implementation. Omit in local setups that do not wire agents → NBA tooling.

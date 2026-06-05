@@ -91,11 +91,30 @@ curl -s https://mcp.thesudar.com/health
 
 ## 6. Supabase Auth redirect URLs
 
-In Supabase → Authentication → URL configuration, add:
+In Supabase → **Authentication** → **URL configuration**, set:
 
-- `https://studio.thesudar.com/**`
-- `https://learn.thesudar.com/**`
-- `https://mcp.thesudar.com/oauth/callback`
+| Setting | Recommended value |
+|---------|-------------------|
+| **Site URL** | `https://thesudar.com` (gateway) or `https://learn.thesudar.com` |
+| **Redirect URLs** | Wildcards below |
+
+Add **every origin** learners and admins may sign in from (production + Vercel staging):
+
+```
+https://learn.thesudar.com/**
+https://studio.thesudar.com/**
+https://sudar-learn.vercel.app/**
+https://sudar-studio.vercel.app/**
+https://mcp.thesudar.com/oauth/callback
+```
+
+Password reset emails use `auth/callback?next=/reset-password` on Learn — no extra redirect entry beyond the wildcards above.
+
+Verify after changes:
+
+```bash
+node scripts/verify-production-domains.mjs
+```
 
 Keep legacy `.app` URLs until you retire that zone.
 
