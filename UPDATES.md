@@ -16,6 +16,13 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-06 — Vercel staging: Studio + Learn production restored
+
+- **Theme**: Ops — fix Vercel builds for `sudar-studio.vercel.app` and `sudar-learn.vercel.app` (Cloudflare remains primary production).
+- **Root cause**: `@opennextjs/cloudflare` `initOpenNextCloudflareForDev()` ran during Vercel builds (EPIPE on Studio); Learn `vercel.json` had a sub-daily KB cron blocked on Hobby tier.
+- **Shipped**: Guard OpenNext dev init in `sudar-learn/next.config.mjs` and `sudar-studio/next.config.mjs`; Studio `next build` on Linux; removed `process-kb-uploads` from Learn `vercel.json` (runs on Cloudflare); lint fix in `resolveOrgKbIds.ts`.
+- **Verify**: Both Vercel projects show **Ready** production on `main` after push.
+
 ### 2026-06-06 — Learn + Studio: clean dashboard loading logo
 
 - **Theme**: Learn and Studio — replace stretched warp/morph loaders with centered `SudarLogoMark` (`h-20 w-auto`, no rectangle box).

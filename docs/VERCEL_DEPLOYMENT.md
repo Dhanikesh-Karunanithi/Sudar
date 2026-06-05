@@ -61,7 +61,7 @@ This guide walks you through connecting the Sudar repo to Vercel and hosting **S
    - **`CRON_SECRET`** → random string (e.g. `openssl rand -base64 32`); **required** for Learn cron route handlers to run. Vercel [Cron Jobs](https://vercel.com/docs/cron-jobs) send `Authorization: Bearer <CRON_SECRET>` when this env var is set on the project.
 5. Click **Deploy**.
 
-**Learn — scheduled crons (Vercel):** `sudar-learn/vercel.json` defines a daily job (**04:30 UTC**) for **`GET /api/cron/consolidate-learner-memory`** (merges recent tutor exchanges into `ai_tutor_context` for learners who keep memory digest enabled). Ensure **`CRON_SECRET`** is set on the Learn Vercel project so the route accepts the invocation. Other cron routes (`notification-monthly-bonus`, `agent-spacing-nudges`) support **GET** for the same auth pattern; add them to `vercel.json` if you want them on a schedule.
+**Learn — scheduled crons (Vercel):** `sudar-learn/vercel.json` defines a daily job (**04:30 UTC**) for **`GET /api/cron/consolidate-learner-memory`**. **`process-kb-uploads`** is **not** on Vercel (Hobby tier allows daily crons only); it runs on Cloudflare — see [CLOUDFLARE_PAGES_DEPLOY.md](CLOUDFLARE_PAGES_DEPLOY.md) and [§8 Multi-platform](#8-multi-platform-vercel--cloudflare). Ensure **`CRON_SECRET`** is set on the Learn Vercel project for the daily job.
 
 ---
 
@@ -111,3 +111,40 @@ Then set **BYTEOS_INTELLIGENCE_URL** in both Vercel projects to that URL (e.g. `
 - [ ] **Learn:** `CRON_SECRET` set on the Learn Vercel project (required for cron routes); verify `sudar-learn/vercel.json` crons (memory consolidation) or equivalent external scheduler
 
 For full env reference, see **docs/ENV_REFERENCE.md**.
+
+---
+
+## 8. Multi-platform: Vercel + Cloudflare
+
+Sudar Learn and Studio deploy to **Cloudflare Workers** on every push to `main` (see [CLOUDFLARE_PAGES_DEPLOY.md](CLOUDFLARE_PAGES_DEPLOY.md)). Vercel projects remain as **staging** (`sudar-learn.vercel.app`, `sudar-studio.vercel.app`).
+
+### OpenNext dev init (required for Vercel builds)
+
+Both apps use `@opennextjs/cloudflare` for Cloudflare deploys. **`initOpenNextCloudflareForDev()` must not run on Vercel or CI** — it starts Miniflare/Wrangler and breaks Vercel builds. In each `next.config.mjs`:
+
+```js
+if (process.env.NODE_ENV === 'development' && !process.env.VERCEL && !process.env.CI) {
+  const { initOpenNextCloudflareForDev } = await import('@opennextjs/cloudflare')
+  initOpenNextCloudflareForDev()
+}
+```
+
+### Studio build on Vercel
+
+`sudar-studio/package.json` uses `next build` on Linux/Vercel. Windows local builds can use `npm run build:win` (wraps `scripts/run-next.mjs` for custom `distDir`).
+
+### Learn crons on Vercel Hobby
+
+**Hobby** accounts only allow **daily** cron schedules. `sudar-learn/vercel.json` keeps the daily memory-consolidation cron only. **`/api/cron/process-kb-uploads`** (every 10 minutes) runs on **Cloudflare** via `workers/sudar-cron-learn` — do not add sub-daily crons back to Learn `vercel.json` unless the Vercel project is on Pro.
+
+### Monorepo CLI deploy
+
+Deploy from the **repo root**, not from inside `sudar-learn/` or `sudar-studio/` (Vercel Root Directory is already set per project):
+
+```bash
+cd /path/to/Sudar
+npx vercel deploy --prod --yes --project sudar-learn
+npx vercel deploy --prod --yes --project sudar-studio
+```
+
+Prefer **git push to `main`** so Vercel builds from GitHub with the correct root directory and cache.
