@@ -69,8 +69,6 @@ export async function processKbQueueItem(
     const kbId = row.kb_id as string
     const sourceDoc = filename
 
-    await admin.from('content_chunks').delete().eq('kb_id', kbId).eq('chunk_type', 'kb')
-
     const insertRows = textChunks.map((tc, i) => ({
       course_id: null,
       module_id: null,
@@ -89,6 +87,15 @@ export async function processKbQueueItem(
 
     const { error: insertErr } = await admin.from('content_chunks').insert(insertRows)
     if (insertErr) throw new Error(insertErr.message)
+
+    // Prune prior KB chunks only after the new batch is stored — avoids data loss on embed/insert failure.
+    const { error: pruneErr } = await admin
+      .from('content_chunks')
+      .delete()
+      .eq('kb_id', kbId)
+      .eq('chunk_type', 'kb')
+      .filter('metadata->>queue_id', 'neq', queueId)
+    if (pruneErr) throw new Error(pruneErr.message)
 
     await admin
       .from('kb_ingest_queue')
