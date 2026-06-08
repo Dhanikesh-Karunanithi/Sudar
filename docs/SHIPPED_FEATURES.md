@@ -14,7 +14,7 @@ This document summarizes **shipped** features that are committed and ready for u
   - **Operators**: No env changes; deploy marketing site and MCP worker as usual.
 - **Key files**:
   - `teachwithsudar/src/app/robots.ts`, `teachwithsudar/public/llms.txt` — primary AI crawler policy and platform summary.
-  - `teachwithsudar/src/app/sitemap.ts`, `teachwithsudar/src/app/layout.tsx` — sitemap + structured data (JSON-LD).
+  - `teachwithsudar/src/app/sitemap.xml/route.ts`, `teachwithsudar/src/app/layout.tsx` — static XML sitemap + structured data (JSON-LD).
   - `sudar-studio/public/robots.txt`, `sudar-learn/public/robots.txt` — app-level crawler policy (public auth pages only).
   - `sudar-studio/src/app/sitemap.ts`, `sudar-learn/src/app/sitemap.ts` — minimal public-route sitemaps.
   - `workers/sudar-mcp-cloudflare/src/discovery.ts`, `src/index.ts` — MCP `GET /llms.txt` and `GET /` discovery JSON.
