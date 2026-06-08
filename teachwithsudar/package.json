@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "next dev -p 3002",
     "build:launch-demo": "node ../scripts/copy-launch-demo.mjs",
-    "prebuild": "npm run build:launch-demo && node scripts/generate-sitemap.mjs",
-    "build": "next build",
+    "prebuild": "npm run build:launch-demo",
+    "build": "next build && node scripts/generate-sitemap.mjs --out",
     "start": "next start -p 3002",
     "lint": "next lint"
   },

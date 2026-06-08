@@ -119,6 +119,11 @@ ${urlEntries}
 </urlset>
 `;
 
-const outPath = path.join(appRoot, "public", "sitemap.xml");
+const writeToOut = process.argv.includes("--out");
+const outPath = writeToOut
+  ? path.join(appRoot, "out", "sitemap.xml")
+  : path.join(appRoot, "public", "sitemap.xml");
+
+fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, xml, "utf8");
 console.log(`Wrote ${allPaths.length} URLs to ${outPath} (${siteUrl})`);
