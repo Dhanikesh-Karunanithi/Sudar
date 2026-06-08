@@ -4,6 +4,27 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## AI discoverability — robots.txt, llms.txt, sitemaps, MCP discovery
+
+- **Where**: `teachwithsudar.com` / `thesudar.com` (primary), `studio.thesudar.com`, `learn.thesudar.com`, `mcp.thesudar.com`.
+- **What**: Makes Sudar visible and understandable to AI crawlers and AI search (Google/Gemini, OpenAI/ChatGPT, Anthropic/Claude, Perplexity, Bing/Copilot, Meta AI, Apple Intelligence, Cohere, Common Crawl). Public `llms.txt` describes the forever-free open education mission, ByteVerse ecosystem, and MCP integration. Sitemaps enumerate crawlable marketing pages. MCP worker serves its own `llms.txt` and JSON discovery document for AI agents.
+- **Value**:
+  - **AI search / discovery**: Crawlers can index Sudar as an open, free AI-powered education platform.
+  - **AI agents**: MCP endpoint is self-describing — agents know tool names, auth modes, and example prompts.
+  - **Operators**: No env changes; deploy marketing site and MCP worker as usual.
+- **Key files**:
+  - `teachwithsudar/src/app/robots.ts`, `teachwithsudar/public/llms.txt` — primary AI crawler policy and platform summary.
+  - `teachwithsudar/src/app/sitemap.ts`, `teachwithsudar/src/app/layout.tsx` — sitemap + structured data (JSON-LD).
+  - `sudar-studio/public/robots.txt`, `sudar-learn/public/robots.txt` — app-level crawler policy (public auth pages only).
+  - `sudar-studio/src/app/sitemap.ts`, `sudar-learn/src/app/sitemap.ts` — minimal public-route sitemaps.
+  - `workers/sudar-mcp-cloudflare/src/discovery.ts`, `src/index.ts` — MCP `GET /llms.txt` and `GET /` discovery JSON.
+- **Flow**:
+  1. AI crawler fetches `teachwithsudar.com/robots.txt` → allowed → follows `sitemap.xml` and `llms.txt`.
+  2. AI agent connects to `mcp.thesudar.com` → reads `/llms.txt` or `/` discovery JSON → authenticates via OAuth or Bearer JWT → calls MCP tools.
+  3. Studio/Learn crawlers see only `/login`, `/signup` (and `/forgot-password` on Learn); dashboard routes remain behind auth.
+
+---
+
 ## Unified ecosystem branding — browser favicon and tab titles
 
 - **Where**: Sudar Learn, Sudar Studio, marketing site (`teachwithsudar/`), and ecosystem demo — browser tab icon and default `<title>`.

@@ -4,6 +4,7 @@
  */
 import { handleMcpRequest } from './mcp-handler'
 import { issueMcpSession, resolveAuth, validateSupabaseAccessToken, type EnvAuth } from './auth'
+import { buildMcpDiscoveryJson, buildMcpLlmsTxt } from './discovery'
 
 export interface Env extends EnvAuth {
   SUDAR_STUDIO_URL: string
@@ -70,8 +71,29 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
 
+    const base = publicUrl(env, request)
+
     if (url.pathname === '/health') {
       return Response.json({ ok: true, service: 'sudar-mcp-cloudflare' })
+    }
+
+    if (url.pathname === '/llms.txt' && request.method === 'GET') {
+      return new Response(buildMcpLlmsTxt(base), {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600',
+        },
+      })
+    }
+
+    if ((url.pathname === '/' || url.pathname === '/discovery') && request.method === 'GET') {
+      return Response.json(
+        buildMcpDiscoveryJson(base, env.SUDAR_STUDIO_URL, env.SUDAR_LEARN_URL),
+        {
+          headers: { 'Cache-Control': 'public, max-age=3600' },
+        }
+      )
     }
 
     if (url.pathname === '/.well-known/oauth-authorization-server') {
@@ -108,8 +130,19 @@ export default {
       return handleMcpRequest(request, env, auth.accessToken)
     }
 
-    return new Response('Sudar MCP — /health, /.well-known/oauth-authorization-server, /mcp', {
-      status: 200,
-    })
+    return Response.json(
+      {
+        error: 'not_found',
+        message: 'Sudar MCP — see / for discovery, /llms.txt for AI-readable docs',
+        endpoints: {
+          discovery: `${base}/`,
+          llmsTxt: `${base}/llms.txt`,
+          mcp: `${base}/mcp`,
+          oauth: `${base}/.well-known/oauth-authorization-server`,
+          health: `${base}/health`,
+        },
+      },
+      { status: 404 }
+    )
   },
 }

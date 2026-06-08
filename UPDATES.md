@@ -16,6 +16,19 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-08 — AI discoverability: robots.txt, llms.txt, sitemaps, MCP discovery
+
+- **Theme**: Marketing + Studio + Learn + MCP — make Sudar visible to AI crawlers (Google, OpenAI, Anthropic, Perplexity, Bing, Meta, Apple, Cohere, Common Crawl) and self-describing for AI agents.
+- **Shipped**:
+  - `teachwithsudar/src/app/robots.ts` — dynamically welcomes major AI crawlers per site variant (`teachwithsudar.com` / `thesudar.com`); points to sitemap and llms.txt.
+  - `teachwithsudar/public/llms.txt` — AI-readable platform summary (forever free, Dhani mission, ByteVerse, MCP tool catalog).
+  - `teachwithsudar/src/app/sitemap.ts` — static sitemap for all marketing routes, blog posts, guides, and public help articles.
+  - `teachwithsudar/src/app/layout.tsx` — robots metadata, keywords, authors, Twitter card, JSON-LD `SoftwareApplication` + `Organization`.
+  - `sudar-studio/public/robots.txt`, `sudar-learn/public/robots.txt` — allow AI crawlers on public auth pages; disallow `/api/`.
+  - `sudar-studio/src/app/sitemap.ts`, `sudar-learn/src/app/sitemap.ts` — minimal public-route sitemaps.
+  - `workers/sudar-mcp-cloudflare/src/discovery.ts`, `src/index.ts` — `GET /llms.txt` and `GET /` JSON discovery for MCP toolsets.
+- **Docs**: `docs/SHIPPED_FEATURES.md` — new AI discoverability section.
+
 ### 2026-06-06 — Learn Cloudflare: Supabase client + CSP fix
 
 - **Theme**: Ops — `learn.thesudar.com` client crash (`NEXT_PUBLIC_SUPABASE_*` missing from OpenNext build) and CSP blocking Cloudflare analytics / Google Fonts.

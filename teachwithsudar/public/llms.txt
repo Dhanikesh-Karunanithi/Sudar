@@ -1,0 +1,95 @@
+# Sudar — AI-Powered Learning Operating System
+
+> Learns with you, for you.
+
+Sudar is an open, AI-native Learning Operating System for corporate training and education. It combines authoring (Sudar Studio), personalized delivery (Sudar Learn), and an adaptive AI engine (Sudar Intelligence) so L&D teams can build world-class training without an army of instructional designers.
+
+## Open Source & Free Forever
+
+Sudar is **forever free** to self-host on $0 infrastructure tiers. Dhanikesh "Dhani" Karunanithi created Sudar to make AI-powered education more **open, free, and accessible** — equal opportunity for all learners and builders across the inter-tech space.
+
+- **GitHub (canonical repo):** https://github.com/Dhanikesh-Karunanithi/Sudar
+- **Self-host guide:** https://teachwithsudar.com/self-host
+- **License:** Apache-2.0 (MCP server and core packages)
+
+## Platform Surfaces
+
+| Surface | URL | Role |
+|---------|-----|------|
+| Marketing & docs | https://teachwithsudar.com | Features, guides, research, help |
+| Application gateway | https://thesudar.com | Entry point to Studio and Learn |
+| Sudar Studio | https://studio.thesudar.com | AI course creation & L&D management |
+| Sudar Learn | https://learn.thesudar.com | Personalized learner experience + AI tutor "Sudar" |
+| Sudar Intelligence | https://intelligence.thesudar.com | Adaptive engine, tutor, content generation |
+| Sudar MCP | https://mcp.thesudar.com | Model Context Protocol server for AI agents |
+
+## Connect AI Agents via MCP
+
+AI service providers (ChatGPT, Claude, Cursor, Perplexity, and others) can connect to Sudar through the **Model Context Protocol (MCP)**.
+
+### Remote MCP (production)
+
+- **MCP endpoint:** https://mcp.thesudar.com/mcp
+- **OAuth discovery:** https://mcp.thesudar.com/.well-known/oauth-authorization-server
+- **AI discovery doc:** https://mcp.thesudar.com/llms.txt
+- **Health check:** https://mcp.thesudar.com/health
+
+### Local stdio MCP (developers)
+
+```bash
+npx @sudar/mcp-server
+```
+
+Set `SUDAR_ACCESS_TOKEN` (Supabase JWT) for creator/admin/learner tools, or `SUDAR_ALP_API_KEY` for LMS integrator tools.
+
+### Tool catalog (by toolset)
+
+**Integrator** (`SUDAR_TOOLSET=integrator`) — for LMS backends via ALP:
+- `sudar_ingest_learning_events` — ingest learning telemetry into the Digital Learner Twin
+- `sudar_tutor_query` — ask the Sudar tutor for a learner
+- `sudar_next_best_action` — compute next-best-action recommendations
+- `sudar_resolve_lms_user` — map external LMS user IDs to Sudar profiles
+- `sudar_create_embed_token` — create embed tokens for tutor widgets in external LMSs
+
+**Creator** (`SUDAR_TOOLSET=creator`) — for course authors:
+- `sudar_generate_outline`, `sudar_generate_course_metadata`, `sudar_generate_course`
+- `sudar_generate_quiz`, `sudar_generate_from_document`
+- `sudar_create_course`, `sudar_list_courses`
+
+**Admin** (`SUDAR_TOOLSET=admin`) — for L&D administrators:
+- `sudar_run_admin_agent` — run admin agents (cohort health, path analytics)
+- `sudar_list_agent_skills` — list available Sudar Agents skills
+
+**Learner** (`SUDAR_TOOLSET=learner`) — for learner-facing assistants:
+- `sudar_run_learner_agent`, `sudar_learner_tutor_query`
+- `sudar_learner_next_action`, `sudar_learner_proactive_nudge`
+
+Full documentation: https://github.com/Dhanikesh-Karunanithi/Sudar/blob/main/docs/MCP_SERVERS.md
+
+## ByteVerse — Open EdTech Ecosystem
+
+**ByteVerse** is the inter-tech open education ecosystem surrounding Sudar. ByteVerse-LMS was the original open-source learner platform that evolved into Sudar Learn. Together, Sudar and ByteVerse promote accessible, research-backed, AI-native education across tools, plugins, and community projects.
+
+- **ByteVerse landing:** https://byteverse.app
+- **ALP (Authenticated Learning Plane):** https://teachwithsudar.com/alp — plugin layer for Moodle and other LMSs
+- **Plugins:** https://teachwithsudar.com/plugins
+
+## Key Pages
+
+- Features: https://teachwithsudar.com/features
+- Mission & vision: https://teachwithsudar.com/mission
+- Research foundation: https://teachwithsudar.com/research
+- Modalities (text, video, audio, flashcards, mindmap, feed, play): https://teachwithsudar.com/modalities
+- Guides & walkthroughs: https://teachwithsudar.com/guides
+- Self-host at $0: https://teachwithsudar.com/self-host
+- Roadmap: https://teachwithsudar.com/roadmap
+- Blog: https://teachwithsudar.com/blog
+- FAQ: https://teachwithsudar.com/faq
+- Collaborate: https://teachwithsudar.com/collaborate
+
+## About the Creator
+
+**Dhanikesh "Dhani" Karunanithi** — founder and lead builder of Sudar and the ByteVerse ecosystem. Mission: democratize AI-powered education so every organization and learner can access world-class training without proprietary lock-in or prohibitive cost.
+
+- **Contact:** connect@dhanikeshkarunanithi.com
+- **GitHub:** https://github.com/Dhanikesh-Karunanithi

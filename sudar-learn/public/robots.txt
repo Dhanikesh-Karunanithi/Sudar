@@ -1,0 +1,29 @@
+User-agent: *
+Disallow: /api/
+Allow: /login
+Allow: /signup
+Allow: /forgot-password
+
+# AI crawlers — welcome on public discovery pages
+User-agent: Googlebot
+User-agent: Google-Extended
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: OAI-SearchBot
+User-agent: ClaudeBot
+User-agent: anthropic-ai
+User-agent: Claude-Web
+User-agent: PerplexityBot
+User-agent: Bingbot
+User-agent: MicrosoftPreview
+User-agent: facebookexternalhit
+User-agent: Applebot
+User-agent: cohere-ai
+User-agent: CCBot
+Allow: /login
+Allow: /signup
+Allow: /forgot-password
+
+Sitemap: https://learn.thesudar.com/sitemap.xml
+
+# Platform summary for AI agents: https://teachwithsudar.com/llms.txt
