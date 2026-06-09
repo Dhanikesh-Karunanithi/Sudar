@@ -23,10 +23,16 @@ export async function processKbQueueItem(
   if (row.status !== 'pending') return { ok: false, error: `skip status ${row.status}` }
 
   const now = new Date().toISOString()
-  await admin
+  const { data: claimed, error: claimErr } = await admin
     .from('kb_ingest_queue')
     .update({ status: 'processing', progress_pct: 5, processing_started_at: now, error_message: null })
     .eq('id', queueId)
+    .eq('status', 'pending')
+    .select('id')
+    .maybeSingle()
+
+  if (claimErr) return { ok: false, error: claimErr.message }
+  if (!claimed) return { ok: false, error: 'skip already claimed' }
 
   try {
     const { data: fileData, error: dlErr } = await admin.storage
