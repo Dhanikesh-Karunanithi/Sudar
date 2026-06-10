@@ -12,7 +12,7 @@ import {
 } from "@/components/home/ModalityPreviewPanel";
 import { SectionReveal } from "@/components/home/SectionReveal";
 
-// ΓöÇΓöÇΓöÇ Impact numbers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Impact numbers ────────────────────────────────────────────────────────────
 
 function ImpactNumbers() {
   const stats = [
@@ -46,7 +46,7 @@ function ImpactNumbers() {
   );
 }
 
-// ΓöÇΓöÇΓöÇ The crisis ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── The crisis ────────────────────────────────────────────────────────────────
 
 function TheCrisis() {
   return (
@@ -98,7 +98,7 @@ function TheCrisis() {
               href="/story"
               className="text-[11px] tracking-[0.3em] text-[#FF4500]/70 hover:text-[#FF4500] transition-colors uppercase font-mono"
             >
-              The story behind Sudar ΓåÆ
+              The story behind Sudar →
             </Link>
           </div>
         </div>
@@ -107,7 +107,7 @@ function TheCrisis() {
   );
 }
 
-// ΓöÇΓöÇΓöÇ Platform architecture ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Platform architecture ─────────────────────────────────────────────────────
 
 function PlatformArchitecture() {
   const products = [
@@ -278,7 +278,7 @@ function PlatformArchitecture() {
   );
 }
 
-// ΓöÇΓöÇΓöÇ Digital Learner Twin ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Digital Learner Twin ──────────────────────────────────────────────────────
 
 function DigitalLearnerTwin() {
   const signals = [
@@ -331,7 +331,7 @@ function DigitalLearnerTwin() {
                 href="/alp"
                 className="inline-flex items-center gap-2 text-[#FF4500]/80 hover:text-[#FF4500] text-sm font-medium transition-colors"
               >
-                Explore the Adaptive Learning Protocol ΓåÆ
+                Explore the Adaptive Learning Protocol →
               </Link>
             </div>
           </div>
@@ -366,7 +366,7 @@ function DigitalLearnerTwin() {
   );
 }
 
-// ΓöÇΓöÇΓöÇ Trust & guardrails ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Trust & guardrails ────────────────────────────────────────────────────────
 
 function TrustAndGuardrails() {
   const pillars = [
@@ -487,13 +487,13 @@ function TrustAndGuardrails() {
 
         <div className="reveal mt-10 flex flex-wrap items-center gap-x-8 gap-y-3 text-sm">
           <Link href="/privacy" className="text-[#FF4500]/80 hover:text-[#FF4500] font-medium transition-colors">
-            Privacy Policy ΓåÆ
+            Privacy Policy →
           </Link>
           <Link href="/help/studio" className="text-zinc-500 hover:text-zinc-300 transition-colors">
-            Studio help &amp; governance ΓåÆ
+            Studio help &amp; governance →
           </Link>
           <Link href="/faq" className="text-zinc-500 hover:text-zinc-300 transition-colors">
-            FAQ: privacy &amp; GDPR ΓåÆ
+            FAQ: privacy &amp; GDPR →
           </Link>
           <a
             href={`${GITHUB_URL}/tree/main/docs/trust`}
@@ -501,7 +501,7 @@ function TrustAndGuardrails() {
             rel="noopener noreferrer"
             className="text-zinc-500 hover:text-zinc-300 transition-colors"
           >
-            Trust pack (docs/trust) ΓåÆ
+            Trust pack (docs/trust) →
           </a>
         </div>
       </div>
@@ -509,7 +509,7 @@ function TrustAndGuardrails() {
   );
 }
 
-// ΓöÇΓöÇΓöÇ Modalities ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Modalities ────────────────────────────────────────────────────────────────
 
 function Modalities() {
   const modes: Array<ModalityPreviewMode & { id: ModalityPreviewId; icon: React.ReactNode }> = [
@@ -681,7 +681,7 @@ function Modalities() {
                 href="/modalities"
                 className="text-xs text-zinc-600 hover:text-[#FF4500]/70 transition-colors font-mono tracking-wide"
               >
-                Explore all modalities ΓåÆ
+                Explore all modalities →
               </Link>
             </div>
           </SectionReveal>
@@ -693,7 +693,7 @@ function Modalities() {
   );
 }
 
-// ΓöÇΓöÇΓöÇ Research foundation ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Research foundation ───────────────────────────────────────────────────────
 
 function ResearchFoundation() {
   const citations = [
@@ -701,10 +701,10 @@ function ResearchFoundation() {
       theory: "Forgetting Curve",
       author: "Hermann Ebbinghaus",
       year: "1885",
-      journal: "├£ber das Ged├ñchtnis",
+      journal: "Über das Gedächtnis",
       era: "Foundation",
       finding:
-        "Without reinforcement, learners forget most new information within days ΓÇö a pattern replicated for over a century. Spaced review is the standard countermeasure.",
+        "Without reinforcement, learners forget most new information within days — a pattern replicated for over a century. Spaced review is the standard countermeasure.",
       how: "Spaced repetition in Flashcards & Adaptive Sequencing",
     },
     {
@@ -724,7 +724,7 @@ function ResearchFoundation() {
       journal: "Psychological Science, 17(3)",
       era: "Modern validation",
       finding:
-        "Retrieval practice ΓÇö answering questions, not just re-reading ΓÇö strengthens long-term retention more than passive review alone.",
+        "Retrieval practice — answering questions, not just re-reading — strengthens long-term retention more than passive review alone.",
       how: "In-module quizzes, flashcards, and struggle signals in the Digital Learner Twin",
     },
     {
@@ -734,7 +734,7 @@ function ResearchFoundation() {
       journal: "Educational Psychologist, 46(4)",
       era: "Modern validation",
       finding:
-        "Meta-analysis shows adaptive tutoring and ITS approaches outperform fixed classroom instruction ΓÇö the gap mainstream LMS products still leave open.",
+        "Meta-analysis shows adaptive tutoring and ITS approaches outperform fixed classroom instruction — the gap mainstream LMS products still leave open.",
       how: "Adaptive sequencing, Next Best Action, and the AI tutor sidebar",
     },
     {
@@ -754,7 +754,7 @@ function ResearchFoundation() {
       journal: "arXiv:2601.04219",
       era: "AI era",
       finding:
-        "Multi-turn tutoring with knowledge memory and strategy adjustment beats stateless chat ΓÇö yet most LLM tutors still reset every session.",
+        "Multi-turn tutoring with knowledge memory and strategy adjustment beats stateless chat — yet most LLM tutors still reset every session.",
       how: "Cross-session tutor memory in ai_tutor_context and consent-governed learner model updates",
     },
   ];
@@ -779,7 +779,7 @@ function ResearchFoundation() {
           </h2>
           <p className="mt-5 text-base text-zinc-500 max-w-2xl font-light leading-relaxed">
             Durable foundations from Ebbinghaus and Mayer, modern validation from retrieval practice and tutoring
-            meta-analyses, and 2020s AI-era trials ΓÇö each mapped to a feature you can inspect in the open codebase.
+            meta-analyses, and 2020s AI-era trials — each mapped to a feature you can inspect in the open codebase.
           </p>
         </div>
 
@@ -794,13 +794,13 @@ function ResearchFoundation() {
                 <div>
                   <p className="text-base font-medium text-white/90 mb-1">{c.theory}</p>
                   <p className="text-xs text-zinc-600 font-mono">
-                    {c.author} ┬╖ {c.year} ┬╖ <em className="not-italic text-zinc-700">{c.journal}</em>
+                    {c.author} · {c.year} · <em className="not-italic text-zinc-700">{c.journal}</em>
                   </p>
                 </div>
                 <span
                   className={`text-[10px] font-mono tracking-widest border px-2.5 py-1 rounded-full flex-shrink-0 whitespace-nowrap ${eraBadgeClass[c.era]}`}
                 >
-                  {c.era} ┬╖ {c.year}
+                  {c.era} · {c.year}
                 </span>
               </div>
               <div className="citation-line mb-5" />
@@ -808,7 +808,7 @@ function ResearchFoundation() {
                 {c.finding}
               </p>
               <p className="text-[11px] text-[#FF4500]/60 font-mono tracking-wide">
-                Γå│ Sudar: {c.how}
+                ↳ Sudar: {c.how}
               </p>
             </div>
           ))}
@@ -819,14 +819,14 @@ function ResearchFoundation() {
             href="/research"
             className="inline-flex items-center gap-2 text-[#FF4500]/70 hover:text-[#FF4500] text-sm font-medium transition-colors"
           >
-            Full research foundation ΓåÆ
+            Full research foundation →
           </Link>
           <span className="hidden sm:block w-px h-4 bg-white/10" />
           <Link
             href="/papers"
             className="text-sm text-zinc-600 hover:text-zinc-400 transition-colors"
           >
-            Read the research papers ΓåÆ
+            Read the research papers →
           </Link>
         </div>
       </div>
@@ -834,7 +834,7 @@ function ResearchFoundation() {
   );
 }
 
-// ΓöÇΓöÇΓöÇ Open by Design ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Open by Design ────────────────────────────────────────────────────────────
 
 function OpenByDesign() {
   return (
@@ -881,7 +881,7 @@ function OpenByDesign() {
                 href="/self-host"
                 className="inline-flex items-center gap-2 text-[#FF4500]/70 hover:text-[#FF4500] border border-[#FF4500]/20 hover:border-[#FF4500]/40 px-6 py-3 rounded-full transition-all duration-300 text-sm tracking-wide"
               >
-                Self-host guide ΓåÆ
+                Self-host guide →
               </Link>
             </div>
           </div>
@@ -914,7 +914,7 @@ function OpenByDesign() {
   );
 }
 
-// ΓöÇΓöÇΓöÇ Closing CTA ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Closing CTA ───────────────────────────────────────────────────────────────
 
 function ClosingCTA() {
   return (
@@ -966,7 +966,7 @@ function ClosingCTA() {
             href="/self-host"
             className="text-sm text-zinc-600 hover:text-zinc-400 transition-colors tracking-wide"
           >
-            Self-host at $0 ΓåÆ
+            Self-host at $0 →
           </Link>
         </div>
 
@@ -984,7 +984,7 @@ function ClosingCTA() {
   );
 }
 
-// ΓöÇΓöÇΓöÇ Page ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export function MarketingHomePage() {
   return (
