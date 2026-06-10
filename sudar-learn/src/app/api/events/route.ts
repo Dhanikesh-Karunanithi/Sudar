@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import type { Json } from '@/types/database'
 import { recordStruggleTopics } from '@/lib/learner/syncTopicSkills'
+import { resolveCourseProgressSnapshot } from '@/lib/learner/courseEnrollmentProgress'
 import { evaluateGamification } from '@/lib/gamification/engine'
 
 const eventTypeEnum = z.enum([
@@ -149,26 +150,17 @@ export async function POST(request: NextRequest) {
 
   // On module_complete — update enrollment progress
   if (event_type === 'module_complete' && course_id) {
-    const { count: totalModules } = await admin
-      .from('modules')
-      .select('id', { count: 'exact', head: true })
-      .eq('course_id', course_id)
+    const { progressPct, status, totalModules } = await resolveCourseProgressSnapshot(
+      admin,
+      user.id,
+      course_id
+    )
 
-    const { count: completedModules } = await admin
-      .from('learning_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('course_id', course_id)
-      .eq('event_type', 'module_complete')
-
-    if (totalModules && completedModules !== null) {
-      const progress = Math.min(100, Math.round((completedModules / totalModules) * 100))
-      const status = progress >= 100 ? 'completed' : 'in_progress'
-
+    if (totalModules > 0) {
       await admin
         .from('enrollments')
         .update({
-          progress_pct: progress,
+          progress_pct: progressPct,
           status,
           ...(status === 'in_progress' && { started_at: new Date().toISOString() }),
           ...(status === 'completed' && { completed_at: new Date().toISOString() }),
