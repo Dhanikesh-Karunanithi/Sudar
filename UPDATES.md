@@ -16,6 +16,15 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-11 — Learn correctness: certificates, progress, tutor guardrail
+
+- **Theme**: Critical bugfix automation — close gaps that escaped review on `main`.
+- **Shipped**:
+  - `sudar-learn/src/lib/learner/courseProgress.ts` — distinct `module_id` counting for enrollment progress; path mandatory-course check for certs.
+  - `sudar-learn/src/app/api/certificates/issue/route.ts` — require path enrollment + completed mandatory courses before issuing.
+  - `sudar-learn/src/app/api/events/route.ts`, `sudar-learn/src/app/api/alp/events/route.ts` — use distinct module completion counts (no duplicate-event inflation).
+  - `sudar-learn/src/lib/tutor/runInputGuardrail.ts` — remove question-word bypass that skipped scope LLM for harmful prompts.
+
 ### 2026-06-08 — AI discoverability: robots.txt, llms.txt, sitemaps, MCP discovery
 
 - **Theme**: Marketing + Studio + Learn + MCP — make Sudar visible to AI crawlers (Google, OpenAI, Anthropic, Perplexity, Bing, Meta, Apple, Cohere, Common Crawl) and self-describing for AI agents.
