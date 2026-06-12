@@ -3,6 +3,7 @@ import { convertFileToMarkdown } from '@/lib/intelligence/kb-convert'
 import { chunkText } from '@/lib/rag/chunk'
 import { embedTexts, EMBED_DIMENSIONS } from '@/lib/embed'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
+import { kbChunkMetadata } from '@/lib/knowledge-base/kbChunkScope'
 
 type Admin = ReturnType<typeof createServiceRoleSupabaseClient>
 
@@ -20,13 +21,17 @@ export async function processKbQueueItem(
     .maybeSingle()
 
   if (fetchErr || !row) return { ok: false, error: 'queue row not found' }
-  if (row.status !== 'pending') return { ok: false, error: `skip status ${row.status}` }
 
   const now = new Date().toISOString()
-  await admin
+  const { data: claimed, error: claimErr } = await admin
     .from('kb_ingest_queue')
     .update({ status: 'processing', progress_pct: 5, processing_started_at: now, error_message: null })
     .eq('id', queueId)
+    .eq('status', 'pending')
+    .select('id')
+    .maybeSingle()
+
+  if (claimErr || !claimed) return { ok: false, error: `skip status ${row.status}` }
 
   try {
     const { data: fileData, error: dlErr } = await admin.storage
@@ -68,8 +73,21 @@ export async function processKbQueueItem(
 
     const kbId = row.kb_id as string
     const sourceDoc = filename
+    const scope = { kbId, sourceDoc, queueId }
 
-    await admin.from('content_chunks').delete().eq('kb_id', kbId).eq('chunk_type', 'kb')
+    // Replace only this document's chunks — other files in the same KB must stay intact.
+    await admin
+      .from('content_chunks')
+      .delete()
+      .eq('kb_id', kbId)
+      .eq('chunk_type', 'kb')
+      .contains('metadata', { queue_id: queueId })
+    await admin
+      .from('content_chunks')
+      .delete()
+      .eq('kb_id', kbId)
+      .eq('chunk_type', 'kb')
+      .contains('metadata', { source_doc: sourceDoc })
 
     const insertRows = textChunks.map((tc, i) => ({
       course_id: null,
@@ -80,9 +98,7 @@ export async function processKbQueueItem(
       content: tc.content,
       embedding: embeddings[i] ?? [],
       metadata: {
-        kb_id: kbId,
-        source_doc: sourceDoc,
-        queue_id: queueId,
+        ...kbChunkMetadata(scope, tc.chunk_index),
         pages: converted.pages ?? undefined,
       },
     }))

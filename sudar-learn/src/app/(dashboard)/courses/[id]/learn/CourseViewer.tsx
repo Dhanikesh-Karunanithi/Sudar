@@ -264,7 +264,7 @@ function ScormViewer({ launchUrl, courseId, moduleId, moduleTitle, onComplete }:
           }),
         }).catch(() => {})
 
-        if (!completedRef.current && (status === 'completed' || status === 'passed' || status === 'failed')) {
+        if (!completedRef.current && (status === 'completed' || status === 'passed')) {
           completedRef.current = true
           onComplete?.()
         }
