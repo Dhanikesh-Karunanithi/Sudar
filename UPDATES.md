@@ -16,6 +16,14 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-14 — Learn: critical progress, certificate, and auth hardening
+
+- **Fix**: Enrollment progress now counts **distinct** `module_id` completions (SCORM re-finishes no longer inflate progress or mark courses/paths complete early).
+- **Fix**: Path certificates require path enrollment and all mandatory courses completed — blocks forged cert issuance via `/api/certificates/issue`.
+- **Fix**: `/api/coins/earn`, `/api/rag/ingest`, and `/api/rag/ingest-external` gated behind `INTERNAL_SERVICE_SECRET`; learners can no longer mint coins or trigger bulk RAG indexing.
+- **Fix**: Tutor guardrail no longer skips scope LLM for any message starting with a question word; duplicate `module_complete` events no longer double-award coins/XP.
+- **Key files**: `sudar-learn/src/lib/learner/courseEnrollmentProgress.ts`, `pathCertificateEligibility.ts`, `internalServiceAuth.ts`, events/ALP/cert/coins/RAG routes, `runInputGuardrail.ts`.
+
 ### 2026-06-08 — AI discoverability: robots.txt, llms.txt, sitemaps, MCP discovery
 
 - **Theme**: Marketing + Studio + Learn + MCP — make Sudar visible to AI crawlers (Google, OpenAI, Anthropic, Perplexity, Bing, Meta, Apple, Cohere, Common Crawl) and self-describing for AI agents.
