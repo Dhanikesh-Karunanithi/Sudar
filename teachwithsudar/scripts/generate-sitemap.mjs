@@ -23,6 +23,7 @@ const NAV_PATHS = [
   "/guides",
   "/modalities",
   "/alp",
+  "/store",
   "/self-host",
   "/plugins",
   "/monetize",
@@ -49,6 +50,22 @@ const BLOG_SLUGS = [
   "why-learners-drop-off",
   "multimodal-learning-design",
   "ai-tutor-with-memory",
+];
+
+const STORE_IDS = [
+  "sudar-memory",
+  "sudar-chat",
+  "sudar-recommend",
+  "sudar-quiz",
+  "sudar-interact",
+  "sudar-cards",
+  "sudar-draft",
+  "sudar-media",
+  "sudar-create-suite",
+  "moodle-alp-connector",
+  "canvas-lti-pack",
+  "mcp-integrator",
+  "alp-sdk",
 ];
 
 const GUIDE_SLUGS = [
@@ -95,6 +112,7 @@ const allPaths = uniquePaths([
   ...NAV_PATHS,
   ...BLOG_SLUGS.map((slug) => `/blog/${slug}`),
   ...GUIDE_SLUGS.map((slug) => `/guides/${slug}`),
+  ...STORE_IDS.map((id) => `/store/${id}`),
   ...loadMarketingHelpPaths(),
 ]);
 

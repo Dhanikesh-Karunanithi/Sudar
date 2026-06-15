@@ -61,4 +61,22 @@ class client {
             'module_id' => $moduleid,
         ]);
     }
+
+    public function create_embed_token(string $creatoruserid, string $tool = 'quiz'): array {
+        return $this->post('/api/alp/create/embed-token', [
+            'creator_user_id' => $creatoruserid,
+            'tool' => $tool,
+        ]);
+    }
+
+    public function sim_embed_token(string $userid, string $mode = 'play', ?string $scenarioid = null): array {
+        $body = [
+            'user_id' => $userid,
+            'mode' => $mode,
+        ];
+        if ($scenarioid !== null) {
+            $body['scenario_id'] = $scenarioid;
+        }
+        return $this->post('/api/alp/sim/embed-token', $body);
+    }
 }

@@ -16,6 +16,54 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-16 — SudarSim standalone Studio authoring
+
+- **Theme**: SudarSim is now a first-class Studio product area — org scenario library + editor — not only reachable from a course module.
+- **Shipped**:
+  - Sudar Studio **`/sudarsim`** library and **`/sudarsim/[id]`** scenario editor (sidebar nav item **SudarSim**).
+  - Org-level APIs: **`GET/POST /api/sudarsim/scenarios`**, **`GET/PUT/DELETE /api/sudarsim/scenarios/[id]`**.
+  - Course modules: **`ModuleSimLinkPanel`** links/unlinks a published scenario via **`PATCH .../modules/[moduleId]/sim`** (authoring stays in SudarSim).
+  - Legacy module sim editor URL redirects to the course editor.
+- **Learn**: unchanged — learners still launch sim from linked module / Sim tab.
+
+### 2026-06-16 — SudarSim (roleplay simulation MVP)
+
+- **Theme**: Real-time multi-channel roleplay (phone, chat, email) with screenshot CRM overlays, AI coach rubric, and Twin integration — distinct from SudarPlay.
+- **Shipped**:
+  - `sudar-sim/` — voice service (LiveKit + WebSocket dev mode) with Pipecat-ready layout.
+  - `supabase/migrations/20260616000000_sudarsim.sql` — scenarios, CRM skins, sessions, transcripts, rubric results.
+  - `shared/sudarsim/schemas.ts` — Zod contracts.
+  - Studio: `SimScenarioEditor`, `CrmOverlayEditor`, module sim route, transcript/SOP import, analytics API.
+  - Learn: `/sim/session`, `SimWorkspace`, CourseViewer **Sim** tab, `/api/sim/*`, ALP embed + Moodle `sim.php`.
+  - Intelligence: `/api/sim/*` persona, coach, scenario generation.
+- **Docs**: `docs/SUDAR_SIM_PLAN.md`, `SUDAR_SIM_DEPLOY.md`, `SUDAR_SIM_API.md`; Sudar Store catalog entry.
+- **Deploy**: Apply migration; run `sudar-sim` on port 8090; set `SUDAR_SIM_URL` on Learn.
+
+### 2026-06-15 — Sudar Store (LMS integrations marketplace)
+
+- **Theme**: Public catalog for ALP + Sudar Create services — download connectors, LTI packs, and API docs in one place.
+- **Shipped**:
+  - `teachwithsudar/src/app/store` — filterable store UI (category, LMS, search) with 13 services.
+  - `teachwithsudar/src/app/store/[id]` — per-service detail pages with install CTAs.
+  - `teachwithsudar/src/data/sudarStore.ts` — catalog source of truth.
+  - `/plugins` redirects to `/store`; nav and sitemap updated.
+  - Studio Integrations links to Sudar Store.
+- **Docs**: `docs/SHIPPED_FEATURES.md` — Sudar Store section.
+
+### 2026-06-15 — Sudar Create: LMS-pluggable content generation suite
+
+- **Theme**: ALP extension — hybrid LTI embed + headless API for quiz, interactives, flashcards, outlines, async document/media jobs; SCORM 1.2 export back into any LMS.
+- **Shipped**:
+  - `docs/SUDAR_CREATE_API.md` — Create API contract (auth, endpoints, xAPI audit shapes).
+  - `shared/content-generation/` — shared prompts, parsers, Zod schemas, single-SCO SCORM builder.
+  - Learn `POST /api/alp/create/*` — quiz, interactive, flashcards, outline, from-document, media, jobs poll, embed-token.
+  - Learn `/alp/create` — teacher embed UI with tool picker and SCORM download.
+  - Supabase migration `20260615000000_content_generation_jobs.sql`.
+  - `@sudar/mcp-server` — `sudar_create_*` tools on integrator toolset.
+  - Moodle `local_sudaralp/create.php`; Canvas `integrations/canvas/README.md` + LTI checklist.
+  - Studio `/api/ai/generate-quiz` uses shared generation lib; Intelligence content route documents Learn delegation.
+- **Docs**: `docs/SHIPPED_FEATURES.md` — Sudar Create section; `docs/LAMP_BUILD_TRACKER.md` C1–C6 Done.
+
 ### 2026-06-08 — AI discoverability: robots.txt, llms.txt, sitemaps, MCP discovery
 
 - **Theme**: Marketing + Studio + Learn + MCP — make Sudar visible to AI crawlers (Google, OpenAI, Anthropic, Perplexity, Bing, Meta, Apple, Cohere, Common Crawl) and self-describing for AI agents.

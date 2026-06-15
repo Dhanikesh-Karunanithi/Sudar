@@ -8,7 +8,20 @@
 - Leave **Status** as `Not started` until work begins. Do not remove or rename task IDs.
 - When a completed task affects what the **paper** claims (e.g. a new shipped feature): update [docs/research/paper.tex](research/paper.tex) and/or [docs/LAMP-Updated-Draft.md](LAMP-Updated-Draft.md) per [docs/research/PAPER_SYNC.md](research/PAPER_SYNC.md) so the paper stays aligned with the build.
 
-**Last updated**: 2026-04-27
+**Last updated**: 2026-06-15
+
+---
+
+## Phase 1 — Sudar Create (LMS content services)
+
+| ID | Task | Status | Note |
+|----|------|--------|------|
+| C1 | Sudar Create API docs (docs/SUDAR_CREATE_API.md) | Done | Endpoints, auth, SCORM export, xAPI shapes. |
+| C2 | Learn `/api/alp/create/*` proxies (quiz, interactive, flashcards, outline) | Done | Org-scoped ALP key; shared/content-generation lib. |
+| C3 | `/alp/create` embed UI + embed-token | Done | LTI-ready teacher shell; SCORM download. |
+| C4 | Async jobs (from-document, media) + migration | Done | `content_generation_jobs`; poll GET jobs/{id}; webhook HMAC optional. |
+| C5 | MCP `sudar_create_*` tools + Moodle create.php + Canvas guide | Done | packages/sudar-mcp; integrations/moodle/local_sudaralp/create.php; integrations/canvas/. |
+| C6 | Single-SCO SCORM export + golden contract tests | Done | shared/content-generation/scorm/buildSingleScoZip.ts; alpGoldenContracts extended. |
 
 ---
 

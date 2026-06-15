@@ -24,6 +24,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@shared-sudarsim/*": [
+        "../shared/sudarsim/*"
       ]
     },
     "target": "ES2017"

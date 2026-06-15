@@ -10,6 +10,7 @@ import {
 import { CourseWysiwygInspector } from '@/components/course/CourseWysiwygInspector'
 import { CourseCanvasFloatingBar } from '@/components/course/CourseCanvasFloatingBar'
 import { ScormExtractedTextEditor } from '@/components/course/ScormExtractedTextEditor'
+import { ModuleSimLinkPanel } from '@/components/sudarsim/ModuleSimLinkPanel'
 import type { ModuleContent } from '@/types/content'
 import { isScormContent } from '@/types/content'
 import { cn } from '@/lib/utils'
@@ -78,7 +79,7 @@ export function CourseStudioWorkspace({ courseId, initialModules }: CourseStudio
       const res = await fetch(`/api/courses/${courseId}`)
       const raw = (await res.json()) as {
         error?: string
-        modules?: Array<{ id: string; title: string; content: unknown; order_index: number }>
+        modules?: Array<{ id: string; title: string; content: unknown; order_index: number; sim_scenario_id?: string | null }>
       }
       if (!res.ok) throw new Error(raw.error ?? 'Failed to load')
       const list: PreviewModule[] = (raw.modules ?? []).map((m) => ({
@@ -86,6 +87,7 @@ export function CourseStudioWorkspace({ courseId, initialModules }: CourseStudio
         title: m.title,
         content: m.content as PreviewModule['content'],
         order_index: m.order_index,
+        sim_scenario_id: m.sim_scenario_id ?? null,
       }))
       const sorted = sortModules(list)
       setModules(sorted)
@@ -586,8 +588,24 @@ export function CourseStudioWorkspace({ courseId, initialModules }: CourseStudio
           <div className="max-h-[min(70vh,calc(100vh-280px))] overflow-y-auto p-4 pb-24">
             {activeModule ? (
               <>
-                <h3 className="mb-4 text-lg font-semibold text-white">{activeModule.title}</h3>
-                <CourseModuleContent module={activeModule} wrapRegion={wrapRegion} />
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-lg font-semibold text-white">{activeModule.title}</h3>
+                </div>
+                <ModuleSimLinkPanel
+                  courseId={courseId}
+                  moduleId={activeModule.id}
+                  linkedScenarioId={activeModule.sim_scenario_id}
+                  onLinked={(scenarioId) => {
+                    setModules((prev) =>
+                      prev.map((m) =>
+                        m.id === activeModule.id ? { ...m, sim_scenario_id: scenarioId } : m,
+                      ),
+                    )
+                  }}
+                />
+                <div className="mt-4">
+                  <CourseModuleContent module={activeModule} wrapRegion={wrapRegion} />
+                </div>
                 {activeScorm ? (
                   <ScormExtractedTextEditor
                     courseId={courseId}

@@ -28,6 +28,9 @@
       "@shared-sudarart/*": [
         "../shared/sudarart/*"
       ],
+      "@shared-sudarsim/*": [
+        "../shared/sudarsim/*"
+      ],
       "zod": [
         "./node_modules/zod/index.d.cts"
       ],

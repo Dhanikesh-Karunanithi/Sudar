@@ -61,4 +61,28 @@ export class AlpClient {
   embedToken(body: { user_id: string; course_id?: string; module_id?: string }) {
     return this.post<{ token: string; embed_url: string; expires_in: number }>('/api/alp/embed-token', body)
   }
+
+  createQuiz(body: Record<string, unknown>) {
+    return this.post<Record<string, unknown>>('/api/alp/create/quiz', body)
+  }
+
+  createInteractive(body: Record<string, unknown>) {
+    return this.post<Record<string, unknown>>('/api/alp/create/interactive', body)
+  }
+
+  createFlashcards(body: Record<string, unknown>) {
+    return this.post<Record<string, unknown>>('/api/alp/create/flashcards', body)
+  }
+
+  createOutline(body: Record<string, unknown>) {
+    return this.post<Record<string, unknown>>('/api/alp/create/outline', body)
+  }
+
+  createFromDocument(body: Record<string, unknown>) {
+    return this.post<Record<string, unknown>>('/api/alp/create/from-document', body)
+  }
+
+  createEmbedToken(body: { creator_user_id: string; tool?: string }) {
+    return this.post<Record<string, unknown>>('/api/alp/create/embed-token', body)
+  }
 }

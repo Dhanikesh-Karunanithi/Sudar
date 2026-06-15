@@ -47,8 +47,11 @@ export default function ALPPage() {
         setup, and embed link generator.
       </p>
       <div className="mt-10 flex flex-wrap gap-4">
+        <Link href="/store" className="text-accent hover:underline">
+          Sudar Store →
+        </Link>
         <Link href="/plugins" className="text-accent hover:underline">
-          Plugin downloads →
+          Plugin downloads (legacy) →
         </Link>
         <a href={`${GITHUB_URL}/blob/main/docs/ALP_API.md`} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
           ALP API (GitHub) →

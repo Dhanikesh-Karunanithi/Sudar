@@ -21,6 +21,7 @@ Moodle 4.x plugins that send telemetry and surface Sudar (ALP) against [docs/ALP
 |------|-----------|
 | SudarMemory | Observers enqueue rows; task resolves Moodle → Sudar UUID, `POST /api/alp/events`, exponential backoff, **dead** status after max attempts |
 | SudarChat / SudarRecommend | `tutor.php`, `nextaction.php` resolve identity then call embed-token / next-action |
+| **Sudar Create** | `create.php?tool=quiz` — embed-token → `/alp/create` (quiz, interact, cards, draft, media). Requires `local/sudaralp:launchcreate`. See [docs/SUDAR_CREATE_API.md](../../docs/SUDAR_CREATE_API.md). |
 | Capabilities | Course + user context: `nextaction_*`, `launchtutor_*`; legacy system `view` |
 | Block | `block_sudaralp` lists next-action + tutor links on Dashboard / course |
 
@@ -31,4 +32,6 @@ Register Learn tool JWKS (`GET /api/alp/lti/jwks`, env `ALP_LTI_TOOL_JWKS_JSON`)
 ## Related
 
 - [docs/ALP_API.md](../../docs/ALP_API.md)
+- [docs/SUDAR_CREATE_API.md](../../docs/SUDAR_CREATE_API.md)
 - [integrations/alp-sdk/README.md](../alp-sdk/README.md)
+- [integrations/canvas/README.md](../canvas/README.md)

@@ -13,7 +13,7 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 
   const { data, error } = await admin
     .from('courses')
-    .select('*, modules(id, title, content, modality_variants, order_index, quiz, created_at)')
+    .select('*, modules(id, title, content, modality_variants, order_index, quiz, sim_scenario_id, created_at)')
     .eq('id', id)
     .eq('created_by', user.id)
     .order('order_index', { referencedTable: 'modules', ascending: true })

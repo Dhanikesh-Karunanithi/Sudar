@@ -4,6 +4,61 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## SudarSim — roleplay simulation (pilot)
+
+- **Where**: Sudar Studio **`/sudarsim`** (org scenario library + editor, sidebar **SudarSim**); Sudar Learn `/sim/session`, CourseViewer **Sim** tab, ALP `/alp/sim/play`; Moodle `local_sudaralp/sim.php`; voice service `sudar-sim/`. Course modules optionally **link** a scenario (delivery only).
+- **What**: Multi-channel customer roleplay (phone voice via WebSocket/LiveKit, chat, email) with screenshot **CRM overlay** editor, configurable rubric coach, transcript→scenario import, optional module completion gate, Twin memory via `ai_interactions`. Locales: en, fr, es, pt, ta.
+- **Key files**:
+  - `docs/SUDAR_SIM_PLAN.md`, `docs/SUDAR_SIM_DEPLOY.md`, `docs/SUDAR_SIM_API.md`
+  - `shared/sudarsim/`, `sudar-sim/main.py`
+  - `sudar-intelligence/src/api/routes/sim.py`
+  - `sudar-learn/src/components/sudarsim/`, `src/app/api/sim/`
+  - `sudar-studio/src/app/(dashboard)/sudarsim/`, `src/app/api/sudarsim/scenarios/`, `src/components/sudarsim/`
+  - `supabase/migrations/20260616000000_sudarsim.sql`
+- **Flow**:
+  1. Admin creates/publishes scenario in Studio **SudarSim** (`/sudarsim`) — CRM screenshot + overlays + rubric.
+  2. Optionally links scenario to a course module for in-context delivery.
+  3. Learner opens **Sim** tab or `/sim/session/new?scenario_id=…`.
+  4. Practices across channels; CRM actions logged.
+  5. Ends session → coach report → optional `module_complete` if rubric passes.
+
+---
+
+## Sudar Store — LMS integrations marketplace
+
+- **Where**: `https://teachwithsudar.com/store` (marketing site); `/plugins` redirects here.
+- **What**: Browse and install Sudar services for existing LMSs — ALP intelligence (Memory, Chat, Recommend), Sudar Create (Quiz, Interact, Cards, Draft, Media), Moodle connector, Canvas LTI pack, MCP server, and ALP SDK. Filter by category and LMS; each item links to GitHub source, API docs, and Studio Integrations for API keys.
+- **Key files**:
+  - `teachwithsudar/src/data/sudarStore.ts` — catalog definitions.
+  - `teachwithsudar/src/app/store/page.tsx`, `store/[id]/page.tsx` — store UI.
+  - `teachwithsudar/src/components/store/StoreCatalog.tsx`, `StoreProductCard.tsx`.
+- **Flow**:
+  1. Admin opens Sudar Store → picks Moodle ALP Connector or SudarQuiz.
+  2. Follows download/docs → configures org key in Studio Integrations.
+  3. Installs plugin or registers LTI → LMS gains new capability.
+
+---
+
+## Sudar Create — LMS content generation (ALP extension)
+
+- **Where**: Sudar Learn `/api/alp/create/*` and `/alp/create` embed UI; Moodle `local_sudaralp/create.php`; Canvas LTI checklist in `integrations/canvas/`.
+- **What**: Org-scoped AI services for external LMSs: **SudarQuiz**, **SudarInteract**, **SudarCards**, outline, async **SudarDraft** / **SudarMedia** jobs. Hybrid delivery: headless ALP API + MCP `sudar_create_*` tools + teacher iframe. Exports JSON and **SCORM 1.2 single-SCO** ZIP for upload into Moodle/Canvas/Blackboard.
+- **Key files**:
+  - `docs/SUDAR_CREATE_API.md` — HTTP contract.
+  - `shared/content-generation/` — prompts, Zod schemas, SCORM builder.
+  - `sudar-learn/src/app/api/alp/create/` — proxy routes.
+  - `sudar-learn/src/app/alp/create/` — embed shell.
+  - `supabase/migrations/20260615000000_content_generation_jobs.sql` — async jobs.
+  - `packages/sudar-mcp/src/tools/create.ts` — MCP integrator tools.
+- **Flow**:
+  1. Admin provisions org-scoped ALP key in Studio Integrations.
+  2. Teacher opens Sudar Create (Moodle link or `POST /api/alp/create/embed-token` → iframe).
+  3. Paste content → Generate → Download SCORM → upload to host LMS activity.
+  4. Integrators call `POST /api/alp/create/quiz` directly or via MCP.
+- **Env**: `ALP_EMBED_SIGNING_SECRET` on Learn (embed tokens); optional `ALP_WEBHOOK_HMAC_SECRET` for async job webhooks.
+
+---
+
 ## AI discoverability — robots.txt, llms.txt, sitemaps, MCP discovery
 
 - **Where**: `teachwithsudar.com` / `thesudar.com` (primary), `studio.thesudar.com`, `learn.thesudar.com`, `mcp.thesudar.com`.

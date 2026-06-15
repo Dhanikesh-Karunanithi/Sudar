@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { loadConfig, toolsetIncludes, type SudarMcpConfig } from './config.js'
 import { registerIntegratorTools } from './tools/integrator.js'
+import { registerCreateTools } from './tools/create.js'
 import { registerAdminTools } from './tools/admin.js'
 import { registerLearnerTools } from './tools/learner.js'
 import { registerCreatorTools } from './tools/creator.js'
@@ -8,6 +9,7 @@ import { registerCreatorTools } from './tools/creator.js'
 export function registerSudarTools(server: McpServer, config: SudarMcpConfig): void {
   if (toolsetIncludes(config, 'integrator')) {
     registerIntegratorTools(server, config)
+    registerCreateTools(server, config)
   }
   if (toolsetIncludes(config, 'creator')) {
     registerCreatorTools(server, config)

@@ -38,11 +38,12 @@ export const navSections = {
     { href: "/features", label: "Features" },
     { href: "/guides", label: "Guides" },
     { href: "/modalities", label: "Modalities" },
+    { href: "/store", label: "Sudar Store" },
     { href: "/alp", label: "ALP & Plugins" },
   ] as NavLink[],
   getStarted: [
     { href: "/self-host", label: "Self-Host at $0" },
-    { href: "/plugins", label: "Plugin Downloads" },
+    { href: "/store", label: "Sudar Store" },
     { href: "/monetize", label: "Make Money with Sudar" },
   ] as NavLink[],
   resources: [

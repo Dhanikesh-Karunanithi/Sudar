@@ -30,6 +30,7 @@ This document makes the ALP ambition executable: not just API docs, but connecto
 | SudarChat | Pilot | Embed flow + course/user capabilities + block link |
 | SudarRecommend | Pilot | Next-action + block link |
 | LTI 1.3 | Pilot | Launch + JWKS + deployment registry; custom claim `sudar_user_id` for JIT link |
+| Sudar Create | Pilot | Learn `/api/alp/create/*`, `/alp/create` embed, SCORM single-SCO, Moodle `create.php`, docs/SUDAR_CREATE_API.md |
 
 ## Claim guidance
 

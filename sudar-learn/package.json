@@ -24,6 +24,7 @@
     "@react-pdf/renderer": "^4.3.2",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.97.0",
+    "adm-zip": "^0.5.17",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "file-type": "^19.6.0",
@@ -47,6 +48,7 @@
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.19.11",
+    "@types/adm-zip": "^0.5.8",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

@@ -48,9 +48,10 @@ async def generate_content(
     _auth: Annotated[str | None, Depends(verify_supabase_jwt_or_service)] = None,
 ):
     """
-    Generates a complete course structure from source material.
-    Called by Sudar Studio's course builder.
-    Provider fallback: Together AI → OpenAI → Anthropic.
+    Legacy Intelligence content route — full course generation runs on Sudar Studio
+    and LMS-facing Sudar Create on Learn (`POST /api/alp/create/*`).
+    See docs/SUDAR_CREATE_API.md. This endpoint returns a title stub and directs
+    callers to Learn ALP Create for module bodies.
     """
     policy = parse_runtime_policy(_body.org_settings)
     router = ModelRouter(policy)
@@ -96,3 +97,13 @@ async def generate_content(
         completeness_score=0.0,
         routing=resolved.routing,
     )
+
+
+@router.get("/create-openapi-hint")
+async def create_openapi_hint():
+    """Points integrators to Sudar Create on Learn (docs/SUDAR_CREATE_API.md)."""
+    return {
+        "create_api": "POST {LEARN_URL}/api/alp/create/quiz|interactive|flashcards|outline|from-document|media",
+        "docs": "docs/SUDAR_CREATE_API.md",
+        "delegation": "Use Sudar Learn ALP Create proxies; Studio JWT routes for in-product authoring.",
+    }

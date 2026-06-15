@@ -27,6 +27,13 @@ const eventTypeEnum = z.enum([
   'inactivity_hibernated',
   'inactivity_resumed',
   'scorm_progress',
+  'sim_start',
+  'sim_channel_switch',
+  'sim_crm_action',
+  'sim_complete',
+  'sim_retry',
+  'sim_rubric_dimension',
+  'coach_report_viewed',
 ])
 
 const eventBodySchema = z.object({
@@ -34,7 +41,7 @@ const eventBodySchema = z.object({
   course_id: z.string().uuid().optional().nullable(),
   module_id: z.string().uuid().optional().nullable(),
   payload: z.record(z.string(), z.unknown()).optional().nullable(),
-  modality: z.enum(['text', 'video', 'audio', 'mindmap', 'flashcards', 'game', 'feed', 'podcast', 'reading', 'listening']).optional().default('text'),
+  modality: z.enum(['text', 'video', 'audio', 'mindmap', 'flashcards', 'game', 'feed', 'podcast', 'reading', 'listening', 'sudarsim']).optional().default('text'),
   duration_secs: z.number().int().min(0).optional().nullable(),
 })
 

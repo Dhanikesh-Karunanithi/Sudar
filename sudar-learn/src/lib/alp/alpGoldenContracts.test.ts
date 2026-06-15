@@ -89,3 +89,30 @@ describe('ALP golden payloads (contract)', () => {
     ).not.toThrow()
   })
 })
+
+describe('Sudar Create golden payloads (contract)', () => {
+  it('POST /api/alp/create/quiz body', async () => {
+    const { createQuizRequestSchema } = await import('../../../../shared/content-generation/schemas')
+    expect(() =>
+      createQuizRequestSchema.parse({
+        content: 'Lesson text about HTTP methods.',
+        module_title: 'HTTP basics',
+        num_questions: 4,
+        export_format: 'scorm12',
+      }),
+    ).not.toThrow()
+  })
+
+  it('POST /api/alp/create/embed-token body', () => {
+    const schema = z.object({
+      creator_user_id: z.string().uuid(),
+      tool: z.enum(['quiz', 'interact', 'cards', 'draft', 'media', 'outline']).optional(),
+    })
+    expect(() =>
+      schema.parse({
+        creator_user_id: SAMPLE_USER,
+        tool: 'quiz',
+      }),
+    ).not.toThrow()
+  })
+})

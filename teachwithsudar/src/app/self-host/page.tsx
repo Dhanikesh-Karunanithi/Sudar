@@ -71,8 +71,8 @@ export default function SelfHostPage() {
         Full step-by-step and env reference: <code>docs/VERCEL_DEPLOYMENT.md</code> and <code>docs/INTELLIGENCE_DEPLOYMENT.md</code> in the repo.
       </p>
       <div className="mt-10 flex flex-wrap gap-4">
-        <Link href="/plugins" className="text-accent hover:underline">
-          Plugin downloads →
+        <Link href="/store" className="text-accent hover:underline">
+          Browse Sudar Store →
         </Link>
         <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
           GitHub repo →

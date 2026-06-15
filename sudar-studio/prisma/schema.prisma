@@ -480,6 +480,8 @@ model Module {
   sudarplayMapUrl  String?  @map("sudarplay_map_url")
   sudarplayMapId   String?  @map("sudarplay_map_id") @db.Uuid
   sudarplayConfig  Json?    @map("sudarplay_config")
+  simScenarioId    String?  @map("sim_scenario_id") @db.Uuid
+  simConfig        Json?    @map("sim_config")
   createdAt        DateTime @default(now()) @map("created_at")
 
   course         Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)

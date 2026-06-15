@@ -22,6 +22,7 @@ import {
   Trophy,
   Bot,
   Cpu,
+  Phone,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -42,6 +43,7 @@ interface SidebarProps {
 const contentNavItems = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Courses', href: '/courses', icon: BookOpen },
+  { label: 'SudarSim', href: '/sudarsim', icon: Phone },
   { label: 'Gamification', href: '/tools/gamification', icon: Trophy },
   { label: 'Tag library', href: '/settings/tags', icon: Tags },
   { label: 'Learning Paths', href: '/paths', icon: Route },

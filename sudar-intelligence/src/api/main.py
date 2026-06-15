@@ -20,7 +20,7 @@ from contextlib import asynccontextmanager
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from src.api.routes import tutor, learner, content, modality, health, audio, agents, runtime, image, kb
+from src.api.routes import tutor, learner, content, modality, health, audio, agents, runtime, image, kb, sim
 from src.api.logging_middleware import LoggingMiddleware
 from src.sudarplay.router import router as sudarplay_router
 
@@ -111,3 +111,4 @@ app.include_router(image.router, prefix="/api/image", tags=["Image Generation"])
 app.include_router(agents.router, prefix="/api/agents", tags=["Sudar Agents"])
 app.include_router(sudarplay_router, prefix="/api/sudarplay", tags=["sudarplay"])
 app.include_router(kb.router, prefix="/api/kb", tags=["Knowledge Bases"])
+app.include_router(sim.router, prefix="/api/sim", tags=["SudarSim"])

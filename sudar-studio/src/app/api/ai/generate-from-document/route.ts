@@ -101,6 +101,7 @@ export async function POST(request: NextRequest) {
 
   let documentText = ''
   const extraGen: Partial<AiGenerationCourseSettings> = {}
+  let attachSimPractice = false
   const contentType = request.headers.get('content-type') ?? ''
 
   if (contentType.includes('multipart/form-data')) {
@@ -133,6 +134,7 @@ export async function POST(request: NextRequest) {
     }
     const ba = formData.get('blueprint_answers')
     const bq = formData.get('blueprint_questions')
+    attachSimPractice = formData.get('attach_sim_practice') === 'true' || formData.get('attach_sim_practice') === 'on'
     if (typeof ba === 'string' && typeof bq === 'string' && ba.trim() && bq.trim()) {
       try {
         const answers = JSON.parse(ba) as BlueprintQuestionAnswer[]
@@ -170,6 +172,7 @@ export async function POST(request: NextRequest) {
         /* ignore invalid blueprint */
       }
     }
+    if (b.attach_sim_practice === true) attachSimPractice = true
   }
 
   documentText = documentText.slice(0, MAX_DOC_CHARS)
@@ -324,5 +327,52 @@ Return ONLY a JSON array of ${numModules} module titles. Example: ["Introduction
     )
   }
 
-  return NextResponse.json({ course_id: course.id })
+  return NextResponse.json({
+    course_id: course.id,
+    sim_practice_attached: attachSimPractice
+      ? await attachSimScenarioToFirstModule(admin, orgId, user.id, course.id, moduleRows?.[0]?.id, documentText)
+      : false,
+  })
+}
+
+async function attachSimScenarioToFirstModule(
+  admin: ReturnType<typeof createServiceRoleSupabaseClient>,
+  orgId: string,
+  userId: string,
+  courseId: string,
+  moduleId: string | undefined,
+  documentText: string,
+): Promise<boolean> {
+  if (!moduleId) return false
+  const intelUrl = (process.env.SUDAR_INTELLIGENCE_URL ?? process.env.BYTEOS_INTELLIGENCE_URL ?? 'http://localhost:8001').replace(/\/$/, '')
+  const secret = process.env.INTELLIGENCE_SERVICE_SECRET?.trim()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (secret) headers['X-Intelligence-Service-Secret'] = secret
+  const res = await fetch(`${intelUrl}/api/sim/scenario/generate`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ content: documentText.slice(0, 8000), locale: 'en' }),
+  }).catch(() => null)
+  if (!res?.ok) return false
+  const data = (await res.json()) as { scenario?: Record<string, unknown> }
+  const draft = data.scenario
+  if (!draft) return false
+  const { data: created } = await admin
+    .from('sim_scenarios')
+    .insert({
+      org_id: orgId,
+      created_by: userId,
+      title: String(draft.title ?? 'Practice simulation'),
+      locale: 'en',
+      status: 'draft',
+      persona: draft.persona ?? {},
+      channels: draft.channels ?? {},
+      rubric: draft.rubric ?? {},
+      source: { type: 'sop', reference: courseId },
+    })
+    .select('id')
+    .single()
+  if (!created?.id) return false
+  await admin.from('modules').update({ sim_scenario_id: created.id }).eq('id', moduleId)
+  return true
 }

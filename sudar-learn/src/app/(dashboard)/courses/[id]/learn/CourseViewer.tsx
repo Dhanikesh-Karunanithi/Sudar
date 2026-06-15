@@ -7,7 +7,7 @@ import {
   ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight,
   List, X, Send, Loader2,
   ChevronDown, FileText, Video, Network,
-  Layers, Zap, MessageSquarePlus, Pin, PinOff, PanelLeftClose, Mic, Maximize2, Minimize2, Headphones, Gamepad2
+  Layers, Zap, MessageSquarePlus, Pin, PinOff, PanelLeftClose, Mic, Maximize2, Minimize2, Headphones, Gamepad2, Phone
 } from 'lucide-react'
 import { cn, stripTutorModelArtifactsFromText } from '@/lib/utils'
 import { renderCourseMarkdown } from '@/lib/courseBodyMarkdown'
@@ -57,6 +57,7 @@ interface Module {
   quiz?: { questions: QuizQuestion[] } | null
   sudarplay_map_url?: string | null
   sudarplay_map_id?: string | null
+  sim_scenario_id?: string | null
 }
 
 interface Course {
@@ -1584,6 +1585,7 @@ export function CourseViewer({
               const hasPodcast = (course.settings?.include_podcast ?? false) &&
                 (course.settings?.podcast_dialogue?.length ?? 0) > 0
               const hasSudarPlay = Boolean(currentModule?.sudarplay_map_url)
+              const hasSudarSim = Boolean(currentModule?.sim_scenario_id)
               const modalities = [
                 { id: 'text', icon: FileText, label: 'Read' },
                 { id: 'listening', icon: Headphones, label: 'Listen' },
@@ -1591,6 +1593,7 @@ export function CourseViewer({
                 ...(hasPodcast ? [{ id: 'podcast', icon: Mic, label: 'Podcast', soon: false }] : []),
                 { id: 'mindmap', icon: Network, label: 'Map' },
                 { id: 'flashcards', icon: Layers, label: 'Cards' },
+                ...(hasSudarSim ? [{ id: 'sudarsim', icon: Phone, label: 'Sim', soon: false, href: `/sim/session/new?scenario_id=${currentModule?.sim_scenario_id}&module_id=${currentModuleId}&course_id=${course.id}` }] : []),
                 ...(hasSudarPlay ? [{ id: 'sudarplay', icon: Gamepad2, label: 'Play', soon: false, href: `/sudarplay/launch?module_id=${currentModuleId}` }] : []),
               ]
               return modalities.map(({ id, icon: Icon, label, soon, href }) => {

@@ -10,6 +10,7 @@ export const CANONICAL_MODALITY_KEYS = [
   'flashcards',
   'game',
   'feed',
+  'sudarsim',
 ] as const
 
 export type CanonicalModality = (typeof CANONICAL_MODALITY_KEYS)[number]
@@ -22,6 +23,7 @@ const DEFAULT_SCORES: Record<CanonicalModality, number> = {
   flashcards: 0.5,
   game: 0.5,
   feed: 0.5,
+  sudarsim: 0.5,
 }
 
 function clamp(n: number, lo: number, hi: number): number {

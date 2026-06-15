@@ -195,7 +195,9 @@ export default function IntegrationsPage() {
         <p className="text-sm text-slate-400 mb-4">
           The <strong className="text-slate-300">Adaptive Learning Layer (ALP)</strong> lets Moodle, Canvas, or other
           LMSs send learning events and use the Sudar tutor and next-action APIs without replacing your LMS. Your
-          external systems call the Learn app with an API key. For <strong className="text-slate-300">LTI 1.3</strong> (Canvas, Blackboard, Moodle), <strong className="text-slate-300">SCORM 1.2</strong>, and <strong className="text-slate-300">xAPI/LRS</strong>, see the Integration guide and{' '}
+          external systems call the Learn app with an API key. Browse installable services in the{' '}
+          <a href="https://teachwithsudar.com/store" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300">Sudar Store</a>
+          {' '}(plugins, Create tools, LTI packs). For <strong className="text-slate-300">LTI 1.3</strong> (Canvas, Blackboard, Moodle), <strong className="text-slate-300">SCORM 1.2</strong>, and <strong className="text-slate-300">xAPI/LRS</strong>, see the Integration guide and{' '}
           <a href="https://github.com/Dhanikesh-Karunanithi/Sudar/blob/main/docs/ENTERPRISE_PROVISIONING.md#lti--lms-options" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300">Enterprise provisioning → LTI / LMS options</a>.
         </p>
 

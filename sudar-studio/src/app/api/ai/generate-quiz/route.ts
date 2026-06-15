@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { Json } from '@/types/database'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { fetchStudioOrgAiContext, studioMeteringChatCtx } from '@/lib/ai/studioOrgAiChat'
+import { buildQuizPrompt, parseQuizFromAi } from '../../../../shared/content-generation'
 
 export async function POST(request: NextRequest) {
   const session = await getRequestSession(request)
@@ -35,38 +36,14 @@ export async function POST(request: NextRequest) {
 
   if (!module_id || !content) return NextResponse.json({ error: 'module_id and content required' }, { status: 400 })
 
-  const prompt = `You are an expert instructional designer creating a quiz for an e-learning module.
-
-Course: "${course_title}"
-Module: "${module_title}"
-Difficulty: ${difficulty}
-Module content:
----
-${content.slice(0, 2500)}
----
-
-Create exactly ${num_questions} multiple-choice questions that test genuine comprehension (not just recall).
-
-Rules:
-- Each question must be answerable from the module content
-- Options must be plausible (no obviously wrong answers)
-- Include a 1-sentence explanation for the correct answer
-- Tag each question with a short topic name (2-4 words, e.g. "variable assignment", "HTTP methods")
-- Vary question types: understanding, application, comparison
-
-Return ONLY valid JSON in this exact structure:
-{
-  "questions": [
-    {
-      "id": "q1",
-      "question": "Question text here?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct": 0,
-      "explanation": "Brief explanation of why this is correct.",
-      "topic": "short topic tag"
-    }
-  ]
-}`
+  const prompt = buildQuizPrompt({
+    content,
+    courseTitle: course_title,
+    moduleTitle: module_title,
+    difficulty,
+    numQuestions: num_questions,
+    language: 'en',
+  })
 
   const { content: raw } = await chatCompletion(
     {
@@ -80,15 +57,11 @@ Return ONLY valid JSON in this exact structure:
 
   let quiz: { questions: unknown[] }
   try {
-    const match = raw.match(/\{[\s\S]*\}/)
-    if (!match) throw new Error('No JSON found')
-    quiz = JSON.parse(match[0])
-    if (!Array.isArray(quiz.questions)) throw new Error('Invalid structure')
+    quiz = parseQuizFromAi(raw)
   } catch {
     return NextResponse.json({ error: 'Failed to parse quiz from AI response' }, { status: 500 })
   }
 
-  // Save to module
   const { error: updateError } = await admin
     .from('modules')
     .update({ quiz: quiz as Json })

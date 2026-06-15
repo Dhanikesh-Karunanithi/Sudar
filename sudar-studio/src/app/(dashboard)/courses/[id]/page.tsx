@@ -16,6 +16,7 @@ type ModuleRow = {
   title: string
   order_index: number
   content?: unknown
+  sim_scenario_id?: string | null
 }
 
 type CourseState = {
@@ -71,6 +72,7 @@ export default function CourseDetailPage() {
         title: m.title,
         order_index: m.order_index,
         content: m.content as PreviewModule['content'],
+        sim_scenario_id: m.sim_scenario_id ?? null,
       }))
   }, [course?.modules])
 

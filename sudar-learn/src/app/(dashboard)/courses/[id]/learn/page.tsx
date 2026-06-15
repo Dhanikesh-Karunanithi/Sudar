@@ -43,7 +43,7 @@ export default async function CourseLearnPage({
   const { data: course } = await admin
     .from('courses')
     .select(
-      'id, title, description, template, settings, is_external, external_provider, external_url, embed_url, allow_tutor_discussion, org_id, modules(id, title, content, modality_variants, order_index, quiz, sudarplay_map_url, sudarplay_map_id)',
+      'id, title, description, template, settings, is_external, external_provider, external_url, embed_url, allow_tutor_discussion, org_id, modules(id, title, content, modality_variants, order_index, quiz, sudarplay_map_url, sudarplay_map_id, sim_scenario_id)',
     )
     .eq('id', id)
     .eq('status', 'published')

@@ -65,4 +65,32 @@ export class AlpClient {
   resolveIdentity(body: AlpIdentityResolveRequest): Promise<AlpIdentityResolveResponse> {
     return this.post('/api/alp/identity/resolve', body as JsonObject)
   }
+
+  createQuiz(body: JsonObject): Promise<JsonObject> {
+    return this.post('/api/alp/create/quiz', body)
+  }
+
+  createInteractive(body: JsonObject): Promise<JsonObject> {
+    return this.post('/api/alp/create/interactive', body)
+  }
+
+  createFlashcards(body: JsonObject): Promise<JsonObject> {
+    return this.post('/api/alp/create/flashcards', body)
+  }
+
+  createOutline(body: JsonObject): Promise<JsonObject> {
+    return this.post('/api/alp/create/outline', body)
+  }
+
+  createEmbedToken(body: { creator_user_id: string; tool?: string }): Promise<JsonObject> {
+    return this.post('/api/alp/create/embed-token', body as JsonObject)
+  }
+
+  simEmbedToken(body: {
+    user_id: string
+    mode?: 'author' | 'play'
+    scenario_id?: string | null
+  }): Promise<JsonObject> {
+    return this.post('/api/alp/sim/embed-token', body as JsonObject)
+  }
 }

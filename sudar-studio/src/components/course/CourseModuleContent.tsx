@@ -21,6 +21,7 @@ export interface PreviewModule {
     sideCard?: unknown
   } | null
   order_index: number
+  sim_scenario_id?: string | null
 }
 
 export interface PreviewCourse {
