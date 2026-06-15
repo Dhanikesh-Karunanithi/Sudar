@@ -12,13 +12,15 @@ import {
   parseOutlineFromAi,
   parseQuizFromAi,
   buildCreateXapiStatement,
-  buildFlashcardsScormZip,
-  buildInteractiveScormZip,
-  buildQuizScormZip,
   type ExportFormat,
   type InteractiveElement,
   type QuizResult,
 } from '@shared-content-generation'
+import {
+  buildFlashcardsScormZip,
+  buildInteractiveScormZip,
+  buildQuizScormZip,
+} from '@shared-content-generation/scorm/buildSingleScoZip'
 
 export async function generateQuizForCreate(
   ctx: CreateAuthContext,

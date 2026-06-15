@@ -6,7 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { CreateAuthContext } from '@/lib/alp/createAuth'
 import { contentGenerationJobsTable, type ContentGenerationJobRow } from '@/lib/alp/contentGenerationJobsDb'
 import { generateDocumentOutlineForCreate } from '@/lib/alp/createGeneration'
-import { buildInteractiveScormZip } from '@shared-content-generation'
+import { buildInteractiveScormZip } from '@shared-content-generation/scorm/buildSingleScoZip'
 
 export async function runContentGenerationJob(
   admin: SupabaseClient,

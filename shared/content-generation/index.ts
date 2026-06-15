@@ -1,5 +1,4 @@
 export * from './schemas'
 export * from './prompts'
 export * from './parsers'
-export * from './scorm/buildSingleScoZip'
 export * from './xapi'

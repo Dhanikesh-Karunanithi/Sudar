@@ -27,6 +27,13 @@ const nextConfig = {
   ...(distDirWin ? { distDir: distDirWin } : {}),
   // Monorepo: avoid inferring a parent folder (e.g. stray lockfile outside the repo) as the workspace root
   outputFileTracingRoot: path.join(__dirname),
+  webpack: (config) => {
+    config.resolve.modules = [
+      path.join(__dirname, 'node_modules'),
+      'node_modules',
+    ]
+    return config
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: '100mb',
