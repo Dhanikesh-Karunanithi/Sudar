@@ -4,10 +4,10 @@
  * Requires embedding provider (Together, OpenAI, or Hugging Face) and pgvector migration.
  */
 
-import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { verifyInternalServiceRequest } from '@/lib/security/internalServiceAuth'
 import { NextRequest, NextResponse } from 'next/server'
 import { embedTexts, EMBED_DIMENSIONS } from '@/lib/embed'
-import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 import { chunkText, extractModuleBody } from '@/lib/rag/chunk'
 import { isAppLocale } from '../../../../../../shared/i18nLocales'
 
@@ -33,9 +33,9 @@ async function resolveOrgContentLanguage(
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!verifyInternalServiceRequest(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const admin = createServiceRoleSupabaseClient()
     let body: { course_id?: string } = {}
@@ -127,13 +127,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (chunks.length === 0) return NextResponse.json({ ok: true, indexed: 0 })
-
-    const blockedRag = await rejectSensitiveLearnerAiInput(
-      admin,
-      user.id,
-      chunks.map((ch) => ch.content)
-    )
-    if (blockedRag) return blockedRag
 
     const embeddings = await embedTexts(chunks.map((ch) => ch.content))
     if (embeddings.some((e) => e.length !== EMBED_DIMENSIONS)) {

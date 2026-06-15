@@ -1,7 +1,14 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { verifyInternalServiceRequest } from '@/lib/security/internalServiceAuth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { evaluateGamification } from '@/lib/gamification/engine'
+
+const CLIENT_BLOCKED_EVENT_TYPES = new Set([
+  'org_kpi_milestone',
+  'creator_course_published',
+  'creator_milestone_hit',
+])
 
 const bodySchema = z.object({
   eventType: z.string().min(1).max(80),
@@ -28,6 +35,10 @@ export async function POST(request: NextRequest) {
   }
 
   const { eventType, courseId, moduleId, payload, modality, durationSecs } = parsed.data
+  if (CLIENT_BLOCKED_EVENT_TYPES.has(eventType) && !verifyInternalServiceRequest(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const admin = createServiceRoleSupabaseClient()
 
   await admin.from('learning_events').insert({

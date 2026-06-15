@@ -1,5 +1,6 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { dispatchUserNotification } from '@/lib/notifications/dispatch'
+import { learnerBelongsToOrg } from '@/lib/learner/learnerOrgAccess'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
@@ -13,12 +14,19 @@ export async function POST(request: NextRequest) {
 
   const { data: course } = await admin
     .from('courses')
-    .select('id, title')
+    .select('id, title, org_id, is_external')
     .eq('id', course_id)
     .eq('status', 'published')
     .single()
 
   if (!course) return NextResponse.json({ error: 'Course not found or not published' }, { status: 404 })
+
+  if (!course.is_external) {
+    const allowed = await learnerBelongsToOrg(admin, user.id, course.org_id)
+    if (!allowed) {
+      return NextResponse.json({ error: 'Course not available for your organization' }, { status: 403 })
+    }
+  }
 
   // Check if already enrolled — return existing
   const { data: existing } = await admin
