@@ -18,7 +18,7 @@ import {
   type ExportFormat,
   type InteractiveElement,
   type QuizResult,
-} from '../../../../shared/content-generation'
+} from '@shared-content-generation'
 
 export async function generateQuizForCreate(
   ctx: CreateAuthContext,

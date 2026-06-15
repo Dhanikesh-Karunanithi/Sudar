@@ -2,7 +2,7 @@
  * ALP Create — Generate course outline for external LMS.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { createOutlineRequestSchema } from '../../../../../../../shared/content-generation/schemas'
+import { createOutlineRequestSchema } from '@shared-content-generation/schemas'
 import { resolveCreateAuth } from '@/lib/alp/createAuth'
 import { generateOutlineForCreate } from '@/lib/alp/createGeneration'
 

@@ -2,7 +2,7 @@
  * ALP Create — Async document-to-course job (SudarDraft).
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { createFromDocumentRequestSchema } from '../../../../../../../shared/content-generation/schemas'
+import { createFromDocumentRequestSchema } from '@shared-content-generation/schemas'
 import { contentGenerationJobsTable, type ContentGenerationJobRow } from '@/lib/alp/contentGenerationJobsDb'
 import { resolveCreateAuth } from '@/lib/alp/createAuth'
 import { runContentGenerationJob } from '@/lib/alp/createJobs'

@@ -92,7 +92,7 @@ describe('ALP golden payloads (contract)', () => {
 
 describe('Sudar Create golden payloads (contract)', () => {
   it('POST /api/alp/create/quiz body', async () => {
-    const { createQuizRequestSchema } = await import('../../../../shared/content-generation/schemas')
+    const { createQuizRequestSchema } = await import('@shared-content-generation/schemas')
     expect(() =>
       createQuizRequestSchema.parse({
         content: 'Lesson text about HTTP methods.',

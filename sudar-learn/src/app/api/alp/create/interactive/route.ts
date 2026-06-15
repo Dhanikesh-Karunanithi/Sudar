@@ -2,7 +2,7 @@
  * ALP Create — Generate interactive blocks for external LMS (SudarInteract).
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { createInteractiveRequestSchema } from '../../../../../../../shared/content-generation/schemas'
+import { createInteractiveRequestSchema } from '@shared-content-generation/schemas'
 import { resolveCreateAuth } from '@/lib/alp/createAuth'
 import { generateInteractiveForCreate } from '@/lib/alp/createGeneration'
 

@@ -2,7 +2,7 @@
  * ALP Create — Async media generation job (SudarMedia).
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { createMediaRequestSchema } from '../../../../../../../shared/content-generation/schemas'
+import { createMediaRequestSchema } from '@shared-content-generation/schemas'
 import { contentGenerationJobsTable, type ContentGenerationJobRow } from '@/lib/alp/contentGenerationJobsDb'
 import { resolveCreateAuth } from '@/lib/alp/createAuth'
 import { runContentGenerationJob } from '@/lib/alp/createJobs'

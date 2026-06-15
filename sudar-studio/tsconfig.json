@@ -31,6 +31,12 @@
       "@shared-sudarsim/*": [
         "../shared/sudarsim/*"
       ],
+      "@shared-content-generation": [
+        "../shared/content-generation/index.ts"
+      ],
+      "@shared-content-generation/*": [
+        "../shared/content-generation/*"
+      ],
       "zod": [
         "./node_modules/zod/index.d.cts"
       ],

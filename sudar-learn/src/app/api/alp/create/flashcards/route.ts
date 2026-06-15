@@ -2,7 +2,7 @@
  * ALP Create — Generate flashcards for external LMS (SudarCards).
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { createFlashcardsRequestSchema } from '../../../../../../../shared/content-generation/schemas'
+import { createFlashcardsRequestSchema } from '@shared-content-generation/schemas'
 import { resolveCreateAuth } from '@/lib/alp/createAuth'
 import { generateFlashcardsForCreate } from '@/lib/alp/createGeneration'
 

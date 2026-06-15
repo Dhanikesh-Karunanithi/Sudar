@@ -27,6 +27,12 @@
       ],
       "@shared-sudarsim/*": [
         "../shared/sudarsim/*"
+      ],
+      "@shared-content-generation": [
+        "../shared/content-generation/index.ts"
+      ],
+      "@shared-content-generation/*": [
+        "../shared/content-generation/*"
       ]
     },
     "target": "ES2017"

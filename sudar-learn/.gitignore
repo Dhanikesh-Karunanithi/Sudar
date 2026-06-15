@@ -37,4 +37,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# wrangler / miniflare local dev cache
+.wrangler/

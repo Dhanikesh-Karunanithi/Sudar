@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { Json } from '@/types/database'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { fetchStudioOrgAiContext, studioMeteringChatCtx } from '@/lib/ai/studioOrgAiChat'
-import { buildQuizPrompt, parseQuizFromAi } from '../../../../shared/content-generation'
+import { buildQuizPrompt, parseQuizFromAi } from '@shared-content-generation'
 
 export async function POST(request: NextRequest) {
   const session = await getRequestSession(request)

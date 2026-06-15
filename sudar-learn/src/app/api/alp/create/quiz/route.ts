@@ -2,7 +2,7 @@
  * ALP Create — Generate quiz from text for external LMS (SudarQuiz).
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { createQuizRequestSchema } from '../../../../../../../shared/content-generation/schemas'
+import { createQuizRequestSchema } from '@shared-content-generation/schemas'
 import { resolveCreateAuth } from '@/lib/alp/createAuth'
 import { generateQuizForCreate } from '@/lib/alp/createGeneration'
 
