@@ -9,6 +9,7 @@
 
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { dispatchUserNotification } from '@/lib/notifications/dispatch'
+import { learnerBelongsToOrg } from '@/lib/learner/learnerOrgAccess'
 import { NextRequest, NextResponse } from 'next/server'
 
 interface PathCourse {
@@ -70,12 +71,17 @@ export async function POST(request: NextRequest) {
   // Load path
   const { data: path } = await admin
     .from('learning_paths')
-    .select('id, title, status, courses, is_adaptive, issues_certificate')
+    .select('id, title, status, courses, is_adaptive, issues_certificate, org_id')
     .eq('id', path_id)
     .eq('status', 'published')
     .single()
 
   if (!path) return NextResponse.json({ error: 'Path not found or not published' }, { status: 404 })
+
+  const allowed = await learnerBelongsToOrg(admin, user.id, path.org_id)
+  if (!allowed) {
+    return NextResponse.json({ error: 'Learning path not available for your organization' }, { status: 403 })
+  }
 
   // Check for existing enrollment
   const { data: existing } = await admin

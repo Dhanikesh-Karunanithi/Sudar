@@ -16,6 +16,13 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-15 — Learn: enrollment isolation + forced password-change bypass
+
+- **Fix**: Course and path enrollment now require org membership (external/open courses remain cross-org).
+- **Fix**: `/api/auth/complete-password-change` requires a server-side password update before clearing `require_password_change`.
+- **Fix**: `/api/quests/progress` blocks client-forged creator milestone events without `INTERNAL_SERVICE_SECRET`.
+- **Key files**: `learnerOrgAccess.ts`, `enrollments/route.ts`, `path-enrollments/route.ts`, `complete-password-change/route.ts`, `quests/progress/route.ts`.
+
 ### 2026-06-14 — Learn: critical progress, certificate, and auth hardening
 
 - **Fix**: Enrollment progress now counts **distinct** `module_id` completions (SCORM re-finishes no longer inflate progress or mark courses/paths complete early).

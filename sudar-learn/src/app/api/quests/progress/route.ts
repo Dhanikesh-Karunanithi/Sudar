@@ -4,7 +4,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { evaluateGamification } from '@/lib/gamification/engine'
 
-const CLIENT_BLOCKED_EVENT_TYPES = new Set(['org_kpi_milestone'])
+const CLIENT_BLOCKED_EVENT_TYPES = new Set([
+  'org_kpi_milestone',
+  'creator_course_published',
+  'creator_milestone_hit',
+])
 
 const bodySchema = z.object({
   eventType: z.string().min(1).max(80),
