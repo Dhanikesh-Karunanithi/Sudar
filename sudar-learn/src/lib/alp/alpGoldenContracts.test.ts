@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { z } from 'zod'
+import { createQuizRequestSchema } from '../../../../shared/content-generation/schemas'
 
 /** Mirrors ALP Learn JSON contracts (see docs/ALP_API.md). UUIDs are syntactically valid only. */
 const eventsRequest = z.object({
@@ -91,8 +92,7 @@ describe('ALP golden payloads (contract)', () => {
 })
 
 describe('Sudar Create golden payloads (contract)', () => {
-  it('POST /api/alp/create/quiz body', async () => {
-    const { createQuizRequestSchema } = await import('@shared-content-generation/schemas')
+  it('POST /api/alp/create/quiz body', () => {
     expect(() =>
       createQuizRequestSchema.parse({
         content: 'Lesson text about HTTP methods.',
