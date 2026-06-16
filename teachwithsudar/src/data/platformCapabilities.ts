@@ -103,12 +103,14 @@ export const platformCapabilities: PlatformCapability[] = [
   {
     id: "modalities",
     surface: "learn",
-    title: "Seven learning modalities",
-    summary: "One authored course; learners switch Read, Listen, Watch, Map, Cards, Feed, Play.",
+    title: "Six learning modalities (shipped)",
+    summary:
+      "One authored course; learners switch Read, Listen, Watch, Podcast, Map, and Cards. SCORM packages import via Studio.",
     details: [
       "On-demand TTS (Edge-TTS / Sarvam via Intelligence)",
       "AI flashcards and mind maps from module content",
       "SudarVid / Remotion for generated video",
+      "SudarFeed and SudarPlay on roadmap — see teachwithsudar.com/roadmap",
     ],
     guideSlug: "learner-modalities-and-tutor",
   },

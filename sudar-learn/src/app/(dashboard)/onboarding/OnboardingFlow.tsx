@@ -13,7 +13,7 @@ import type { MascotId, MascotIntensity, MascotMode, MascotSupportStyle } from '
 interface Props {
   firstName: string
   existingMemory: Record<string, unknown>
-  moduleTitles: string[]
+  moduleTitles?: string[]
 }
 
 const EXPERIENCE_LEVELS = [
@@ -54,12 +54,20 @@ const MASCOT_INTENSITIES: { value: MascotIntensity; label: string; desc: string 
   { value: 'high', label: 'High', desc: 'Frequent support and reactions' },
 ]
 
+const MASCOT_COMPANION_LABELS: Record<MascotId, string> = {
+  sudar: 'Sudar',
+  focus: 'Focus Guardian',
+  memory: 'Memory Keeper',
+  confidence: 'Confidence Coach',
+}
+
 const STEPS = [
   { id: 'welcome', icon: Bot, label: 'Meet Sudar' },
   { id: 'background', icon: User, label: 'Your background' },
   { id: 'goals', icon: Target, label: 'Your goals' },
   { id: 'style', icon: Lightbulb, label: 'How you learn' },
   { id: 'mascot', icon: Bot, label: 'Companions' },
+  { id: 'verify', icon: User, label: 'Verify profile' },
   { id: 'done', icon: CheckCircle2, label: 'Done' },
 ]
 
@@ -67,6 +75,8 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
+  const skipCount = Number(existingMemory.onboarding_skip_count ?? 0)
+  const canSkip = skipCount < 3
 
   // Form values
   const [background, setBackground] = useState((existingMemory.self_reported_background as string) ?? '')
@@ -80,6 +90,18 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
   const [mascotCompanions, setMascotCompanions] = useState<MascotId[]>(['focus', 'memory', 'confidence'])
 
   const totalSteps = STEPS.length - 1 // exclude 'done' from progress
+
+  async function handleSkip() {
+    if (!canSkip) return
+    await fetch('/api/tutor/memory', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ onboarding_skip_count: String(skipCount + 1) }),
+    })
+    document.cookie = 'sudar_onboarding_skip=1; path=/; max-age=86400; SameSite=Lax'
+    router.push('/')
+    router.refresh()
+  }
 
   async function handleFinish() {
     setSaving(true)
@@ -167,9 +189,17 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
               className="w-full py-3 bg-primary hover:opacity-90 text-primary-foreground font-semibold rounded-button transition-all shadow-lg shadow-md flex items-center justify-center gap-2">
               Let&apos;s get started <ChevronRight className="w-5 h-5" />
             </button>
-            <button onClick={() => router.push('/')} className="text-sm text-muted-foreground hover:text-muted-foreground transition-colors">
-              Skip for now
-            </button>
+            {canSkip ? (
+              <button
+                type="button"
+                onClick={() => void handleSkip()}
+                className="text-sm text-muted-foreground hover:text-muted-foreground transition-colors"
+              >
+                Skip for now ({3 - skipCount} skips left)
+              </button>
+            ) : (
+              <p className="text-xs text-muted-foreground">Complete setup to continue — skips used.</p>
+            )}
           </div>
         )}
 
@@ -389,7 +419,7 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
                           : 'border-border text-muted-foreground hover:text-card-foreground',
                       )}
                     >
-                      {id}
+                      {MASCOT_COMPANION_LABELS[id]}
                     </button>
                   ))}
                 </div>
@@ -398,7 +428,35 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
 
             <div className="flex gap-3">
               <button onClick={() => setStep(3)} className="px-4 py-2.5 text-muted-foreground hover:text-card-foreground text-sm rounded-xl hover:bg-muted transition-all">Back</button>
-              <button onClick={() => { setStep(5); handleFinish() }} disabled={saving}
+              <button onClick={() => setStep(5)} disabled={saving}
+                className="flex-1 py-2.5 bg-primary hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground text-sm font-semibold rounded-button transition-all flex items-center justify-center gap-2">
+                Next <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 5: Verify profile */}
+        {step === 5 && (
+          <div className="bg-card border border-border rounded-2xl p-7 shadow-sm space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <User className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-bold text-card-foreground">Verify your profile</h2>
+                <p className="text-muted-foreground text-sm">Confirm these choices before Sudar personalises your path.</p>
+              </div>
+            </div>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><span className="text-card-foreground font-medium">Background:</span> {background.slice(0, 120)}{background.length > 120 ? '…' : ''}</li>
+              <li><span className="text-card-foreground font-medium">Goals:</span> {goals.slice(0, 120)}{goals.length > 120 ? '…' : ''}</li>
+              <li><span className="text-card-foreground font-medium">Style:</span> {learningStyle || 'Not set'}</li>
+              <li><span className="text-card-foreground font-medium">Companions:</span> {mascotMode === 'hero-only' ? 'Sudar only' : mascotCompanions.map((id) => MASCOT_COMPANION_LABELS[id]).join(', ')}</li>
+            </ul>
+            <div className="flex gap-3">
+              <button onClick={() => setStep(4)} className="px-4 py-2.5 text-muted-foreground hover:text-card-foreground text-sm rounded-xl hover:bg-muted transition-all">Back</button>
+              <button onClick={() => { setStep(6); void handleFinish() }} disabled={saving}
                 className="flex-1 py-2.5 bg-primary hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground text-sm font-semibold rounded-button transition-all flex items-center justify-center gap-2">
                 {saving ? <><SudarInlineLoader size="sm" className="text-primary-foreground" starFill="var(--primary)" />Saving...</> : <>Complete setup <Zap className="w-4 h-4" /></>}
               </button>
@@ -406,8 +464,8 @@ export function OnboardingFlow({ firstName, existingMemory }: Props) {
           </div>
         )}
 
-        {/* Step 5: Done */}
-        {step === 5 && (
+        {/* Step 6: Done */}
+        {step === 6 && (
           <div className="text-center space-y-6">
             <div
               className={cn(

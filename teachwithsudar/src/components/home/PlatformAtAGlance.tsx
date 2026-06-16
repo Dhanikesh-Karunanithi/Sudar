@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ResponsiveCardGrid } from "@/components/ui/ResponsiveCardGrid";
 import { platformCapabilities } from "@/data/platformCapabilities";
 
 const highlights = [
@@ -29,13 +30,16 @@ export function PlatformAtAGlance() {
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <ResponsiveCardGrid
+          gridClassName="sm:grid-cols-2 lg:grid-cols-3 gap-4"
+          ariaLabel="Platform capabilities"
+        >
           {highlights.map((cap) =>
             cap ? (
               <Link
                 key={cap.id}
                 href={cap.guideSlug ? `/guides/${cap.guideSlug}` : "/features"}
-                className="reveal group rounded-2xl border border-white/[0.06] bg-[#0d0d0d] p-6 hover:border-[#FF4500]/25 transition-all"
+                className="reveal group h-full rounded-2xl border border-white/[0.06] bg-[#0d0d0d] p-6 hover:border-[#FF4500]/25 transition-all"
               >
                 <p className="text-[10px] font-mono tracking-widest text-[#FF4500]/50 uppercase">
                   {cap.surface}
@@ -50,7 +54,7 @@ export function PlatformAtAGlance() {
               </Link>
             ) : null
           )}
-        </div>
+        </ResponsiveCardGrid>
 
         <div className="reveal mt-12 flex flex-wrap justify-center gap-6 text-sm">
           <Link href="/guides" className="text-[#FF4500]/80 hover:text-[#FF4500] font-medium">

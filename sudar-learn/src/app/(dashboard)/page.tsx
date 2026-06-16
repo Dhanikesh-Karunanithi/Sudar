@@ -421,6 +421,61 @@ export default async function DashboardPage() {
   })()
   const nextDeadline = upcomingDeadlines[0]
 
+  const isSparseLearner =
+    enrolledCourses.length === 0 || (totalMins < 10 && streakDays === 0 && inProgress.length === 0)
+
+  const greetingContext = {
+    streakDays,
+    weeklyMins: periodStats.thisWeek.totalMins,
+    lastCourseTitle: lastVisited?.courseTitle ?? null,
+    profileCompleteness,
+    hasEnrollments: enrolledCourses.length > 0,
+  }
+
+  if (isSparseLearner) {
+    return (
+      <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
+        <div className="flex-[2.2] flex flex-col gap-8">
+          <section className="hero-block min-h-[240px] flex flex-col justify-between p-6 md:p-10">
+            <div>
+              <h1 className="font-display text-3xl md:text-4xl font-bold text-card-foreground leading-tight mb-2">
+                <Greeting firstName={firstName} context={greetingContext} />
+              </h1>
+              <p className="text-muted-foreground text-base max-w-xl mb-6">
+                Welcome to Sudar. Browse your org catalog or complete setup so Sudar can personalise your path.
+              </p>
+              {profileCompleteness < 100 && (
+                <ProfileCompletenessBar completeness={profileCompleteness} />
+              )}
+            </div>
+            <div className="flex flex-wrap gap-3 mt-6">
+              <Link
+                href="/courses"
+                className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-button"
+              >
+                <BookOpen className="w-4 h-4" /> Browse courses
+              </Link>
+              <Link href="/paths" className="flex items-center gap-2 px-4 py-3 border border-border text-sm font-medium rounded-button hover:bg-muted">
+                <Route className="w-4 h-4" /> Learning paths
+              </Link>
+            </div>
+          </section>
+          <QuestCard />
+        </div>
+        <div className="flex-1 min-w-0 lg:max-w-sm">
+          <DashboardSidebar
+            periodStats={periodStats}
+            streakDays={streakDays}
+            completedCount={completed.length}
+            inProgress={inProgress.map((c) => ({ id: c.id, title: c.title, progress_pct: c.progress_pct, enrollStatus: c.enrollStatus }))}
+            completed={completed.map((c) => ({ id: c.id, title: c.title, progress_pct: c.progress_pct, enrollStatus: c.enrollStatus }))}
+            leaderboard={leaderboard}
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
       {/* Left column: hero + KPI + next action + lists */}
@@ -429,7 +484,7 @@ export default async function DashboardPage() {
         <section className="hero-block min-h-[280px] flex flex-col justify-between p-6 md:p-10">
           <div className="relative z-10">
             <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-card-foreground leading-tight tracking-tighter mb-2">
-              <Greeting firstName={firstName} />
+              <Greeting firstName={firstName} context={greetingContext} />
             </h1>
             <p className="text-muted-foreground text-base md:text-lg max-w-xl mb-4">
               {nba?.course_title

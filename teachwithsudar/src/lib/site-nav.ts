@@ -43,7 +43,6 @@ export const navSections = {
   ] as NavLink[],
   getStarted: [
     { href: "/self-host", label: "Self-Host at $0" },
-    { href: "/store", label: "Sudar Store" },
     { href: "/monetize", label: "Make Money with Sudar" },
   ] as NavLink[],
   resources: [

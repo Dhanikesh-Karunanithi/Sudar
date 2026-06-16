@@ -4,9 +4,9 @@ import { StoreCatalog } from "@/components/store/StoreCatalog";
 import { GITHUB_URL, STUDIO_APP_URL } from "@/lib/site-nav";
 
 export const metadata = {
-  title: "Sudar Store",
+  title: "Integrations marketplace (private beta)",
   description:
-    "Download LMS plugins, Sudar Create tools, ALP connectors, and developer SDKs. Integrate adaptive tutoring and AI content generation with Moodle, Canvas, and any LTI LMS.",
+    "ALP plugins, LTI tools, and API connectors for Moodle, Canvas, and custom LMS backends. Most packages are pilot—contact us for production rollout.",
 };
 
 export default function StorePage() {
@@ -14,10 +14,13 @@ export default function StorePage() {
     <>
       <ProseSection
         wide
-        label="Integrations"
-        title="Sudar Store"
-        subtitle="Download packages, launch LTI tools, and connect APIs to add adaptive intelligence and AI content creation to your LMS — without replacing it."
+        title="Integrations marketplace"
       >
+        <p className="text-lg text-foreground max-w-3xl -mt-2">
+          Download packages, launch LTI tools, and connect APIs to add adaptive intelligence to your
+          LMS without replacing it. Most items are in <strong>private beta</strong>—MCP integrator
+          and ALP SDK are available now; Moodle plugins and Create tools require a pilot conversation.
+        </p>
         <div className="not-prose mb-10 flex flex-wrap gap-3">
           <a
             href={STUDIO_APP_URL}

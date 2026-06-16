@@ -48,7 +48,21 @@ export async function GET(request: NextRequest) {
         }
         await admin.from('org_invites').delete().eq('email', data.user.email.toLowerCase())
       }
-      return NextResponse.redirect(`${origin}${next}`)
+      const nextParam = searchParams.get('next') ?? '/'
+      let redirectPath = nextParam
+      if (data?.user?.id) {
+        const { data: lp } = await admin
+          .from('learner_profiles')
+          .select('ai_tutor_context')
+          .eq('user_id', data.user.id)
+          .maybeSingle()
+        const memory = (lp?.ai_tutor_context as Record<string, unknown>) ?? {}
+        const skipCount = Number(memory.onboarding_skip_count ?? 0)
+        if (memory.onboarding_complete !== 'true' && skipCount < 3) {
+          redirectPath = '/onboarding'
+        }
+      }
+      return NextResponse.redirect(`${origin}${redirectPath}`)
     }
     if (error) logAuth('failed_login', { reason: error.message?.slice(0, 100) })
   }

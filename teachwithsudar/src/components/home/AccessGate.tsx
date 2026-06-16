@@ -16,7 +16,7 @@ export function AccessGate() {
               Sudar Learn
             </GatewayHeadline>
             <p className="text-[var(--text-secondary)] leading-relaxed">
-              Enter your personal learning space—seven modalities, your AI tutor, and your cognitive twin.
+              Enter your personal learning space—six shipped modalities, your AI tutor, and your Digital Learner Twin.
             </p>
             <GatewayCta href="https://learn.thesudar.com/login">Enter learn space</GatewayCta>
           </div>

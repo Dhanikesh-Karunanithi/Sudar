@@ -51,6 +51,47 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  const onboardingExempt =
+    pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/api/tutor/memory') ||
+    isPublicPath ||
+    delegatesAuth
+
+  if (user && !onboardingExempt && !pathname.startsWith('/api/')) {
+    const { data: learnerProfile } = await supabase
+      .from('learner_profiles')
+      .select('ai_tutor_context')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    const memory = (learnerProfile?.ai_tutor_context as Record<string, unknown>) ?? {}
+    const onboardingDone = memory.onboarding_complete === 'true'
+    const skipCount = Number(memory.onboarding_skip_count ?? 0)
+    const deferred = request.cookies.get('sudar_onboarding_skip')?.value === '1'
+
+    if (!onboardingDone) {
+      if (skipCount >= 3 || !deferred) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/onboarding'
+        return NextResponse.redirect(url)
+      }
+    }
+  }
+
+  if (user && pathname.startsWith('/onboarding')) {
+    const { data: learnerProfile } = await supabase
+      .from('learner_profiles')
+      .select('ai_tutor_context')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    const memory = (learnerProfile?.ai_tutor_context as Record<string, unknown>) ?? {}
+    if (memory.onboarding_complete === 'true') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
+  }
+
   return supabaseResponse
 }
 

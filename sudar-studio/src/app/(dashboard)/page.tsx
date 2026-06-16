@@ -1,7 +1,7 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import type { Metadata } from 'next'
 import { getOrCreateOrg } from '@/lib/org'
-import { BookOpen, Users, BarChart2, Plus, ArrowRight, Sparkles, Globe } from 'lucide-react'
+import { BookOpen, Users, BarChart2, Plus, ArrowRight, Sparkles, Globe, Activity, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Greeting } from '@/components/dashboard/Greeting'
@@ -66,6 +66,7 @@ export default async function DashboardPage() {
     { count: totalLearners },
     { count: completions },
     { data: recentCourses },
+    { count: draftCourses },
   ] = await Promise.all([
     admin.from('courses').select('id', { count: 'exact', head: true }).eq('org_id', orgId),
     admin.from('courses').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('status', 'published'),
@@ -76,7 +77,61 @@ export default async function DashboardPage() {
       ? admin.from('enrollments').select('id', { count: 'exact', head: true }).eq('status', 'completed').in('course_id', courseIdList)
       : Promise.resolve({ count: 0 }),
     admin.from('courses').select('id, title, status, updated_at').eq('org_id', orgId).order('updated_at', { ascending: false }).limit(5),
+    admin.from('courses').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('status', 'draft'),
   ])
+
+  const weekStart = new Date()
+  weekStart.setHours(0, 0, 0, 0)
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+
+  let newEnrollmentsThisWeek = 0
+  let completionsThisWeek = 0
+  let recentActivity: Array<{ label: string; href: string; at: string }> = []
+
+  if (courseIdList.length > 0) {
+    const [{ count: enrollWeek }, { count: completeWeek }, { data: recentEnrollments }] = await Promise.all([
+      admin
+        .from('enrollments')
+        .select('id', { count: 'exact', head: true })
+        .in('course_id', courseIdList)
+        .gte('created_at', weekStart.toISOString()),
+      admin
+        .from('enrollments')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'completed')
+        .in('course_id', courseIdList)
+        .gte('updated_at', weekStart.toISOString()),
+      admin
+        .from('enrollments')
+        .select('created_at, courses(title)')
+        .in('course_id', courseIdList)
+        .order('created_at', { ascending: false })
+        .limit(5),
+    ])
+    newEnrollmentsThisWeek = enrollWeek ?? 0
+    completionsThisWeek = completeWeek ?? 0
+    recentActivity = (recentEnrollments ?? []).map((row) => {
+      const course = row.courses as { title?: string } | null
+      return {
+        label: `New enrollment · ${course?.title ?? 'Course'}`,
+        href: '/users',
+        at: row.created_at as string,
+      }
+    })
+  }
+
+  for (const course of recentCourses ?? []) {
+    recentActivity.push({
+      label: `${course.status === 'published' ? 'Updated' : 'Edited'} · ${course.title}`,
+      href: `/courses/${course.id}`,
+      at: course.updated_at as string,
+    })
+  }
+  recentActivity.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
+  recentActivity = recentActivity.slice(0, 6)
+
+  const avgCompletionRate =
+    (totalLearners ?? 0) > 0 ? Math.round(((completions ?? 0) / (totalLearners ?? 1)) * 100) : 0
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
 
@@ -86,7 +141,15 @@ export default async function DashboardPage() {
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-foreground">
-            <Greeting firstName={firstName} />
+            <Greeting
+              firstName={firstName}
+              context={{
+                publishedCourses: publishedCourses ?? 0,
+                draftCourses: draftCourses ?? 0,
+                newEnrollmentsThisWeek,
+                completionsThisWeek,
+              }}
+            />
           </h1>
           <p className="text-muted-foreground text-sm">
             Here&apos;s an overview of your Sudar Studio workspace.
@@ -137,6 +200,55 @@ export default async function DashboardPage() {
           />
         </Link>
       </div>
+
+      {/* Analytics strip */}
+      {(totalCourses ?? 0) > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs text-muted-foreground font-medium">Completion rate</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{avgCompletionRate}%</p>
+            <p className="text-xs text-muted-foreground mt-1">Enrollments that reached completed</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5" /> This week
+            </p>
+            <p className="text-2xl font-bold text-foreground mt-1">{newEnrollmentsThisWeek}</p>
+            <p className="text-xs text-muted-foreground mt-1">New enrollments</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-xs text-muted-foreground font-medium">Completions this week</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{completionsThisWeek}</p>
+            <Link href="/analytics" className="text-xs text-indigo-400 hover:text-indigo-300 mt-1 inline-block">
+              Open analytics →
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Recent activity */}
+      {recentActivity.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-muted-foreground" />
+            <h2 className="text-base font-semibold text-foreground">Recent activity</h2>
+          </div>
+          <div className="bg-card border border-border rounded-xl divide-y divide-border overflow-hidden">
+            {recentActivity.map((item) => (
+              <Link
+                key={`${item.label}-${item.at}`}
+                href={item.href}
+                className="flex items-center justify-between gap-4 px-5 py-3 hover:bg-muted/60 transition-colors text-sm"
+              >
+                <span className="text-card-foreground">{item.label}</span>
+                <span className="text-xs text-muted-foreground shrink-0">
+                  {new Date(item.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* CTA or recent courses */}
       {!recentCourses || recentCourses.length === 0 ? (

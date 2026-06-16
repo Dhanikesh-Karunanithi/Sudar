@@ -14,7 +14,13 @@ export default function FeaturesPage() {
   return (
     <ProseSection title="Platform capabilities" wide>
       <p className="text-lg text-foreground max-w-3xl">
-        This page tracks what ships in the Sudar monorepo today. For narrative release notes see{" "}
+        This page tracks what ships in the Sudar monorepo today—not roadmap slides. Six learner
+        modalities are live (Read, Listen, Watch, Podcast, Map, Cards); SudarFeed and SudarPlay are
+        listed on{" "}
+        <Link href="/roadmap" className="text-primary hover:underline">
+          Roadmap
+        </Link>
+        . For narrative release notes see{" "}
         <Link href="/updates" className="text-primary hover:underline">
           Updates
         </Link>

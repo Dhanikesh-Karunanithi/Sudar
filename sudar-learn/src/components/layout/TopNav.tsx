@@ -298,6 +298,20 @@ export function TopNav({ user, showOnboardingNudge, coinBalance = 0 }: TopNavPro
                   <Award className="h-4 w-4" /> Achievements
                 </Link>
                 <Link
+                  href="/gamification"
+                  onClick={() => setMoreOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                >
+                  <Award className="h-4 w-4" /> Gamification hub
+                </Link>
+                <Link
+                  href="/leaderboard"
+                  onClick={() => setMoreOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"
+                >
+                  <Target className="h-4 w-4" /> Leaderboard
+                </Link>
+                <Link
                   href="/kpis"
                   onClick={() => setMoreOpen(false)}
                   className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-card-foreground transition-colors"

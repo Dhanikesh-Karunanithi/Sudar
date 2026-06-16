@@ -19,7 +19,7 @@ export default async function DashboardLayout({
   const orgId = await getOrCreateOrg(user.id)
 
   const [{ data: profile }, { data: membership }] = await Promise.all([
-    supabase.from('profiles').select('full_name, avatar_url, role').eq('id', user.id).single(),
+    supabase.from('profiles').select('full_name, avatar_url, role, onboarding_complete').eq('id', user.id).single(),
     supabase.from('org_members').select('role').eq('org_id', orgId).eq('user_id', user.id).single(),
   ])
 

@@ -11,6 +11,7 @@ import {
   type ModalityPreviewMode,
 } from "@/components/home/ModalityPreviewPanel";
 import { SectionReveal } from "@/components/home/SectionReveal";
+import { ResponsiveCardGrid } from "@/components/ui/ResponsiveCardGrid";
 
 // ─── Impact numbers ────────────────────────────────────────────────────────────
 
@@ -139,10 +140,15 @@ function PlatformArchitecture() {
       number: "03",
       name: "Sudar Learn",
       verb: "Deliver",
-      tagline: "Every learner gets a tutor, a path, and seven ways to learn.",
+      tagline: "Every learner gets a tutor, a path, and six ways to learn today.",
       description:
-        "Where learners take courses. They can switch between text, video, audio, mind map, flashcards, short-form feed, or game-style practice. Tutor Sudar answers questions, nudges when someone is stuck, and uses prior sessions as context.",
-      features: ["7 learning modalities", "Tutor Sudar with session memory", "Mobile-first layout", "Progress and skill tracking"],
+        "Where learners take courses. Switch between Read, Listen, Watch, Podcast, Map, and Cards from one authored module. Tutor Sudar answers questions, nudges when someone is stuck, and uses prior sessions as context.",
+      features: [
+        "6 shipped modalities + SCORM",
+        "Tutor Sudar with governed memory",
+        "Mobile-first layout",
+        "Progress and skill tracking",
+      ],
       href: LEARN_APP_URL,
       external: true,
       accent: false,
@@ -167,11 +173,11 @@ function PlatformArchitecture() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <ResponsiveCardGrid gridClassName="grid-cols-1 md:grid-cols-3 gap-6" ariaLabel="Platform products">
           {products.map((p, i) => (
             <div
               key={p.number}
-              className="reveal group"
+              className="reveal group h-full"
               style={{ transitionDelay: `${i * 120}ms` }}
             >
               <div
@@ -272,7 +278,7 @@ function PlatformArchitecture() {
               </div>
             </div>
           ))}
-        </div>
+        </ResponsiveCardGrid>
       </div>
     </section>
   );
@@ -576,8 +582,8 @@ function Modalities() {
       ),
       id: "SudarFeed",
       name: "SudarFeed",
-      tag: "Microlearning",
-      desc: "Short vertical clips in a scrollable feed. Useful when learners want small chunks instead of a long module.",
+      tag: "Roadmap",
+      desc: "Short vertical clips in a scrollable feed. Planned for microlearning—see roadmap.",
     },
     {
       icon: (
@@ -587,8 +593,8 @@ function Modalities() {
       ),
       id: "SudarPlay",
       name: "SudarPlay",
-      tag: "Gamified",
-      desc: "Interactive scenario-based games. Applied learning in context. High retention, high engagement.",
+      tag: "Roadmap",
+      desc: "Interactive scenario-based games. Planned for applied practice—see roadmap.",
     },
   ];
 
@@ -626,15 +632,22 @@ function Modalities() {
             Modalities
           </span>
           <h2 className="mt-4 text-4xl sm:text-5xl font-serif font-medium text-white leading-[1.1] tracking-tight text-balance">
-            One course. Seven ways to experience it.
+            One course. Six ways to learn today.
           </h2>
           <p className="mt-5 text-base text-zinc-500 max-w-xl mx-auto font-light leading-relaxed">
-            Write the course once in Studio. Intelligence can render the same material as text, audio, video,
-            cards, and more without maintaining separate copies for each format.
+            Write the course once in Studio. Learners switch Read, Listen, Watch, Podcast, Map, and Cards
+            without separate copies. Feed and Play are on the{" "}
+            <Link href="/roadmap" className="text-[#FF4500]/70 hover:text-[#FF4500] underline-offset-2 hover:underline">
+              roadmap
+            </Link>
+            .
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <ResponsiveCardGrid
+          gridClassName="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+          ariaLabel="Learning modalities"
+        >
           {modes.map((m, i) => (
             <SectionReveal key={m.name} delay={(i % 4) * 0.08} className="h-full">
               <button
@@ -673,8 +686,6 @@ function Modalities() {
               </button>
             </SectionReveal>
           ))}
-
-          {/* "And more" placeholder */}
           <SectionReveal delay={0.56} className="h-full">
             <div className="group h-full p-6 rounded-2xl border border-dashed border-white/[0.05] flex flex-col items-center justify-center text-center gap-3 min-h-[160px]">
               <Link
@@ -685,7 +696,7 @@ function Modalities() {
               </Link>
             </div>
           </SectionReveal>
-        </div>
+        </ResponsiveCardGrid>
 
         <ModalityPreviewPanel active={active} onClose={close} />
       </div>
@@ -783,11 +794,11 @@ function ResearchFoundation() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <ResponsiveCardGrid gridClassName="grid-cols-1 md:grid-cols-2 gap-5" ariaLabel="Research citations">
           {citations.map((c, i) => (
             <div
-              key={i}
-              className="citation-card reveal group p-7 rounded-2xl border border-white/[0.06] bg-[#0d0d0d] hover:border-white/10 transition-all duration-400 overflow-hidden"
+              key={c.theory}
+              className="citation-card reveal group h-full p-7 rounded-2xl border border-white/[0.06] bg-[#0d0d0d] hover:border-white/10 transition-all duration-400 overflow-hidden"
               style={{ transitionDelay: `${(i % 2) * 100}ms` }}
             >
               <div className="flex items-start justify-between mb-5 gap-4">
@@ -812,7 +823,7 @@ function ResearchFoundation() {
               </p>
             </div>
           ))}
-        </div>
+        </ResponsiveCardGrid>
 
         <div className="reveal mt-10 flex flex-col sm:flex-row items-start sm:items-center gap-6" style={{ transitionDelay: "400ms" }}>
           <Link

@@ -11,6 +11,7 @@ const USER_EDITABLE_KEYS = [
   'learning_frequency',
   'difficulty_comfort',
   'onboarding_complete',
+  'onboarding_skip_count',
 ]
 
 export async function PATCH(request: NextRequest) {

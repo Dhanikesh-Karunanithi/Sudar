@@ -3,19 +3,98 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import type { TutorialStep } from "@/data/tutorials";
+import { SwipeCardStrip } from "@/components/ui/SwipeCardStrip";
 import { WireframeScene } from "@/components/wireframes/WireframeScenes";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 
 type AnimatedWorkflowProps = {
   steps: TutorialStep[];
   autoPlay?: boolean;
 };
 
+function WorkflowStepPanel({
+  step,
+  stepIndex,
+  totalSteps,
+  playing,
+  onTogglePlay,
+  onPrev,
+  onNext,
+  isLast,
+  showControls = true,
+}: {
+  step: TutorialStep;
+  stepIndex: number;
+  totalSteps: number;
+  playing: boolean;
+  onTogglePlay: () => void;
+  onPrev: () => void;
+  onNext: () => void;
+  isLast: boolean;
+  showControls?: boolean;
+}) {
+  return (
+    <div className="flex flex-col">
+      <div className="p-6 sm:p-8 border-b border-card-border flex flex-col min-h-[200px]">
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <p className="text-[10px] font-mono tracking-[0.3em] text-primary/70 uppercase">
+            Step {stepIndex + 1} of {totalSteps}
+          </p>
+          {showControls ? (
+            <button
+              type="button"
+              onClick={onTogglePlay}
+              className="text-[11px] font-mono text-foreground-muted hover:text-foreground border border-card-border rounded-full px-3 py-1 transition-colors"
+            >
+              {playing ? "Pause" : "Play"}
+            </button>
+          ) : null}
+        </div>
+
+        <h3 className="text-xl font-semibold text-foreground tracking-tight">{step.title}</h3>
+        <p className="mt-3 text-foreground-muted leading-relaxed">{step.body}</p>
+        {step.callout ? (
+          <p className="mt-4 text-sm text-primary/80 border-l-2 border-primary/40 pl-3">{step.callout}</p>
+        ) : null}
+
+        {showControls ? (
+          <div className="mt-8 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onPrev}
+              className="rounded-full border border-card-border px-4 py-2 text-sm text-foreground-muted hover:text-foreground hover:border-primary/30 transition-colors"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={onNext}
+              className="rounded-full bg-primary/90 hover:bg-primary text-white px-4 py-2 text-sm font-medium transition-colors"
+            >
+              {isLast ? "Restart" : "Next"}
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="p-4 sm:p-6 bg-[#080808]">
+        <WireframeScene id={step.scene} />
+      </div>
+    </div>
+  );
+}
+
 export function AnimatedWorkflow({ steps, autoPlay = true }: AnimatedWorkflowProps) {
+  const isMobile = useIsMobile();
   const [index, setIndex] = useState(0);
-  const [playing, setPlaying] = useState(autoPlay);
+  const [playing, setPlaying] = useState(autoPlay && !isMobile);
 
   const step = steps[index];
   const isLast = index >= steps.length - 1;
+
+  useEffect(() => {
+    if (isMobile) setPlaying(false);
+  }, [isMobile]);
 
   const next = useCallback(() => {
     setIndex((i) => (i >= steps.length - 1 ? 0 : i + 1));
@@ -26,12 +105,57 @@ export function AnimatedWorkflow({ steps, autoPlay = true }: AnimatedWorkflowPro
   }, [steps.length]);
 
   useEffect(() => {
-    if (!playing || steps.length <= 1) return;
+    if (!playing || steps.length <= 1 || isMobile) return;
     const id = window.setInterval(next, 6000);
     return () => window.clearInterval(id);
-  }, [playing, next, steps.length]);
+  }, [playing, next, steps.length, isMobile]);
 
   if (!step) return null;
+
+  if (isMobile) {
+    return (
+      <div className="rounded-2xl border border-card-border bg-card-bg overflow-hidden shadow-card">
+        <SwipeCardStrip
+          count={steps.length}
+          activeIndex={index}
+          onIndexChange={setIndex}
+          ariaLabel="Workflow steps"
+          showHint
+        >
+          {steps.map((s, i) => (
+            <WorkflowStepPanel
+              key={i}
+              step={s}
+              stepIndex={i}
+              totalSteps={steps.length}
+              playing={playing}
+              onTogglePlay={() => setPlaying((p) => !p)}
+              onPrev={prev}
+              onNext={next}
+              isLast={i >= steps.length - 1}
+              showControls={false}
+            />
+          ))}
+        </SwipeCardStrip>
+        <div className="border-t border-card-border px-6 py-4 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={prev}
+            className="rounded-full border border-card-border px-4 py-2 text-sm text-foreground-muted hover:text-foreground hover:border-primary/30 transition-colors"
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            onClick={next}
+            className="rounded-full bg-primary/90 hover:bg-primary text-white px-4 py-2 text-sm font-medium transition-colors"
+          >
+            {isLast ? "Restart" : "Next"}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-card-border bg-card-bg overflow-hidden shadow-card">

@@ -1,78 +1,49 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useMemo } from 'react'
 
-interface GreetingConfig {
-  timeSlot: 'early_bird' | 'morning' | 'afternoon' | 'evening' | 'night_owl'
-  hour: number
+export type StudioGreetingContext = {
+  publishedCourses?: number
+  draftCourses?: number
+  newEnrollmentsThisWeek?: number
+  completionsThisWeek?: number
+  isMonday?: boolean
 }
 
-function getTimeSlot(hour: number): GreetingConfig['timeSlot'] {
-  if (hour >= 5 && hour < 9) return 'early_bird'
-  if (hour >= 9 && hour < 12) return 'morning'
-  if (hour >= 12 && hour < 17) return 'afternoon'
-  if (hour >= 17 && hour < 22) return 'evening'
-  return 'night_owl'
-}
+function buildStudioGreeting(firstName: string, ctx: StudioGreetingContext): string {
+  const name = firstName.trim() || 'there'
 
-/**
- * Generates engaging, contextual greetings based on time of day.
- * Not generic "good morning" — more like "You're up early!" or "Night owl alert!"
- */
-function generateGreeting(firstName: string, timeSlot: GreetingConfig['timeSlot']): string {
-  const name = (firstName || '').trim()
-  const nameStr = name ? name : 'there'
-
-  const greetings: Record<GreetingConfig['timeSlot'], string[]> = {
-    early_bird: [
-      `Rise and shine, ${nameStr}! ☀️`,
-      `Up before the world, ${nameStr}? That's dedication.`,
-      `Morning champion, ${nameStr}!`,
-      `Early to create, ${nameStr}. Love it.`,
-    ],
-    morning: [
-      `Ready to shape learning, ${nameStr}?`,
-      `Welcome back, ${nameStr}!`,
-      `Time to inspire, ${nameStr}.`,
-      `Good to see you, ${nameStr}!`,
-      `Let's build something great, ${nameStr}.`,
-    ],
-    afternoon: [
-      `Back for round two, ${nameStr}?`,
-      `${nameStr}, afternoon creator — love it!`,
-      `Let's keep building, ${nameStr}.`,
-      `Still at it, ${nameStr}!`,
-      `You're on a roll, ${nameStr}.`,
-    ],
-    evening: [
-      `Evening grind, ${nameStr}? Respect.`,
-      `Late-night creation mode, ${nameStr}?`,
-      `Evening focus activated, ${nameStr}.`,
-      `${nameStr}, you're back! 🔥`,
-      `${nameStr}, this is some serious passion.`,
-    ],
-    night_owl: [
-      `Hello, ${nameStr}. Night owl creator — welcome back.`,
-      `Still going, ${nameStr}? We respect the vision.`,
-      `Late-night creator energy, ${nameStr} — nice.`,
-      `You're back again, ${nameStr}? That's passion.`,
-      `The owls are out, ${nameStr}. Welcome back.`,
-    ],
+  if ((ctx.newEnrollmentsThisWeek ?? 0) > 0) {
+    const n = ctx.newEnrollmentsThisWeek!
+    return `${n} learner${n === 1 ? '' : 's'} joined this week, ${name}. Check progress below.`
   }
-
-  const options = greetings[timeSlot]
-  return options[Math.floor(Math.random() * options.length)]
+  if ((ctx.completionsThisWeek ?? 0) > 0) {
+    const n = ctx.completionsThisWeek!
+    return `${n} completion${n === 1 ? '' : 's'} this week, ${name}. Momentum is building.`
+  }
+  if ((ctx.draftCourses ?? 0) > 0 && (ctx.publishedCourses ?? 0) === 0) {
+    return `${ctx.draftCourses} draft course${ctx.draftCourses === 1 ? '' : 's'} ready to publish, ${name}.`
+  }
+  if (ctx.isMonday) {
+    return `New week, ${name}. Review learner progress and upcoming deadlines.`
+  }
+  if ((ctx.publishedCourses ?? 0) > 0) {
+    return `Welcome back, ${name}. ${ctx.publishedCourses} course${ctx.publishedCourses === 1 ? '' : 's'} live in Learn.`
+  }
+  return `Welcome, ${name}. Create your first course when you are ready.`
 }
 
-export function Greeting({ firstName }: { firstName: string }) {
-  const [greeting, setGreeting] = useState('')
-
-  useEffect(() => {
-    const hour = new Date().getHours()
-    const timeSlot = getTimeSlot(hour)
-    const msg = generateGreeting(firstName, timeSlot)
-    setGreeting(msg)
-  }, [firstName])
+export function Greeting({
+  firstName,
+  context = {},
+}: {
+  firstName: string
+  context?: StudioGreetingContext
+}) {
+  const greeting = useMemo(() => {
+    const isMonday = new Date().getDay() === 1
+    return buildStudioGreeting(firstName, { ...context, isMonday })
+  }, [firstName, context])
 
   return <>{greeting}</>
 }

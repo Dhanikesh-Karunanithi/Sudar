@@ -1,78 +1,47 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useMemo } from 'react'
 
-interface GreetingConfig {
-  timeSlot: 'early_bird' | 'morning' | 'afternoon' | 'evening' | 'night_owl'
-  hour: number
+export type LearnGreetingContext = {
+  streakDays?: number
+  weeklyMins?: number
+  lastCourseTitle?: string | null
+  profileCompleteness?: number
+  hasEnrollments?: boolean
 }
 
-function getTimeSlot(hour: number): GreetingConfig['timeSlot'] {
-  if (hour >= 5 && hour < 9) return 'early_bird'
-  if (hour >= 9 && hour < 12) return 'morning'
-  if (hour >= 12 && hour < 17) return 'afternoon'
-  if (hour >= 17 && hour < 22) return 'evening'
-  return 'night_owl'
-}
+function buildLearnGreeting(firstName: string, ctx: LearnGreetingContext): string {
+  const name = firstName.trim() || 'there'
 
-/**
- * Generates engaging, contextual greetings based on time of day.
- * Not generic "good morning" — more like "You're up early!" or "Night owl alert!"
- */
-function generateGreeting(firstName: string, timeSlot: GreetingConfig['timeSlot']): string {
-  const name = (firstName || '').trim()
-  const nameStr = name ? name : 'there'
-
-  const greetings: Record<GreetingConfig['timeSlot'], string[]> = {
-    early_bird: [
-      `Rise and shine, ${nameStr}! ☀️`,
-      `Up before the world, ${nameStr}? That's dedication.`,
-      `Morning champion, ${nameStr}!`,
-      `Early to learn, ${nameStr}. We like it.`,
-    ],
-    morning: [
-      `Ready to level up today, ${nameStr}?`,
-      `Welcome back, ${nameStr}!`,
-      `Time to learn, ${nameStr}.`,
-      `Good to see you, ${nameStr}!`,
-      `Let's make today count, ${nameStr}.`,
-    ],
-    afternoon: [
-      `Back for round two, ${nameStr}?`,
-      `${nameStr}, afternoon learner — love it!`,
-      `Let's keep the momentum, ${nameStr}.`,
-      `Still crushing it, ${nameStr}!`,
-      `You're on a roll, ${nameStr}.`,
-    ],
-    evening: [
-      `Evening grind, ${nameStr}? Respect.`,
-      `Burning the midnight oil already, ${nameStr}?`,
-      `Evening focus activated, ${nameStr}.`,
-      `${nameStr}, you're back! 🔥`,
-      `${nameStr}, this is some serious commitment.`,
-    ],
-    night_owl: [
-      `Hello, ${nameStr}. Night owl energy — welcome back.`,
-      `Still awake, ${nameStr}? We like your energy.`,
-      `Late-night learner energy, ${nameStr} — nice.`,
-      `You're back again, ${nameStr}? Respect the grind.`,
-      `The owls are out, ${nameStr}. Welcome back.`,
-    ],
+  if ((ctx.streakDays ?? 0) >= 3) {
+    return `Your ${ctx.streakDays}-day streak is live, ${name}. Keep it going today.`
   }
-
-  const options = greetings[timeSlot]
-  return options[Math.floor(Math.random() * options.length)]
+  if (ctx.lastCourseTitle) {
+    return `Pick up "${ctx.lastCourseTitle}" where you left off, ${name}.`
+  }
+  if ((ctx.weeklyMins ?? 0) >= 60) {
+    return `You logged ${ctx.weeklyMins} minutes this week, ${name}. Solid focus.`
+  }
+  if (!ctx.hasEnrollments) {
+    return `Welcome, ${name}. Browse courses to start your first module.`
+  }
+  if ((ctx.profileCompleteness ?? 0) < 50) {
+    return `Complete your profile (${ctx.profileCompleteness}%), ${name} — Sudar adapts better with context.`
+  }
+  if ((ctx.streakDays ?? 0) === 1) {
+    return `Day one of your streak, ${name}. One session keeps it alive.`
+  }
+  return `Welcome back, ${name}. Your next best action is below.`
 }
 
-export function Greeting({ firstName }: { firstName: string }) {
-  const [greeting, setGreeting] = useState('')
-
-  useEffect(() => {
-    const hour = new Date().getHours()
-    const timeSlot = getTimeSlot(hour)
-    const msg = generateGreeting(firstName, timeSlot)
-    setGreeting(msg)
-  }, [firstName])
+export function Greeting({
+  firstName,
+  context = {},
+}: {
+  firstName: string
+  context?: LearnGreetingContext
+}) {
+  const greeting = useMemo(() => buildLearnGreeting(firstName, context), [firstName, context])
 
   return <>{greeting}</>
 }

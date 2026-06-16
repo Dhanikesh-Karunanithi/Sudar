@@ -79,15 +79,15 @@ export function LoginClient() {
               <span className="text-xs font-medium tracking-widest text-[#FF4500]/90">Adaptive learning</span>
             </div>
             <p className="font-display text-2xl font-light leading-snug text-white text-balance">
-              Seven modalities, one tutor that remembers you — pick up exactly where you left off.
+              Six modalities, one tutor that remembers you — pick up exactly where you left off.
             </p>
           </div>
 
           <ul className="space-y-3">
             {[
               'Personalized paths from your Digital Learner Twin',
-              'Text, video, audio, mind map, flashcards, feed, and play',
-              'Sudar tutor: proactive help without judgment',
+              'Read, Listen, Watch, Podcast, Map, and Cards from one course',
+              'Sudar tutor: proactive help with governed memory',
             ].map((line) => (
               <li key={line} className="flex items-start gap-3">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#FF4500]/80" />

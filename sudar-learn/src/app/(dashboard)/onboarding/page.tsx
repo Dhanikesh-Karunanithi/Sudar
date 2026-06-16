@@ -9,37 +9,22 @@ export default async function OnboardingPage() {
 
   const admin = createServiceRoleSupabaseClient()
 
-  // Load existing profile to pre-populate
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('full_name')
-    .eq('id', user.id)
-    .single()
-
-  const { data: learnerProfile } = await admin
-    .from('learner_profiles')
-    .select('ai_tutor_context')
-    .eq('user_id', user.id)
-    .single()
+  const [{ data: profile }, { data: learnerProfile }] = await Promise.all([
+    admin.from('profiles').select('full_name').eq('id', user.id).single(),
+    admin.from('learner_profiles').select('ai_tutor_context').eq('user_id', user.id).single(),
+  ])
 
   const memory = (learnerProfile?.ai_tutor_context as Record<string, unknown>) ?? {}
 
-  // Load a sample of published course module titles for the knowledge check
-  const { data: courses } = await admin
-    .from('courses')
-    .select('title, modules(title)')
-    .eq('status', 'published')
-    .limit(5)
-
-  const moduleTitles: string[] = (courses ?? [])
-    .flatMap((c) => (c.modules as Array<{ title: string }>).map((m) => m.title))
-    .slice(0, 20)
+  if (memory.onboarding_complete === 'true') {
+    redirect('/')
+  }
 
   return (
     <OnboardingFlow
       firstName={profile?.full_name?.split(' ')[0] ?? 'there'}
       existingMemory={memory}
-      moduleTitles={moduleTitles}
+      moduleTitles={[]}
     />
   )
 }

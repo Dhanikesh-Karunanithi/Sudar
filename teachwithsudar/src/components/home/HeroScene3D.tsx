@@ -6,9 +6,11 @@ import { useCallback, useRef, type ReactNode } from "react";
 type HeroScene3DProps = {
   children: ReactNode;
   reducedMotion: boolean;
+  /** Disable mouse parallax tilt (mobile / touch) */
+  disableTilt?: boolean;
 };
 
-export function HeroScene3D({ children, reducedMotion }: HeroScene3DProps) {
+export function HeroScene3D({ children, reducedMotion, disableTilt = false }: HeroScene3DProps) {
   const ref = useRef<HTMLDivElement>(null);
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
@@ -37,7 +39,7 @@ export function HeroScene3D({ children, reducedMotion }: HeroScene3DProps) {
     my.set(0);
   }, [mx, my]);
 
-  if (reducedMotion) {
+  if (reducedMotion || disableTilt) {
     return <div className="relative w-full">{children}</div>;
   }
 

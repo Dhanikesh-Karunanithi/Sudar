@@ -80,6 +80,175 @@ body {
   animation: hero-float 7s ease-in-out infinite;
 }
 
+/* ── Hero demo: liquid glass window ──────────────────────────────────── */
+@keyframes hero-glass-sheen {
+  0%, 72%, 100% {
+    transform: translateX(-130%) skewX(-14deg);
+    opacity: 0;
+  }
+  78% {
+    opacity: 0.55;
+  }
+  88% {
+    opacity: 0.35;
+  }
+  95% {
+    transform: translateX(230%) skewX(-14deg);
+    opacity: 0;
+  }
+}
+
+.hero-glass-window {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(52px) saturate(2.2);
+  -webkit-backdrop-filter: blur(52px) saturate(2.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.hero-glass-window::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: none;
+}
+
+.hero-glass-window::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  border-radius: calc(1.75rem - 1px);
+  pointer-events: none;
+  border: none;
+  background: none;
+}
+
+.hero-glass-ambient {
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(255, 255, 255, 0.08) 0%,
+    transparent 60%
+  );
+  opacity: 0.6;
+}
+
+.hero-glass-sheen {
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 100%
+  );
+  animation: hero-glass-sheen 10s ease-in-out infinite;
+  mix-blend-mode: screen;
+  opacity: 0.4;
+}
+
+.hero-glass-corner {
+  position: absolute;
+  width: 1.25rem;
+  height: 1.25rem;
+  pointer-events: none;
+  opacity: 0.65;
+  z-index: 1;
+}
+
+.hero-glass-corner::before,
+.hero-glass-corner::after {
+  content: "";
+  position: absolute;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.hero-glass-corner-tl {
+  top: 0.85rem;
+  left: 0.85rem;
+}
+
+.hero-glass-corner-tl::before {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+
+.hero-glass-corner-tl::after {
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 100%;
+}
+
+.hero-glass-corner-tr {
+  top: 0.85rem;
+  right: 0.85rem;
+}
+
+.hero-glass-corner-tr::before {
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 1px;
+}
+
+.hero-glass-corner-tr::after {
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+}
+
+.hero-glass-corner-bl {
+  bottom: 0.85rem;
+  left: 0.85rem;
+}
+
+.hero-glass-corner-bl::before {
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+
+.hero-glass-corner-bl::after {
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  height: 100%;
+}
+
+.hero-glass-corner-br {
+  bottom: 0.85rem;
+  right: 0.85rem;
+}
+
+.hero-glass-corner-br::before {
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: 1px;
+}
+
+.hero-glass-corner-br::after {
+  bottom: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-glass-sheen {
+    animation: none;
+    opacity: 0.25;
+  }
+}
+
 .hero-scene-3d {
   transform-style: preserve-3d;
 }
@@ -275,4 +444,21 @@ body {
 /* Custom radial gradient for split screen */
 .bg-radial-gradient {
   background-image: radial-gradient(circle, var(--tw-gradient-stops));
+}
+
+/* ── Mobile swipe card rails ───────────────────────────────────────────── */
+.swipe-strip {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.swipe-strip::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swipe-strip {
+    scroll-behavior: auto;
+  }
 }

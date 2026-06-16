@@ -16,6 +16,24 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-16 — teachwithsudar mobile swipe carousels
+
+- **Theme**: Touch-first navigation for animated demos and card sections on the marketing site.
+- **Shipped**:
+  - **Hero demo**: Swipeable step cards on mobile; auto-play off on touch; lazy scene mounting; 3D tilt disabled on mobile.
+  - **Home sections**: Horizontal swipe rails for platform capabilities, modalities, platform architecture, and research citations.
+  - **Guides & store**: Swipeable workflow steps on `/guides/*`; store catalog product rail on mobile.
+  - **Primitives**: `SwipeCardStrip`, `ResponsiveCardGrid`, `useMediaQuery` / `useIsMobile`.
+
+### 2026-06-16 — Content & UX improvement (marketing, Studio, Learn)
+
+- **Theme**: Replace placeholder marketing copy, add first-run Studio onboarding, tighten Learn onboarding and home layouts, ship leaderboard and gamification hub.
+- **Shipped**:
+  - **teachwithsudar**: Expanded `/edtech`, honest `/contact` and `/papers`, store private-beta framing, six-modality messaging (Feed/Play on roadmap).
+  - **Sudar Studio**: `/onboarding` wizard, enhanced dashboard (activity + analytics strip), `/tools` hub, `/settings/governance`, data-driven greetings, Sudar Studio branding fix.
+  - **Sudar Learn**: Mandatory onboarding gate (3 skips), verify-profile step, sparse vs active home layouts, `/leaderboard` and `/gamification`, login copy aligned to shipped modalities.
+  - **Help center**: Articles for Studio onboarding, export formats, tools, data governance, gamification, leaderboard.
+
 ### 2026-06-16 — SudarSim standalone Studio authoring
 
 - **Theme**: SudarSim is now a first-class Studio product area — org scenario library + editor — not only reachable from a course module.

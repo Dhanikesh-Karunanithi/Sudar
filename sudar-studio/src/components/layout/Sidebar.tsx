@@ -23,6 +23,7 @@ import {
   Bot,
   Cpu,
   Phone,
+  LayoutGrid,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -44,6 +45,7 @@ const contentNavItems = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Courses', href: '/courses', icon: BookOpen },
   { label: 'SudarSim', href: '/sudarsim', icon: Phone },
+  { label: 'Tools', href: '/tools', icon: LayoutGrid },
   { label: 'Gamification', href: '/tools/gamification', icon: Trophy },
   { label: 'Tag library', href: '/settings/tags', icon: Tags },
   { label: 'Learning Paths', href: '/paths', icon: Route },
@@ -96,7 +98,7 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
           <SudarLogoMark className="h-8 w-auto max-w-[5.5rem] shrink-0 text-card-foreground" starFill="var(--background)" />
           <div>
             <p className="text-card-foreground font-semibold text-sm leading-tight">Sudar</p>
-            <p className="text-primary text-xs font-medium">SudarLab</p>
+            <p className="text-primary text-xs font-medium">Sudar Studio</p>
           </div>
         </Link>
       </div>

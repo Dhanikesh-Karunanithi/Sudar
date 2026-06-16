@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-05T20:38:21.912Z",
+  "generatedAt": "2026-06-15T23:13:08.248Z",
   "articles": [
     {
       "slug": "admins/integrations-overview",
@@ -27,6 +27,42 @@
       "category": "admins",
       "order": 1,
       "marketing": true
+    },
+    {
+      "slug": "admins/studio-onboarding",
+      "title": "Studio onboarding",
+      "description": "First-run workspace setup for new Sudar Studio admins.",
+      "audience": "admin",
+      "category": "admins",
+      "order": 4,
+      "marketing": true
+    },
+    {
+      "slug": "admins/export-formats",
+      "title": "Course export formats",
+      "description": "SCORM 1.2 today; SCORM 2004 and IMS CC on the roadmap.",
+      "audience": "admin",
+      "category": "admins",
+      "order": 5,
+      "marketing": true
+    },
+    {
+      "slug": "admins/studio-tools",
+      "title": "Studio tools hub",
+      "description": "Gamification, notifications, and SudarArt status in one place.",
+      "audience": "admin",
+      "category": "admins",
+      "order": 6,
+      "marketing": false
+    },
+    {
+      "slug": "admins/data-governance",
+      "title": "Data governance (Settings)",
+      "description": "GDPR, FERPA, retention, and export summary for operators.",
+      "audience": "admin",
+      "category": "admins",
+      "order": 7,
+      "marketing": false
     },
     {
       "slug": "ai-literacy/cloud-vs-your-server",
@@ -116,6 +152,24 @@
       "audience": "learner",
       "category": "learners",
       "order": 2,
+      "marketing": true
+    },
+    {
+      "slug": "learners/gamification",
+      "title": "Gamification in Learn",
+      "description": "Quests, coins, achievements, and how they connect to learning events.",
+      "audience": "learner",
+      "category": "learners",
+      "order": 6,
+      "marketing": true
+    },
+    {
+      "slug": "learners/leaderboard",
+      "title": "Org leaderboard",
+      "description": "Weekly and all-time XP rankings in Sudar Learn.",
+      "audience": "learner",
+      "category": "learners",
+      "order": 7,
       "marketing": true
     },
     {

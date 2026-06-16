@@ -9,6 +9,7 @@ import {
   type StoreLms,
 } from "@/data/sudarStore";
 import { StoreProductCard } from "@/components/store/StoreProductCard";
+import { ResponsiveCardGrid } from "@/components/ui/ResponsiveCardGrid";
 
 export function StoreCatalog() {
   const [category, setCategory] = useState<StoreCategory | "all">("all");
@@ -78,11 +79,16 @@ export function StoreCatalog() {
         {filtered.length} service{filtered.length === 1 ? "" : "s"} — download packages, use LTI, or call APIs with your org key from Sudar Studio.
       </p>
 
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((item) => (
-          <StoreProductCard key={item.id} item={item} />
-        ))}
-      </div>
+      {filtered.length > 0 ? (
+        <ResponsiveCardGrid
+          gridClassName="gap-6 sm:grid-cols-2 xl:grid-cols-3"
+          ariaLabel="Store products"
+        >
+          {filtered.map((item) => (
+            <StoreProductCard key={item.id} item={item} />
+          ))}
+        </ResponsiveCardGrid>
+      ) : null}
 
       {filtered.length === 0 && (
         <p className="rounded-2xl border border-dashed border-white/10 py-16 text-center text-sm text-foreground-muted">

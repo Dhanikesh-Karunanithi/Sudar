@@ -110,7 +110,7 @@ const BIBTEX = `@misc{karunanithi2026sudar,
   year      = {2026},
   url       = {https://github.com/Dhanikesh-Karunanithi/Sudar},
   note      = {Sudar / ALP Project. Apache-2.0 licence.
-               arXiv preprint pending.}
+               Draft white paper — contact author for PDF.}
 }`;
 
 export default function PapersPage() {
@@ -125,9 +125,9 @@ export default function PapersPage() {
       {/* ── Paper card ────────────────────────────────────────────────────── */}
       <div className="mt-10 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:p-8">
         {/* Status badge */}
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-400">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
-          Preprint · arXiv submission pending
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-400">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-cyan-400" />
+          Draft white paper · request PDF
         </div>
 
         <h2 className="text-2xl font-semibold leading-snug text-foreground sm:text-3xl">
@@ -213,11 +213,17 @@ export default function PapersPage() {
             </svg>
             Repository (GitHub)
           </a>
+          <a
+            href="mailto:connect@dhanikeshkarunanithi.com?subject=Sudar%20white%20paper%20draft"
+            className="inline-flex items-center gap-1.5 text-accent hover:underline"
+          >
+            Request draft PDF
+          </a>
           <span className="text-slate-600">·</span>
           <span className="text-slate-500">
-            arXiv link will appear here upon submission. See{" "}
+            Full draft in{" "}
             <code className="rounded bg-white/5 px-1 text-xs text-slate-400">docs/research/</code>{" "}
-            in the repo for the current draft
+            in the repo. arXiv submission planned for 2026.
           </span>
         </div>
       </div>
@@ -368,7 +374,8 @@ export default function PapersPage() {
             Learning That Remembers You: An Open-Source AI-Native Learning Platform and Plugin
             Architecture for Longitudinal Learner Modelling at Scale.
           </em>{" "}
-          Sudar / ALP Project. Apache-2.0 licence. arXiv preprint pending.{" "}
+          Sudar / ALP Project. Apache-2.0 licence. Draft white paper —{" "}
+          <span className="text-accent">contact author for PDF</span>.{" "}
           <span className="text-accent">https://github.com/Dhanikesh-Karunanithi/Sudar</span>
         </p>
       </div>

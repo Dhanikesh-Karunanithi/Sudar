@@ -4,6 +4,24 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## teachwithsudar mobile swipe carousels (June 2026)
+
+- **Where**: teachwithsudar homepage hero, platform/modalities/research sections, `/guides/*` workflows, `/store` catalog.
+- **What**: On viewports below `md`, card grids and animated demos use horizontal scroll-snap swipe rails with dot/chevron controls instead of auto-advancing or long vertical stacks. Hero demo mounts scenes lazily (active ±1) and disables 3D parallax on touch.
+- **Key files**: `teachwithsudar/src/components/ui/SwipeCardStrip.tsx`, `ResponsiveCardGrid.tsx`, `teachwithsudar/src/hooks/useMediaQuery.ts`, `teachwithsudar/src/components/home/HeroFlowDemo.tsx`, `PlatformAtAGlance.tsx`, `MarketingHomePage.tsx`, `AnimatedWorkflow.tsx`, `StoreCatalog.tsx`.
+- **Flow**: Mobile visitor lands on homepage → swipes hero demo steps manually → swipes modality/platform/research cards → on guide pages swipes workflow steps; desktop keeps grids and hero auto-play.
+
+---
+
+## Content & UX improvement (June 2026)
+
+- **Where**: teachwithsudar marketing pages; Sudar Studio `/onboarding`, `/tools`, `/settings/governance`, dashboard; Sudar Learn `/onboarding`, `/leaderboard`, `/gamification`, home dashboard.
+- **What**: Honest six-modality messaging; Studio first-run wizard; Learn onboarding gate with verify step; sparse/active home layouts; org leaderboard page; gamification hub; help articles for onboarding, exports, governance.
+- **Key files**: `teachwithsudar/src/app/edtech|contact|papers|store`, `sudar-studio/src/app/onboarding`, `sudar-learn/src/app/(dashboard)/leaderboard`, `help-center/articles/admins|learners/*`.
+- **Flow**: New Studio admin completes onboarding → creates first course; new Learn user completes or skips (max 3) onboarding → sparse home until enrolled → active layout with continue-learning priority.
+
+---
+
 ## SudarSim — roleplay simulation (pilot)
 
 - **Where**: Sudar Studio **`/sudarsim`** (org scenario library + editor, sidebar **SudarSim**); Sudar Learn `/sim/session`, CourseViewer **Sim** tab, ALP `/alp/sim/play`; Moodle `local_sudaralp/sim.php`; voice service `sudar-sim/`. Course modules optionally **link** a scenario (delivery only).

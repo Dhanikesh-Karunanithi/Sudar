@@ -6,7 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { GatewaySection } from "@/components/gateway/GatewaySection";
 
 const stats = [
-  { value: 7, suffix: "", label: "Modalities", desc: "Text, video, audio, mind map, flashcards, feed, play" },
+  { value: 6, suffix: "", label: "Modalities shipped", desc: "Read, Listen, Watch, Podcast, Map, Cards" },
   { value: 30, suffix: "+", label: "Languages", desc: "Full-stack localization and multilingual TTS" },
   { value: 14, suffix: "", label: "Visual templates", desc: "Pedagogically sound Studio styles" },
   { value: 100, suffix: "%", label: "Adaptive", desc: "Real-time next-best-action engine" },

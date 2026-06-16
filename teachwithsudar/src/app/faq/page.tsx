@@ -118,7 +118,7 @@ const faqs: FaqItem[] = [
     q: "Which learning modalities does Learn support?",
     content: (
       <>
-        Read, Listen (TTS), Watch (video/SudarVid), Map, Cards (flashcards), plus SCORM delivery. SudarFeed
+        Read, Listen (TTS), Watch (SudarVid), Podcast, Map, Cards (flashcards), plus SCORM delivery. SudarFeed
         and SudarPlay are on the roadmap. Learners switch per module. Full list:{" "}
         <Link href="/modalities" className={faqLinkClass}>
           Modalities
