@@ -24,7 +24,11 @@ export default async function StoreDetailPage({ params }: { params: Promise<{ id
   if (!item) notFound();
 
   return (
-    <ProseSection wide label="Sudar Store" title={item.name} subtitle={item.tagline}>
+    <ProseSection wide title={item.name}>
+      <p className="text-[10px] font-mono uppercase tracking-widest text-brand-orange/70 -mt-2 mb-1">
+        Sudar Store
+      </p>
+      <p className="text-lg text-foreground-muted mb-6">{item.tagline}</p>
       <p className="text-lg text-foreground">{item.description}</p>
 
       <div className="not-prose mt-8 grid gap-6 lg:grid-cols-2">
