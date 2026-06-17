@@ -88,39 +88,40 @@ describe('computeCourseEnrollmentProgress', () => {
 
 describe('checkPathCertificateEligibility', () => {
   it('requires completed mandatory courses only', async () => {
+    let enrollmentsQuery = 0
     const mockAdmin = {
       from(table: string) {
         if (table === 'enrollments') {
+          enrollmentsQuery += 1
+          if (enrollmentsQuery === 1) {
+            return {
+              select: () => ({
+                eq: () => ({
+                  eq: () => ({
+                    maybeSingle: async () => ({
+                      data: {
+                        id: 'enroll-1',
+                        personalized_sequence: [
+                          { course_id: 'course-a', is_mandatory: true },
+                          { course_id: 'course-b', is_mandatory: false },
+                        ],
+                      },
+                    }),
+                  }),
+                }),
+              }),
+            }
+          }
           return {
             select: () => ({
-              eq: (column: string) => {
-                if (column === 'user_id') {
-                  return {
-                    eq: () => ({
-                      maybeSingle: async () => ({
-                        data: {
-                          id: 'enroll-1',
-                          personalized_sequence: [
-                            { course_id: 'course-a', is_mandatory: true },
-                            { course_id: 'course-b', is_mandatory: false },
-                          ],
-                        },
-                      }),
-                    }),
-                  }
-                }
-                if (column === 'course_id') {
-                  return {
-                    in: async () => ({
-                      data: [
-                        { course_id: 'course-a', status: 'completed' },
-                        { course_id: 'course-b', status: 'in_progress' },
-                      ],
-                    }),
-                  }
-                }
-                throw new Error(`unexpected eq column ${column}`)
-              },
+              eq: () => ({
+                in: async () => ({
+                  data: [
+                    { course_id: 'course-a', status: 'completed' },
+                    { course_id: 'course-b', status: 'in_progress' },
+                  ],
+                }),
+              }),
             }),
           }
         }
