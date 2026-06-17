@@ -175,6 +175,18 @@ function SignupForm() {
       return
     }
 
+    const prepareRes = await fetch('/api/invite/prepare-oauth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: inviteCode.trim() }),
+    })
+    const prepareData = await prepareRes.json()
+    if (!prepareRes.ok || !prepareData.ok) {
+      setError(prepareData.error || 'Could not prepare invite code.')
+      setLoading(false)
+      return
+    }
+
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -273,7 +285,16 @@ function SignupForm() {
     )
   }
 
-  const formShell = (children: React.ReactNode, title: string, subtitle: string, footer?: React.ReactNode) => (
+  const formShell = (
+    children: React.ReactNode,
+    title: string,
+    subtitle: string,
+    options: {
+      footer?: React.ReactNode
+      step?: string
+      topAction?: React.ReactNode
+    } = {}
+  ) => (
     <div className="flex min-h-screen bg-[#050505]">
       <div className="relative hidden shrink-0 flex-col justify-between border-r border-white/[0.06] bg-[#080808] p-12 lg:flex lg:w-[480px]">
         <AuthMarketingDecor />
@@ -289,13 +310,19 @@ function SignupForm() {
       </div>
       <div className="relative flex flex-1 flex-col items-center justify-center p-6 sm:p-8">
         <div className="relative w-full max-w-md space-y-8">
-          <div className="mb-6 space-y-1 text-center">
+          {options.topAction && (
+            <div className="flex justify-end">{options.topAction}</div>
+          )}
+          <div className="mb-6 space-y-2 text-center">
+            {options.step && (
+              <p className="text-xs font-medium uppercase tracking-widest text-[#FF4500]/80">{options.step}</p>
+            )}
             <h1 className="font-display text-2xl font-semibold text-white">{title}</h1>
             <p className="text-sm text-zinc-500">{subtitle}</p>
           </div>
           <div className="rounded-2xl border border-white/[0.08] bg-zinc-950/60 p-8 backdrop-blur-sm">
             {children}
-            {footer}
+            {options.footer}
           </div>
         </div>
       </div>
@@ -342,15 +369,17 @@ function SignupForm() {
       </>,
       EARLY_ACCESS_COPY.completeInviteTitle,
       EARLY_ACCESS_COPY.completeInviteSubtitle,
-      (
-        <button
-          type="button"
-          onClick={() => void handleSignOut()}
-          className="mt-6 block w-full text-center text-sm text-[#FF4500]/90 hover:text-[#FF5722]"
-        >
-          Sign out and use a different account
-        </button>
-      )
+      {
+        footer: (
+          <button
+            type="button"
+            onClick={() => void handleSignOut()}
+            className="mt-6 block w-full text-center text-sm text-[#FF4500]/90 hover:text-[#FF5722]"
+          >
+            Sign out and use a different account
+          </button>
+        ),
+      }
     )
   }
 
@@ -400,14 +429,14 @@ function SignupForm() {
       </>,
       EARLY_ACCESS_COPY.inviteGateTitle,
       EARLY_ACCESS_COPY.inviteGateSubtitle,
-      (
-        <p className="mt-6 text-center text-sm text-zinc-500">
-          Already have an account?{' '}
-          <Link href="/login" className="font-medium text-[#FF4500]/90 hover:text-[#FF5722]">
-            Sign in
+      {
+        step: EARLY_ACCESS_COPY.inviteGateStep,
+        topAction: (
+          <Link href="/login" className="text-sm font-medium text-[#FF4500]/90 hover:text-[#FF5722]">
+            Already have an account? Sign in
           </Link>
-        </p>
-      )
+        ),
+      }
     )
   }
 
@@ -474,16 +503,19 @@ function SignupForm() {
         </button>
       </form>
     </>,
-    EARLY_ACCESS_COPY.inviteGateTitle,
+    EARLY_ACCESS_COPY.accountStepTitle,
     'Complete your account details below.',
-    (
-      <p className="mt-6 text-center text-sm text-zinc-500">
-        Already have an account?{' '}
-        <Link href="/login" className="font-medium text-[#FF4500]/90 hover:text-[#FF5722]">
-          Sign in
-        </Link>
-      </p>
-    )
+    {
+      step: EARLY_ACCESS_COPY.accountStep,
+      footer: (
+        <p className="mt-6 text-center text-sm text-zinc-500">
+          Already have an account?{' '}
+          <Link href="/login" className="font-medium text-[#FF4500]/90 hover:text-[#FF5722]">
+            Sign in
+          </Link>
+        </p>
+      ),
+    }
   )
 }
 

@@ -175,6 +175,18 @@ function SignupForm() {
       return
     }
 
+    const prepareRes = await fetch('/api/invite/prepare-oauth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: inviteCode.trim() }),
+    })
+    const prepareData = await prepareRes.json()
+    if (!prepareRes.ok || !prepareData.ok) {
+      setError(prepareData.error || 'Could not prepare invite code.')
+      setLoading(false)
+      return
+    }
+
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -270,7 +282,16 @@ function SignupForm() {
     )
   }
 
-  const card = (children: React.ReactNode, title: string, subtitle: string, footer?: React.ReactNode) => (
+  const card = (
+    children: React.ReactNode,
+    title: string,
+    subtitle: string,
+    options: {
+      footer?: React.ReactNode
+      step?: string
+      topAction?: React.ReactNode
+    } = {}
+  ) => (
     <div className="flex min-h-screen bg-[#050505]">
       <div className="relative hidden shrink-0 flex-col justify-between border-r border-white/[0.06] bg-[#080808] p-12 lg:flex lg:w-[480px]">
         <AuthMarketingDecor />
@@ -279,13 +300,19 @@ function SignupForm() {
       </div>
       <div className="flex flex-1 items-center justify-center p-8">
         <div className="w-full max-w-md space-y-6">
+          {options.topAction && (
+            <div className="flex justify-end">{options.topAction}</div>
+          )}
           <div className="text-center">
+            {options.step && (
+              <p className="mb-2 text-xs font-medium uppercase tracking-widest text-[#FF4500]/80">{options.step}</p>
+            )}
             <h1 className="font-display text-2xl font-semibold text-white">{title}</h1>
             <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>
           </div>
           <div className="rounded-2xl border border-white/[0.08] bg-zinc-950/60 p-8">
             {children}
-            {footer}
+            {options.footer}
           </div>
         </div>
       </div>
@@ -351,11 +378,14 @@ function SignupForm() {
       </>,
       EARLY_ACCESS_COPY.inviteGateTitle,
       EARLY_ACCESS_COPY.inviteGateSubtitle,
-      (
-        <p className="mt-4 text-center text-sm text-zinc-500">
-          Already have an account? <Link href="/login" className="text-[#FF4500]/90">Sign in</Link>
-        </p>
-      )
+      {
+        step: EARLY_ACCESS_COPY.inviteGateStep,
+        topAction: (
+          <Link href="/login" className="text-sm font-medium text-[#FF4500]/90 hover:text-[#FF5722]">
+            Already have an account? Sign in
+          </Link>
+        ),
+      }
     )
   }
 
@@ -386,8 +416,9 @@ function SignupForm() {
         </button>
       </form>
     </>,
-    'Create your account',
-    'Complete your account details below.'
+    EARLY_ACCESS_COPY.accountStepTitle,
+    'Complete your account details below.',
+    { step: EARLY_ACCESS_COPY.accountStep }
   )
 }
 

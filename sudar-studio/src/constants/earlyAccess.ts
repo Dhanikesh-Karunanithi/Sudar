@@ -1,5 +1,8 @@
 export const EARLY_ACCESS_COPY = {
-  inviteGateTitle: 'Create your account',
+  inviteGateTitle: "You're invited",
+  accountStepTitle: 'Create your account',
+  inviteGateStep: 'Step 1 of 2',
+  accountStep: 'Step 2 of 2',
   inviteGateSubtitle: 'Sudar Studio is in early access. Enter your invite code to join.',
   inviteAccepted: 'Early access invite accepted — welcome aboard.',
   inviteRequiredError: 'An invite code is required before you can access Sudar Studio.',

@@ -89,7 +89,11 @@ export async function GET(request: NextRequest) {
   }
 
   if (intent === 'signup') {
-    const verifiedInvite = cookieStore.get(VERIFIED_INVITE_COOKIE)?.value
+    const verifiedInvite =
+      cookieStore.get(VERIFIED_INVITE_COOKIE)?.value ??
+      (typeof user.user_metadata?.invite_code === 'string'
+        ? user.user_metadata.invite_code
+        : undefined)
     if (verifiedInvite) {
       await applyInviteToProfile(admin, user.id, verifiedInvite)
     }
