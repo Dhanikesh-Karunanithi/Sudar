@@ -4,6 +4,7 @@
  * Generates a unique verification code and stores a Certification record.
  */
 
+import { checkPathCertificateEligibility } from '@/lib/certificates/pathCertificateEligibility'
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
@@ -26,6 +27,11 @@ export async function POST(request: NextRequest) {
 
   if (!path) return NextResponse.json({ error: 'Path not found' }, { status: 404 })
   if (!path.issues_certificate) return NextResponse.json({ error: 'Path does not issue certificates' }, { status: 400 })
+
+  const eligibility = await checkPathCertificateEligibility(admin, user.id, path_id)
+  if (!eligibility.eligible) {
+    return NextResponse.json({ error: 'Path not completed', reason: eligibility.reason }, { status: 403 })
+  }
 
   // Check existing cert
   const { data: existing } = await admin

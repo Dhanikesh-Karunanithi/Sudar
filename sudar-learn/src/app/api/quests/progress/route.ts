@@ -1,9 +1,11 @@
-import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { authorizeInternalService } from '@/lib/security/internalServiceAuth'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { evaluateGamification } from '@/lib/gamification/engine'
 
 const bodySchema = z.object({
+  userId: z.string().uuid(),
   eventType: z.string().min(1).max(80),
   courseId: z.string().uuid().optional().nullable(),
   moduleId: z.string().uuid().optional().nullable(),
@@ -14,12 +16,12 @@ const bodySchema = z.object({
 
 /**
  * POST /api/quests/progress
- * Emits quest-related or milestone events and evaluates gamification immediately.
+ * Internal route for server-side quest/milestone events and immediate gamification evaluation.
  */
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!authorizeInternalService(request)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const body = await request.json().catch(() => null)
   const parsed = bodySchema.safeParse(body)
@@ -27,11 +29,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid body', issues: parsed.error.issues }, { status: 400 })
   }
 
-  const { eventType, courseId, moduleId, payload, modality, durationSecs } = parsed.data
+  const { userId, eventType, courseId, moduleId, payload, modality, durationSecs } = parsed.data
   const admin = createServiceRoleSupabaseClient()
 
   await admin.from('learning_events').insert({
-    user_id: user.id,
+    user_id: userId,
     course_id: courseId ?? null,
     module_id: moduleId ?? null,
     event_type: eventType,
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
   })
 
   const result = await evaluateGamification({
-    userId: user.id,
+    userId,
     eventType,
     courseId: courseId ?? null,
     moduleId: moduleId ?? null,
@@ -52,4 +54,3 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ success: true, data: result })
 }
-
