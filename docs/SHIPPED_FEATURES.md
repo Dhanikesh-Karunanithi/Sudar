@@ -6,19 +6,21 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ## Early access gate (June 2026)
 
-- **Where**: Sudar Learn + Sudar Studio signup/login; Studio **`/early-access`** (super admin / `ADMIN_EMAILS`); public **`/signup/waitlist`**.
-- **What**: New self-signup users must redeem an early-access invite code before using the platform. Waitlist captures interest; operators issue single-use codes. Org-invited and admin-provisioned users bypass the gate. Existing users are grandfathered on migration.
+- **Where**: Sudar Learn + Sudar Studio signup/login; Studio **`/early-access`** (super admin / `ADMIN_EMAILS`); public **`/signup/waitlist`**; persistent **Early Access** banner on all pages when enabled.
+- **What**: New self-signup users must redeem an early-access invite code before using the platform. Waitlist captures interest; operators issue single-use codes. Org-invited and admin-provisioned users bypass the gate. Existing users are grandfathered on migration. A slim top banner labels the platform as **Early Access** with an experimental-prototype disclaimer for demos.
 - **Key files**:
   - `supabase/migrations/20260617000000_early_access.sql`, `20260617000001_early_access_auth_hook.sql`
   - `shared/access/` — invite validation, access checks, auth callback helpers
   - `sudar-learn|sudar-studio/src/app/signup/SignupClient.tsx`, `src/middleware.ts`, `src/app/auth/callback/route.ts`
+  - `sudar-learn|sudar-studio/src/components/branding/EarlyAccessBanner.tsx`, `src/app/layout.tsx`
   - `sudar-studio/src/app/(dashboard)/early-access/page.tsx`, `src/app/api/early-access/admin/route.ts`
   - `scripts/configure-auth-signup.mjs`
+  - `supabase/templates/invite.html`, `scripts/ops/update-supabase-email-templates.mjs` — branded org-invite email (Supabase Auth template)
 - **Flow**:
   1. User joins waitlist or receives invite code from operator.
   2. `/signup` → validate code → email or Google signup with invite metadata.
   3. Middleware allows app access when `signup_code_used` is set (or exempt tier/role).
-- **Env**: `EARLY_ACCESS_ENABLED=true` on Learn + Studio; optional `ADMIN_EMAILS` on Studio.
+- **Env**: `EARLY_ACCESS_ENABLED=true` on Learn + Studio; optional `ADMIN_EMAILS` on Studio. Banner on by default (`NEXT_PUBLIC_EARLY_ACCESS_BANNER=false` to hide).
 - **Database**: Apply migrations; run auth hook script or wire `hook_before_user_created` in Supabase Dashboard.
 
 ---

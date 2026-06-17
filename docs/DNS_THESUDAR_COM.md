@@ -110,6 +110,24 @@ https://mcp.thesudar.com/oauth/callback
 
 Password reset emails use `auth/callback?next=/reset-password` on Learn — no extra redirect entry beyond the wildcards above.
 
+### Auth email templates (invite, etc.)
+
+Invite emails are **Supabase Auth templates**, not app code. Source of truth:
+
+- `supabase/templates/invite.html` — Sudar branding (teachwithsudar dark theme, `thesudar.com` URLs, current logo)
+- `scripts/ops/update-supabase-email-templates.mjs` — push to hosted Supabase via Management API
+
+After editing templates or changing **Site URL**, deploy:
+
+```bash
+# Token: https://supabase.com/dashboard/account/tokens (store in sudar-studio/.env.local)
+node scripts/ops/update-supabase-email-templates.mjs
+```
+
+Set **Site URL** to `https://studio.thesudar.com` (org invites) or `https://learn.thesudar.com`. The invite template links to `learn.thesudar.com` and `studio.thesudar.com` — not Vercel staging hosts.
+
+Logo image for emails: `learn.thesudar.com/brand/Sudar_Logo.svg` (same mark as `sudar-learn/public/brand/Sudar_Logo.svg`).
+
 Verify after changes:
 
 ```bash

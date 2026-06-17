@@ -14,6 +14,7 @@ This is the single source of truth for all environment variables used across Sud
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Studio, Learn | Supabase anon (public) key. Same dashboard as above. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Studio, Learn | Supabase service role key (server-only). Same dashboard. |
 | `EARLY_ACCESS_ENABLED` | Studio, Learn | When `true`, new self-signup users need a platform invite code (`signup_code_used` on `profiles`). Org-provisioned and grandfathered users bypass. Default off until migrations + hook are applied. |
+| `NEXT_PUBLIC_EARLY_ACCESS_BANNER` | Studio, Learn | Persistent top-of-app **Early Access** notice on login, signup, and dashboard. **On by default**; set to `false` to hide. |
 | `ADMIN_EMAILS` | Studio | Comma-separated operator emails for **Early access** admin API (`/api/early-access/admin`) in addition to `super_admin` profile role. |
 | `NEXTAUTH_URL` | Studio, Learn | Base URL of the app (e.g. `http://localhost:3000` for Studio, `http://localhost:3001` for Learn). |
 | `NEXTAUTH_SECRET` | Studio, Learn | Random 32+ character string for session signing. Generate with `openssl rand -base64 32`. |
@@ -234,6 +235,9 @@ Setup: [KNOWLEDGE_BASE_SETUP.md](KNOWLEDGE_BASE_SETUP.md), [MARKITDOWN_INTEGRATI
 | `PURGE_KEEP_EMAIL` | Studio | Required keeper email when the dangerous purge-users tool is explicitly enabled. |
 | `ENABLE_ANALYTICS_ENGINE` | Studio, Learn | Set `true` to enable analytics engine APIs; set `false` to disable analytics endpoints during staged rollout. |
 | `LANGFUSE_*` | Studio | Optional observability (Langfuse). |
+| `SUPABASE_ACCESS_TOKEN` | Ops (local only) | [Supabase account token](https://supabase.com/dashboard/account/tokens) for `scripts/ops/update-supabase-email-templates.mjs`, `scripts/ops/patch-supabase-auth-urls.mjs`, `scripts/configure-auth-signup.mjs`. Must be scoped to the **Sudar** project (`NEXT_PUBLIC_SUPABASE_URL` ref) with **`auth_config_write`**. Never commit. |
+| `SUPABASE_PROJECT_REF` | Ops (optional) | Project ref (default `qnsrrboprydmjyormlky`). |
+| `SUPABASE_SITE_URL` | Ops (optional) | Target **Site URL** when pushing auth email templates (default `https://studio.thesudar.com`). |
 
 ---
 

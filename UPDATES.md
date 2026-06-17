@@ -16,6 +16,27 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-17 — Branded Supabase invite email
+
+- **Theme**: Replace old infinity logo and Vercel URLs in org-invite emails with restrained teachwithsudar dark branding.
+- **Shipped**:
+  - `supabase/templates/invite.html` — flat `#050505` canvas, Playfair headlines, `learn.thesudar.com` + `studio.thesudar.com` links, SVG mark from `Sudar_Logo.svg`.
+  - `scripts/ops/update-supabase-email-templates.mjs` — push template + `site_url` via Supabase Management API.
+  - `teachwithsudar/public/brand/Sudar_Logo.svg` — mirrored for marketing deploy.
+  - Studio invite API uses `NEXTAUTH_URL` for auth callback redirect (not Vercel origin).
+- **Ops**: Run `node scripts/ops/update-supabase-email-templates.mjs` with `SUPABASE_ACCESS_TOKEN` (Sudar project + `auth_config_write`). Template already pushed to hosted Supabase.
+- **Docs**: `DNS_THESUDAR_COM.md` §6 (auth email templates).
+
+### 2026-06-17 — Early access banner (Learn + Studio)
+
+- **Theme**: Persistent Early Access framing for demos and invite-only rollout.
+- **Shipped**:
+  - Slim top banner on all Learn + Studio pages: product name · Early Access + experimental prototype subtitle.
+  - `shared/access/constants.ts` — `isEarlyAccessBannerEnabled()`, `EARLY_ACCESS_BANNER_COPY`.
+  - `sudar-learn|sudar-studio/src/components/branding/EarlyAccessBanner.tsx`, wired in root `layout.tsx`.
+- **Env**: Banner on by default; `NEXT_PUBLIC_EARLY_ACCESS_BANNER=false` to hide.
+- **Docs**: `ENV_REFERENCE.md`, `SHIPPED_FEATURES.md` (early access section).
+
 ### 2026-06-17 — Early access gate (invite-only signup)
 
 - **Theme**: Restrict new self-signup to invite-only early access, ported from ByteVerse patterns.

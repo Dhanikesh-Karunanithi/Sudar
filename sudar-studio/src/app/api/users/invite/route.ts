@@ -37,7 +37,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invite already sent to this email for this org' }, { status: 409 })
   }
 
-  const redirectTo = process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin
+  const redirectTo =
+    process.env.NEXTAUTH_URL?.replace(/\/$/, '') ||
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ||
+    request.nextUrl.origin
   const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
     data: { full_name: body.full_name ?? null },
     redirectTo: `${redirectTo}/auth/callback`,
