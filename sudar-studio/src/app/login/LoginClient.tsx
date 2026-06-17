@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { AuthMarketingDecor } from '@/components/auth/AuthMarketingDecor'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { GoogleIcon } from '@/components/ui/GoogleIcon'
+import { buildAuthCallbackUrl, safeNextPath } from '@shared-access/authIntent'
 import { createClient } from '@/lib/supabase/client'
 
 export function LoginClient() {
@@ -38,8 +39,14 @@ export function LoginClient() {
       setLoading(true)
       setError(null)
 
-      const nextParam = searchParams?.get('next') ?? '/'
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextParam)}`
+      await fetch('/api/invite/clear-oauth-prep', { method: 'POST' }).catch(() => {})
+
+      const nextParam = safeNextPath(searchParams?.get('next') ?? undefined)
+      const redirectTo = buildAuthCallbackUrl({
+        origin: window.location.origin,
+        next: nextParam,
+        intent: 'login',
+      })
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

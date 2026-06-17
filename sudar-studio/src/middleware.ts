@@ -2,7 +2,31 @@ import { createServerClient } from '@supabase/ssr'
 import type { User } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { checkUserInviteAccess, isEarlyAccessEnabled } from '@shared-access'
 import { fetchWithDeadline } from '@/lib/fetch-with-deadline'
+
+const PUBLIC_PATHS = [
+  '/login',
+  '/signup',
+  '/signup/waitlist',
+  '/auth/callback',
+  '/api/invite/validate',
+  '/api/invite/prepare-oauth',
+  '/api/invite/clear-oauth-prep',
+  '/api/invite/apply-profile',
+  '/api/invite/redeem',
+  '/api/waitlist',
+]
+
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.some((p) => pathname.startsWith(p))
+}
+
+const INVITE_EXEMPT_PATHS = ['/signup', '/login', '/auth/callback']
+
+function isInviteExemptPath(pathname: string): boolean {
+  return INVITE_EXEMPT_PATHS.some((p) => pathname.startsWith(p))
+}
 
 export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -40,7 +64,6 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session — must not use getSession() here, always getUser()
   let user: User | null = null
   try {
     const { data, error } = await supabase.auth.getUser()
@@ -50,12 +73,10 @@ export async function middleware(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl
-  const publicPaths = ['/login', '/signup', '/auth/callback']
-  const isPublicPath = publicPaths.some((p) => pathname.startsWith(p))
-  /** SudarVid render proxy sets auth via HttpOnly cookie (iframe loads often omit session cookies). */
+  const isPublic = isPublicPath(pathname)
   const delegatesAuth = pathname.startsWith('/api/studio/ai/generate-video/render/')
 
-  if (!user && !isPublicPath && !delegatesAuth) {
+  if (!user && !isPublic && !delegatesAuth) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
     }
@@ -64,7 +85,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
+  if (user && isEarlyAccessEnabled() && !isPublic && !delegatesAuth) {
+    const access = await checkUserInviteAccess(user.id, supabase)
+    if (!access.hasAccess) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Invite required', code: 'INVITE_REQUIRED' }, { status: 403 })
+      }
+      if (!isInviteExemptPath(pathname)) {
+        const redirectUrl = request.nextUrl.clone()
+        redirectUrl.pathname = '/signup'
+        redirectUrl.searchParams.set('error', 'invite_required')
+        return NextResponse.redirect(redirectUrl)
+      }
+    }
+  }
+
   if (user && (pathname === '/login' || pathname === '/signup')) {
+    if (isEarlyAccessEnabled()) {
+      const access = await checkUserInviteAccess(user.id, supabase)
+      if (!access.hasAccess) {
+        return supabaseResponse
+      }
+    }
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = '/'
     return NextResponse.redirect(redirectUrl)
@@ -73,7 +115,7 @@ export async function middleware(request: NextRequest) {
   const onboardingExempt =
     pathname.startsWith('/onboarding') ||
     pathname.startsWith('/api/onboarding') ||
-    isPublicPath ||
+    isPublic ||
     delegatesAuth
 
   if (user && !onboardingExempt) {

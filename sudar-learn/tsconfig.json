@@ -33,6 +33,12 @@
       ],
       "@shared-content-generation/*": [
         "../shared/content-generation/*"
+      ],
+      "@shared-access": [
+        "../shared/access/index.ts"
+      ],
+      "@shared-access/*": [
+        "../shared/access/*"
       ]
     },
     "target": "ES2017"

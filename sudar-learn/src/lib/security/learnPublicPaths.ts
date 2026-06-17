@@ -5,6 +5,7 @@
 const PUBLIC_PREFIXES = [
   '/login',
   '/signup',
+  '/signup/waitlist',
   '/forgot-password',
   '/auth/callback',
   '/api/notifications/unsubscribe',
@@ -12,6 +13,12 @@ const PUBLIC_PREFIXES = [
   '/api/alp/',
   '/api/internal/',
   '/api/cron/',
+  '/api/invite/validate',
+  '/api/invite/prepare-oauth',
+  '/api/invite/clear-oauth-prep',
+  '/api/invite/apply-profile',
+  '/api/invite/redeem',
+  '/api/waitlist',
 ] as const
 
 /**

@@ -1,7 +1,14 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { checkUserInviteAccess, isEarlyAccessEnabled } from '@shared-access'
 import { isLearnApiDelegatedAuthPath, isLearnPublicPath } from '@/lib/security/learnPublicPaths'
+
+const INVITE_EXEMPT_PATHS = ['/signup', '/login', '/forgot-password', '/auth/callback']
+
+function isInviteExemptPath(pathname: string): boolean {
+  return INVITE_EXEMPT_PATHS.some((p) => pathname.startsWith(p))
+}
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -36,7 +43,6 @@ export async function middleware(request: NextRequest) {
   const delegatesAuth = isLearnApiDelegatedAuthPath(pathname)
 
   if (!user && !isPublicPath && !delegatesAuth) {
-    // API callers (fetch, integrations) expect JSON errors — not HTML login redirects.
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
     }
@@ -45,7 +51,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  if (user && isEarlyAccessEnabled() && !isPublicPath && !delegatesAuth) {
+    const access = await checkUserInviteAccess(user.id, supabase)
+    if (!access.hasAccess) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Invite required', code: 'INVITE_REQUIRED' }, { status: 403 })
+      }
+      if (!isInviteExemptPath(pathname)) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/signup'
+        url.searchParams.set('error', 'invite_required')
+        return NextResponse.redirect(url)
+      }
+    }
+  }
+
   if (user && (pathname === '/login' || pathname === '/signup')) {
+    if (isEarlyAccessEnabled()) {
+      const access = await checkUserInviteAccess(user.id, supabase)
+      if (!access.hasAccess) {
+        return supabaseResponse
+      }
+    }
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)

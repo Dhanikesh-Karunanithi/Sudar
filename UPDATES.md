@@ -16,6 +16,16 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-17 — Early access gate (invite-only signup)
+
+- **Theme**: Restrict new self-signup to invite-only early access, ported from ByteVerse patterns.
+- **Shipped**:
+  - **Database**: `profiles.access_tier`, `signup_code_used`, `invite_codes`, `waitlist_entries`, `access_tier_config`; auth hook `hook_before_user_created`; grandfather existing users.
+  - **Learn + Studio**: Invite-gated signup UI, OAuth cookie flow, middleware gate (`EARLY_ACCESS_ENABLED`), waitlist page, invite API routes.
+  - **Studio admin**: `/early-access` — issue codes from waitlist, create manual codes (super admin + `ADMIN_EMAILS`).
+  - **Bypass**: Org invites, admin-provisioned users (`ORG_PROVISIONED` / `ORG_INVITE` markers).
+  - **Ops**: `scripts/configure-auth-signup.mjs`, migrations `20260617000000_early_access.sql` + `20260617000001_early_access_auth_hook.sql`.
+
 ### 2026-06-16 — teachwithsudar mobile swipe carousels
 
 - **Theme**: Touch-first navigation for animated demos and card sections on the marketing site.

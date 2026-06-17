@@ -23,6 +23,8 @@ model Profile {
   avatarUrl             String?  @map("avatar_url")
   role                  Role     @default(LEARNER)
   orgId                 String?  @map("org_id") @db.Uuid
+  accessTier            String   @default("default") @map("access_tier")
+  signupCodeUsed        String?  @map("signup_code_used")
   onboardingComplete    Boolean  @default(false) @map("onboarding_complete")
   requirePasswordChange Boolean  @default(false) @map("require_password_change")
   notificationPreferences Json? @default("{\"notify_when_course_ready\": false, \"sound_when_course_ready\": false, \"sound_volume\": 50}") @map("notification_preferences") @db.JsonB
@@ -649,4 +651,51 @@ model UserNotification {
 
   @@index([userId, createdAt(sort: Desc)])
   @@map("user_notifications")
+}
+
+// ============================================
+// EARLY ACCESS
+// ============================================
+
+model AccessTierConfig {
+  tier           String  @id
+  requiresInvite Boolean @default(true) @map("requires_invite")
+  description    String?
+
+  @@map("access_tier_config")
+}
+
+model InviteCode {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code         String    @unique
+  type         String
+  ownerUserId  String?   @map("owner_user_id") @db.Uuid
+  maxUses      Int?      @map("max_uses")
+  usesCount    Int       @default(0) @map("uses_count")
+  grantsTier   String    @default("early_access") @map("grants_tier")
+  bonusCredits Int       @default(0) @map("bonus_credits")
+  expiresAt    DateTime? @map("expires_at")
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  waitlistEntries WaitlistEntry[]
+
+  @@index([code])
+  @@map("invite_codes")
+}
+
+model WaitlistEntry {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email          String    @unique
+  name           String?
+  useCase        String?   @map("use_case")
+  role           String?
+  teamSize       String?   @map("team_size")
+  status         String    @default("pending")
+  invitedCodeId  String?   @map("invited_code_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  invitedCode InviteCode? @relation(fields: [invitedCodeId], references: [id], onDelete: SetNull)
+
+  @@map("waitlist_entries")
 }

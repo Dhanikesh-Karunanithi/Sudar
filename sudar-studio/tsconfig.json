@@ -37,6 +37,12 @@
       "@shared-content-generation/*": [
         "../shared/content-generation/*"
       ],
+      "@shared-access": [
+        "../shared/access/index.ts"
+      ],
+      "@shared-access/*": [
+        "../shared/access/*"
+      ],
       "zod": [
         "./node_modules/zod/index.d.cts"
       ],

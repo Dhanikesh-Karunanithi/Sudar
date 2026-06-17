@@ -7,6 +7,7 @@ on:
     paths:
       - "sudar-learn/**"
       - "shared/**"
+      - "supabase/migrations/**"
       - "scripts/sync-help-center-ai.mjs"
       - "help-center/**"
       - ".github/workflows/sudar-learn-cloudflare.yml"
@@ -42,3 +43,4 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_APP_URL: https://learn.thesudar.com
           NEXTAUTH_URL: https://learn.thesudar.com
+          EARLY_ACCESS_ENABLED: "true"

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
+import { buildAuthCallbackUrl, safeNextPath } from '@shared-access/authIntent'
 import { CheckCircle2 } from 'lucide-react'
 import { AuthMarketingDecor } from '@/components/auth/AuthMarketingDecor'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
@@ -39,8 +40,14 @@ export function LoginClient() {
       setLoading(true)
       setError(null)
 
-      const nextParam = searchParams?.get('next') ?? '/'
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextParam)}`
+      await fetch('/api/invite/clear-oauth-prep', { method: 'POST' }).catch(() => {})
+
+      const nextParam = safeNextPath(searchParams?.get('next') ?? undefined)
+      const redirectTo = buildAuthCallbackUrl({
+        origin: window.location.origin,
+        next: nextParam,
+        intent: 'login',
+      })
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

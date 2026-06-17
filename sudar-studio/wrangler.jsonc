@@ -21,6 +21,10 @@
   "observability": {
     "enabled": true
   },
+  "vars": {
+    "EARLY_ACCESS_ENABLED": "true",
+    "ADMIN_EMAILS": "dhanikesh.karunanithi@foundever.com,connect@dhanikeshkarunanithi.com"
+  },
   "routes": [
     {
       "pattern": "studio.thesudar.com",

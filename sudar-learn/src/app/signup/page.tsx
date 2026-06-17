@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import { PendingInviteHandler } from '@/components/auth/PendingInviteHandler'
 import { SignupClient } from './SignupClient'
 
 export default function SignupPage() {
@@ -16,6 +17,7 @@ export default function SignupPage() {
         </div>
       }
     >
+      <PendingInviteHandler />
       <SignupClient />
     </Suspense>
   )

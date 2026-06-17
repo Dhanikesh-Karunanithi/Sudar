@@ -68,6 +68,7 @@ const organizationNavItems = [
 const superAdminNavItems = [
   { label: 'Platform users', href: '/admin/system', icon: Users },
   { label: 'Organisations', href: '/admin/system?tab=orgs', icon: Shield },
+  { label: 'Early access', href: '/early-access', icon: ShieldCheck },
 ]
 
 export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: SidebarProps) {

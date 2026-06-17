@@ -66,6 +66,8 @@ export async function POST(request: NextRequest) {
       full_name: row.full_name ?? null,
       org_id: orgId,
       require_password_change: true,
+      access_tier: 'early_access',
+      signup_code_used: 'ORG_PROVISIONED',
     }, { onConflict: 'id' })
 
     await admin.from('org_members').insert({

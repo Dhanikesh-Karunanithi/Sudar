@@ -13,6 +13,8 @@ This is the single source of truth for all environment variables used across Sud
 | `NEXT_PUBLIC_SUPABASE_URL` | Studio, Learn | Supabase project URL. [Get from](https://supabase.com/dashboard/project/_/settings/api) Project Settings → API. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Studio, Learn | Supabase anon (public) key. Same dashboard as above. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Studio, Learn | Supabase service role key (server-only). Same dashboard. |
+| `EARLY_ACCESS_ENABLED` | Studio, Learn | When `true`, new self-signup users need a platform invite code (`signup_code_used` on `profiles`). Org-provisioned and grandfathered users bypass. Default off until migrations + hook are applied. |
+| `ADMIN_EMAILS` | Studio | Comma-separated operator emails for **Early access** admin API (`/api/early-access/admin`) in addition to `super_admin` profile role. |
 | `NEXTAUTH_URL` | Studio, Learn | Base URL of the app (e.g. `http://localhost:3000` for Studio, `http://localhost:3001` for Learn). |
 | `NEXTAUTH_SECRET` | Studio, Learn | Random 32+ character string for session signing. Generate with `openssl rand -base64 32`. |
 | `SUDAR_INTELLIGENCE_URL` | Studio, Learn | Preferred: Sudar Intelligence API base URL. With `scripts/dev-with-sudarvid.mjs`, default is `http://localhost:8001` (SudarVid uses **8000**). |

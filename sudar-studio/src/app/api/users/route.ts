@@ -111,6 +111,8 @@ export async function POST(request: NextRequest) {
     full_name: body.full_name ?? null,
     org_id: orgId,
     require_password_change: requirePasswordChange,
+    access_tier: 'early_access',
+    signup_code_used: 'ORG_PROVISIONED',
   }, { onConflict: 'id' })
 
   const orgRole: 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER' =

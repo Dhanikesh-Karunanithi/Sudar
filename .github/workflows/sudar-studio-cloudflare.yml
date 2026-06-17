@@ -7,6 +7,7 @@ on:
     paths:
       - "sudar-studio/**"
       - "shared/**"
+      - "supabase/migrations/**"
       - "scripts/sync-help-center-ai.mjs"
       - "help-center/**"
       - ".github/workflows/sudar-studio-cloudflare.yml"
@@ -40,3 +41,5 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_LEARN_APP_URL: https://learn.thesudar.com
           NEXTAUTH_URL: https://studio.thesudar.com
+          EARLY_ACCESS_ENABLED: "true"
+          ADMIN_EMAILS: dhanikesh.karunanithi@foundever.com,connect@dhanikeshkarunanithi.com
