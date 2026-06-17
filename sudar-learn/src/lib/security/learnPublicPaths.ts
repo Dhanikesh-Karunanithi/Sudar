@@ -8,6 +8,7 @@ const PUBLIC_PREFIXES = [
   '/signup/waitlist',
   '/forgot-password',
   '/auth/callback',
+  '/api/auth/complete',
   '/api/notifications/unsubscribe',
   '/api/notifications/track',
   '/api/alp/',

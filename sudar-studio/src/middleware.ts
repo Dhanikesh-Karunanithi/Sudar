@@ -10,6 +10,7 @@ const PUBLIC_PATHS = [
   '/signup',
   '/signup/waitlist',
   '/auth/callback',
+  '/api/auth/complete',
   '/api/invite/validate',
   '/api/invite/prepare-oauth',
   '/api/invite/clear-oauth-prep',
@@ -22,7 +23,7 @@ function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname.startsWith(p))
 }
 
-const INVITE_EXEMPT_PATHS = ['/signup', '/login', '/auth/callback']
+const INVITE_EXEMPT_PATHS = ['/signup', '/login', '/auth/callback', '/api/auth/complete']
 
 function isInviteExemptPath(pathname: string): boolean {
   return INVITE_EXEMPT_PATHS.some((p) => pathname.startsWith(p))

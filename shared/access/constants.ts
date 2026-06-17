@@ -1,6 +1,10 @@
 export const AUTH_LOGIN_ERRORS = {
   auth_callback_failed: 'We could not complete sign-in. Please try again or use a different method.',
   session_expired: 'Your session expired. Please sign in again.',
+  no_registered_account:
+    'No Sudar account is registered for that Google email. Create an account with an invite code to get started.',
+  invite_required:
+    'That account does not have early access yet. Sign up with an invite code or contact your administrator.',
 } as const
 
 export type AuthLoginErrorCode = keyof typeof AUTH_LOGIN_ERRORS

@@ -19,11 +19,12 @@ export function LoginClient() {
   const router = useRouter()
   const supabase = createClient()
   const searchParams = useSearchParams()
+  const errorCode = searchParams?.get('error')
 
   useEffect(() => {
-    const message = resolveAuthLoginError(searchParams?.get('error'))
+    const message = resolveAuthLoginError(errorCode)
     if (message) setError(message)
-  }, [searchParams])
+  }, [errorCode])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -59,6 +60,9 @@ export function LoginClient() {
         provider: 'google',
         options: {
           redirectTo,
+          queryParams: {
+            prompt: 'select_account',
+          },
         },
       })
 
@@ -141,7 +145,16 @@ export function LoginClient() {
 
             {error && (
               <div className="mb-4 rounded-lg border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-                {error}
+                <p>{error}</p>
+                {(errorCode === 'no_registered_account' || errorCode === 'invite_required') && (
+                  <p className="mt-2 text-xs text-zinc-400">
+                    <Link href="/signup" className="font-medium text-[#FF4500]/90 hover:text-[#FF5722]">
+                      {errorCode === 'no_registered_account'
+                        ? 'Create an account with an invite code'
+                        : 'Sign up with an invite code'}
+                    </Link>
+                  </p>
+                )}
               </div>
             )}
 

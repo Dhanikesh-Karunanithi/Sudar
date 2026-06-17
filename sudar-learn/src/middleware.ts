@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { checkUserInviteAccess, isEarlyAccessEnabled } from '@shared-access'
 import { isLearnApiDelegatedAuthPath, isLearnPublicPath } from '@/lib/security/learnPublicPaths'
 
-const INVITE_EXEMPT_PATHS = ['/signup', '/login', '/forgot-password', '/auth/callback']
+const INVITE_EXEMPT_PATHS = ['/signup', '/login', '/forgot-password', '/auth/callback', '/api/auth/complete']
 
 function isInviteExemptPath(pathname: string): boolean {
   return INVITE_EXEMPT_PATHS.some((p) => pathname.startsWith(p))
