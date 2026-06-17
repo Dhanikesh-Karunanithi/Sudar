@@ -1,27 +1,36 @@
 import { cookies } from 'next/headers'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 
 import {
   AUTH_INTENT_PARAM,
+  createOAuthCallbackSupabase,
   deleteInviteCookie,
   loginErrorPath,
   parseAuthIntent,
+  redirectWithAuthCookies,
   resolvePostOAuthRedirect,
   safeNextPath,
   signupErrorPath,
+  type SessionCookie,
   VERIFIED_INVITE_COOKIE,
 } from '@shared-access'
 import type { AccessSupabaseClient } from '@shared-access/types'
-import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
+  const sessionCookies: SessionCookie[] = []
+  const supabase = createOAuthCallbackSupabase(request, sessionCookies)
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
+  const origin = new URL(request.url).origin
+
   if (!user) {
-    return NextResponse.redirect(new URL('/login?error=auth_callback_failed', request.url))
+    return redirectWithAuthCookies(
+      `${origin}/login?error=auth_callback_failed`,
+      sessionCookies
+    )
   }
 
   const { searchParams } = new URL(request.url)
@@ -34,7 +43,9 @@ export async function GET(request: NextRequest) {
     user,
     intent,
     next,
-    verifiedInviteCookie: cookieStore.get(VERIFIED_INVITE_COOKIE)?.value,
+    verifiedInviteCookie:
+      request.cookies.get(VERIFIED_INVITE_COOKIE)?.value ??
+      cookieStore.get(VERIFIED_INVITE_COOKIE)?.value,
     admin,
   })
 
@@ -42,18 +53,20 @@ export async function GET(request: NextRequest) {
     if (result.signOut) {
       await supabase.auth.signOut()
     }
-    const response = NextResponse.redirect(new URL(loginErrorPath(result), request.url))
-    deleteInviteCookie(response)
-    return response
+    return redirectWithAuthCookies(
+      `${origin}${loginErrorPath(result)}`,
+      sessionCookies,
+      deleteInviteCookie
+    )
   }
 
   if (result.kind === 'signup_error') {
-    const response = NextResponse.redirect(new URL(signupErrorPath(result.code), request.url))
-    deleteInviteCookie(response)
-    return response
+    return redirectWithAuthCookies(
+      `${origin}${signupErrorPath(result.code)}`,
+      sessionCookies,
+      deleteInviteCookie
+    )
   }
 
-  const response = NextResponse.redirect(new URL(result.path, request.url))
-  deleteInviteCookie(response)
-  return response
+  return redirectWithAuthCookies(`${origin}${result.path}`, sessionCookies, deleteInviteCookie)
 }

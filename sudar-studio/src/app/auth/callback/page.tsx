@@ -31,6 +31,14 @@ function AuthCallbackHandler() {
         return
       }
 
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (!session) {
+        router.replace('/login?error=auth_callback_failed')
+        return
+      }
+
       const params = new URLSearchParams()
       const intent = searchParams?.get(AUTH_INTENT_PARAM)
       const next = searchParams?.get('next')
@@ -38,7 +46,7 @@ function AuthCallbackHandler() {
       if (next) params.set('next', next)
 
       const query = params.toString()
-      router.replace(query ? `/api/auth/complete?${query}` : '/api/auth/complete')
+      window.location.assign(query ? `/api/auth/complete?${query}` : '/api/auth/complete')
     }
 
     void completeAuth()
