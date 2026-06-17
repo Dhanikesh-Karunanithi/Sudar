@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ||
     request.nextUrl.origin
   const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { full_name: body.full_name ?? null },
+    data: { full_name: body.full_name ?? null, org_invite: true },
     redirectTo: `${redirectTo}/auth/callback`,
   })
 

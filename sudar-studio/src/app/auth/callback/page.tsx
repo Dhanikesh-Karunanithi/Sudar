@@ -1,33 +1,25 @@
 'use client'
 
 import { AUTH_INTENT_PARAM } from '@shared-access/authIntent'
+import {
+  establishSessionFromAuthCallback,
+  parseAuthCallbackSearchParams,
+} from '@shared-access/establishAuthSession'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect } from 'react'
 
 function AuthCallbackHandler() {
-  const router = useRouter()
   const searchParams = useSearchParams()
 
   useEffect(() => {
     async function completeAuth() {
-      const oauthError = searchParams?.get('error')
-      if (oauthError) {
-        router.replace('/login?error=auth_callback_failed')
-        return
-      }
-
-      const code = searchParams?.get('code')
-      if (!code) {
-        router.replace('/login?error=auth_callback_failed')
-        return
-      }
-
+      const params = parseAuthCallbackSearchParams(searchParams)
       const supabase = createClient()
-      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-      if (exchangeError) {
-        router.replace('/login?error=auth_callback_failed')
+      const sessionResult = await establishSessionFromAuthCallback(supabase, params)
+      if (!sessionResult.ok) {
+        window.location.assign('/login?error=auth_callback_failed')
         return
       }
 
@@ -35,22 +27,22 @@ function AuthCallbackHandler() {
         data: { session },
       } = await supabase.auth.getSession()
       if (!session) {
-        router.replace('/login?error=auth_callback_failed')
+        window.location.assign('/login?error=auth_callback_failed')
         return
       }
 
-      const params = new URLSearchParams()
+      const forward = new URLSearchParams()
       const intent = searchParams?.get(AUTH_INTENT_PARAM)
       const next = searchParams?.get('next')
-      if (intent) params.set(AUTH_INTENT_PARAM, intent)
-      if (next) params.set('next', next)
+      if (intent) forward.set(AUTH_INTENT_PARAM, intent)
+      if (next) forward.set('next', next)
 
-      const query = params.toString()
+      const query = forward.toString()
       window.location.assign(query ? `/api/auth/complete?${query}` : '/api/auth/complete')
     }
 
     void completeAuth()
-  }, [router, searchParams])
+  }, [searchParams])
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#050505] p-6">
