@@ -2,11 +2,12 @@
 
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AuthMarketingDecor } from '@/components/auth/AuthMarketingDecor'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { GoogleIcon } from '@/components/ui/GoogleIcon'
 import { buildAuthCallbackUrl, safeNextPath } from '@shared-access/authIntent'
+import { resolveAuthLoginError } from '@shared-access/constants'
 import { createClient } from '@/lib/supabase/client'
 
 export function LoginClient() {
@@ -17,6 +18,11 @@ export function LoginClient() {
   const router = useRouter()
   const supabase = createClient()
   const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const message = resolveAuthLoginError(searchParams?.get('error'))
+    if (message) setError(message)
+  }, [searchParams])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()

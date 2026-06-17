@@ -1,6 +1,5 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import type { NextResponse } from 'next/server'
 
 import {
   applyInviteToProfile,
@@ -10,7 +9,10 @@ import {
   isNewAuthUser,
   parseAuthIntent,
   processOrgInvites,
+  redirectWithAuthCookies,
+  createOAuthCallbackSupabase,
   safeNextPath,
+  type SessionCookie,
   VERIFIED_INVITE_COOKIE,
 } from '@shared-access'
 import type { AccessSupabaseClient } from '@shared-access/types'
@@ -20,12 +22,22 @@ function deleteInviteCookie(response: NextResponse) {
   response.cookies.delete(VERIFIED_INVITE_COOKIE)
 }
 
-function signupRedirect(origin: string, error: string) {
+function signupRedirect(
+  origin: string,
+  error: string,
+  sessionCookies: SessionCookie[]
+) {
   const signupUrl = new URL('/signup', origin)
   signupUrl.searchParams.set('error', error)
-  const response = NextResponse.redirect(signupUrl.toString())
-  deleteInviteCookie(response)
-  return response
+  return redirectWithAuthCookies(signupUrl.toString(), sessionCookies, deleteInviteCookie)
+}
+
+function finishRedirect(
+  origin: string,
+  path: string,
+  sessionCookies: SessionCookie[]
+) {
+  return redirectWithAuthCookies(`${origin}${path}`, sessionCookies, deleteInviteCookie)
 }
 
 export async function GET(request: NextRequest) {
@@ -33,32 +45,17 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code')
   const next = safeNextPath(searchParams.get('next') ?? '/')
   const intent = parseAuthIntent(searchParams.get(AUTH_INTENT_PARAM))
+  const sessionCookies: SessionCookie[] = []
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)
+    return redirectWithAuthCookies(`${origin}/login?error=auth_callback_failed`, sessionCookies)
   }
 
-  const cookieStore = await cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          )
-        },
-      },
-    }
-  )
+  const supabase = createOAuthCallbackSupabase(request, sessionCookies)
 
   const { data, error } = await supabase.auth.exchangeCodeForSession(code)
   if (error || !data?.user) {
-    return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)
+    return redirectWithAuthCookies(`${origin}/login?error=auth_callback_failed`, sessionCookies)
   }
 
   const admin = createServiceRoleSupabaseClient() as AccessSupabaseClient
@@ -71,23 +68,21 @@ export async function GET(request: NextRequest) {
   if (intent === 'login') {
     if (isNewAuthUser(user)) {
       await supabase.auth.signOut()
-      return signupRedirect(origin, 'new_account_use_signup')
+      return signupRedirect(origin, 'new_account_use_signup', sessionCookies)
     }
 
     const access = await checkUserInviteAccess(user.id, admin)
     if (!access.hasAccess) {
-      return signupRedirect(origin, 'invite_required')
+      return signupRedirect(origin, 'invite_required', sessionCookies)
     }
 
     await finalizePostAuthInvite(admin, user.id)
-    const response = NextResponse.redirect(`${origin}${next}`)
-    deleteInviteCookie(response)
-    return response
+    return finishRedirect(origin, next, sessionCookies)
   }
 
   if (intent === 'signup') {
     const verifiedInvite =
-      cookieStore.get(VERIFIED_INVITE_COOKIE)?.value ??
+      request.cookies.get(VERIFIED_INVITE_COOKIE)?.value ??
       (typeof user.user_metadata?.invite_code === 'string'
         ? user.user_metadata.invite_code
         : undefined)
@@ -97,22 +92,18 @@ export async function GET(request: NextRequest) {
 
     const access = await checkUserInviteAccess(user.id, admin)
     if (!access.hasAccess) {
-      return signupRedirect(origin, 'invite_required')
+      return signupRedirect(origin, 'invite_required', sessionCookies)
     }
 
     await finalizePostAuthInvite(admin, user.id)
-    const response = NextResponse.redirect(`${origin}${next}`)
-    deleteInviteCookie(response)
-    return response
+    return finishRedirect(origin, next, sessionCookies)
   }
 
   const access = await checkUserInviteAccess(user.id, admin)
   if (!access.hasAccess) {
-    return signupRedirect(origin, 'invite_required')
+    return signupRedirect(origin, 'invite_required', sessionCookies)
   }
 
   await finalizePostAuthInvite(admin, user.id)
-  const response = NextResponse.redirect(`${origin}${next}`)
-  deleteInviteCookie(response)
-  return response
+  return finishRedirect(origin, next, sessionCookies)
 }

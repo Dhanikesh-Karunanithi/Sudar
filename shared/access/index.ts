@@ -5,6 +5,7 @@ export * from './requireInvite'
 export * from './applyInviteToProfile'
 export * from './authIntent'
 export * from './authCallback'
+export * from './oauthCallbackSession'
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 
