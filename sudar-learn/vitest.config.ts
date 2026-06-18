@@ -10,11 +10,13 @@ export default defineConfig({
         __dirname,
         '../shared/content-generation/schemas.ts',
       ),
+      '@shared-access': path.resolve(__dirname, '../shared/access/index.ts'),
+      '@shared-access/*': path.resolve(__dirname, '../shared/access/*'),
     },
   },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', '../shared/access/**/*.test.ts'],
   },
 })
 

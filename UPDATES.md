@@ -16,6 +16,11 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-18 — Early access invite redemption hardening
+
+- **Fix**: Atomic invite redemption (`redeem_invite_code_internal`) prevents concurrent OAuth signups from exceeding `max_uses` on single-use codes; `apply-profile` now redeems before granting access; failed OAuth signups sign out so `/api/invite/redeem` cannot burn codes without an applied profile.
+- **Migration**: `supabase/migrations/20260618120000_atomic_invite_redeem.sql` — apply on Supabase before deploy.
+
 ### 2026-06-17 — Branded Supabase invite email
 
 - **Theme**: Replace old infinity logo and Vercel URLs in org-invite emails with restrained teachwithsudar dark branding.

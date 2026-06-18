@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-import { applyInviteToProfile, ensureInviteRedeemed } from './applyInviteToProfile'
+import { applyInviteToProfile } from './applyInviteToProfile'
 import { checkUserInviteAccess, grantOrgPlatformAccess } from './requireInvite'
 import { ORG_INVITE_CODE } from './constants'
 
@@ -50,18 +50,10 @@ export async function processOrgInvites(
 }
 
 export async function finalizePostAuthInvite(
-  admin: AccessSupabase,
-  userId: string
+  _admin: AccessSupabase,
+  _userId: string
 ): Promise<void> {
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('signup_code_used')
-    .eq('id', userId)
-    .maybeSingle()
-
-  if (profile?.signup_code_used) {
-    await ensureInviteRedeemed(admin, userId, profile.signup_code_used)
-  }
+  // Invite redemption happens in applyInviteToProfile / signup redeem — not on every login.
 }
 
 export { applyInviteToProfile, checkUserInviteAccess }
