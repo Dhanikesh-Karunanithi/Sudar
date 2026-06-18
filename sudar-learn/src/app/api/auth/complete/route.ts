@@ -74,6 +74,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (result.kind === 'signup_error') {
+    await supabase.auth.signOut()
     return redirectWithAuthCookies(
       `${origin}${signupErrorPath(result.code)}`,
       sessionCookies,
