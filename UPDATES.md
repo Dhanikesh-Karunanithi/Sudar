@@ -16,6 +16,15 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-18 — Personalized org-invite email (inviter + org name)
+
+- **Theme**: Org invite emails name the sender and workspace when Studio sends `inviteUserByEmail`.
+- **Shipped**:
+  - `shared/access/inviteEmailPersonalization.ts` — first-name / email fallback for `invited_by_name`.
+  - `sudar-studio/src/app/api/users/invite/route.ts` — passes `invited_by_name` + `org_name` in invite metadata.
+  - `supabase/templates/invite.html` — Go-template conditionals with generic fallbacks.
+- **Ops**: Template pushed via `scripts/ops/update-supabase-email-templates.mjs`; redeploy Studio for API change.
+
 ### 2026-06-20 — Learn course SSR slim + tutor HTTP parsing
 
 - **Theme**: Keep large courses loadable on Cloudflare Workers; surface real tutor API errors in chat.

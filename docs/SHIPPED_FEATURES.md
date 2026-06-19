@@ -15,7 +15,7 @@ This document summarizes **shipped** features that are committed and ready for u
   - `sudar-learn|sudar-studio/src/components/branding/EarlyAccessBanner.tsx`, `src/app/layout.tsx`
   - `sudar-studio/src/app/(dashboard)/early-access/page.tsx`, `src/app/api/early-access/admin/route.ts`
   - `scripts/configure-auth-signup.mjs`
-  - `supabase/templates/invite.html`, `scripts/ops/update-supabase-email-templates.mjs` — branded org-invite email (Supabase Auth template)
+  - `supabase/templates/invite.html`, `scripts/ops/update-supabase-email-templates.mjs` — branded org-invite email (Supabase Auth template); personalized with `invited_by_name` + `org_name` from Studio invite API
 - **Flow**:
   1. User joins waitlist or receives invite code from operator.
   2. `/signup` → validate code → email or Google signup with invite metadata.
