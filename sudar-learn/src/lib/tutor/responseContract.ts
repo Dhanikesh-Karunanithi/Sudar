@@ -163,8 +163,19 @@ export function parseTutorModelOutput(rawResponse: string): {
 }
 
 export function validateTutorQueryResponsePayload(payload: unknown): TutorQueryResponse {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return { error: 'Invalid response from tutor.' }
+  }
+
+  const record = payload as Record<string, unknown>
+  const pickedError = pickTutorErrorMessage(record)
+
   const parsed = tutorQueryResponseSchema.safeParse(payload)
   if (!parsed.success) {
+    if (pickedError) return { error: pickedError }
+    if (typeof record.response === 'string') {
+      return { response: record.response }
+    }
     return { error: 'Invalid response from tutor.' }
   }
   const data = parsed.data
@@ -172,6 +183,34 @@ export function validateTutorQueryResponsePayload(payload: unknown): TutorQueryR
     ? sanitizeTutorBlocks(data.blocks)
     : undefined
   return { ...data, blocks: safeBlocks }
+}
+
+function pickTutorErrorMessage(record: Record<string, unknown>): string | undefined {
+  if (typeof record.error === 'string' && record.error.trim()) return record.error.trim()
+  if (typeof record.message === 'string' && record.message.trim()) return record.message.trim()
+  return undefined
+}
+
+/** Parse raw HTTP body + status from POST /api/tutor/query (or ALP tutor proxy). */
+export function parseTutorQueryHttpResponse(text: string, status: number): TutorQueryResponse {
+  const trimmed = text.trim()
+  if (!trimmed) {
+    if (status >= 400) {
+      return { error: `Something went wrong (${status}). Please try again.` }
+    }
+    return {}
+  }
+
+  try {
+    return validateTutorQueryResponsePayload(JSON.parse(trimmed))
+  } catch {
+    const looksHtml = trimmed.startsWith('<')
+    return {
+      error: looksHtml
+        ? `Sudar could not respond (HTTP ${status}). The server returned an error page — check your AI provider configuration and server logs.`
+        : 'Invalid response from tutor.',
+    }
+  }
 }
 
 export function buildSafeActionFallback(

@@ -5,6 +5,7 @@ import { ExternalCourseViewer } from './ExternalCourseViewer'
 import type { ComponentProps } from 'react'
 import { resolvePersonalizationAccess } from '@/lib/personalization/eligibility'
 import type { PersonalizationEligibility } from '@/lib/personalization/eligibility'
+import { slimCourseSettingsForSsr } from '@/lib/learn/coursePayloadSlim'
 
 function serializeGate(e: PersonalizationEligibility): { allowed: boolean; reason?: string } {
   return e.allowed ? { allowed: true } : { allowed: false, reason: e.reason }
@@ -43,7 +44,7 @@ export default async function CourseLearnPage({
   const { data: course } = await admin
     .from('courses')
     .select(
-      'id, title, description, template, settings, is_external, external_provider, external_url, embed_url, allow_tutor_discussion, org_id, modules(id, title, content, modality_variants, order_index, quiz, sudarplay_map_url, sudarplay_map_id, sim_scenario_id)',
+      'id, title, description, template, settings, is_external, external_provider, external_url, embed_url, allow_tutor_discussion, org_id, modules(id, title, order_index, sudarplay_map_url, sudarplay_map_id, sim_scenario_id)',
     )
     .eq('id', id)
     .eq('status', 'published')
@@ -93,6 +94,17 @@ export default async function CourseLearnPage({
   const activeModuleId =
     selectedModuleId ?? course.modules?.[0]?.id ?? null
 
+  let activeModulePayload: { content: unknown; quiz: unknown } | null = null
+  if (!isExternal && activeModuleId) {
+    const { data: activeModule } = await admin
+      .from('modules')
+      .select('content, quiz')
+      .eq('id', activeModuleId)
+      .eq('course_id', id)
+      .maybeSingle()
+    activeModulePayload = activeModule ?? null
+  }
+
   if (isExternal) {
     const externalModuleId = activeModuleId ?? course.modules?.[0]?.id
     if (!externalModuleId) notFound()
@@ -130,9 +142,26 @@ export default async function CourseLearnPage({
     && enrollment.status !== 'completed'
     && personalizationAccess.courseWelcome.allowed
 
+  const modulesForViewer = (course.modules ?? []).map((mod) => {
+    if (mod.id === activeModuleId && activeModulePayload) {
+      return {
+        ...mod,
+        content: activeModulePayload.content,
+        quiz: activeModulePayload.quiz,
+      }
+    }
+    return { ...mod, content: null, quiz: null }
+  })
+
+  const courseForViewer = {
+    ...course,
+    settings: slimCourseSettingsForSsr(course.settings),
+    modules: modulesForViewer,
+  }
+
   return (
     <CourseViewer
-      course={course as unknown as CourseForViewer}
+      course={courseForViewer as unknown as CourseForViewer}
       activeModuleId={activeModuleId!}
       completedModuleIds={Array.from(completedModuleIds)}
       enrollmentProgress={Math.round(enrollment.progress_pct)}

@@ -5,6 +5,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages, setRequestLocale } from 'next-intl/server'
 import { isRtlLocale } from '../../../shared/i18nLocales'
 import { bodyFontClassForLocale } from '@/lib/i18n/localeFonts'
+import { EarlyAccessBanner } from '@/components/branding/EarlyAccessBanner'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -72,7 +73,10 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
-          {children}
+          <div className="flex min-h-screen flex-col">
+            <EarlyAccessBanner />
+            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+          </div>
         </NextIntlClientProvider>
       </body>
     </html>

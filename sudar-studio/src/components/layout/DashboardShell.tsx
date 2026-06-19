@@ -14,7 +14,7 @@ interface DashboardShellProps {
 export function DashboardShell({ user, orgRole = 'LEARNER', isSuperAdmin = false, children }: DashboardShellProps) {
   return (
     <SidebarContentProvider>
-      <div className="dark flex h-screen bg-background text-foreground overflow-hidden">
+      <div className="dark flex min-h-0 flex-1 overflow-hidden bg-background text-foreground">
         <Sidebar user={user} orgRole={orgRole} isSuperAdmin={isSuperAdmin} />
         <main className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-background">
           {children}

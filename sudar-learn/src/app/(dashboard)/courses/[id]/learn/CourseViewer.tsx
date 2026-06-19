@@ -33,7 +33,7 @@ import { ProactiveSudarChoiceChips } from '@/components/tutor/ProactiveSudarChoi
 import { idleNudgeFallbackChoices } from '@/lib/tutor/proactiveTemplates'
 import { InactiveHibernationOverlay } from '@/components/features/activity/InactiveHibernationOverlay'
 import { useInactivityHibernation, type ActivityTrackingState } from '@/components/features/activity/useInactivityHibernation'
-import { validateTutorQueryResponsePayload } from '@/lib/tutor/responseContract'
+import { parseTutorQueryHttpResponse } from '@/lib/tutor/responseContract'
 import { inferContentIntentFromModality } from '@/lib/learner/modalityContentIntent'
 import type { ResolvedLearnerPreferences } from '@/lib/learner/learnerPreferences'
 import { useNotificationSound } from '@/components/features/notifications/NotificationSoundProvider'
@@ -478,6 +478,25 @@ export function CourseViewer({
   const [mindmapScope, setMindmapScope] = useState<'module' | 'course'>('module')
   const [mindmapCourse, setMindmapCourse] = useState<MindMapNode | null>(null)
   const [mindmapCourseLoading, setMindmapCourseLoading] = useState(false)
+  const [modulePayloads, setModulePayloads] = useState<
+    Record<string, { content: Module['content']; quiz: Module['quiz'] }>
+  >(() => {
+    const seed: Record<string, { content: Module['content']; quiz: Module['quiz'] }> = {}
+    for (const m of course.modules) {
+      if (m.content != null || m.quiz != null) {
+        seed[m.id] = { content: m.content, quiz: m.quiz ?? null }
+      }
+    }
+    return seed
+  })
+  const [moduleLoadingId, setModuleLoadingId] = useState<string | null>(null)
+  const modulePayloadsRef = useRef(modulePayloads)
+  modulePayloadsRef.current = modulePayloads
+  const [courseMedia, setCourseMedia] = useState<{
+    video_scenes?: NonNullable<Course['settings']>['video_scenes']
+    podcast_dialogue?: NonNullable<Course['settings']>['podcast_dialogue']
+  } | null>(null)
+  const [courseMediaLoading, setCourseMediaLoading] = useState(false)
   const [listeningAudioByModule, setListeningAudioByModule] = useState<Record<string, string>>({})
   const [listeningUnavailableByModule, setListeningUnavailableByModule] = useState<Record<string, boolean>>({})
   const [listeningLoading, setListeningLoading] = useState(false)
@@ -531,6 +550,46 @@ export function CourseViewer({
       .catch(() => {})
   }, [])
 
+  const loadModuleContent = useCallback(async (moduleId: string) => {
+    if (modulePayloadsRef.current[moduleId]) return
+    setModuleLoadingId(moduleId)
+    try {
+      const res = await fetch(
+        `/api/learn/course-module?course_id=${encodeURIComponent(course.id)}&module_id=${encodeURIComponent(moduleId)}`
+      )
+      if (!res.ok) return
+      const data = (await res.json()) as { content?: Module['content']; quiz?: Module['quiz'] }
+      setModulePayloads((prev) => ({
+        ...prev,
+        [moduleId]: { content: data.content ?? null, quiz: data.quiz ?? null },
+      }))
+    } finally {
+      setModuleLoadingId((id) => (id === moduleId ? null : id))
+    }
+  }, [course.id])
+
+  useEffect(() => {
+    if (!currentModuleId) return
+    const seeded = course.modules.find((m) => m.id === currentModuleId)
+    if (seeded?.content != null || modulePayloadsRef.current[currentModuleId]) return
+    void loadModuleContent(currentModuleId)
+  }, [currentModuleId, course.modules, loadModuleContent])
+
+  useEffect(() => {
+    if (courseMedia || courseMediaLoading) return
+    if (activeModality !== 'video' && activeModality !== 'podcast') return
+    const needsVideo = activeModality === 'video' && (course.settings?.video_scenes?.length ?? 0) > 0
+    const needsPodcast = activeModality === 'podcast' && (course.settings?.podcast_dialogue?.length ?? 0) > 0
+    if (!needsVideo && !needsPodcast) return
+    setCourseMediaLoading(true)
+    void fetch(`/api/learn/course-media?course_id=${encodeURIComponent(course.id)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setCourseMedia(data as NonNullable<typeof courseMedia>)
+      })
+      .finally(() => setCourseMediaLoading(false))
+  }, [activeModality, course.id, course.settings, courseMedia, courseMediaLoading])
+
   useEffect(() => {
     setModuleBridgeText(null)
     if (!course.id || !currentModuleId) return
@@ -549,8 +608,14 @@ export function CourseViewer({
     }
   }, [course.id, currentModuleId])
 
-  const modules = course.modules
+  const modules = course.modules.map((m) => {
+    const loaded = modulePayloads[m.id]
+    return loaded ? { ...m, content: loaded.content, quiz: loaded.quiz } : m
+  })
   const currentModule = modules.find((m) => m.id === currentModuleId) ?? modules[0]
+  const isLoadingModuleContent = moduleLoadingId === currentModuleId
+  const videoScenes = courseMedia?.video_scenes ?? course.settings?.video_scenes
+  const podcastDialogue = courseMedia?.podcast_dialogue ?? course.settings?.podcast_dialogue
   const currentModuleTitleRaw = modules.find((m) => m.id === currentModuleId)?.title ?? 'Module'
   const currentModuleTitle =
     currentModuleTitleRaw.toLowerCase().startsWith(`${course.title.toLowerCase()}:`)
@@ -900,22 +965,23 @@ export function CourseViewer({
   // Fetch course mindmap when switching to mindmap modality (course scope)
   useEffect(() => {
     if (activeModality !== 'mindmap' || mindmapScope !== 'course' || mindmapCourse != null) return
-    const modulesPayload = course.modules.map((m) => ({
-      title: m.title,
-      content: getContentBodyForFlashcards(m.content ?? null),
-    })).filter((m) => m.content.trim().length > 0)
-    if (modulesPayload.length === 0) return
     setMindmapCourseLoading(true)
-    fetch('/api/ai/generate-mindmap', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        scope: 'course',
-        course_title: course.title,
-        modules: modulesPayload,
-      }),
-    })
-      .then((r) => r.json())
+    void fetch(`/api/learn/course-module-bodies?course_id=${encodeURIComponent(course.id)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((bodyData: { modules?: Array<{ title: string; content: string }> } | null) => {
+        const modulesPayload = (bodyData?.modules ?? []).filter((m) => m.content.trim().length > 0)
+        if (modulesPayload.length === 0) return null
+        return fetch('/api/ai/generate-mindmap', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            scope: 'course',
+            course_title: course.title,
+            modules: modulesPayload,
+          }),
+        })
+      })
+      .then((res) => (res ? res.json() : null))
       .then((data) => {
         const root = data?.root
         if (root && typeof root === 'object' && Array.isArray((root as { children?: unknown }).children) && (root as { children: unknown[] }).children.length > 0) {
@@ -927,7 +993,7 @@ export function CourseViewer({
       })
       .catch(() => {})
       .finally(() => setMindmapCourseLoading(false))
-  }, [activeModality, mindmapScope, mindmapCourse, course.id, course.title, course.modules, playChime])
+  }, [activeModality, mindmapScope, mindmapCourse, course.id, course.title, playChime])
 
   // Fetch audio for Listen modality when switching to listening and we don't have it for this module
   useEffect(() => {
@@ -1080,6 +1146,7 @@ export function CourseViewer({
     setCurrentModuleId(moduleId)
     setSidebarOpen(false)
     setSelectionPopup(null)
+    void loadModuleContent(moduleId)
     router.replace(`/courses/${course.id}/learn?module=${moduleId}`, { scroll: false })
   }
 
@@ -1199,18 +1266,18 @@ export function CourseViewer({
         }),
       })
       const text = await res.text()
-      let data: TutorQueryResponse & { error?: string } = {}
-      if (text) {
-        try {
-          data = validateTutorQueryResponsePayload(JSON.parse(text))
-        } catch {
-          data = { error: 'Invalid response from tutor.' }
-        }
-      }
-      if (!res.ok) {
+      const data = parseTutorQueryHttpResponse(text, res.status)
+      const assistantContent =
+        data.response ??
+        data.error ??
+        (res.ok
+          ? 'Sorry, I had trouble answering that. Please try again.'
+          : `Something went wrong (${res.status}). Please try again.`)
+
+      if (!res.ok || (data.error && !data.response)) {
         setMessages([...newMessages, {
           role: 'assistant',
-          content: data.error ?? `Something went wrong (${res.status}). Please try again.`,
+          content: assistantContent,
         }])
         return
       }
@@ -1700,6 +1767,15 @@ export function CourseViewer({
                 'max-w-3xl'
               )} ref={contentRef}>
 
+                {isLoadingModuleContent && currentModule?.content == null && (
+                  <div className="flex flex-col items-center justify-center gap-3 py-24 text-muted-foreground" role="status" aria-live="polite">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <p className="text-sm">Loading module…</p>
+                  </div>
+                )}
+
+                <div className={cn('space-y-10', isLoadingModuleContent && currentModule?.content == null && 'hidden')}>
+
                 {personalizeOffered && personalizationAccess.courseWelcome.allowed && (
                   <div className="mb-8 rounded-2xl border border-primary/25 bg-primary/5 p-5 space-y-3">
                     <p className="text-sm font-medium text-card-foreground">Personalize this course</p>
@@ -1898,20 +1974,32 @@ export function CourseViewer({
                       contentBody={getContentBodyForFlashcards(currentModule?.content ?? null)}
                       courseId={course.id}
                     />
-                    {(course.settings?.video_scenes?.length ?? 0) > 0 && (
+                    {(videoScenes?.length ?? 0) > 0 && (
                       <section className="space-y-3 border-t border-border pt-8" aria-label="Course overview video">
                         <p className="text-xs font-medium text-muted-foreground">Course overview video</p>
-                        <CourseVideoCard
-                          scenes={course.settings!.video_scenes!}
-                          courseTitle={course.title}
-                          telemetry={{ courseId: course.id, moduleId: currentModuleId }}
-                        />
+                        {courseMediaLoading && !courseMedia ? (
+                          <div className="flex items-center justify-center py-12 text-muted-foreground">
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                          </div>
+                        ) : (
+                          <CourseVideoCard
+                            scenes={videoScenes!}
+                            courseTitle={course.title}
+                            telemetry={{ courseId: course.id, moduleId: currentModuleId }}
+                          />
+                        )}
                       </section>
                     )}
                   </div>
                 ) : activeModality === 'podcast' ? (
-                  (course.settings?.podcast_dialogue?.length ?? 0) > 0 ? (
-                    <CoursePodcastCard dialogue={course.settings!.podcast_dialogue!} courseTitle={course.title} />
+                  (podcastDialogue?.length ?? 0) > 0 ? (
+                    courseMediaLoading && !courseMedia ? (
+                      <div className="flex items-center justify-center py-12 text-muted-foreground">
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                      </div>
+                    ) : (
+                      <CoursePodcastCard dialogue={podcastDialogue!} courseTitle={course.title} />
+                    )
                   ) : (
                     <div className="max-w-xl mx-auto py-12 text-center space-y-3">
                       <Mic className="w-10 h-10 text-muted-foreground mx-auto" />
@@ -1929,20 +2017,22 @@ export function CourseViewer({
                       if (mindmapScope === 'course') {
                         setMindmapCourse(null)
                         setMindmapCourseLoading(true)
-                        const modulesPayload = course.modules.map((m) => ({
-                          title: m.title,
-                          content: getContentBodyForFlashcards(m.content ?? null),
-                        })).filter((m) => m.content.trim().length > 0)
-                        fetch('/api/ai/generate-mindmap', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            scope: 'course',
-                            course_title: course.title,
-                            modules: modulesPayload,
-                          }),
-                        })
-                          .then((r) => r.json())
+                        void fetch(`/api/learn/course-module-bodies?course_id=${encodeURIComponent(course.id)}`)
+                          .then((r) => (r.ok ? r.json() : null))
+                          .then((bodyData: { modules?: Array<{ title: string; content: string }> } | null) => {
+                            const modulesPayload = (bodyData?.modules ?? []).filter((m) => m.content.trim().length > 0)
+                            if (modulesPayload.length === 0) return null
+                            return fetch('/api/ai/generate-mindmap', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                scope: 'course',
+                                course_title: course.title,
+                                modules: modulesPayload,
+                              }),
+                            })
+                          })
+                          .then((res) => (res ? res.json() : null))
                           .then((data) => {
                             const root = data?.root
                             if (root && typeof root === 'object') {
@@ -2131,6 +2221,7 @@ export function CourseViewer({
                     />
                   </div>
                 )}
+                </div>
               </div>
               </CourseThemeProvider>
             </div>

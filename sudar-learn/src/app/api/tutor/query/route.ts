@@ -376,7 +376,6 @@ export async function POST(request: NextRequest) {
         course_id: course_id ?? undefined,
         module_id: module_id ?? undefined,
       },
-      orgSettings,
       chatCtx: { privateOpenAi: privateRuntime },
     }
     const runtimePolicy = parseOrgAiRuntimePolicy(orgSettings)

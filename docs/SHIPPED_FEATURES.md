@@ -25,6 +25,25 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## Learn course viewer — slim SSR + lazy module load (June 2026)
+
+- **Where**: Sudar Learn — `/courses/[id]/learn` (CourseViewer).
+- **What**: Course pages no longer serialize every module’s content and embedded audio blobs in the initial SSR payload (which could exceed Cloudflare Worker memory limits). Only the active module’s `content`/`quiz` is server-rendered; switching modules or opening video/podcast/mindmap fetches the rest on demand.
+- **Key files**:
+  - `sudar-learn/src/lib/learn/coursePayloadSlim.ts` — strips `audioDataURL` from `video_scenes` / `podcast_dialogue` in SSR settings.
+  - `sudar-learn/src/app/(dashboard)/courses/[id]/learn/page.tsx` — slim module list + active module seed.
+  - `sudar-learn/src/app/(dashboard)/courses/[id]/learn/CourseViewer.tsx` — client lazy-load orchestration.
+  - `sudar-learn/src/app/api/learn/course-module/route.ts` — per-module `content` + `quiz`.
+  - `sudar-learn/src/app/api/learn/course-media/route.ts` — full `video_scenes` / `podcast_dialogue` with audio blobs.
+  - `sudar-learn/src/app/api/learn/course-module-bodies/route.ts` — plain-text bodies for course-scope mindmap.
+- **Flow**:
+  1. Learner opens course → SSR returns titles/order + active module content only.
+  2. Learner switches module → client fetches `/api/learn/course-module?course_id&module_id`.
+  3. Video/podcast modality → client fetches `/api/learn/course-media?course_id` when needed.
+  4. Course mindmap → client fetches module bodies then calls generate-mindmap API.
+
+---
+
 ## teachwithsudar mobile swipe carousels (June 2026)
 
 - **Where**: teachwithsudar homepage hero, platform/modalities/research sections, `/guides/*` workflows, `/store` catalog.

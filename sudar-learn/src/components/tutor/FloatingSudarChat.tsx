@@ -19,7 +19,7 @@ import { SudarChatLaunchButton } from '@/components/tutor/SudarChatLaunchButton'
 import { ProactiveSudarChoiceChips } from '@/components/tutor/ProactiveSudarChoiceChips'
 import { PROACTIVE_FOLLOW_UP_EVENT, type ProactiveFollowUpDetail } from '@/lib/tutor/proactiveEvents'
 import type { ProactivePromptChoice } from '@/types/tutor'
-import { validateTutorQueryResponsePayload } from '@/lib/tutor/responseContract'
+import { parseTutorQueryHttpResponse } from '@/lib/tutor/responseContract'
 import { useNotificationSound } from '@/components/features/notifications/NotificationSoundProvider'
 import { CHAT_OPEN_PET_EVENT } from '@/lib/mascot/petSpriteManifest'
 import { SUDAR_PERSONA_VOICE } from '@/lib/mascot/sudarPersonaVoice'
@@ -157,19 +157,18 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
         }),
       })
       const text = await res.text()
-      let rawPayload: unknown = {}
-      if (text) {
-        try {
-          rawPayload = JSON.parse(text)
-        } catch {
-          rawPayload = { error: 'Invalid response from tutor.' }
-        }
-      }
-      const data = validateTutorQueryResponsePayload(rawPayload)
-      if (!res.ok) {
+      const data = parseTutorQueryHttpResponse(text, res.status)
+      const assistantContent =
+        data.response ??
+        data.error ??
+        (res.ok
+          ? 'I had trouble completing that answer. Please try again.'
+          : `Something went wrong (${res.status}). Please try again.`)
+
+      if (!res.ok || (data.error && !data.response)) {
         setMessages([
           ...newMessages,
-          { role: 'assistant', content: data.error ?? 'Something went wrong. Please try again.' },
+          { role: 'assistant', content: assistantContent },
         ])
         return
       }

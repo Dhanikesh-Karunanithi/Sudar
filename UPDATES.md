@@ -16,6 +16,15 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-20 — Learn course SSR slim + tutor HTTP parsing
+
+- **Theme**: Keep large courses loadable on Cloudflare Workers; surface real tutor API errors in chat.
+- **Shipped**:
+  - **Learn course viewer**: SSR ships module metadata + active module only; `slimCourseSettingsForSsr` strips `audioDataURL` blobs from settings; client lazy-loads module content, course media, and mindmap bodies via `/api/learn/course-module`, `/api/learn/course-media`, `/api/learn/course-module-bodies`.
+  - **Early Access banner**: `EarlyAccessBanner` wired in Learn + Studio root layouts (on by default; `NEXT_PUBLIC_EARLY_ACCESS_BANNER=false` to hide).
+  - **Tutor**: `parseTutorQueryHttpResponse` — config/error envelopes and HTML 5xx pages show actionable messages instead of generic “invalid response”.
+- **Docs**: `SHIPPED_FEATURES.md` (course viewer lazy load section).
+
 ### 2026-06-17 — Branded Supabase invite email
 
 - **Theme**: Replace old infinity logo and Vercel URLs in org-invite emails with restrained teachwithsudar dark branding.

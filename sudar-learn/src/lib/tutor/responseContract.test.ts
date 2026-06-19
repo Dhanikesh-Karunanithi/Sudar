@@ -3,6 +3,7 @@ import {
   parseTutorActionsFromText,
   parseTutorBlocksFromText,
   parseTutorModelOutput,
+  parseTutorQueryHttpResponse,
   sanitizeActions,
   validateTutorQueryResponsePayload,
 } from '@/lib/tutor/responseContract'
@@ -41,6 +42,68 @@ describe('validateTutorQueryResponsePayload', () => {
     })
     expect(data.response).toBe('Completed answer')
     expect(data.actions?.[0]?.type).toBe('open_path')
+  })
+
+  it('accepts API error envelopes with extra fields', () => {
+    const data = validateTutorQueryResponsePayload({
+      error: 'Set TOGETHER_API_KEY.',
+      code: 'CONFIG',
+    })
+    expect(data.error).toBe('Set TOGETHER_API_KEY.')
+  })
+
+  it('accepts full tutor query success shape from the Learn API', () => {
+    const data = validateTutorQueryResponsePayload({
+      response: 'Here is the answer.',
+      blocks: [
+        { id: 'text-1', type: 'text', payload: { content: 'Here is the answer.' } },
+        {
+          id: 'actions-1',
+          type: 'action_group',
+          payload: {
+            actions: [
+              {
+                type: 'open_course',
+                label: 'Continue',
+                href: '/courses/123e4567-e89b-12d3-a456-426614174000/learn',
+                course_id: '123e4567-e89b-12d3-a456-426614174000',
+              },
+            ],
+          },
+        },
+      ],
+      routing: {
+        decision: 'cloud',
+        provider_id: 'cloud:default',
+        model: 'openai/gpt-oss-20b',
+        fallback_used: false,
+        fallback_reason: null,
+      },
+    })
+    expect(data.error).toBeUndefined()
+    expect(data.response).toBe('Here is the answer.')
+    expect(data.blocks?.length).toBeGreaterThan(0)
+  })
+
+  it('surfaces string error fields even when extra keys fail strict parsing', () => {
+    const data = validateTutorQueryResponsePayload({
+      error: 'Set TOGETHER_API_KEY.',
+      code: 500,
+    })
+    expect(data.error).toBe('Set TOGETHER_API_KEY.')
+  })
+})
+
+describe('parseTutorQueryHttpResponse', () => {
+  it('parses config errors from the tutor API', () => {
+    const data = parseTutorQueryHttpResponse(JSON.stringify({ error: 'Set TOGETHER_API_KEY.' }), 500)
+    expect(data.error).toBe('Set TOGETHER_API_KEY.')
+  })
+
+  it('describes HTML error pages instead of a generic invalid response', () => {
+    const data = parseTutorQueryHttpResponse('<!DOCTYPE html><html><body>fail</body></html>', 502)
+    expect(data.error).toContain('HTTP 502')
+    expect(data.error).toContain('error page')
   })
 })
 
