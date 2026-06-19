@@ -128,6 +128,8 @@ Set **Site URL** to `https://studio.thesudar.com` (org invites) or `https://lear
 
 Logo image for emails: `learn.thesudar.com/brand/Sudar_Logo.svg` (same mark as `sudar-learn/public/brand/Sudar_Logo.svg`).
 
+**Personalization:** Studio `POST /api/users/invite` passes `invited_by_name` and `org_name` in `inviteUserByEmail` metadata; the template uses `{{ .Data.invited_by_name }}` / `{{ .Data.org_name }}` with fallbacks to generic copy.
+
 Verify after changes:
 
 ```bash

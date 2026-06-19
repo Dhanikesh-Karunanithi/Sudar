@@ -1,3 +1,4 @@
+import { formatInviterDisplayName } from '@shared-access/inviteEmailPersonalization'
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { requireOrgAdmin } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
@@ -27,6 +28,17 @@ export async function POST(request: NextRequest) {
   const admin = createServiceRoleSupabaseClient()
   const role = ['ADMIN', 'MANAGER', 'CREATOR', 'LEARNER'].includes(body.org_role ?? '') ? body.org_role : 'LEARNER'
 
+  const [{ data: inviterProfile }, { data: org }] = await Promise.all([
+    admin.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
+    admin.from('organisations').select('name').eq('id', orgId).maybeSingle(),
+  ])
+
+  const invitedByName = formatInviterDisplayName(
+    inviterProfile?.full_name ?? (user.user_metadata?.full_name as string | undefined),
+    user.email
+  )
+  const orgName = org?.name?.trim() || null
+
   const { error: inviteConflict } = await admin.from('org_invites').insert({
     org_id: orgId,
     email,
@@ -41,8 +53,16 @@ export async function POST(request: NextRequest) {
     process.env.NEXTAUTH_URL?.replace(/\/$/, '') ||
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ||
     request.nextUrl.origin
+
+  const inviteMetadata: Record<string, string | boolean | null> = {
+    full_name: body.full_name ?? null,
+    org_invite: true,
+  }
+  if (invitedByName) inviteMetadata.invited_by_name = invitedByName
+  if (orgName) inviteMetadata.org_name = orgName
+
   const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { full_name: body.full_name ?? null, org_invite: true },
+    data: inviteMetadata,
     redirectTo: `${redirectTo}/auth/callback`,
   })
 

@@ -8,6 +8,7 @@ export * from './authCallback'
 export * from './oauthCallbackSession'
 export * from './postOAuthRedirect'
 export * from './establishAuthSession'
+export * from './inviteEmailPersonalization'
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 

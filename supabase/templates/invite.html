@@ -34,10 +34,17 @@
             <td style="background-color:#000000;border:1px solid rgba(255,255,255,0.08);padding:48px 36px;text-align:center;">
               <p style="margin:0 0 20px 0;font-size:11px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#71717a;">You have been invited</p>
               <h1 style="margin:0 0 20px 0;font-family:Georgia,'Playfair Display',serif;font-size:34px;line-height:1.15;font-weight:500;color:#fafafa;letter-spacing:-0.02em;">
-                Someone saved <span style="color:#ff7a45;">a seat for you.</span>
+                {{ if .Data.invited_by_name }}{{ .Data.invited_by_name }}{{ else }}Someone{{ end }} saved <span style="color:#ff7a45;">a seat for you.</span>
               </h1>
               <p style="margin:0;font-size:16px;line-height:1.65;color:#a1a1aa;">
-                You&rsquo;ve been personally invited to join Sudar. Accept your invite and get started today.
+                {{ if and .Data.invited_by_name .Data.org_name }}
+                You&rsquo;ve been personally invited by {{ .Data.invited_by_name }} to join {{ .Data.org_name }} on Sudar.
+                {{ else if .Data.invited_by_name }}
+                You&rsquo;ve been personally invited by {{ .Data.invited_by_name }} to join Sudar.
+                {{ else }}
+                You&rsquo;ve been personally invited to join Sudar.
+                {{ end }}
+                Accept your invite and get started today.
               </p>
             </td>
           </tr>
@@ -59,7 +66,15 @@
             <td style="padding:28px 0 8px 0;">
               <p style="margin:0 0 16px 0;font-size:16px;line-height:1.7;color:#fafafa;">Hello,</p>
               <p style="margin:0;font-size:16px;line-height:1.75;color:#a1a1aa;">
-                Great news &mdash; you&rsquo;ve received a personal invitation to join Sudar. Someone thought you&rsquo;d be a great fit, and we couldn&rsquo;t agree more. Click the button below to accept your invitation, set up your account, and start exploring everything Sudar has to offer.
+                Great news &mdash; you&rsquo;ve received a personal invitation to join Sudar.
+                {{ if and .Data.invited_by_name .Data.org_name }}
+                {{ .Data.invited_by_name }} thought you&rsquo;d be a great fit for {{ .Data.org_name }}, and we couldn&rsquo;t agree more.
+                {{ else if .Data.invited_by_name }}
+                {{ .Data.invited_by_name }} thought you&rsquo;d be a great fit, and we couldn&rsquo;t agree more.
+                {{ else }}
+                Someone thought you&rsquo;d be a great fit, and we couldn&rsquo;t agree more.
+                {{ end }}
+                Click the button below to accept your invitation, set up your account, and start exploring everything Sudar has to offer.
               </p>
             </td>
           </tr>
