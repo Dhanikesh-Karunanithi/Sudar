@@ -4,6 +4,7 @@
  * Auth: x-alp-api-key or Authorization: Bearer (env ALP_API_KEY or org key from integration_api_keys).
  * See docs/ALP_API.md for the contract.
  */
+import { computeCourseEnrollmentProgress } from '@/lib/enrollment/courseEnrollmentProgress'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { validateAlpKey, getAlpKeyFromRequest, rejectAlpUserOutsideOrg } from '@/lib/alp-auth'
 import type { Json } from '@/types/database'
@@ -51,21 +52,10 @@ export async function POST(request: NextRequest) {
   const first = events[0]
   if (first?.event_type === 'module_complete' && first.course_id) {
     const course_id = first.course_id
-    const { count: totalModules } = await admin
-      .from('modules')
-      .select('id', { count: 'exact', head: true })
-      .eq('course_id', course_id)
+    const enrollmentProgress = await computeCourseEnrollmentProgress(admin, user_id, course_id)
 
-    const { count: completedModules } = await admin
-      .from('learning_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user_id)
-      .eq('course_id', course_id)
-      .eq('event_type', 'module_complete')
-
-    if (totalModules != null && completedModules != null && totalModules > 0) {
-      const progress = Math.min(100, Math.round((completedModules / totalModules) * 100))
-      const status = progress >= 100 ? 'completed' : 'in_progress'
+    if (enrollmentProgress) {
+      const { progress, status } = enrollmentProgress
 
       await admin
         .from('enrollments')

@@ -48,15 +48,25 @@ export async function validateInviteCode(
 
 export async function redeemInviteCode(
   supabase: AccessSupabase,
-  _userId: string,
+  userId: string,
   rawCode: string
 ): Promise<{ ok: boolean; error?: string }> {
+  const code = normalizeCode(rawCode)
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('signup_code_used')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (profile?.signup_code_used === code) {
+    return { ok: true }
+  }
+
   const validation = await validateInviteCode(supabase, rawCode)
   if (!validation.valid) {
     return { ok: false, error: validation.error }
   }
-
-  const code = normalizeCode(rawCode)
 
   const { data: invite } = await supabase
     .from('invite_codes')
