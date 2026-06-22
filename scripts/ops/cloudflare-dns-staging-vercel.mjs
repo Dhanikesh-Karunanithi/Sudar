@@ -2,9 +2,6 @@
 /**
  * Create or update staging.learn / staging.studio A records → Vercel (76.76.21.21, DNS only).
  */
-import fs from 'node:fs'
-import os from 'node:os'
-import path from 'node:path'
 
 const ZONE_ID = 'ec9f8f44820b216ec2aa412fbf26d250'
 const VERCEL_A = '76.76.21.21'
@@ -14,21 +11,14 @@ const STAGING_HOSTS = [
   { name: 'staging.studio', fqdn: 'staging.studio.thesudar.com' },
 ]
 
-const cfgPath = path.join(
-  os.homedir(),
-  'AppData/Roaming/xdg.config/.wrangler/config/default.toml',
-)
 const tokenFromEnv = process.env.CLOUDFLARE_API_TOKEN?.trim()
-let token = tokenFromEnv
-if (!token) {
-  const cfg = fs.readFileSync(cfgPath, 'utf8')
-  const tokenMatch = cfg.match(/oauth_token = "([^"]+)"/)
-  if (!tokenMatch) {
-    console.error('No CLOUDFLARE_API_TOKEN or wrangler oauth token. Run: npx wrangler login')
-    process.exit(1)
-  }
-  token = tokenMatch[1]
+if (!tokenFromEnv) {
+  console.error(
+    'CLOUDFLARE_API_TOKEN is required (Zone → DNS → Edit). Wrangler OAuth cannot write DNS records.',
+  )
+  process.exit(1)
 }
+const token = tokenFromEnv
 const headers = {
   Authorization: `Bearer ${token}`,
   'Content-Type': 'application/json',
