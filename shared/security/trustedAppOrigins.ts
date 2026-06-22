@@ -8,6 +8,8 @@ export const SUDAR_PRODUCTION_ORIGINS = [
 ] as const
 
 export const SUDAR_STAGING_ORIGINS = [
+  'https://staging.learn.thesudar.com',
+  'https://staging.studio.thesudar.com',
   'https://sudar-learn.vercel.app',
   'https://sudar-studio.vercel.app',
 ] as const

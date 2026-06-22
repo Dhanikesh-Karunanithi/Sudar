@@ -61,6 +61,10 @@ export default function SettingsPage() {
   const [privateAiBearerConfigured, setPrivateAiBearerConfigured] = useState(false)
   const [privateAiTestStatus, setPrivateAiTestStatus] = useState<string | null>(null)
   const [privateAiTesting, setPrivateAiTesting] = useState(false)
+  const [usePlatformAi, setUsePlatformAi] = useState(false)
+  const [platformAiFeatureAvailable, setPlatformAiFeatureAvailable] = useState(false)
+  const [platformAiConfigured, setPlatformAiConfigured] = useState(false)
+  const [platformAiLabel, setPlatformAiLabel] = useState('Sudar AI')
   const [runtimeMode, setRuntimeMode] = useState<'cloud' | 'local' | 'hybrid'>('cloud')
   const [runtimeStrictLocal, setRuntimeStrictLocal] = useState(false)
   const [runtimeFallbackEnabled, setRuntimeFallbackEnabled] = useState(true)
@@ -149,6 +153,12 @@ export default function SettingsPage() {
       setPrivateServerModel(typeof data.ai_inference.private_server_model === 'string' ? data.ai_inference.private_server_model : '')
       setPrivateAiFeatureAvailable(data.ai_inference.feature_available === true)
       setPrivateAiBearerConfigured(data.ai_inference.bearer_configured === true)
+    }
+    if (data.ai_platform) {
+      setUsePlatformAi(data.ai_platform.enabled === true)
+      setPlatformAiFeatureAvailable(data.ai_platform.feature_available === true)
+      setPlatformAiConfigured(data.ai_platform.freellmapi_configured === true)
+      setPlatformAiLabel(typeof data.ai_platform.label === 'string' ? data.ai_platform.label : 'Sudar AI')
     }
     if (data.ai_runtime) {
       setRuntimeMode(
@@ -276,6 +286,13 @@ export default function SettingsPage() {
                   },
                 ]
               : [],
+          },
+        }),
+        ...(platformAiFeatureAvailable && {
+          ai_platform: {
+            enabled: usePlatformAi,
+            label: platformAiLabel.trim() || 'Sudar AI',
+            model: 'auto',
           },
         }),
         sudar_agents: {
@@ -804,6 +821,43 @@ export default function SettingsPage() {
               <p className="text-slate-500 text-xs mt-1">Forwarded to Intelligence when supported (default: default).</p>
             </div>
           </div>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-slate-500" />
+          <h2 className="font-semibold text-white">Sudar AI (included for pilots)</h2>
+        </div>
+        <p className="text-slate-500 text-sm">
+          Pilot organisations can route chat and generation through Sudar&apos;s included AI tier instead of your own cloud API keys.
+          When enabled, Sudar falls back to deployment cloud keys if the included service is unavailable.
+        </p>
+        {!platformAiFeatureAvailable && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200/90">
+            Included Sudar AI is not enabled on this deployment. Your platform operator sets{' '}
+            <code className="text-xs bg-slate-800 px-1 rounded">ALLOW_ORG_PLATFORM_AI=true</code> and configures{' '}
+            <code className="text-xs bg-slate-800 px-1 rounded">FREELLMAPI_*</code> on staging.
+          </div>
+        )}
+        {platformAiFeatureAvailable && (
+          <>
+            {!platformAiConfigured && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200/90">
+                Sudar AI is not configured on the server yet. Contact your platform operator before enabling for learners.
+              </div>
+            )}
+            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={usePlatformAi}
+                onChange={(e) => setUsePlatformAi(e.target.checked)}
+                disabled={!platformAiConfigured}
+                className="rounded border-slate-600 disabled:opacity-40"
+              />
+              Use Sudar AI (included for pilot) for chat and generation
+            </label>
+          </>
         )}
       </div>
 

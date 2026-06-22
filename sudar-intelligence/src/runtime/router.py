@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from src.core.ai_client import _get_provider
+from src.core.ai_client import _get_provider, _is_org_platform_ai_active
 from src.runtime.providers.openai_local import OpenAiCompatibleLocalProvider
 from src.runtime.schemas import RuntimeCapability, RuntimePolicy, RuntimeProviderConfig, RuntimeRoutingMetadata
 
@@ -36,8 +36,9 @@ class RouteResolution:
 
 
 class ModelRouter:
-    def __init__(self, policy: RuntimePolicy):
+    def __init__(self, policy: RuntimePolicy, org_settings: Any = None):
         self.policy = policy
+        self.org_settings = org_settings
 
     def _pick_local_provider(self, capability: RuntimeCapability) -> RuntimeProviderConfig | None:
         for p in self.policy.providers:
@@ -51,6 +52,23 @@ class ModelRouter:
         return None
 
     async def resolve(self, capability: RuntimeCapability) -> RouteResolution:
+        if _is_org_platform_ai_active(self.org_settings):
+            platform = (
+                self.org_settings.get("ai_platform", {}).get("model")
+                if isinstance(self.org_settings, dict)
+                else "auto"
+            )
+            return RouteResolution(
+                routing=RuntimeRoutingMetadata(
+                    decision="cloud",
+                    provider_id="cloud:sudar_platform",
+                    model=platform if isinstance(platform, str) and platform.strip() else "auto",
+                    fallback_used=False,
+                    fallback_reason=None,
+                ),
+                provider=None,
+            )
+
         cloud_provider = _get_provider()
         if self.policy.mode == "cloud":
             return RouteResolution(

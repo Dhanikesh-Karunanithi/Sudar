@@ -4,6 +4,23 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## Pilot orgs — multi-org admin + Sudar AI tier (June 2026)
+
+- **Where**: Staging Sudar Studio (`sudar-studio.vercel.app`); org switcher in sidebar; **Platform → Organisations** switch action; **Org settings → Sudar AI (included for pilots)**.
+- **What**: Platform operators can provision Talisma/Foundever pilot orgs with included **Sudar AI** (FreeLLMAPI proxy, white-labeled). Super admins with multiple org memberships switch active workspace in Studio. Chat/tutor routes: org private BYOM → Sudar AI → cloud fallback (Together/OpenAI/Anthropic). Per-org monthly token caps via `ai_entitlements`.
+- **Key files**:
+  - `supabase/migrations/20260620100000_profiles_active_org_id.sql`
+  - `shared/ai/orgAiPlatform.ts`, `shared/ai/platformChat.ts`
+  - `sudar-studio/src/lib/org.ts`, `src/app/api/org/memberships/route.ts`, `src/app/api/org/switch/route.ts`, `src/components/layout/OrgSwitcher.tsx`
+  - `sudar-studio|sudar-learn/src/lib/ai/chat.ts`
+  - `sudar-intelligence/src/core/ai_client.py`, `src/runtime/router.py`
+  - `scripts/ops/bootstrap-freellmapi.mjs`, `scripts/ops/provision-pilot-org.mjs`
+  - `docs/PILOT_ONBOARDING.md`
+- **Env**: `ALLOW_ORG_PLATFORM_AI=true`, `FREELLMAPI_BASE_URL`, `FREELLMAPI_API_KEY`, `TOGETHER_API_KEY` (fallback), `ADMIN_EMAILS`, `EARLY_ACCESS_ENABLED` on staging.
+- **Ops**: `node scripts/ops/provision-pilot-org.mjs` after migration; bootstrap FreeLLMAPI via `node scripts/ops/bootstrap-freellmapi.mjs`.
+
+---
+
 ## Early access gate (June 2026)
 
 - **Where**: Sudar Learn + Sudar Studio signup/login; Studio **`/early-access`** (super admin / `ADMIN_EMAILS`); public **`/signup/waitlist`**; persistent **Early Access** banner on all pages when enabled.

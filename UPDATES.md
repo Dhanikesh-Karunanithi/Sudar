@@ -16,6 +16,26 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-20 — Staging ops rollout (Vercel + Supabase shared DB)
+
+- **Theme**: Branded staging hostnames for Talisma pilot testing on Vercel while production stays on Cloudflare Workers.
+- **Ops**:
+  - Supabase migration `profiles.active_org_id` applied; auth redirect URLs patched for `staging.learn.thesudar.com` / `staging.studio.thesudar.com`.
+  - Pilot orgs **Talisma** + **Foundever** provisioned on shared project via `scripts/ops/provision-pilot-org.mjs`.
+  - Vercel Production env + domains on `sudar-learn` / `sudar-studio`; deploys live at `sudar-learn.vercel.app` / `sudar-studio.vercel.app`.
+  - Cloudflare DNS script `scripts/ops/cloudflare-dns-staging-vercel.mjs` (A → `76.76.21.21`); Intelligence CORS patch script + `render.yaml` staging origins.
+- **Manual follow-up**: Add Cloudflare A records (or run DNS script with `CLOUDFLARE_API_TOKEN`); patch Render `CORS_ORIGINS` with `RENDER_API_KEY` and redeploy Intelligence.
+
+### 2026-06-20 — Pilot orgs, org switcher, Sudar AI (FreeLLMAPI) tier
+
+- **Theme**: Staging pilots for Talisma and Foundever with included AI and multi-org platform admin.
+- **Shipped**:
+  - **Multi-org admin**: `profiles.active_org_id`, Studio org switcher, `GET/POST /api/org/memberships` + `/api/org/switch`, Platform org list **Switch** action.
+  - **Sudar AI tier**: `organisations.settings.ai_platform` + `ALLOW_ORG_PLATFORM_AI` / `FREELLMAPI_*` env; routing in Studio/Learn chat and Intelligence `ai_client` with Together cloud fallback.
+  - **Ops scripts**: `scripts/ops/bootstrap-freellmapi.mjs`, `scripts/ops/provision-pilot-org.mjs` (Talisma + Foundever + super_admin grants).
+  - **Docs**: `docs/PILOT_ONBOARDING.md`, `ENV_REFERENCE.md`, `SHIPPED_FEATURES.md`.
+- **Staging env**: Set `FREELLMAPI_*`, `ALLOW_ORG_PLATFORM_AI=true`, `ADMIN_EMAILS` on Vercel staging Studio/Learn/Intelligence; run provision script against staging Supabase.
+
 ### 2026-06-18 — Personalized org-invite email (inviter + org name)
 
 - **Theme**: Org invite emails name the sender and workspace when Studio sends `inviteUserByEmail`.

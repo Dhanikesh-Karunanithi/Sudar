@@ -22,6 +22,19 @@ Operator runbook for **thesudar.com** on Cloudflare Registrar + DNS.
 | `mcp` | Worker custom domain | `sudar-mcp-cloudflare` | Remote MCP (ChatGPT) |
 | `demo` | CNAME (optional) | Cloudflare Pages / Vercel | Ecosystem demo |
 
+### Staging (Vercel — pilot / Talisma eval)
+
+Production Learn and Studio stay on Cloudflare Workers. Staging uses **Vercel Production env** with branded subdomains:
+
+| Host | Type | Target | Purpose |
+|------|------|--------|---------|
+| `staging.learn` | A (DNS only) | `76.76.21.21` | Sudar Learn on Vercel |
+| `staging.studio` | A (DNS only) | `76.76.21.21` | Sudar Studio on Vercel |
+
+Add domains in Vercel (`vercel domains add …`) then create the records above in Cloudflare (grey cloud until Vercel issues SSL). Ops script: `node scripts/ops/cloudflare-dns-staging-vercel.mjs` (needs `CLOUDFLARE_API_TOKEN` with **Zone → DNS → Edit**; wrangler OAuth alone is read-only for DNS).
+
+Also add staging origins to Intelligence `CORS_ORIGINS` and redeploy (`scripts/ops/patch-render-intelligence-cors.mjs` with `RENDER_API_KEY`, or Render dashboard).
+
 ### Attaching Learn / Studio custom domains
 
 After the first OpenNext deploy (see [CLOUDFLARE_PAGES_DEPLOY.md](CLOUDFLARE_PAGES_DEPLOY.md)):

@@ -18,6 +18,12 @@ import { normalizeTtsVoiceId, TTS_VOICE_OPTIONS_BY_ID } from '@/lib/audio/voices
 import { orgSudarAgentsPatchSchema } from '@/types/orgSudarAgents'
 import { resolveSudarAgentsFromOrgSettings } from '../../../../../../shared/sudarAgentsOrgSettings'
 import { isAppLocale } from '../../../../../../shared/i18nLocales'
+import {
+  isFreellmapiConfigured,
+  isOrgPlatformAiFeatureEnabled,
+  orgAiPlatformPatchSchema,
+  parseOrgAiPlatform,
+} from '../../../../../../shared/ai/orgAiPlatform'
 
 /**
  * GET /api/org/settings — Return current org settings (performance_config, etc.). Admin/Manager only.
@@ -51,6 +57,7 @@ export async function GET() {
   const notification_branding = (settings.notification_branding as Record<string, unknown> | undefined) ?? {}
   const ai_inference = parseOrgAiInference(settings)
   const ai_runtime = parseOrgAiRuntimePolicy(settings)
+  const ai_platform = parseOrgAiPlatform(settings)
   const sudar_agents = resolveSudarAgentsFromOrgSettings(settings)
 
   const localizationRaw = (settings.localization as Record<string, unknown> | undefined) ?? {}
@@ -140,6 +147,11 @@ export async function GET() {
       ...ai_runtime,
       feature_available: isOrgPrivateAiFeatureEnabled(),
       bearer_configured: Boolean(getPrivateLlmBearerToken()),
+    },
+    ai_platform: {
+      ...ai_platform,
+      feature_available: isOrgPlatformAiFeatureEnabled(),
+      freellmapi_configured: isFreellmapiConfigured(),
     },
     sudar_agents,
     localization: {
@@ -364,6 +376,31 @@ export async function PATCH(request: Request) {
       }
     }
     updatedSettings.ai_runtime = parsed.data
+  }
+
+  if (body.ai_platform !== undefined) {
+    if (!isOrgPlatformAiFeatureEnabled()) {
+      return NextResponse.json(
+        { error: 'Sudar AI (included pilot tier) is not enabled on this deployment (ALLOW_ORG_PLATFORM_AI).' },
+        { status: 403 }
+      )
+    }
+    if (typeof body.ai_platform !== 'object' || body.ai_platform === null || Array.isArray(body.ai_platform)) {
+      return NextResponse.json({ error: 'Invalid ai_platform' }, { status: 400 })
+    }
+    const parsed = orgAiPlatformPatchSchema.safeParse(body.ai_platform)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid ai_platform', details: parsed.error.flatten() },
+        { status: 400 }
+      )
+    }
+    const prev = parseOrgAiPlatform(currentSettings)
+    updatedSettings.ai_platform = {
+      enabled: parsed.data.enabled ?? prev.enabled,
+      label: parsed.data.label ?? prev.label,
+      model: parsed.data.model ?? prev.model,
+    }
   }
 
   if (body.sudar_agents !== undefined) {

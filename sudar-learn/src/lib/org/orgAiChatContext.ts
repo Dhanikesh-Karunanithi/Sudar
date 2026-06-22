@@ -25,8 +25,31 @@ export async function loadOrgAiChatContext(
     orgId = data?.org_id ?? null
   }
   if (!orgId) {
-    const { data } = await admin.from('profiles').select('org_id').eq('id', opts.userId).maybeSingle()
-    orgId = data?.org_id ?? null
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('org_id, active_org_id')
+      .eq('id', opts.userId)
+      .maybeSingle()
+    const preferred = profile?.active_org_id ?? profile?.org_id ?? null
+    if (preferred) {
+      const { data: member } = await admin
+        .from('org_members')
+        .select('org_id')
+        .eq('user_id', opts.userId)
+        .eq('org_id', preferred)
+        .maybeSingle()
+      orgId = member?.org_id ?? preferred
+    }
+    if (!orgId) {
+      const { data: membership } = await admin
+        .from('org_members')
+        .select('org_id')
+        .eq('user_id', opts.userId)
+        .order('joined_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+      orgId = membership?.org_id ?? null
+    }
   }
   if (!orgId) {
     return { orgId: null, orgSettings: {}, privateRuntime: null }

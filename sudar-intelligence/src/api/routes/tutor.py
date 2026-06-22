@@ -88,7 +88,7 @@ async def tutor_query(
     """
     require_learner_match(request, body.user_id)
     policy = parse_runtime_policy(body.org_settings)
-    resolved = await ModelRouter(policy).resolve("chat")
+    resolved = await ModelRouter(policy, body.org_settings).resolve("chat")
     # TODO: Implement RAG pipeline
     # 1. Embed the user's question
     # 2. Retrieve relevant chunks from context_text

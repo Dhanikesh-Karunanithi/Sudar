@@ -71,6 +71,21 @@ export const PROVIDER_KEYS: ProviderKeyDef[] = [
     description: 'Claude models.',
   },
   {
+    id: 'freellmapi',
+    name: 'Sudar AI (FreeLLMAPI proxy)',
+    envVar: 'FREELLMAPI_API_KEY',
+    category: 'chat',
+    signupUrl: 'https://github.com/tashfeenahmed/freellmapi',
+    steps: [
+      'Self-host FreeLLMAPI (see scripts/ops/bootstrap-freellmapi.mjs) or deploy beside staging Intelligence.',
+      'Copy the unified API key from the FreeLLMAPI server log.',
+      'Set FREELLMAPI_BASE_URL=https://your-proxy/v1 and FREELLMAPI_API_KEY on Studio, Learn, and Intelligence.',
+      'Set ALLOW_ORG_PLATFORM_AI=true to let pilot orgs enable Sudar AI in Org settings.',
+      'Keep TOGETHER_API_KEY as fallback when upstream free routes fail.',
+    ],
+    description: 'Included AI tier for pilot orgs. White-labeled as Sudar AI — never shown to learners as FreeLLMAPI.',
+  },
+  {
     id: 'local_openai_compatible',
     name: 'Local / OpenAI-compatible LLM',
     envVar: 'AI_CHAT_BASE_URL',

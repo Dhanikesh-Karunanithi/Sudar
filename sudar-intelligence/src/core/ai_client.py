@@ -15,6 +15,7 @@ PROVIDER_OPENAI = "openai"
 PROVIDER_ANTHROPIC = "anthropic"
 PROVIDER_CUSTOM = "custom"
 PROVIDER_HUGGINGFACE = "huggingface"
+PROVIDER_SUDAR_PLATFORM = "sudar_platform"
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 TOGETHER_URL = "https://api.together.xyz/v1/chat/completions"
@@ -29,7 +30,66 @@ DEFAULT_MODELS = {
     PROVIDER_ANTHROPIC: "claude-3-5-sonnet-20241022",
     PROVIDER_CUSTOM: "gemma3:4b",
     PROVIDER_HUGGINGFACE: "meta-llama/Meta-Llama-3.1-8B-Instruct",
+    PROVIDER_SUDAR_PLATFORM: "auto",
 }
+
+
+def _is_org_platform_ai_feature_enabled() -> bool:
+    return os.environ.get("ALLOW_ORG_PLATFORM_AI", "").strip().lower() == "true"
+
+
+def _is_freellmapi_configured() -> bool:
+    return bool(os.environ.get("FREELLMAPI_API_KEY", "").strip())
+
+
+def _parse_org_ai_platform(settings: Any) -> dict[str, Any]:
+    if not isinstance(settings, dict):
+        return {"enabled": False, "model": "auto"}
+    raw = settings.get("ai_platform")
+    if not isinstance(raw, dict):
+        return {"enabled": False, "model": "auto"}
+    model = raw.get("model")
+    return {
+        "enabled": raw.get("enabled") is True,
+        "model": model.strip() if isinstance(model, str) and model.strip() else "auto",
+    }
+
+
+def _is_org_platform_ai_active(org_settings: Any) -> bool:
+    if not _is_org_platform_ai_feature_enabled() or not _is_freellmapi_configured():
+        return False
+    return _parse_org_ai_platform(org_settings).get("enabled") is True
+
+
+def _get_freellmapi_config() -> tuple[str, str] | None:
+    key = os.environ.get("FREELLMAPI_API_KEY", "").strip()
+    if not key:
+        return None
+    base = os.environ.get("FREELLMAPI_BASE_URL", "http://localhost:3001/v1").strip().rstrip("/")
+    return base, key
+
+
+def _resolve_provider(org_settings: Any | None = None) -> str:
+    if _is_org_platform_ai_active(org_settings):
+        return PROVIDER_SUDAR_PLATFORM
+    return _get_provider()
+
+
+def _cloud_provider_chain() -> list[str]:
+    preferred = (os.environ.get("AI_CHAT_PROVIDER") or "").strip().lower()
+    order = [PROVIDER_OPENROUTER, PROVIDER_TOGETHER, PROVIDER_OPENAI, PROVIDER_ANTHROPIC]
+    if preferred in order:
+        return [preferred] + [p for p in order if p != preferred]
+    configured: list[str] = []
+    if os.environ.get("OPENROUTER_API_KEY", "").strip():
+        configured.append(PROVIDER_OPENROUTER)
+    if os.environ.get("TOGETHER_API_KEY", "").strip():
+        configured.append(PROVIDER_TOGETHER)
+    if os.environ.get("OPENAI_API_KEY", "").strip():
+        configured.append(PROVIDER_OPENAI)
+    if os.environ.get("ANTHROPIC_API_KEY", "").strip():
+        configured.append(PROVIDER_ANTHROPIC)
+    return configured
 
 
 def _get_provider() -> str:
@@ -96,37 +156,111 @@ async def chat_completion(
     max_tokens: int = 1024,
     temperature: float = 0.7,
     org_id: str | None = None,
+    org_settings: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
     Call the configured chat provider. Returns {"content": str, "raw": dict, "provider": str}.
-    org_id reserved for future per-org encrypted keys.
+    When org_settings.ai_platform.enabled and FREELLMAPI_* env are set, uses Sudar AI platform tier first.
     """
-    provider = _get_provider()
+    _ = org_id
+    provider = _resolve_provider(org_settings)
+    platform = _parse_org_ai_platform(org_settings) if org_settings else {"enabled": False, "model": "auto"}
+
+    if provider == PROVIDER_SUDAR_PLATFORM:
+        cfg = _get_freellmapi_config()
+        if cfg:
+            base, key = cfg
+            platform_model = (model or "").strip() or platform.get("model") or _get_model(PROVIDER_SUDAR_PLATFORM)
+            url = base if base.endswith("/chat/completions") else f"{base}/chat/completions"
+            try:
+                return await _chat_openai_compatible_url(
+                    url=url,
+                    key=key,
+                    messages=messages,
+                    model=platform_model,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    provider=PROVIDER_SUDAR_PLATFORM,
+                )
+            except Exception:
+                pass
+
     err = get_chat_config_error()
     if err:
         raise RuntimeError(err)
 
-    model = (model or "").strip() or _get_model(provider)
+    last_error: Exception | None = None
+    for cloud_provider in _cloud_provider_chain() or [_get_provider()]:
+        try:
+            resolved_model = (model or "").strip() or _get_model(cloud_provider)
+            if cloud_provider == PROVIDER_ANTHROPIC:
+                return await _chat_anthropic(messages, model=resolved_model, max_tokens=max_tokens, temperature=temperature)
+            if cloud_provider == PROVIDER_HUGGINGFACE:
+                from src.core.hf_client import chat_completion_openai_compat
 
-    if provider == PROVIDER_ANTHROPIC:
-        return await _chat_anthropic(messages, model=model, max_tokens=max_tokens, temperature=temperature)
-    if provider == PROVIDER_HUGGINGFACE:
-        from src.core.hf_client import chat_completion_openai_compat
+                return await chat_completion_openai_compat(
+                    messages,
+                    model=resolved_model,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                )
+            return await _chat_openai_compatible(
+                provider=cloud_provider,
+                messages=messages,
+                model=resolved_model,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+        except Exception as exc:
+            last_error = exc
 
-        return await chat_completion_openai_compat(
-            messages,
-            model=model,
-            max_tokens=max_tokens,
-            temperature=temperature,
+    if last_error:
+        raise last_error
+    raise RuntimeError("No AI chat provider configured.")
+
+
+async def _chat_openai_compatible_url(
+    *,
+    url: str,
+    key: str,
+    messages: list[dict[str, str]],
+    model: str,
+    max_tokens: int,
+    temperature: float,
+    provider: str,
+) -> dict[str, Any]:
+    payload = {
+        "model": model,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+    }
+
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        r = await client.post(
+            url,
+            headers={
+                "Authorization": f"Bearer {key}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
         )
-    # OpenAI-compatible: OpenRouter, Together, OpenAI, custom
-    return await _chat_openai_compatible(
-        provider=provider,
-        messages=messages,
-        model=model,
-        max_tokens=max_tokens,
-        temperature=temperature,
-    )
+        r.raise_for_status()
+        data = r.json()
+
+    content = ""
+    if isinstance(data.get("choices"), list) and data["choices"]:
+        msg = data["choices"][0].get("message") or {}
+        content = (msg.get("content") or "").strip()
+
+    usage = _parse_openai_compatible_usage(data.get("usage"))
+    return {
+        "content": content,
+        "raw": data,
+        "provider": provider,
+        "model": model,
+        "usage": usage,
+    }
 
 
 async def _chat_openai_compatible(
@@ -136,6 +270,21 @@ async def _chat_openai_compatible(
     max_tokens: int,
     temperature: float,
 ) -> dict[str, Any]:
+    if provider == PROVIDER_SUDAR_PLATFORM:
+        cfg = _get_freellmapi_config()
+        if not cfg:
+            raise RuntimeError("FREELLMAPI_API_KEY not set")
+        base, key = cfg
+        url = base if base.endswith("/chat/completions") else f"{base}/chat/completions"
+        return await _chat_openai_compatible_url(
+            url=url,
+            key=key,
+            messages=messages,
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            provider=provider,
+        )
     if provider == PROVIDER_OPENROUTER:
         url = OPENROUTER_URL
         key = os.environ.get("OPENROUTER_API_KEY", "").strip()

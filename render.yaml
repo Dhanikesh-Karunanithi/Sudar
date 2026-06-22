@@ -18,7 +18,7 @@ services:
       - key: ENV
         value: production
       - key: CORS_ORIGINS
-        value: https://learn.thesudar.com,https://studio.thesudar.com
+        value: https://learn.thesudar.com,https://studio.thesudar.com,https://staging.learn.thesudar.com,https://staging.studio.thesudar.com,https://sudar-learn.vercel.app,https://sudar-studio.vercel.app
       - key: LEARN_INTERNAL_URL
         value: https://learn.thesudar.com
       - key: SUPABASE_URL

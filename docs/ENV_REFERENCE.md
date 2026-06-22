@@ -76,7 +76,22 @@ When `ALLOW_ORG_PRIVATE_AI_SERVER=true`, org **Admins/Managers** can set a priva
 
 Admin-facing walkthrough: **Studio → Understanding AI** (`/help/ai-at-sudar`). Printable mirror: [docs/admin/AI_LITERACY_AND_LOCAL_MODELS.md](admin/AI_LITERACY_AND_LOCAL_MODELS.md).
 
-**Sudar Intelligence** does not read `organisations.settings` yet; configure `AI_CHAT_*` env on the Intelligence host for the same effect, or extend in a follow-up.
+**Sudar Intelligence** reads org `ai_platform` when callers pass `org_settings` (ALP tutor proxy). For deployment-wide defaults, configure `FREELLMAPI_*` env on the Intelligence host.
+
+### Sudar AI — included pilot tier (FreeLLMAPI proxy)
+
+When `ALLOW_ORG_PLATFORM_AI=true`, org **Admins/Managers** can enable **Sudar AI** in **Org settings** (`organisations.settings.ai_platform`). Uses a self-hosted [FreeLLMAPI](https://github.com/tashfeenahmed/freellmapi) OpenAI-compatible proxy; learners see **Sudar AI**, not FreeLLMAPI.
+
+| Variable | App | Description |
+|----------|-----|-------------|
+| `ALLOW_ORG_PLATFORM_AI` | Studio, Learn, Intelligence | Must be `true` to expose Sudar AI toggle and route pilot org chat through FreeLLMAPI. |
+| `FREELLMAPI_BASE_URL` | Studio, Learn, Intelligence | OpenAI-compatible base URL (e.g. `https://proxy.example.com/v1` or `http://localhost:3001/v1`). |
+| `FREELLMAPI_API_KEY` | Studio, Learn, Intelligence | Unified API key from your FreeLLMAPI instance. |
+| `TOGETHER_API_KEY` | Studio, Learn, Intelligence | Recommended fallback when FreeLLMAPI upstream routes fail. |
+
+Bootstrap: `node scripts/ops/bootstrap-freellmapi.mjs`. Pilot org provisioning: `node scripts/ops/provision-pilot-org.mjs`. Runbook: [docs/PILOT_ONBOARDING.md](PILOT_ONBOARDING.md).
+
+Per-org quota: `organisations.settings.ai_entitlements` (`monthly_token_allowance`, `hard_stop`) — see `shared/ai/entitlements.ts`.
 
 ---
 

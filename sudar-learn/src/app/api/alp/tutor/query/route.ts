@@ -87,6 +87,19 @@ export async function POST(request: NextRequest) {
   let sourcesUsed: string[] = []
   let responseActions: unknown[] | undefined
   let responseBlocks: unknown[] | undefined
+  let orgSettings: Record<string, unknown> = {}
+
+  if (orgId) {
+    const { data: orgRow } = await admin.from('organisations').select('settings').eq('id', orgId).maybeSingle()
+    orgSettings = (orgRow?.settings as Record<string, unknown>) ?? {}
+  } else if (course_id) {
+    const { data: courseRow } = await admin.from('courses').select('org_id').eq('id', course_id).maybeSingle()
+    const courseOrgId = courseRow?.org_id
+    if (courseOrgId) {
+      const { data: orgRow } = await admin.from('organisations').select('settings').eq('id', courseOrgId).maybeSingle()
+      orgSettings = (orgRow?.settings as Record<string, unknown>) ?? {}
+    }
+  }
 
   const intelligenceHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
   const serviceSecret = process.env.INTELLIGENCE_SERVICE_SECRET
@@ -104,6 +117,7 @@ export async function POST(request: NextRequest) {
           message: message.trim(),
           context_text: context_text.slice(0, 12000),
           session_history: [],
+          org_settings: orgSettings,
         }),
       })
       if (res.ok) {

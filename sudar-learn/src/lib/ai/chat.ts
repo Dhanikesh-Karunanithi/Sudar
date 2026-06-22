@@ -1,24 +1,26 @@
 /**
  * Sudar Learn — provider-agnostic chat completion.
- * Supports OpenRouter, Together, OpenAI, Anthropic, custom base URL, and org private OpenAI-compatible servers.
- * Backward compatible with TOGETHER_TUTOR_MODEL and TOGETHER_MEMORY_MODEL.
+ * Supports org private server, Sudar AI (FreeLLMAPI), and cloud fallback chain.
  */
 
 import { assertOrgAiQuota } from '../../../../shared/ai/checkOrgAiQuota'
-import { parseAnthropicUsage, parseOpenAiCompatibleUsage } from '../../../../shared/ai/parseChatUsage'
+import {
+  chatWithPlatformOrCloudFallback,
+  getCloudChatConfigError,
+  getOrgPlatformAiConfigError,
+} from '../../../../shared/ai/platformChat'
+import { parseOpenAiCompatibleUsage } from '../../../../shared/ai/parseChatUsage'
 import type { AiUsageContext, ChatUsage } from '../../../../shared/ai/usageTypes'
 import { getOrgPrivateAiConfigError, type PrivateOpenAiRuntime } from '@/types/orgAiInference'
 import { recordAiUsage, type RecordAiUsageInput, type UsageAdmin } from '@/lib/ai/recordUsage'
+import { buildPlatformAiRuntime, parseOrgAiPlatform } from '../../../../shared/ai/orgAiPlatform'
 
 export type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string }
 
 export type ChatCompletionContext = {
-  /** When set, chat uses this private server instead of deployment env provider. */
   privateOpenAi?: PrivateOpenAiRuntime | null
-  /** When set with usageAdmin, records token usage after a successful completion. */
   usageContext?: AiUsageContext
   usageAdmin?: UsageAdmin
-  /** Required for org monthly token cap enforcement (ai_entitlements.hard_stop). */
   orgSettings?: unknown
 }
 
@@ -37,92 +39,64 @@ export type ChatCompletionResult = {
   usage?: ChatUsage
 }
 
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
-const TOGETHER_URL = 'https://api.together.xyz/v1/chat/completions'
-const OPENAI_URL = 'https://api.openai.com/v1/chat/completions'
-const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
-
 const DEFAULT_TUTOR_MODEL = 'openai/gpt-oss-20b'
 const DEFAULT_MEMORY_MODEL = 'google/gemma-3n-E4B-it'
 
-const DEFAULT_MODEL_BY_PROVIDER: Record<string, string> = {
-  openrouter: 'openai/gpt-4o-mini',
-  together: DEFAULT_TUTOR_MODEL,
-  openai: 'gpt-4o-mini',
-  anthropic: 'claude-3-5-sonnet-20241022',
-  custom: 'gemma3:4b',
-}
-
-function getProvider(): string {
-  const env = process.env.AI_CHAT_PROVIDER?.trim().toLowerCase()
-  if (env && ['openrouter', 'together', 'openai', 'anthropic', 'custom'].includes(env)) return env
-  if (process.env.OPENROUTER_API_KEY?.trim()) return 'openrouter'
-  if (process.env.TOGETHER_API_KEY?.trim()) return 'together'
-  if (process.env.OPENAI_API_KEY?.trim()) return 'openai'
-  if (process.env.ANTHROPIC_API_KEY?.trim()) return 'anthropic'
-  if (process.env.AI_CHAT_BASE_URL?.trim()) return 'custom'
-  return 'together'
-}
-
-function getApiKeyAndUrl(provider: string): { key: string; url: string } {
-  const customBase = process.env.AI_CHAT_BASE_URL?.replace(/\/$/, '')
-  switch (provider) {
-    case 'openrouter': {
-      const key = process.env.OPENROUTER_API_KEY?.trim()
-      if (!key) throw new Error('OPENROUTER_API_KEY not set')
-      return { key, url: OPENROUTER_URL }
-    }
-    case 'together': {
-      const key = process.env.TOGETHER_API_KEY?.trim()
-      if (!key) throw new Error('TOGETHER_API_KEY not set')
-      return { key, url: TOGETHER_URL }
-    }
-    case 'openai': {
-      const key = process.env.OPENAI_API_KEY?.trim()
-      if (!key) throw new Error('OPENAI_API_KEY not set')
-      return { key, url: OPENAI_URL }
-    }
-    case 'anthropic': {
-      const key = process.env.ANTHROPIC_API_KEY?.trim()
-      if (!key) throw new Error('ANTHROPIC_API_KEY not set')
-      return { key, url: ANTHROPIC_URL }
-    }
-    case 'custom': {
-      if (!customBase) throw new Error('AI_CHAT_BASE_URL not set for custom provider')
-      const key = process.env.AI_CHAT_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim() || process.env.TOGETHER_API_KEY?.trim()
-      if (!key) throw new Error('Set AI_CHAT_API_KEY or OPENAI_API_KEY or TOGETHER_API_KEY for custom provider')
-      return { key, url: `${customBase}/v1/chat/completions` }
-    }
-    default:
-      throw new Error(`Unknown AI_CHAT_PROVIDER: ${provider}`)
-  }
+async function chatPrivateOpenAi(
+  runtime: PrivateOpenAiRuntime,
+  options: ChatCompletionOptions
+): Promise<ChatCompletionResult> {
+  const base = runtime.baseUrl.replace(/\/$/, '')
+  const url = `${base}/v1/chat/completions`
+  const model = options.model ?? runtime.defaultModel ?? getDefaultModel('custom')
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${runtime.apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      messages: options.messages,
+      max_tokens: options.max_tokens ?? 1024,
+      temperature: options.temperature ?? 0.7,
+      ...(options.top_p != null && { top_p: options.top_p }),
+    }),
+  })
+  const text = await res.text()
+  if (!res.ok) throw new Error(text || `AI API ${res.status}`)
+  const data = JSON.parse(text)
+  const content = data.choices?.[0]?.message?.content?.trim() ?? ''
+  const usage = parseOpenAiCompatibleUsage(data.usage)
+  return { content, provider: 'custom', model, usage }
 }
 
 function getDefaultModel(provider: string): string {
   return (
     process.env.AI_CHAT_DEFAULT_MODEL?.trim() ||
     (provider === 'together' ? (process.env.TOGETHER_TUTOR_MODEL?.trim() || DEFAULT_TUTOR_MODEL) : null) ||
-    DEFAULT_MODEL_BY_PROVIDER[provider] ||
     DEFAULT_TUTOR_MODEL
   )
 }
 
-/** Default model for tutor (main) responses. Backward compat: TOGETHER_TUTOR_MODEL. */
-export function getDefaultTutorModel(privateRuntime?: PrivateOpenAiRuntime | null): string {
+export function getDefaultTutorModel(
+  privateRuntime?: PrivateOpenAiRuntime | null,
+  orgSettings?: unknown
+): string {
   if (privateRuntime) return privateRuntime.defaultModel
+  const platform = buildPlatformAiRuntime(orgSettings ?? {})
+  if (platform) return platform.defaultModel
   return process.env.AI_CHAT_DEFAULT_MODEL?.trim() || process.env.TOGETHER_TUTOR_MODEL?.trim() || DEFAULT_TUTOR_MODEL
 }
 
-/** Default model for memory/short tasks (e.g. quiz block). Backward compat: TOGETHER_MEMORY_MODEL. */
-export function getDefaultMemoryModel(privateRuntime?: PrivateOpenAiRuntime | null): string {
+export function getDefaultMemoryModel(
+  privateRuntime?: PrivateOpenAiRuntime | null,
+  orgSettings?: unknown
+): string {
   if (privateRuntime) return privateRuntime.defaultModel
+  const platform = parseOrgAiPlatform(orgSettings ?? {})
+  if (platform.enabled) return platform.model
   return process.env.TOGETHER_MEMORY_MODEL?.trim() || DEFAULT_MEMORY_MODEL
 }
 
-function maybeRecordUsage(
-  ctx: ChatCompletionContext | undefined,
-  result: ChatCompletionResult
-): void {
+function maybeRecordUsage(ctx: ChatCompletionContext | undefined, result: ChatCompletionResult): void {
   if (!ctx?.usageContext || !ctx.usageAdmin || !result.usage) return
   const input: RecordAiUsageInput = {
     ...ctx.usageContext,
@@ -137,62 +111,6 @@ function maybeRecordUsage(
   recordAiUsage(ctx.usageAdmin, input)
 }
 
-async function chatOpenAICompatible(
-  url: string,
-  apiKey: string,
-  options: ChatCompletionOptions,
-  provider: string
-): Promise<ChatCompletionResult> {
-  const model = options.model ?? getDefaultModel(provider)
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model,
-      messages: options.messages,
-      max_tokens: options.max_tokens ?? 1024,
-      temperature: options.temperature ?? 0.7,
-      ...(options.top_p != null && { top_p: options.top_p }),
-    }),
-  })
-  const text = await res.text()
-  if (!res.ok) throw new Error(text || `AI API ${res.status}`)
-  const data = JSON.parse(text)
-  const content = data.choices?.[0]?.message?.content?.trim() ?? ''
-  const usage = parseOpenAiCompatibleUsage(data.usage)
-  return { content, provider, model, usage }
-}
-
-async function chatAnthropic(apiKey: string, options: ChatCompletionOptions): Promise<ChatCompletionResult> {
-  const model = options.model ?? getDefaultModel('anthropic')
-  const system = options.messages.find((m) => m.role === 'system')?.content
-  const rest = options.messages.filter((m) => m.role !== 'system') as Array<{ role: 'user' | 'assistant'; content: string }>
-  if (!rest.some((m) => m.role === 'user')) throw new Error('No user message')
-  const res = await fetch(ANTHROPIC_URL, {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: options.max_tokens ?? 1024,
-      ...(system && { system }),
-      messages: rest,
-    }),
-  })
-  const text = await res.text()
-  if (!res.ok) throw new Error(text || `Anthropic API ${res.status}`)
-  const data = JSON.parse(text)
-  const content = data.content?.[0]?.text?.trim() ?? ''
-  const usage = parseAnthropicUsage(data.usage)
-  return { content, provider: 'anthropic', model, usage }
-}
-
-/**
- * Call the configured AI chat provider. Throws if no provider is configured.
- */
 export async function chatCompletion(
   options: ChatCompletionOptions,
   ctx?: ChatCompletionContext
@@ -204,57 +122,25 @@ export async function chatCompletion(
   let result: ChatCompletionResult
   const p = ctx?.privateOpenAi
   if (p) {
-    const base = p.baseUrl.replace(/\/$/, '')
-    const url = `${base}/v1/chat/completions`
-    const model = options.model ?? p.defaultModel ?? getDefaultModel('custom')
-    result = await chatOpenAICompatible(url, p.apiKey, { ...options, model }, 'custom')
+    result = await chatPrivateOpenAi(p, options)
   } else {
-    const provider = getProvider()
-    const { key, url } = getApiKeyAndUrl(provider)
-    if (provider === 'anthropic') {
-      result = await chatAnthropic(key, options)
-    } else {
-      result = await chatOpenAICompatible(url, key, options, provider)
-    }
+    result = await chatWithPlatformOrCloudFallback(options, ctx?.orgSettings)
   }
   maybeRecordUsage(ctx, result)
   return result
 }
 
-/**
- * Config error for chat: org private AI misconfiguration wins; else env-based provider.
- */
 export function resolveChatConfigError(orgSettings: unknown, privateRuntime: PrivateOpenAiRuntime | null): string | null {
   if (privateRuntime) return null
   const orgErr = getOrgPrivateAiConfigError(orgSettings)
   if (orgErr) return orgErr
-  return getChatConfigError()
+  const platformErr = getOrgPlatformAiConfigError(orgSettings)
+  if (platformErr) return platformErr
+  return getCloudChatConfigError()
 }
 
 export function getChatConfigError(): string | null {
-  const provider = getProvider()
-  if (provider === 'openrouter' && !process.env.OPENROUTER_API_KEY?.trim()) return 'Set OPENROUTER_API_KEY.'
-  if (provider === 'together' && !process.env.TOGETHER_API_KEY?.trim()) return 'Set TOGETHER_API_KEY.'
-  if (provider === 'openai' && !process.env.OPENAI_API_KEY?.trim()) return 'Set OPENAI_API_KEY.'
-  if (provider === 'anthropic' && !process.env.ANTHROPIC_API_KEY?.trim()) return 'Set ANTHROPIC_API_KEY.'
-  if (provider === 'custom') {
-    if (!process.env.AI_CHAT_BASE_URL?.trim()) return 'Set AI_CHAT_BASE_URL for custom/local OpenAI-compatible server.'
-    const key =
-      process.env.AI_CHAT_API_KEY?.trim() ||
-      process.env.OPENAI_API_KEY?.trim() ||
-      process.env.TOGETHER_API_KEY?.trim()
-    if (!key) return 'Set AI_CHAT_API_KEY (any non-empty string is fine for Ollama) or reuse OPENAI_API_KEY / TOGETHER_API_KEY. See docs/ENV_REFERENCE.md — Local LLM.'
-    return null
-  }
-  if (
-    !process.env.OPENROUTER_API_KEY?.trim() &&
-    !process.env.TOGETHER_API_KEY?.trim() &&
-    !process.env.OPENAI_API_KEY?.trim() &&
-    !process.env.ANTHROPIC_API_KEY?.trim()
-  ) {
-    return 'No AI chat provider configured. Set a cloud API key or use a local server (AI_CHAT_BASE_URL + AI_CHAT_API_KEY). See docs/ENV_REFERENCE.md.'
-  }
-  return null
+  return getCloudChatConfigError()
 }
 
 export type { ChatUsage, AiUsageContext }

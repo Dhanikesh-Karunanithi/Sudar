@@ -44,6 +44,7 @@ import {
   searchImagesForTutor,
   searchWebForTutor,
 } from '@/lib/tutor/webResources'
+import { buildPlatformAiRuntime } from '../../../../../../shared/ai/orgAiPlatform'
 import { SUDAR_LEARN_PLATFORM_KNOWLEDGE } from '@/content/learnPlatformKnowledge.generated'
 const GUARDRAIL_REFUSAL_MESSAGE = "I'm here to help with your courses and learning. I can't help with that. What would you like to learn today?"
 const SENSITIVE_DATA_REFUSAL_MESSAGE = (
@@ -82,6 +83,16 @@ function resolveRoutingMeta(orgSettings: unknown, privateRuntime: PrivateOpenAiR
       decision: 'local' as const,
       provider_id: 'local-main',
       model: privateRuntime?.defaultModel ?? '',
+      fallback_used: false,
+      fallback_reason: null,
+    }
+  }
+  const platform = buildPlatformAiRuntime(orgSettings)
+  if (platform) {
+    return {
+      decision: 'cloud' as const,
+      provider_id: 'cloud:sudar_platform',
+      model: platform.defaultModel,
       fallback_used: false,
       fallback_reason: null,
     }

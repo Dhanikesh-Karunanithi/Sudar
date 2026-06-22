@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils'
 import { useSidebarContent } from '@/contexts/SidebarContentContext'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { UserAvatar } from '@/components/ui/UserAvatar'
+import { OrgSwitcher } from '@/components/layout/OrgSwitcher'
 
 interface SidebarProps {
   user: {
@@ -103,6 +104,8 @@ export function Sidebar({ user, orgRole = 'LEARNER', isSuperAdmin = false }: Sid
           </div>
         </Link>
       </div>
+
+      <OrgSwitcher />
 
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto flex flex-col min-h-0">

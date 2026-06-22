@@ -12,6 +12,10 @@ const TOKEN = process.env.SUPABASE_ACCESS_TOKEN
 const ADDITIONAL = [
   'https://learn.thesudar.com/**',
   'https://studio.thesudar.com/**',
+  'https://staging.learn.thesudar.com/**',
+  'https://staging.studio.thesudar.com/**',
+  'https://sudar-learn.vercel.app/**',
+  'https://sudar-studio.vercel.app/**',
   'https://mcp.thesudar.com/oauth/callback',
 ]
 

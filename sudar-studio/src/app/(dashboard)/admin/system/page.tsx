@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Users, Building2, AlertCircle, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Users, Building2, AlertCircle, Trash2, ArrowRightLeft } from 'lucide-react'
 import { SudarLoadingFrost } from '@/components/branding/SudarBrandLoader'
 
 interface PlatformUser {
@@ -26,6 +27,7 @@ interface PlatformOrg {
 }
 
 export default function SystemAdminPage() {
+  const router = useRouter()
   const [tab, setTab] = useState<'users' | 'orgs'>('users')
   const [users, setUsers] = useState<PlatformUser[]>([])
   const [orgs, setOrgs] = useState<PlatformOrg[]>([])
@@ -33,6 +35,22 @@ export default function SystemAdminPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
+  const [switchingOrgId, setSwitchingOrgId] = useState<string | null>(null)
+
+  async function switchToOrg(orgId: string) {
+    setSwitchingOrgId(orgId)
+    try {
+      const res = await fetch('/api/org/switch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ org_id: orgId }),
+      })
+      if (res.ok) router.push('/')
+      else router.refresh()
+    } finally {
+      setSwitchingOrgId(null)
+    }
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -264,6 +282,7 @@ export default function SystemAdminPage() {
                   <th className="px-4 py-3">Plan</th>
                   <th className="px-4 py-3">Members</th>
                   <th className="px-4 py-3">Created</th>
+                  <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -275,6 +294,18 @@ export default function SystemAdminPage() {
                     <td className="px-4 py-3 text-slate-100">{o.member_count}</td>
                     <td className="px-4 py-3 text-slate-400 text-xs">
                       {o.created_at ? new Date(o.created_at).toLocaleDateString() : '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => switchToOrg(o.id)}
+                        disabled={switchingOrgId === o.id}
+                        className="inline-flex items-center gap-1 rounded-lg border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+                        aria-label={`Switch to ${o.name}`}
+                      >
+                        <ArrowRightLeft className="h-3.5 w-3.5" />
+                        Switch
+                      </button>
                     </td>
                   </tr>
                 ))}
