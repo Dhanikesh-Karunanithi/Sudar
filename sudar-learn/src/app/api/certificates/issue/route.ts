@@ -5,6 +5,7 @@
  */
 
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { isLearnerEligibleForPathCertificate } from '@/lib/learner/pathCertificateEligibility'
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 
@@ -26,6 +27,11 @@ export async function POST(request: NextRequest) {
 
   if (!path) return NextResponse.json({ error: 'Path not found' }, { status: 404 })
   if (!path.issues_certificate) return NextResponse.json({ error: 'Path does not issue certificates' }, { status: 400 })
+
+  const eligibility = await isLearnerEligibleForPathCertificate(admin, user.id, path_id)
+  if (!eligibility.eligible) {
+    return NextResponse.json({ error: eligibility.reason ?? 'Path requirements are not complete' }, { status: 403 })
+  }
 
   // Check existing cert
   const { data: existing } = await admin
