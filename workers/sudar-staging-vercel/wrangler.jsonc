@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "sudar-staging-vercel",
+  "main": "src/index.ts",
+  "account_id": "c832f01f11c861e2b31cd36a0db18f36",
+  "compatibility_date": "2025-06-01",
+  "observability": {
+    "enabled": true
+  },
+  "routes": [
+    {
+      "pattern": "staging.learn.thesudar.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "staging.studio.thesudar.com",
+      "custom_domain": true
+    }
+  ]
+}

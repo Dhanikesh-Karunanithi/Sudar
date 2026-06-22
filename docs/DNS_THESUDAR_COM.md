@@ -33,6 +33,13 @@ Production Learn and Studio stay on Cloudflare Workers. Staging uses **Vercel Pr
 
 Add domains in Vercel (`vercel domains add …`) then create the records above in Cloudflare (grey cloud until Vercel issues SSL). Ops script: `node scripts/ops/cloudflare-dns-staging-vercel.mjs` (needs `CLOUDFLARE_API_TOKEN` with **Zone → DNS → Edit**; wrangler OAuth alone is read-only for DNS).
 
+**If the API token lacks DNS Edit** (Workers/Pages token only), deploy the edge proxy instead — it attaches custom domains and Cloudflare creates DNS automatically:
+
+```bash
+cd workers/sudar-staging-vercel && npm install && npx wrangler deploy
+# Or: GitHub Actions → "Ops — staging access (Cloudflare → Vercel)"
+```
+
 Also add staging origins to Intelligence `CORS_ORIGINS` and redeploy (`scripts/ops/patch-render-intelligence-cors.mjs` with `RENDER_API_KEY`, or Render dashboard).
 
 ### Attaching Learn / Studio custom domains

@@ -24,6 +24,7 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
   - **SudarSim preview**: Studio **Preview simulation** button + Learn `preview=1` session API for draft scenarios (creator role); preview banner; course preview Sim card; draft badge on module link; publish validation.
   - **Early-access feedback**: `early_access_feedback` table; upload + submit APIs; feedback form in Learn/Studio Sudar chat; **Tester feedback** inbox on Studio `/early-access`.
 - **Migrations**: `20260622100000_sim_sessions_metadata.sql`, `20260622110000_early_access_feedback.sql`.
+- **Staging access**: Deployed Cloudflare Worker `sudar-staging-vercel` — proxies `staging.learn.thesudar.com` / `staging.studio.thesudar.com` → Vercel (custom domains auto-create DNS; repo `CLOUDFLARE_API_TOKEN` lacks Zone DNS Edit).
 
 ### 2026-06-20 — Staging ops rollout (Vercel + Supabase shared DB)
 
@@ -33,7 +34,7 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
   - Pilot orgs **Talisma** + **Foundever** provisioned on shared project via `scripts/ops/provision-pilot-org.mjs`.
   - Vercel Production env + domains on `sudar-learn` / `sudar-studio`; deploys live at `sudar-learn.vercel.app` / `sudar-studio.vercel.app`.
   - Cloudflare DNS script `scripts/ops/cloudflare-dns-staging-vercel.mjs` (A → `76.76.21.21`); Intelligence CORS patch script + `render.yaml` staging origins.
-- **Manual follow-up**: Add Cloudflare A records (or run DNS script with `CLOUDFLARE_API_TOKEN`); patch Render `CORS_ORIGINS` with `RENDER_API_KEY` and redeploy Intelligence.
+- **Manual follow-up**: ~~Add Cloudflare A records~~ **Done** via `workers/sudar-staging-vercel` edge proxy (or use DNS script if token gains **Zone → DNS → Edit**); patch Render `CORS_ORIGINS` with `RENDER_API_KEY` and redeploy Intelligence.
 
 ### 2026-06-20 — Pilot orgs, org switcher, Sudar AI (FreeLLMAPI) tier
 

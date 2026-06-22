@@ -1,17 +1,30 @@
-# Point staging.learn / staging.studio at Vercel (A → 76.76.21.21, DNS only).
-name: Ops — staging DNS (Cloudflare → Vercel)
+# Staging learn/studio: Cloudflare Worker proxy → Vercel (auto DNS via custom domains).
+name: Ops — staging access (Cloudflare → Vercel)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "workers/sudar-staging-vercel/**"
+      - ".github/workflows/ops-staging-dns.yml"
 
 jobs:
-  dns:
+  deploy:
     runs-on: ubuntu-latest
-    name: Upsert staging A records on thesudar.com
+    name: Deploy sudar-staging-vercel proxy
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cloudflare DNS — staging.learn + staging.studio
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install and deploy
+        working-directory: workers/sudar-staging-vercel
+        run: |
+          npm install
+          npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: node scripts/ops/cloudflare-dns-staging-vercel.mjs
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
