@@ -96,8 +96,13 @@ export function ModuleSimLinkPanel({
       </div>
 
       {linkedScenarioId && linkedTitle ? (
-        <p className="text-sm text-slate-200">
+        <p className="text-sm text-slate-200 flex flex-wrap items-center gap-2">
           Linked: <span className="font-medium text-white">{linkedTitle}</span>
+          {scenarios.find((s) => s.id === linkedScenarioId)?.status === 'draft' ? (
+            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-200">
+              Draft — publish before learners can play
+            </span>
+          ) : null}
         </p>
       ) : null}
 

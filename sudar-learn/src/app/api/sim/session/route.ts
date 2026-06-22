@@ -3,6 +3,23 @@ import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/se
 import { createSimSessionRequestSchema } from '@shared-sudarsim/schemas'
 import { createVoiceRoom, DEFAULT_PERSONA_STATE } from '@/lib/sim/simSession'
 
+const CREATOR_ROLES = new Set(['ADMIN', 'MANAGER', 'CREATOR'])
+
+async function userCanPreviewScenario(
+  admin: ReturnType<typeof createServiceRoleSupabaseClient>,
+  userId: string,
+  orgId: string,
+): Promise<boolean> {
+  const { data: membership } = await admin
+    .from('org_members')
+    .select('role')
+    .eq('org_id', orgId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  return CREATOR_ROLES.has((membership?.role as string | undefined) ?? '')
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const {
@@ -22,17 +39,36 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: parsed.error.flatten() }, { status: 400 })
   }
 
+  const isPreview = parsed.data.preview === true
   const admin = createServiceRoleSupabaseClient()
 
-  const { data: scenario, error: scenErr } = await admin
-    .from('sim_scenarios')
-    .select('*')
-    .eq('id', parsed.data.scenario_id)
-    .eq('status', 'published')
-    .single()
+  let scenarioQuery = admin.from('sim_scenarios').select('*').eq('id', parsed.data.scenario_id)
+  if (!isPreview) {
+    scenarioQuery = scenarioQuery.eq('status', 'published')
+  }
+
+  const { data: scenario, error: scenErr } = await scenarioQuery.single()
 
   if (scenErr || !scenario) {
     return NextResponse.json({ success: false, error: 'Scenario not found' }, { status: 404 })
+  }
+
+  const { data: profile } = await admin.from('profiles').select('org_id').eq('id', user.id).single()
+  if (!profile?.org_id || profile.org_id !== scenario.org_id) {
+    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
+  }
+
+  if (isPreview) {
+    if (scenario.status !== 'draft') {
+      return NextResponse.json(
+        { success: false, error: 'Preview is only for draft scenarios' },
+        { status: 400 },
+      )
+    }
+    const canPreview = await userCanPreviewScenario(admin, user.id, scenario.org_id)
+    if (!canPreview) {
+      return NextResponse.json({ success: false, error: 'Forbidden: creator role required' }, { status: 403 })
+    }
   }
 
   const { data: crmSkinRow } = await admin
@@ -40,11 +76,6 @@ export async function POST(request: NextRequest) {
     .select('image_url, width, height, overlays')
     .eq('scenario_id', scenario.id)
     .maybeSingle()
-
-  const { data: profile } = await admin.from('profiles').select('org_id').eq('id', user.id).single()
-  if (!profile?.org_id || profile.org_id !== scenario.org_id) {
-    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
-  }
 
   const persona = scenario.persona as { initial_mood?: number } | null
   const initialMood = persona?.initial_mood ?? 0.5
@@ -64,6 +95,7 @@ export async function POST(request: NextRequest) {
       enrollment_id: parsed.data.enrollment_id ?? null,
       persona_state: personaState,
       status: 'active',
+      metadata: isPreview ? { preview: true } : {},
     })
     .select('id')
     .single()
@@ -89,6 +121,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     success: true,
     session_id: session.id,
+    preview: isPreview,
     scenario: {
       id: scenario.id,
       title: scenario.title,

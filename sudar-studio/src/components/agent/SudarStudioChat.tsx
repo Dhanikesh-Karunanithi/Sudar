@@ -9,6 +9,7 @@ import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { SudarChatLaunchButton } from '@/components/agent/SudarChatLaunchButton'
+import { EarlyAccessFeedbackPanel } from '@/components/feedback/EarlyAccessFeedbackPanel'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -59,6 +60,7 @@ const QUICK_PROMPTS = [
   'Export users CSV',
   'How do I embed Sudar?',
   'What are our org KPIs?',
+  'Share early access feedback',
 ]
 
 export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER' }) {
@@ -69,6 +71,7 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
+  const [feedbackMode, setFeedbackMode] = useState(false)
   const [autoApply, setAutoApply] = useState(false)
   const [authoringContext, setAuthoringContext] = useState<StudioAuthoringContext>({
     courseId: null,
@@ -125,6 +128,22 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
   async function handleSendWithMessage(msg: string) {
     const trimmed = msg.trim()
     if (!trimmed || thinking) return
+
+    if (/share feedback|early access feedback|report a bug|beta feedback|tester feedback/i.test(trimmed)) {
+      setFeedbackMode(true)
+      setInput('')
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: trimmed },
+        {
+          role: 'assistant',
+          content:
+            'Thanks for helping us improve Sudar. Use the form below to describe what you found — screenshots and URLs are welcome.',
+        },
+      ])
+      return
+    }
+
     setInput('')
     const newMessages: Message[] = [...messages, { role: 'user', content: trimmed }]
     setMessages(newMessages)
@@ -431,6 +450,19 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
             </div>
 
             <div className="p-5 border-t border-border bg-card/80 shrink-0">
+              {feedbackMode ? (
+                <EarlyAccessFeedbackPanel
+                  surface="studio"
+                  pageRoute={route}
+                  courseId={authoringContext.courseId ?? undefined}
+                  moduleId={authoringContext.activeModuleId ?? undefined}
+                  onCancel={() => setFeedbackMode(false)}
+                  onSubmitted={(thankYou) => {
+                    setFeedbackMode(false)
+                    setMessages((prev) => [...prev, { role: 'assistant', content: thankYou }])
+                  }}
+                />
+              ) : (
               <div className="relative flex items-center gap-2">
                 <input
                   type="text"
@@ -451,6 +483,7 @@ export function SudarStudioChat({ orgRole }: { orgRole: 'ADMIN' | 'MANAGER' | 'C
                   <Send className="w-4 h-4" />
                 </button>
               </div>
+              )}
             </div>
           </motion.div>
         )}

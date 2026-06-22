@@ -37,6 +37,7 @@ import { parseTutorQueryHttpResponse } from '@/lib/tutor/responseContract'
 import { inferContentIntentFromModality } from '@/lib/learner/modalityContentIntent'
 import type { ResolvedLearnerPreferences } from '@/lib/learner/learnerPreferences'
 import { useNotificationSound } from '@/components/features/notifications/NotificationSoundProvider'
+import { EarlyAccessFeedbackPanel } from '@/components/feedback/EarlyAccessFeedbackPanel'
 
 // --- Types ------------------------------------------------------------------
 
@@ -128,6 +129,8 @@ interface Props {
   personalizeOffered?: boolean
   personalizationAccess?: PersonalizationAccessSerialized
   personalizationOverlays?: Record<string, ModulePersonalizationOverlay> | null
+  simScenarioStatusById?: Record<string, 'draft' | 'published'>
+  isOrgCreator?: boolean
 }
 
 /** Get plain text body from module content for flashcards or fallback */
@@ -333,6 +336,8 @@ export function CourseViewer({
   personalizeOffered = false,
   personalizationAccess = DEFAULT_PERSONALIZATION_ACCESS,
   personalizationOverlays = null,
+  simScenarioStatusById = {},
+  isOrgCreator = false,
 }: Props) {
   const { playChime } = useNotificationSound()
   const router = useRouter()
@@ -512,6 +517,7 @@ export function CourseViewer({
 
   // Tutor state
   const [tutorOpen, setTutorOpen] = useState(false)
+  const [feedbackMode, setFeedbackMode] = useState(false)
   const [tutorPanelExpanded, setTutorPanelExpanded] = useState(false)
   const [tutorPanelWidth, setTutorPanelWidth] = useState(384)
   const [tutorPanelResizing, setTutorPanelResizing] = useState(false)
@@ -1222,6 +1228,21 @@ export function CourseViewer({
     const msg = (overrideInput ?? input).trim()
     if (!msg || thinking) return
 
+    if (/share feedback|early access feedback|report a bug|beta feedback|tester feedback/i.test(msg)) {
+      setFeedbackMode(true)
+      setInput('')
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: msg },
+        {
+          role: 'assistant',
+          content:
+            'Thanks for helping us improve Sudar. Use the form below to describe what you found — screenshots and URLs are welcome.',
+        },
+      ])
+      return
+    }
+
     // Capture selected content so Sudar can "read" what the learner is referring to
     const selectedFromPopup = selectionPopup?.text
     const selectedFromDoc =
@@ -1652,7 +1673,10 @@ export function CourseViewer({
               const hasPodcast = (course.settings?.include_podcast ?? false) &&
                 (course.settings?.podcast_dialogue?.length ?? 0) > 0
               const hasSudarPlay = Boolean(currentModule?.sudarplay_map_url)
-              const hasSudarSim = Boolean(currentModule?.sim_scenario_id)
+              const linkedSimId = currentModule?.sim_scenario_id
+              const linkedSimStatus = linkedSimId ? simScenarioStatusById[linkedSimId] : undefined
+              const simPublished = linkedSimStatus === 'published'
+              const hasSudarSim = Boolean(linkedSimId && simPublished)
               const modalities = [
                 { id: 'text', icon: FileText, label: 'Read' },
                 { id: 'listening', icon: Headphones, label: 'Listen' },
@@ -1697,6 +1721,17 @@ export function CourseViewer({
               })
             })()}
           </div>
+
+          {(() => {
+            const linkedSimId = currentModule?.sim_scenario_id
+            const status = linkedSimId ? simScenarioStatusById[linkedSimId] : undefined
+            if (!linkedSimId || status !== 'draft' || !isOrgCreator) return null
+            return (
+              <p className="hidden sm:block text-xs text-amber-600 dark:text-amber-400 shrink-0 max-w-[200px]">
+                Sim is draft — preview in Studio before publish.
+              </p>
+            )
+          })()}
 
           {isCompleted && (
             <div className="flex items-center gap-1.5 text-green-600 text-xs font-medium shrink-0">
@@ -2354,8 +2389,22 @@ export function CourseViewer({
                       </div>
                     </div>
                     <div className="space-y-1.5 pl-8">
-                      {['Give me a quick summary', 'Explain this with an example', 'What are the key takeaways?', 'Quiz me on this module', 'How does this connect to what I\'ve learned before?'].map((prompt) => (
-                        <button key={prompt} onClick={() => { setInput(prompt); setTimeout(() => handleTutorSend(prompt), 50) } }
+                      {['Give me a quick summary', 'Explain this with an example', 'What are the key takeaways?', 'Quiz me on this module', 'How does this connect to what I\'ve learned before?', 'Share early access feedback'].map((prompt) => (
+                        <button key={prompt} onClick={() => {
+                          if (prompt === 'Share early access feedback') {
+                            setFeedbackMode(true)
+                            setMessages([
+                              {
+                                role: 'assistant',
+                                content:
+                                  'Thanks for helping us improve Sudar. Use the form below to describe what you found — screenshots and URLs are welcome.',
+                              },
+                            ])
+                            return
+                          }
+                          setInput(prompt)
+                          setTimeout(() => handleTutorSend(prompt), 50)
+                        } }
                           className="w-full text-left px-2.5 py-1.5 bg-card border border-border hover:border-primary/30 hover:bg-primary/10 text-muted-foreground hover:text-primary text-xs rounded-lg transition-all">
                           {prompt}
                         </button>
@@ -2512,6 +2561,20 @@ export function CourseViewer({
               </div>
 
               <div className="p-3 border-t border-border bg-background">
+                {feedbackMode ? (
+                  <EarlyAccessFeedbackPanel
+                    surface="learn"
+                    pageRoute={pathname ?? `/courses/${course.id}/learn`}
+                    courseId={course.id}
+                    moduleId={currentModuleId}
+                    onCancel={() => setFeedbackMode(false)}
+                    onSubmitted={(thankYou) => {
+                      setFeedbackMode(false)
+                      setMessages((prev) => [...prev, { role: 'assistant', content: thankYou }])
+                    }}
+                  />
+                ) : (
+                <>
                 {(messages.length > 0 || thinking) && (
                   <div className="mb-2">
                     <p className="text-[10px] text-muted-foreground mb-1">Remember…</p>
@@ -2556,6 +2619,8 @@ export function CourseViewer({
                   </button>
                 </div>
                 <p className="text-center text-muted-foreground text-[10px] mt-1.5">Sudar knows the full course + your learning history</p>
+                </>
+                )}
               </div>
             </div>
             </div>

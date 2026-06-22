@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
+import { FEEDBACK_CATEGORY_LABELS, type FeedbackCategory, type FeedbackStatus } from '@shared-feedback/schemas'
 
 type WaitlistEntry = {
   id: string
@@ -20,8 +22,23 @@ type InviteCode = {
   is_active: boolean
 }
 
+type FeedbackRow = {
+  id: string
+  user_id: string
+  user_name: string | null
+  surface: string
+  category: FeedbackCategory
+  message: string
+  page_route: string | null
+  urls: string[]
+  attachment_urls: string[]
+  status: FeedbackStatus
+  created_at: string
+}
+
 export default function EarlyAccessAdminPage() {
   const [data, setData] = useState<{ waitlist: WaitlistEntry[]; inviteCodes: InviteCode[] } | null>(null)
+  const [feedback, setFeedback] = useState<FeedbackRow[]>([])
   const [error, setError] = useState<string | null>(null)
   const [newCode, setNewCode] = useState('')
   const [issuedCode, setIssuedCode] = useState<string | null>(null)
@@ -36,9 +53,37 @@ export default function EarlyAccessAdminPage() {
       .catch((e: Error) => setError(e.message))
   }
 
+  const loadFeedback = () => {
+    fetch('/api/early-access/feedback')
+      .then(async (r) => {
+        if (!r.ok) return { feedback: [] }
+        return r.json()
+      })
+      .then((body: { feedback?: FeedbackRow[] }) => {
+        setFeedback(
+          (body.feedback ?? []).map((row) => ({
+            ...row,
+            urls: Array.isArray(row.urls) ? row.urls : [],
+            attachment_urls: Array.isArray(row.attachment_urls) ? row.attachment_urls : [],
+          })),
+        )
+      })
+      .catch(() => setFeedback([]))
+  }
+
   useEffect(() => {
     load()
+    loadFeedback()
   }, [])
+
+  const updateFeedbackStatus = async (id: string, status: FeedbackStatus) => {
+    await fetch('/api/early-access/feedback', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update_status', id, status }),
+    })
+    loadFeedback()
+  }
 
   const createCode = async () => {
     if (!newCode.trim()) return
@@ -171,6 +216,74 @@ export default function EarlyAccessAdminPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-medium text-foreground">Tester feedback ({feedback.length})</h2>
+        <p className="text-sm text-muted-foreground">
+          Submissions from Sudar chat (early-access testers). Screenshots and URLs are included when provided.
+        </p>
+        {feedback.length === 0 ? (
+          <p className="text-sm text-muted-foreground rounded-lg border border-border p-4">No feedback yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {feedback.map((row) => (
+              <article key={row.id} className="rounded-lg border border-border p-4 space-y-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {FEEDBACK_CATEGORY_LABELS[row.category]} · {row.surface}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {row.user_name ?? row.user_id.slice(0, 8)} ·{' '}
+                      {new Date(row.created_at).toLocaleString()}
+                      {row.page_route ? ` · ${row.page_route}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs rounded-full border border-border px-2 py-0.5 capitalize">{row.status}</span>
+                    {row.status === 'new' ? (
+                      <button
+                        type="button"
+                        onClick={() => void updateFeedbackStatus(row.id, 'reviewed')}
+                        className="text-xs rounded-lg border border-primary px-2 py-1 text-primary"
+                      >
+                        Mark reviewed
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+                <p className="text-sm text-foreground whitespace-pre-wrap">{row.message}</p>
+                {row.urls.length > 0 ? (
+                  <ul className="text-xs space-y-1">
+                    {row.urls.map((url) => (
+                      <li key={url}>
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
+                          {url}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {row.attachment_urls.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {row.attachment_urls.map((url) => (
+                      <a
+                        key={url}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative block h-20 w-20 rounded-md overflow-hidden border border-border"
+                      >
+                        <Image src={url} alt="Feedback screenshot" fill className="object-cover" unoptimized />
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   )

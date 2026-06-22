@@ -43,6 +43,9 @@
       "@shared-access/*": [
         "../shared/access/*"
       ],
+      "@shared-feedback/*": [
+        "../shared/feedback/*"
+      ],
       "zod": [
         "./node_modules/zod/index.d.cts"
       ],

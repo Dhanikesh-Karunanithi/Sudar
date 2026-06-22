@@ -15,7 +15,7 @@ export default async function CoursePreviewPage({
   const admin = createServiceRoleSupabaseClient()
   const { data: course, error } = await admin
     .from('courses')
-    .select('id, title, description, modules(id, title, content, order_index)')
+    .select('id, title, description, modules(id, title, content, order_index, sim_scenario_id)')
     .eq('id', id)
     .eq('created_by', user.id)
     .order('order_index', { referencedTable: 'modules', ascending: true })
@@ -23,13 +23,14 @@ export default async function CoursePreviewPage({
 
   if (error || !course) redirect('/courses')
 
-  type CourseRow = { id: string; title: string | null; description: string | null; modules?: Array<{ id: string; title: string; content: unknown; order_index: number }> }
+  type CourseRow = { id: string; title: string | null; description: string | null; modules?: Array<{ id: string; title: string; content: unknown; order_index: number; sim_scenario_id?: string | null }> }
   const c = course as unknown as CourseRow
   const modules: PreviewModule[] = (c.modules ?? []).map((m) => ({
     id: m.id,
     title: m.title,
     content: m.content as PreviewModule['content'],
     order_index: m.order_index,
+    sim_scenario_id: m.sim_scenario_id ?? null,
   }))
   const courseForView: PreviewCourse = {
     id: c.id,

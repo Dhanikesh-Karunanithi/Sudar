@@ -50,6 +50,34 @@ export function SimScenarioEditor({
     onSaved?.()
   }
 
+  const previewSimulation = async () => {
+    setSaving(true)
+    setMessage(null)
+    const res = await fetch(`/api/sudarsim/scenarios/${scenarioId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scenario: { ...scenario, status: 'draft' },
+        crm_skin: crmSkin,
+        publish: false,
+      }),
+    })
+    const data = await res.json()
+    setSaving(false)
+    if (!data.success) {
+      setMessage(data.error ?? 'Save failed — fix errors before preview')
+      return
+    }
+    const learnBase =
+      (process.env.NEXT_PUBLIC_LEARN_APP_URL ?? process.env.NEXT_PUBLIC_LEARN_URL ?? 'http://localhost:3001').replace(
+        /\/$/,
+        '',
+      )
+    const url = `${learnBase}/sim/session/new?scenario_id=${scenarioId}&preview=1`
+    window.open(url, '_blank', 'noopener,noreferrer')
+    setMessage('Preview opened in Learn (new tab)')
+  }
+
   const importFromTranscript = async () => {
     if (transcript.length < 50) return
     setSaving(true)
@@ -97,6 +125,14 @@ export function SimScenarioEditor({
             className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200"
           >
             Save draft
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void previewSimulation()}
+            className="rounded-lg border border-violet-500/50 bg-violet-950/40 px-4 py-2 text-sm text-violet-100"
+          >
+            Preview simulation
           </button>
           <button
             type="button"

@@ -10,6 +10,7 @@ export function sudarContentSecurityPolicy() {
     "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://static.cloudflareinsights.com https://cloudflareinsights.com https://api.together.xyz https://api.openai.com https://api.anthropic.com",
     "img-src 'self' data: https: blob:",
+    "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https:",
     "frame-ancestors 'self'",
   ].join('; ')
 }

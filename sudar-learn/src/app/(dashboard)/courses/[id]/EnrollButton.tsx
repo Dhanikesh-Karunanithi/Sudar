@@ -47,24 +47,27 @@ export function EnrollButton({
     setLoading(true)
     setError(null)
 
-    const res = await fetch('/api/enrollments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ course_id: courseId }),
-    })
+    try {
+      const res = await fetch('/api/enrollments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ course_id: courseId }),
+      })
 
-    if (!res.ok) {
-      const data = await res.json()
-      setError(data.error ?? 'Failed to enroll')
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error ?? 'Failed to enroll')
+        return
+      }
+
+      if (isExternal) {
+        router.push(`/courses/${courseId}/learn`)
+      } else if (firstModuleId) {
+        router.push(`/courses/${courseId}/learn?module=${firstModuleId}`)
+      }
+      router.refresh()
+    } finally {
       setLoading(false)
-      return
-    }
-
-    router.refresh()
-    if (isExternal) {
-      router.push(`/courses/${courseId}/learn`)
-    } else if (firstModuleId) {
-      router.push(`/courses/${courseId}/learn?module=${firstModuleId}`)
     }
   }
 

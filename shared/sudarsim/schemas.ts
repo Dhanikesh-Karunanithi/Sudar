@@ -123,6 +123,7 @@ export const createSimSessionRequestSchema = z.object({
   module_id: z.string().uuid().optional(),
   course_id: z.string().uuid().optional(),
   enrollment_id: z.string().uuid().optional(),
+  preview: z.boolean().optional(),
 })
 
 export const simTurnRequestSchema = z.object({

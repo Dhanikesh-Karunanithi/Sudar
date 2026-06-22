@@ -24,6 +24,7 @@ import { useNotificationSound } from '@/components/features/notifications/Notifi
 import { CHAT_OPEN_PET_EVENT } from '@/lib/mascot/petSpriteManifest'
 import { SUDAR_PERSONA_VOICE } from '@/lib/mascot/sudarPersonaVoice'
 import { SudarPetSprite } from '@/components/mascot/SudarPetSprite'
+import { EarlyAccessFeedbackPanel } from '@/components/feedback/EarlyAccessFeedbackPanel'
 import {
   getCachedConversation,
   isLocalTutorCacheEnabled,
@@ -51,7 +52,12 @@ const STARTUP_CHIPS: ProactivePromptChoice[] = [
   { id: 'recommend', label: 'Recommend a course', follow_up_message: 'Recommend a course for me' },
   { id: 'progress', label: 'Show my progress', follow_up_message: 'Show me my progress' },
   { id: 'skills', label: 'Improve my skills', follow_up_message: 'Are there any courses on improving skills?' },
+  { id: 'feedback', label: 'Share early access feedback', follow_up_message: 'I want to share early access feedback' },
 ]
+
+function wantsFeedbackMode(message: string): boolean {
+  return /share feedback|early access feedback|report a bug|beta feedback|tester feedback/i.test(message)
+}
 
 interface FloatingSudarChatProps {
   userId: string
@@ -71,6 +77,7 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
   const [prefs, setPrefs] = useState<MascotPreferences | null>(null)
   const [pedagogyMode, setPedagogyMode] = useState<'explain' | 'guide' | 'exam_focus'>('explain')
   const [openTracked, setOpenTracked] = useState(false)
+  const [feedbackMode, setFeedbackMode] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const handleSendWithMessageRef = useRef<(msg: string) => Promise<void>>(async () => {})
   const activeMascot = pickActiveMascot('chat_open', prefs)
@@ -132,6 +139,22 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
   async function handleSendWithMessage(msg: string) {
     const trimmed = msg.trim()
     if (!trimmed || thinking) return
+
+    if (wantsFeedbackMode(trimmed) || trimmed === 'I want to share early access feedback') {
+      setFeedbackMode(true)
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: trimmed },
+        {
+          role: 'assistant',
+          content:
+            'Thanks for helping us improve Sudar. Use the form below to describe what you found — screenshots and URLs are welcome.',
+        },
+      ])
+      setInput('')
+      return
+    }
+
     setInput('')
     const newMessages: Message[] = [...messages, { role: 'user', content: trimmed }]
     setMessages(newMessages)
@@ -337,6 +360,17 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
                         source: 'tutor_chat',
                         detail: { nudge_type: 'startup_question', accepted: true },
                       })
+                      if (c.id === 'feedback') {
+                        setFeedbackMode(true)
+                        setMessages([
+                          {
+                            role: 'assistant',
+                            content:
+                              'Thanks for helping us improve Sudar. Use the form below to describe what you found — screenshots and URLs are welcome.',
+                          },
+                        ])
+                        return
+                      }
                       const q = c.follow_up_message?.trim()
                       if (q) void handleSendWithMessage(q)
                     }}
@@ -433,6 +467,18 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
             </div>
 
             <div className="p-5 border-t border-border bg-card/80 shrink-0">
+              {feedbackMode ? (
+                <EarlyAccessFeedbackPanel
+                  surface="learn"
+                  pageRoute={pathname ?? '/'}
+                  onCancel={() => setFeedbackMode(false)}
+                  onSubmitted={(thankYou) => {
+                    setFeedbackMode(false)
+                    setMessages((prev) => [...prev, { role: 'assistant', content: thankYou }])
+                  }}
+                />
+              ) : (
+              <>
               {pastedText.length > 0 && (
                 <div className="mb-2 rounded-lg border border-border bg-card/80 p-2">
                   <p className="text-[10px] text-muted-foreground mb-1">Pasted text ({pastedText.length} chars) — will be sent with your message</p>
@@ -481,6 +527,8 @@ export function FloatingSudarChat({ userId }: FloatingSudarChatProps) {
                   Sudar is for learning. Do not paste passwords, card numbers, or private keys.
                 </p>
               </div>
+              </>
+              )}
             </div>
           </motion.div>
         )}

@@ -39,6 +39,9 @@
       ],
       "@shared-access/*": [
         "../shared/access/*"
+      ],
+      "@shared-feedback/*": [
+        "../shared/feedback/*"
       ]
     },
     "target": "ES2017"

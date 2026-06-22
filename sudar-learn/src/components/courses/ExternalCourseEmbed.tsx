@@ -1,31 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getExternalProviderMeta, resolveExternalEmbedUrl } from '@/lib/courses/externalProviders'
+import {
+  getExternalProviderMeta,
+  providerAllowsInAppEmbed,
+  resolveExternalEmbedUrl,
+} from '@/lib/courses/externalProviders'
 import { ExternalCourseLabel } from './ExternalCourseLabel'
 
-function isYouTubeUrl(url: string): { videoId?: string; playlistId?: string } | null {
-  try {
-    const parsed = new URL(url)
-    const host = parsed.hostname.replace(/^www\./, '')
-
-    if (host === 'youtube.com' || host === 'm.youtube.com') {
-      const list = parsed.searchParams.get('list')
-      if (list) return { playlistId: list }
-      const v = parsed.searchParams.get('v')
-      if (v) return { videoId: v }
-    }
-    if (host === 'youtu.be') {
-      const id = parsed.pathname.replace(/^\//, '').split(/[/?]/)[0]
-      if (id) return { videoId: id }
-    }
-  } catch {
-    return null
-  }
-  return null
-}
+const IFRAME_LOAD_TIMEOUT_MS = 8000
 
 export function ExternalCourseEmbed({
   title,
@@ -48,15 +33,44 @@ export function ExternalCourseEmbed({
 }) {
   const provider = getExternalProviderMeta(externalProvider)
   const src = resolveExternalEmbedUrl({ externalProvider, externalUrl, embedUrl })
-  const [iframeBlocked, setIframeBlocked] = useState(false)
+  const canEmbedInApp = providerAllowsInAppEmbed(externalProvider) && Boolean(src)
+  const [iframeBlocked, setIframeBlocked] = useState(!canEmbedInApp)
+  const [iframeLoaded, setIframeLoaded] = useState(false)
+  const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     onView?.()
   }, [onView])
 
-  // Special handling for YouTube: use official embed format without sandbox for reliability
-  const youtubeMatch = externalUrl ? isYouTubeUrl(externalUrl) : null
-  const isYouTubeEmbed = externalProvider === 'youtube' || (src && src.includes('youtube.com/embed'))
+  useEffect(() => {
+    if (!canEmbedInApp || iframeBlocked) return
+
+    loadTimerRef.current = setTimeout(() => {
+      if (!iframeLoaded) {
+        setIframeBlocked(true)
+      }
+    }, IFRAME_LOAD_TIMEOUT_MS)
+
+    return () => {
+      if (loadTimerRef.current) clearTimeout(loadTimerRef.current)
+    }
+  }, [canEmbedInApp, iframeBlocked, iframeLoaded, src])
+
+  const isYouTubeEmbed =
+    externalProvider === 'youtube' || (src != null && src.includes('youtube.com/embed'))
+  const isWebEmbed =
+    externalProvider === 'custom' || externalProvider === 'manual'
+  const skipSandbox = isYouTubeEmbed || isWebEmbed
+
+  const showIframe = canEmbedInApp && src && !iframeBlocked
+
+  function handleIframeLoad() {
+    setIframeLoaded(true)
+    if (loadTimerRef.current) {
+      clearTimeout(loadTimerRef.current)
+      loadTimerRef.current = null
+    }
+  }
 
   return (
     <div
@@ -67,7 +81,7 @@ export function ExternalCourseEmbed({
     >
       <ExternalCourseLabel provider={externalProvider} variant="ribbon" />
 
-      {src && !iframeBlocked ? (
+      {showIframe ? (
         <div className={cn('relative w-full bg-black', minHeight)}>
           <iframe
             src={src}
@@ -76,12 +90,13 @@ export function ExternalCourseEmbed({
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
             referrerPolicy="no-referrer"
-            {...(isYouTubeEmbed
+            {...(skipSandbox
               ? {}
               : {
                   sandbox:
                     'allow-scripts allow-same-origin allow-popups allow-forms allow-presentation',
                 })}
+            onLoad={handleIframeLoad}
             onError={() => setIframeBlocked(true)}
           />
         </div>
@@ -107,7 +122,7 @@ export function ExternalCourseEmbed({
         </div>
       )}
 
-      {src && !iframeBlocked && externalUrl && (
+      {showIframe && externalUrl && (
         <div className="px-4 py-3 border-t border-border bg-muted/20 flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground">
             Viewing content from {provider.label} inside Sudar (external).

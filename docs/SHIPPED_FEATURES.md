@@ -79,21 +79,34 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## Early-access tester feedback (June 2026)
+
+- **Where**: Sudar Learn + Studio **Sudar chat** (chip **Share early access feedback**); Studio **`/early-access`** → **Tester feedback** section.
+- **What**: Invited testers (`early_access`, `tester`, `unlimited` tiers) submit structured feedback with category, message, URLs, and screenshot paste/upload. Operators review submissions in Studio Early access admin.
+- **Key files**:
+  - `supabase/migrations/20260622110000_early_access_feedback.sql`
+  - `shared/feedback/schemas.ts`, `shared/feedback/access.ts`
+  - `sudar-learn/src/components/feedback/EarlyAccessFeedbackPanel.tsx`, `src/app/api/feedback/`
+  - `sudar-studio/src/app/api/early-access/feedback/route.ts`, `src/components/feedback/`
+- **Flow**: Tester opens Sudar chat → **Share early access feedback** → describe issue + attach screenshots/URLs → submit → appears in Studio **Early access** inbox.
+
+---
+
 ## SudarSim — roleplay simulation (pilot)
 
 - **Where**: Sudar Studio **`/sudarsim`** (org scenario library + editor, sidebar **SudarSim**); Sudar Learn `/sim/session`, CourseViewer **Sim** tab, ALP `/alp/sim/play`; Moodle `local_sudaralp/sim.php`; voice service `sudar-sim/`. Course modules optionally **link** a scenario (delivery only).
-- **What**: Multi-channel customer roleplay (phone voice via WebSocket/LiveKit, chat, email) with screenshot **CRM overlay** editor, configurable rubric coach, transcript→scenario import, optional module completion gate, Twin memory via `ai_interactions`. Locales: en, fr, es, pt, ta.
+- **What**: Multi-channel customer roleplay (phone voice via WebSocket/LiveKit, chat, email) with screenshot **CRM overlay** editor, configurable rubric coach, transcript→scenario import, optional module completion gate, Twin memory via `ai_interactions`. Locales: en, fr, es, pt, ta. **Preview simulation** in Studio (draft test in Learn with preview banner) before publish.
 - **Key files**:
   - `docs/SUDAR_SIM_PLAN.md`, `docs/SUDAR_SIM_DEPLOY.md`, `docs/SUDAR_SIM_API.md`
   - `shared/sudarsim/`, `sudar-sim/main.py`
   - `sudar-intelligence/src/api/routes/sim.py`
   - `sudar-learn/src/components/sudarsim/`, `src/app/api/sim/`
   - `sudar-studio/src/app/(dashboard)/sudarsim/`, `src/app/api/sudarsim/scenarios/`, `src/components/sudarsim/`
-  - `supabase/migrations/20260616000000_sudarsim.sql`
+  - `supabase/migrations/20260616000000_sudarsim.sql`, `20260622100000_sim_sessions_metadata.sql`
 - **Flow**:
-  1. Admin creates/publishes scenario in Studio **SudarSim** (`/sudarsim`) — CRM screenshot + overlays + rubric.
-  2. Optionally links scenario to a course module for in-context delivery.
-  3. Learner opens **Sim** tab or `/sim/session/new?scenario_id=…`.
+  1. Admin creates scenario in Studio **SudarSim** — use **Preview simulation** to test draft in Learn.
+  2. Publish scenario; optionally link to a course module.
+  3. Learner opens **Sim** tab (published scenarios only) or `/sim/session/new?scenario_id=…`.
   4. Practices across channels; CRM actions logged.
   5. Ends session → coach report → optional `module_complete` if rubric passes.
 
@@ -263,9 +276,10 @@ This document summarizes **shipped** features that are committed and ready for u
 ## External open courses — Discover + import (Learn + Studio)
 
 - **Where**: Sudar Learn — **Courses** catalog (`/courses`, **`?tab=discover`**), course detail, learn viewer for external items; Next Best Action on dashboard; Sudar tutor chat and proactive nudges. Sudar Studio — **Settings → External courses**, **External courses → Import**.
-- **What**: Admins import external courses from **YouTube, Udemy, Coursera, edX, Khan Academy, or manual URL** with **org tag** assignment (LLM-suggested + manual). Learners discover open courses on the **Open courses** tab; view in Sudar via **iframe** (with optional consent + sign-in gates for paid providers); **Mark as complete** syncs progress. Sudar tutor uses **ingested metadata + RAG chunks** to discuss topics when `content_access_mode` allows; NBA scores external courses (boost on skill-gap match); proactive nudges can recommend tagged external courses after low quiz scores.
+- **What**: Admins import external courses from **YouTube, Udemy, Coursera, edX, Khan Academy, or manual URL** with **org tag** assignment (LLM-suggested + manual). Learners discover open courses on the **Open courses** tab; view in Sudar via **iframe** when the provider allows embedding (CSP `frame-src` + provider-aware fallback); **Mark as complete** syncs progress. Sudar tutor uses **ingested metadata + RAG chunks** to discuss topics when `content_access_mode` allows; NBA scores external courses (boost on skill-gap match); proactive nudges can recommend tagged external courses after low quiz scores.
 - **Key files**:
   - `supabase/migrations/20260601000000_external_open_courses.sql`, `20260602120000_external_courses_extended.sql` — external columns, `external_course_data`, provider config, sync log, `learner_profiles.external_course_engagement`.
+  - `shared/security/contentSecurityPolicy.mjs` — `frame-src` for YouTube, Vimeo, HTTPS embeds.
   - `shared/external-courses/types.ts` — shared metadata and policy types.
   - `sudar-studio/src/lib/providers/` — provider adapters (YouTube, Udemy, Coursera, edX, Khan, manual).
   - `sudar-studio/src/lib/ai/suggestExternalCourseTags.ts`, `sudar-studio/src/lib/external/importExternalCourse.ts`.

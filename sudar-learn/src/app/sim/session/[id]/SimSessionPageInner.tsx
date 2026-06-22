@@ -9,6 +9,7 @@ export default function SimSessionPageInner({ params }: { params: Promise<{ id: 
   const searchParams = useSearchParams()
   const router = useRouter()
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [isPreview, setIsPreview] = useState(false)
   const [payload, setPayload] = useState<{
     scenario: Parameters<typeof SimWorkspace>[0]['scenario']
     persona_state: SimPersonaState
@@ -21,6 +22,7 @@ export default function SimSessionPageInner({ params }: { params: Promise<{ id: 
         const scenarioId = searchParams.get('scenario_id')
         const moduleId = searchParams.get('module_id') ?? undefined
         const courseId = searchParams.get('course_id') ?? undefined
+        const preview = searchParams.get('preview') === '1'
         if (!scenarioId) {
           setError('scenario_id required')
           return
@@ -28,14 +30,22 @@ export default function SimSessionPageInner({ params }: { params: Promise<{ id: 
         const res = await fetch('/api/sim/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ scenario_id: scenarioId, module_id: moduleId, course_id: courseId }),
+          body: JSON.stringify({
+            scenario_id: scenarioId,
+            module_id: moduleId,
+            course_id: courseId,
+            preview,
+          }),
         })
         const data = await res.json()
         if (!data.success) {
           setError(data.error ?? 'Failed to start session')
           return
         }
-        router.replace(`/sim/session/${data.session_id}?module_id=${moduleId ?? ''}&course_id=${courseId ?? ''}`)
+        const previewQuery = preview ? '&preview=1' : ''
+        router.replace(
+          `/sim/session/${data.session_id}?module_id=${moduleId ?? ''}&course_id=${courseId ?? ''}${previewQuery}`,
+        )
         return
       }
       setSessionId(id)
@@ -45,6 +55,8 @@ export default function SimSessionPageInner({ params }: { params: Promise<{ id: 
         setError(data.error ?? 'Session not found')
         return
       }
+      const sessionMeta = data.session?.metadata as { preview?: boolean } | null
+      setIsPreview(Boolean(sessionMeta?.preview))
       setPayload({
         scenario: data.scenario ?? {
           id: data.session.scenario_id,
@@ -68,9 +80,20 @@ export default function SimSessionPageInner({ params }: { params: Promise<{ id: 
 
   const moduleId = searchParams.get('module_id') ?? undefined
   const courseId = searchParams.get('course_id') ?? undefined
+  const previewFromQuery = searchParams.get('preview') === '1'
+  const previewMode = isPreview || previewFromQuery
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
+      {previewMode ? (
+        <div
+          className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+          role="status"
+        >
+          <span className="font-semibold text-amber-50">Preview mode</span> — test run only. Publish the
+          scenario in Studio before learners can access it.
+        </div>
+      ) : null}
       <h1 className="mb-4 text-2xl font-bold text-foreground">{payload.scenario.title}</h1>
       <SimWorkspace
         sessionId={sessionId}

@@ -136,9 +136,7 @@ export function providerAllowsInAppEmbed(provider: string | null | undefined): b
   return (
     provider === 'youtube' ||
     provider === 'custom' ||
-    provider === 'manual' ||
-    provider === 'khan' ||
-    provider === 'khan_academy'
+    provider === 'manual'
   )
 }
 

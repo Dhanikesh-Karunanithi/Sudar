@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, Pencil } from 'lucide-react'
+import { ArrowLeft, BookOpen, Pencil, Phone } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   CourseModuleContent,
@@ -153,6 +153,9 @@ export function PreviewCourseView({ course }: Props) {
   }, [studioVideoPhase, studioVideoJobId])
 
   const canGenerateStudioVideo = !activeScorm
+  const learnBase =
+    (process.env.NEXT_PUBLIC_LEARN_APP_URL ?? 'http://localhost:3001').replace(/\/$/, '')
+  const activeSimScenarioId = activeModule?.sim_scenario_id ?? null
 
   return (
     <div className="flex h-full min-h-0 min-w-0 w-full flex-col bg-background text-foreground overflow-hidden">
@@ -217,6 +220,29 @@ export function PreviewCourseView({ course }: Props) {
         {activeModule ? (
           <>
             <h1 className="text-2xl font-bold font-display text-foreground mb-2">{activeModule.title}</h1>
+            {activeSimScenarioId ? (
+              <div className="mb-6 rounded-xl border border-violet-500/35 bg-violet-500/10 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-violet-100 flex items-center gap-2">
+                      <Phone className="h-4 w-4" aria-hidden />
+                      SudarSim preview
+                    </p>
+                    <p className="text-xs text-violet-200/90 mt-1">
+                      Test the linked scenario in Learn before publishing the course.
+                    </p>
+                  </div>
+                  <a
+                    href={`${learnBase}/sim/session/new?scenario_id=${activeSimScenarioId}&module_id=${activeModule.id}&course_id=${course.id}&preview=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500"
+                  >
+                    Preview simulation
+                  </a>
+                </div>
+              </div>
+            ) : null}
             <CourseModuleContent module={activeModule} />
             <div className="mt-6 rounded-xl border border-amber-500/35 bg-amber-500/10 p-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

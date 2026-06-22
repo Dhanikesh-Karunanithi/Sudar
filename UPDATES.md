@@ -16,6 +16,15 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-22 — External course embeds, SudarSim preview, early-access feedback
+
+- **Theme**: Fix broken external course iframes, let authors test simulations before publish, and collect structured tester feedback via Sudar chat.
+- **Shipped**:
+  - **External courses**: `frame-src` added to shared CSP (YouTube, Vimeo, HTTPS Web URLs); provider-aware link-out for Khan/Coursera/Udemy/edX; enroll button loading fix.
+  - **SudarSim preview**: Studio **Preview simulation** button + Learn `preview=1` session API for draft scenarios (creator role); preview banner; course preview Sim card; draft badge on module link; publish validation.
+  - **Early-access feedback**: `early_access_feedback` table; upload + submit APIs; feedback form in Learn/Studio Sudar chat; **Tester feedback** inbox on Studio `/early-access`.
+- **Migrations**: `20260622100000_sim_sessions_metadata.sql`, `20260622110000_early_access_feedback.sql`.
+
 ### 2026-06-20 — Staging ops rollout (Vercel + Supabase shared DB)
 
 - **Theme**: Branded staging hostnames for Talisma pilot testing on Vercel while production stays on Cloudflare Workers.

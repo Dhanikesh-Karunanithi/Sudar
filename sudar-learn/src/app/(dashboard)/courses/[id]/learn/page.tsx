@@ -153,6 +153,33 @@ export default async function CourseLearnPage({
     return { ...mod, content: null, quiz: null }
   })
 
+  const simScenarioIds = (course.modules ?? [])
+    .map((m) => m.sim_scenario_id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0)
+
+  let simScenarioStatusById: Record<string, 'draft' | 'published'> = {}
+  if (simScenarioIds.length > 0) {
+    const { data: simRows } = await admin
+      .from('sim_scenarios')
+      .select('id, status')
+      .in('id', simScenarioIds)
+    simScenarioStatusById = Object.fromEntries(
+      (simRows ?? []).map((row) => [row.id as string, row.status as 'draft' | 'published']),
+    )
+  }
+
+  let isOrgCreator = false
+  if (course.org_id) {
+    const { data: membership } = await admin
+      .from('org_members')
+      .select('role')
+      .eq('org_id', course.org_id)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    const role = membership?.role as string | undefined
+    isOrgCreator = Boolean(role && ['ADMIN', 'MANAGER', 'CREATOR'].includes(role))
+  }
+
   const courseForViewer = {
     ...course,
     settings: slimCourseSettingsForSsr(course.settings),
@@ -179,6 +206,8 @@ export default async function CourseLearnPage({
       personalizationOverlays={
         (enrollment.personalization_overlays as Record<string, ModulePersonalizationOverlay> | null) ?? null
       }
+      simScenarioStatusById={simScenarioStatusById}
+      isOrgCreator={isOrgCreator}
     />
   )
 }

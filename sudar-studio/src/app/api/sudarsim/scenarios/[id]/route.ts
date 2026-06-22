@@ -60,6 +60,24 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: scenarioParsed.error.flatten() }, { status: 400 })
   }
 
+  if (publish) {
+    const draft = scenarioParsed.data
+    const channels = draft.channels ?? { phone: true, chat: true, email: true }
+    const hasChannel = Boolean(channels.phone || channels.chat || channels.email)
+    const personaName = draft.persona?.name?.trim()
+    const title = draft.title?.trim() || (existing.title as string | undefined)?.trim()
+
+    if (!title) {
+      return NextResponse.json({ error: 'Title is required before publishing' }, { status: 400 })
+    }
+    if (!personaName) {
+      return NextResponse.json({ error: 'Customer persona name is required before publishing' }, { status: 400 })
+    }
+    if (!hasChannel) {
+      return NextResponse.json({ error: 'Enable at least one channel before publishing' }, { status: 400 })
+    }
+  }
+
   const scenarioRow = buildScenarioRow(scenarioParsed.data, orgId, user.id, publish)
   const { error } = await admin.from('sim_scenarios').update(scenarioRow).eq('id', scenarioId)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
