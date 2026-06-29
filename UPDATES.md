@@ -16,6 +16,15 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-06-26 — Account settings + owner login recovery
+
+- **Theme**: Learners and admins can edit their name; Studio enforces temp-password change like Learn; owner accounts reset with one-time passwords.
+- **Shipped**:
+  - **Account card**: Settings → **Account** (full name + read-only email) on Studio and Learn; `PATCH /api/profile`.
+  - **Studio change-password**: `/change-password` when `profiles.require_password_change` is true.
+  - **Ops**: `scripts/ops/reset-owner-access.mjs` for super-admin password reset; fixed Foundever email in `provision-pilot-org.mjs`.
+- **Docs**: `SHIPPED_FEATURES.md` — Account settings section.
+
 ### 2026-06-22 — External course embeds, SudarSim preview, early-access feedback
 
 - **Theme**: Fix broken external course iframes, let authors test simulations before publish, and collect structured tester feedback via Sudar chat.

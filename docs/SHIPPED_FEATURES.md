@@ -4,6 +4,19 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## Account settings (Studio | Learn)
+
+- **Where**: Sudar Studio and Sudar Learn — **Settings** (`/settings`) — **Account** card (above profile photo).
+- **What**: Signed-in users can view their email (read-only) and edit **full name**, which updates `profiles.full_name` and auth `user_metadata`. Studio and Learn both redirect to `/change-password` when `profiles.require_password_change` is true after a temp password is issued.
+- **Key files**:
+  - `sudar-studio/src/components/features/profile/AccountSettingsCard.tsx`, `sudar-learn/src/components/features/profile/AccountSettingsCard.tsx` — UI.
+  - `sudar-studio/src/app/api/profile/route.ts`, `sudar-learn/src/app/api/profile/route.ts` — `GET` + `PATCH`.
+  - `sudar-studio/src/app/change-password/page.tsx` — Studio temp-password gate.
+  - `scripts/ops/reset-owner-access.mjs` — ops script to reset owner emails with a one-time password.
+- **Flow**: Settings → Account → edit name → Save. After admin reset, sign in with temp password → change-password screen → set new password → dashboard.
+
+---
+
 ## Pilot orgs — multi-org admin + Sudar AI tier (June 2026)
 
 - **Where**: Staging Sudar Studio (`sudar-studio.vercel.app`); org switcher in sidebar; **Platform → Organisations** switch action; **Org settings → Sudar AI (included for pilots)**.

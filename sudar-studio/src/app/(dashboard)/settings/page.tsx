@@ -19,6 +19,7 @@ import { SudarInlineLoader, SudarLoadingFrost } from '@/components/branding/Suda
 import type { PerformanceConfig, KpiDefinition, TermDefinition } from '@/types/performance'
 import { ModelPicker, type ModelPickerOption } from '@/components/ui/ModelPicker'
 import { ProfilePhotoSettingsCard } from '@/components/features/profile/ProfilePhotoSettingsCard'
+import { AccountSettingsCard } from '@/components/features/profile/AccountSettingsCard'
 import { VoiceCharacterStage } from '@/components/features/audio/VoiceCharacterStage'
 import type { VoiceLibraryProviderStatus } from '@/lib/audio/voices'
 import { normalizeTtsVoiceId, TTS_VOICE_OPTIONS } from '@/lib/audio/voices'
@@ -380,6 +381,7 @@ export default function SettingsPage() {
 
   return (
     <div className="p-8 max-w-3xl mx-auto space-y-6">
+      <AccountSettingsCard />
       <ProfilePhotoSettingsCard />
       <div className="rounded-xl border border-border bg-card p-4">
         <p className="text-sm text-muted-foreground">

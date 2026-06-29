@@ -7,6 +7,7 @@ import { SudarInlineLoader, SudarLoadingFrost } from '@/components/branding/Suda
 import { VoiceCharacterStage } from '@/components/features/audio/VoiceCharacterStage'
 import { trackMascotEvent } from '@/lib/mascot/tracking'
 import { ProfilePhotoSettingsCard } from '@/components/features/profile/ProfilePhotoSettingsCard'
+import { AccountSettingsCard } from '@/components/features/profile/AccountSettingsCard'
 import type { MascotId, MascotIntensity, MascotMode, MascotSupportStyle } from '@/types/mascot'
 import type { VoiceLibraryProviderStatus } from '@/lib/audio/voices'
 import { normalizeTtsVoiceId, TTS_VOICE_OPTIONS } from '@/lib/audio/voices'
@@ -138,6 +139,7 @@ export default function SettingsPage() {
 
   return (
     <div className="p-8 max-w-3xl mx-auto space-y-6">
+      <AccountSettingsCard />
       <ProfilePhotoSettingsCard />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

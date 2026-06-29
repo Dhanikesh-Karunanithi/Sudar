@@ -16,12 +16,16 @@ export default async function DashboardLayout({
 
   if (!user) redirect('/login')
 
-  const orgId = await getOrCreateOrg(user.id)
-
-  const [{ data: profile }, { data: membership }] = await Promise.all([
-    supabase.from('profiles').select('full_name, avatar_url, role, onboarding_complete').eq('id', user.id).single(),
-    supabase.from('org_members').select('role').eq('org_id', orgId).eq('user_id', user.id).single(),
+  const [{ data: profile }, orgId] = await Promise.all([
+    supabase.from('profiles').select('full_name, avatar_url, role, onboarding_complete, require_password_change').eq('id', user.id).single(),
+    getOrCreateOrg(user.id),
   ])
+
+  if (profile?.require_password_change) {
+    redirect('/change-password')
+  }
+
+  const { data: membership } = await supabase.from('org_members').select('role').eq('org_id', orgId).eq('user_id', user.id).single()
 
   const role = (membership as { role?: string } | null)?.role ?? 'LEARNER'
   const orgRole = ['ADMIN', 'MANAGER', 'CREATOR', 'LEARNER'].includes(role) ? role as 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER' : 'LEARNER'

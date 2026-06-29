@@ -30,7 +30,7 @@ const admin = createClient(supabaseUrl, serviceKey, {
 
 const DEFAULT_ADMIN_EMAILS = [
   'connect@dhanikeshkarunanithi.com',
-  'dhanikeshkarunanithi@foundever.com',
+  'dhanikesh.karunanithi@foundever.com',
 ]
 
 const adminEmails = (process.env.PILOT_ADMIN_EMAILS ?? DEFAULT_ADMIN_EMAILS.join(','))
