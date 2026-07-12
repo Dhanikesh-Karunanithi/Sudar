@@ -16,6 +16,90 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-07-13 — Cursor Education demo access + brand cards
+
+- **Theme**: Job-application demo readiness — accessible courses, Cursor logo cards, catalog scoped to active org.
+- **Shipped**:
+  - Org-scoped published catalog/paths; SCORM access for org members; demo prepare script (switch org, enroll, hide non-Cursor courses with restore map).
+  - Cursor brand logo in SCORM titlebar; generated course thumb/banner cards uploaded to `course-media`.
+- **Docs**: This entry; `APPLICATION_ANSWERS.md` course IDs.
+- **Ops**: `node portfolio/cursor-education/scripts/make-course-cards.mjs`; build + upload; `prepare-demo-access.mjs`. Restore drafts via `hidden-courses.restore.local`.
+
+### 2026-07-13 — Cursor Education portfolio pedagogy + Cursor UI refresh
+
+- **Theme**: Teaching beats, scored feedback, completion notice, Cursor-like shell (no emoji), learner-facing course descriptions.
+- **Shipped**:
+  - Chat panel scrollable; Continue-after-feedback; miss penalties (pass ≥70%); completion overlay.
+  - Teaching notes in all three `course.json` files; upload descriptions no longer mention “IDE shell.”
+  - Shared shell CSS/icons aligned to Cursor dark chrome; rebuild + re-upload all three SCORMs; admins enrolled with learners.
+- **Docs**: This entry; `APPLICATION_ANSWERS.md` course IDs; `SHIPPED_FEATURES.md` portfolio section.
+
+### 2026-07-13 — Cursor Education Portfolio (SCORM IDE shells)
+
+- **Theme**: Application portfolio for Cursor Director, Product Education Engineering — interactive SCORM courses that simulate Cursor IDE / DevEx Console / Launch Board, hosted on a dedicated Sudar org.
+- **Shipped**:
+  - Local SCORM 1.2 packages + builder under `portfolio/cursor-education/` (shared shell, three courses, `dist/*.zip`).
+  - Ops: `scripts/ops/provision-cursor-education-org.mjs` (org, test learners, `CURSOR-HIRE-*` invite codes); `portfolio/cursor-education/scripts/upload-to-sudar.mjs` (import + certified path).
+  - Live org **Cursor Education Portfolio** with path **Cursor Developer Fluency Program** (`issues_certificate`).
+  - Demo script + application essay drafts in `portfolio/cursor-education/`.
+- **Docs**: This entry; portfolio README / OUTLINES / FLUENCY_METRICS / DEMO_SCRIPT / APPLICATION_ANSWERS.
+- **Ops**: Rebuild `node portfolio/cursor-education/scripts/build-scorm.mjs`; upload with Studio env file. Credentials in gitignored `credentials.local`.
+
+### 2026-07-12 — SudarSim Practice OS wave
+
+- **Theme**: Evolve SudarSim from “sim then scorecard” into a deliberate **Practice OS** loop on existing Studio/Learn/Intelligence rails (no greenfield app).
+- **Shipped**:
+  - North star + ADR: `docs/SUDARSIM_PRACTICE_OS.md`, ADR addendum in `docs/SUDAR_SIM_PLAN.md`, self-host providers `docs/SUDAR_SIM_SELFHOST.md`.
+  - Practice Loop UX: strengths / needs-work, **Practice only X** drills (`focus_dimension`), conversation timeline from `practice_blocks`, progressive full report (`SimCoachReport`, `SimWorkspace`).
+  - Twin + NBA: richer `ai_tutor_context.sim`, authoritative `sim_complete` `learning_events`, NBA `practice_sim`, Learn **Today’s Practice** (`/api/sim/today-practice`).
+  - Authoring: Studio practice blocks editor, portable **Export JSON** (`/api/sudarsim/scenarios/[id]/export`), migration `20260712000000_sudarsim_practice_blocks.sql`, `shared/sudarsim/portable.ts`.
+  - Intelligence coach/persona prompts return Practice Loop fields.
+- **Docs**: This entry; `SHIPPED_FEATURES.md` SudarSim; `SUDAR_SIM_API.md`.
+- **Ops**: Apply `supabase/migrations/20260712000000_sudarsim_practice_blocks.sql`.
+
+### 2026-07-11 — In-Studio SudarSim preview
+
+- **Theme**: Authors preview roleplay inside Studio without opening Learn.
+- **Shipped**:
+  - Embedded `StudioSimPreview` on the scenario editor (chat/phone/email HTTP turns + coach).
+  - Studio APIs: `POST /api/sudarsim/preview-session`, `POST /api/sudarsim/preview-session/[id]?action=turn|complete` (draft scenarios allowed; calls Intelligence).
+- **Docs**: This entry; `SHIPPED_FEATURES.md` SudarSim flow updated.
+- **Key files**: `sudar-studio/src/components/sudarsim/StudioSimPreview.tsx`, `sudar-studio/src/app/api/sudarsim/preview-session/`.
+
+### 2026-07-11 — Remove WorkAdventure / SudarPlay
+
+- **Theme**: Retire the experimental Play (game) modality and WorkAdventure bridge from the monorepo.
+- **Removed**:
+  - `workadventure/` client bridge scripts
+  - Learn `/sudarplay/launch` route and Play modality tab in course viewer
+  - Intelligence `/api/sudarplay` package and router mount
+  - Studio Prisma `sudarplay_*` module fields; new migration `20260711000000_drop_sudarplay.sql`
+  - Env docs (`SUDARPLAY_*`, `WA_INSTANCE_URL`); `docs/SUDARPLAY_STATUS.md`
+  - Marketing / roadmap / ECOSYSTEM claims of SudarPlay as current or planned modality
+- **Key files**: `sudar-intelligence/src/api/main.py`, `sudar-learn/.../CourseViewer.tsx`, `supabase/migrations/20260711000000_drop_sudarplay.sql`
+
+### 2026-07-11 — SudarSim reliability, Studio Video & Podcast, content quality gates
+
+- **Theme**: Make roleplay actually work end-to-end, let authors generate overview video/podcast from Studio, harden course generation quality, and add optional local Ollama eval.
+- **Shipped**:
+  - **SudarSim P0**: Phone turns persist to `sim_transcripts` (coach no longer empty); session auth uses `getSession()`; errors surfaced in `SimWorkspace`; `sudar-sim` started by `scripts/dev-with-sudarvid.mjs`; Sim tab visible on mobile; publish CTA on module link; document-import sim attaches as **published**.
+  - **Studio Video & Podcast panel**: `VideoPodcastPanel` wires `/api/studio/video` (now **persists** `video_scenes` + `include_video`), podcast, and TTS; quality page CTA to generate media.
+  - **Watch UX**: Module vs course-overview labels; locale-aware SudarVid `language`; clearer SudarVid-down errors.
+  - **Course gen quality**: Banned-opening retry, `shouldRejectContent` regenerate, `general` content skill, critique hardening, shared outline prompts, `strict_component_validation` honored.
+  - **Ollama (optional)**: `USE_OLLAMA_LOCAL` + `scripts/ollama-eval-content-skill.mjs` for offline prompt eval (not production chain). Pull a model when Ollama is installed (`ollama pull qwen2.5:3b`).
+- **Docs**: This entry; `SHIPPED_FEATURES.md` SudarSim + Video/Podcast sections; `sudar-studio/.env.example` Ollama flags.
+- **Key files**: `sudar-learn/src/components/sudarsim/SimWorkspace.tsx`, `sudar-studio/src/components/content/VideoPodcastPanel.tsx`, `sudar-studio/src/lib/ai/courseGeneration/pipeline.ts`, `sudar-studio/src/lib/ai/ollamaLocal.ts`.
+
+### 2026-07-10 — Fable-inspired prompt engineering (tutor + course gen)
+
+- **Theme**: Make Sudar’s tutor and course generation more decision-oriented and less “AI slop” by applying transferable prompt patterns (modular sections, elicitation WHEN/WHEN NOT, domain skills, few-shot + rationale) — without copying any vendor system prompt.
+- **Shipped**:
+  - **Learn tutor**: Modular `buildTutorSystemPrompt` (mode-aware prose-first formatting, `choice_group` elicitation contract, wellbeing, anti-over-reliance, platform truth, long-turn reminder); shared `tutorVoice` on nudges / enroll bridge / module personalize.
+  - **Studio course gen**: Domain **content skills** playbooks + gold vs slop openings; critique/refine gated by compliance, density, and course length; shared modality prompts (quiz, flashcards, mindmap, podcast, video) with WHEN/WHEN NOT + examples.
+  - **Studio agent**: Rich ACTIONS WHEN/WHEN NOT in `lib/agent/systemPrompt.ts`.
+  - **Docs**: `docs/PROMPT_ENGINEERING.md` inventory; quality gates wired in `pipeline.ts` (banned openings, reject/retry, general skill).
+- **Key files**: `sudar-learn/src/lib/tutor/systemPrompt.ts`, `sudar-studio/src/lib/ai/courseGeneration/contentSkills.ts`, `critiqueGating.ts`, `shared/content-generation/prompts.ts`.
+
 ### 2026-06-26 — Account settings + owner login recovery
 
 - **Theme**: Learners and admins can edit their name; Studio enforces temp-password change like Learn; owner accounts reset with one-time passwords.
@@ -134,7 +218,7 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ### 2026-06-16 — SudarSim (roleplay simulation MVP)
 
-- **Theme**: Real-time multi-channel roleplay (phone, chat, email) with screenshot CRM overlays, AI coach rubric, and Twin integration — distinct from SudarPlay.
+- **Theme**: Real-time multi-channel roleplay (phone, chat, email) with screenshot CRM overlays, AI coach rubric, and Twin integration.
 - **Shipped**:
   - `sudar-sim/` — voice service (LiveKit + WebSocket dev mode) with Pipecat-ready layout.
   - `supabase/migrations/20260616000000_sudarsim.sql` — scenarios, CRM skins, sessions, transcripts, rubric results.
@@ -772,7 +856,7 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 ### Phase 5 — Scale (in progress)
 - **Done**: Path assignment + due dates, compliance view, certificate print, upcoming deadlines, required paths; compliance **email reminders** (Studio cron — see SHIPPED_FEATURES.md).
 - **Implemented**: Flashcards modality (Learn: FlashcardsCard, generate-flashcards API); document-to-course (Studio: generate-from-document API for PDF/DOCX/URL); SCORM 1.2 import (Studio: import-scorm API). RAG in Learn (content_chunks, ingest, tutor search); Floating Sudar Chat (global); tutor workflows (summarize/extract_terms); outcome logging; validate-memory quick preferences; memory insights carousel; SCORM delivery proxy (Learn); change-password flow. **Personalization v2** (overlays, consent, learner groups), Sudar **brand/mascot** surfaces, **trust** docs + Studio Governance (2026-04-11 — see Latest above).
-- **Upcoming**: SudarPlay / SudarFeed / SudarMind wiring, white-label, SSO/HRIS; production hardening of personalization policies.
+- **Upcoming**: SudarFeed / SudarMind wiring, white-label, SSO/HRIS; production hardening of personalization policies.
 
 ---
 
@@ -785,7 +869,7 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 | 3 | ~~SCORM 1.2 import~~ | ✅ Shipped — import-scorm API in Studio. |
 | 4 | ~~**Email reminders**~~ | ✅ Shipped — Studio `POST /api/cron/compliance-reminders` (see SHIPPED_FEATURES.md). |
 | 5 | **Server-side certificate PDF** | Optional: generate PDF for download (in addition to browser Print). |
-| 6 | **SudarPlay / SudarFeed / SudarMind** | Wire game, feed, and mindmap modalities into Learn. |
+| 6 | **SudarFeed / SudarMind** | Wire feed modality further; mindmap already in Learn. |
 | 7 | **White-label & SSO** | Org branding, custom domain, SAML/OIDC (later phase). |
 | 8 | **HRIS integration** | Webhooks for Workday, BambooHR, Rippling (later phase). |
 

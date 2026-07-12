@@ -7,7 +7,7 @@ import {
   ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight,
   List, X, Send, Loader2,
   ChevronDown, FileText, Video, Network,
-  Layers, Zap, MessageSquarePlus, Pin, PinOff, PanelLeftClose, Mic, Maximize2, Minimize2, Headphones, Gamepad2, Phone
+  Layers, Zap, MessageSquarePlus, Pin, PinOff, PanelLeftClose, Mic, Maximize2, Minimize2, Headphones, Phone
 } from 'lucide-react'
 import { cn, stripTutorModelArtifactsFromText } from '@/lib/utils'
 import { renderCourseMarkdown } from '@/lib/courseBodyMarkdown'
@@ -56,8 +56,6 @@ interface Module {
   content: ModuleContent | null
   order_index: number
   quiz?: { questions: QuizQuestion[] } | null
-  sudarplay_map_url?: string | null
-  sudarplay_map_id?: string | null
   sim_scenario_id?: string | null
 }
 
@@ -285,32 +283,21 @@ function ScormViewer({ launchUrl, courseId, moduleId, moduleTitle, onComplete }:
     scormStatus === 'incomplete' ? 'text-amber-400' : 'text-muted-foreground'
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden">
-      {/* Compact SCORM status bar */}
-      <div className="shrink-0 flex items-center gap-3 px-4 py-1.5 bg-muted/40 border-b border-border text-xs">
-        <span className="text-muted-foreground">Interactive SCORM module</span>
-        {scormStatus && (
-          <span className={cn('flex items-center gap-1 font-medium', statusColor)}>
-            <CheckCircle2 className="w-3 h-3" />
-            {scormStatus}
-          </span>
-        )}
-        {scormScore && (
-          <span className="text-muted-foreground ml-auto">
-            Score: <span className="font-medium text-card-foreground">{scormScore}</span>
-          </span>
-        )}
-      </div>
-      {/* Iframe fills the remaining height exactly */}
-      <div className="flex-1 min-h-0 overflow-hidden bg-white">
-        <iframe
-          src={scormProxyUrl(launchUrl)}
-          className="w-full h-full block"
-          style={{ border: 'none' } }
-          allow="fullscreen"
-          title="SCORM content"
-        />
-      </div>
+    <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-[#0d0d0f]">
+      {(scormStatus || scormScore) && (
+        <div className="pointer-events-none absolute right-3 top-2 z-10 flex items-center gap-2 rounded-md bg-black/55 px-2 py-1 text-[10px] text-zinc-200 backdrop-blur-sm">
+          {scormStatus && (
+            <span className={cn('font-medium capitalize', statusColor)}>{scormStatus}</span>
+          )}
+          {scormScore && <span>Score {scormScore}</span>}
+        </div>
+      )}
+      <iframe
+        src={scormProxyUrl(launchUrl)}
+        className="absolute inset-0 h-full w-full border-0"
+        allow="fullscreen"
+        title="SCORM content"
+      />
     </div>
   )
 }
@@ -349,6 +336,7 @@ export function CourseViewer({
   const SIDEBAR_STORAGE_KEY = 'sudar-learn-course-sidebar'
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [sidebarPinned, setSidebarPinned] = useState(true)
+  const scormSidebarPrefApplied = useRef(false)
   useEffect(() => {
     try {
       const raw = localStorage.getItem(SIDEBAR_STORAGE_KEY)
@@ -357,6 +345,15 @@ export function CourseViewer({
       setSidebarPinned(parsed.pinned !== false)
     } catch {}
   }, [])
+  // SCORM IDE shells need horizontal room (Explorer + Editor + Agent). Collapse module list once.
+  useEffect(() => {
+    if (scormSidebarPrefApplied.current) return
+    const mod = course.modules.find((m) => m.id === currentModuleId)
+    if (mod && isScormContent(mod.content as ModuleContent | null | undefined)) {
+      scormSidebarPrefApplied.current = true
+      setSidebarCollapsed(true)
+    }
+  }, [course.modules, currentModuleId])
   useEffect(() => {
     try {
       localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify({ collapsed: sidebarCollapsed, pinned: sidebarPinned }))
@@ -1397,9 +1394,29 @@ export function CourseViewer({
   }
 
   const tutorPanelStyle = { width: tutorPanelWidth }
+  const isScormModule = isScormContent(currentModule?.content)
+
+  useEffect(() => {
+    if (!isScormModule) return
+    const prev = document.documentElement.style.overflow
+    document.documentElement.style.overflow = 'hidden'
+    document.documentElement.dataset.scormImmersive = '1'
+    return () => {
+      document.documentElement.style.overflow = prev
+      delete document.documentElement.dataset.scormImmersive
+    }
+  }, [isScormModule])
 
   return (
-    <div className="flex bg-background overflow-hidden -mx-6 -mt-8 -mb-8 h-[calc(100vh-64px)]">
+    <div
+      className={cn(
+        'flex bg-background overflow-hidden',
+        // Escape dashboard max-w-[1600px] card shell — IDE courses need the full viewport.
+        isScormModule
+          ? 'fixed inset-0 z-[45] h-[100dvh] w-screen max-w-none'
+          : '-mx-4 md:-mx-8 -mt-6 md:-mt-8 -mb-6 md:-mb-8 h-[calc(100vh-64px)]',
+      )}
+    >
       {/* Mobile sidebar overlay */}
       {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
@@ -1461,8 +1478,8 @@ export function CourseViewer({
         )
       })()}
 
-      {/* Collapsed: show expand tab on desktop */}
-      {sidebarCollapsed && (
+      {/* Collapsed: show expand tab on desktop — not used for immersive SCORM */}
+      {!isScormModule && sidebarCollapsed && (
         <div className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-30">
           <button
             onClick={() => setSidebarCollapsed(false)}
@@ -1473,7 +1490,8 @@ export function CourseViewer({
         </div>
       )}
 
-      {/* Module list sidebar */}
+      {/* Module list sidebar — hidden for SCORM IDE (missions live in Explorer) */}
+      {!isScormModule && (
       <div className={cn(
         'fixed lg:relative inset-y-0 left-0 z-30 w-72 bg-muted border-r border-border flex flex-col transition-transform duration-200',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
@@ -1563,9 +1581,10 @@ export function CourseViewer({
           })}
         </div>
       </div>
+      )}
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden w-full">
         {proactiveBanner && (
           <div
             role="status"
@@ -1652,31 +1671,50 @@ export function CourseViewer({
           </div>
         )}
         {/* Top bar */}
-        <div className="flex items-center gap-3 px-6 py-3 border-b border-border bg-background shrink-0 flex-wrap">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-1.5 rounded-md hover:bg-muted transition-colors">
-            <List className="w-4 h-4 text-muted-foreground" />
-          </button>
-          <span className="text-xs text-muted-foreground">{currentIndex + 1}{' / '}{modules.length}</span>
-          <div className="h-4 w-px bg-muted" />
-          <h1 className="text-sm font-semibold text-card-foreground truncate flex-1 min-w-0">{currentModule?.title}</h1>
+        <div className={cn(
+          'flex items-center gap-3 border-b border-border bg-background shrink-0 flex-wrap',
+          isScormModule ? 'px-4 py-2' : 'px-6 py-3',
+        )}>
+          {isScormModule ? (
+            <Link
+              href={`/courses/${course.id}`}
+              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-card-foreground"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Exit
+            </Link>
+          ) : (
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-1.5 rounded-md hover:bg-muted transition-colors">
+              <List className="w-4 h-4 text-muted-foreground" />
+            </button>
+          )}
+          {!isScormModule && (
+            <>
+              <span className="text-xs text-muted-foreground">{currentIndex + 1}{' / '}{modules.length}</span>
+              <div className="h-4 w-px bg-muted" />
+            </>
+          )}
+          <h1 className="text-sm font-semibold text-card-foreground truncate flex-1 min-w-0">
+            {isScormModule ? course.title : currentModule?.title}
+          </h1>
 
           {/* Modality switcher — hidden for SCORM modules; WAI-ARIA tabs for accessibility */}
           <div
             id="content-format-tabs"
             role="tablist"
             aria-label="Content format"
-            className={cn('hidden sm:flex items-center gap-0.5 bg-muted rounded-lg p-0.5 shrink-0', isScormContent(currentModule?.content) && '!hidden')}
+            className={cn('flex items-center gap-0.5 bg-muted rounded-lg p-0.5 shrink-0 overflow-x-auto max-w-full', isScormContent(currentModule?.content) && '!hidden')}
           >
             {(() => {
-              const hasVideo = (course.settings?.include_video ?? false) &&
+              const hasOverviewVideo = (course.settings?.include_video ?? false) &&
                 (course.settings?.video_scenes?.length ?? 0) > 0
               const hasPodcast = (course.settings?.include_podcast ?? false) &&
                 (course.settings?.podcast_dialogue?.length ?? 0) > 0
-              const hasSudarPlay = Boolean(currentModule?.sudarplay_map_url)
               const linkedSimId = currentModule?.sim_scenario_id
               const linkedSimStatus = linkedSimId ? simScenarioStatusById[linkedSimId] : undefined
               const simPublished = linkedSimStatus === 'published'
               const hasSudarSim = Boolean(linkedSimId && simPublished)
+              void hasOverviewVideo // overview scenes render inside Watch tab when present
               const modalities = [
                 { id: 'text', icon: FileText, label: 'Read' },
                 { id: 'listening', icon: Headphones, label: 'Listen' },
@@ -1685,7 +1723,6 @@ export function CourseViewer({
                 { id: 'mindmap', icon: Network, label: 'Map' },
                 { id: 'flashcards', icon: Layers, label: 'Cards' },
                 ...(hasSudarSim ? [{ id: 'sudarsim', icon: Phone, label: 'Sim', soon: false, href: `/sim/session/new?scenario_id=${currentModule?.sim_scenario_id}&module_id=${currentModuleId}&course_id=${course.id}` }] : []),
-                ...(hasSudarPlay ? [{ id: 'sudarplay', icon: Gamepad2, label: 'Play', soon: false, href: `/sudarplay/launch?module_id=${currentModuleId}` }] : []),
               ]
               return modalities.map(({ id, icon: Icon, label, soon, href }) => {
                 if (href) {
@@ -1727,8 +1764,8 @@ export function CourseViewer({
             const status = linkedSimId ? simScenarioStatusById[linkedSimId] : undefined
             if (!linkedSimId || status !== 'draft' || !isOrgCreator) return null
             return (
-              <p className="hidden sm:block text-xs text-amber-600 dark:text-amber-400 shrink-0 max-w-[200px]">
-                Sim is draft — preview in Studio before publish.
+              <p className="text-xs text-amber-600 dark:text-amber-400 shrink-0 max-w-[200px]">
+                Sim is draft — publish in Studio SudarSim before learners can practice.
               </p>
             )
           })()}
@@ -1761,7 +1798,7 @@ export function CourseViewer({
             {/* ── SCORM: full-height iframe — no scroll wrapper, no max-width ── */}
             {isScormContent(currentModule?.content) ? (
               <>
-                <div className="flex-1 min-h-0 overflow-hidden">
+                <div className="relative flex-1 min-h-0 w-full overflow-hidden">
                   <ScormViewer
                     launchUrl={currentModule.content.launch_url}
                     courseId={course.id}
@@ -1771,6 +1808,7 @@ export function CourseViewer({
                   />
                 </div>
                 {/* Compact SCORM bottom bar: prev / completion status / next */}
+                {!isScormModule && (
                 <div className="shrink-0 border-t border-border bg-background px-6 py-3 flex items-center gap-4">
                   <button onClick={() => prevModule && navigateTo(prevModule.id)} disabled={!prevModule}
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-card-foreground disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-muted transition-all">
@@ -1790,6 +1828,7 @@ export function CourseViewer({
                     Next <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
+                )}
               </>
             ) : (
               <>
@@ -2003,15 +2042,22 @@ export function CourseViewer({
                 {/* Module content — text, rich, audio, video, podcast, mindmap, or flashcards */}
                 {activeModality === 'video' ? (
                   <div className="flex flex-col gap-10">
-                    <SudarVidCard
-                      moduleId={currentModuleId}
-                      moduleTitle={currentModule?.title ?? ''}
-                      contentBody={getContentBodyForFlashcards(currentModule?.content ?? null)}
-                      courseId={course.id}
-                    />
+                    <section className="space-y-3" aria-label="Module video">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Module video — generated from this lesson
+                      </p>
+                      <SudarVidCard
+                        moduleId={currentModuleId}
+                        moduleTitle={currentModule?.title ?? ''}
+                        contentBody={getContentBodyForFlashcards(currentModule?.content ?? null)}
+                        courseId={course.id}
+                      />
+                    </section>
                     {(videoScenes?.length ?? 0) > 0 && (
                       <section className="space-y-3 border-t border-border pt-8" aria-label="Course overview video">
-                        <p className="text-xs font-medium text-muted-foreground">Course overview video</p>
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Course overview — authored in Studio Video &amp; Podcast
+                        </p>
                         {courseMediaLoading && !courseMedia ? (
                           <div className="flex items-center justify-center py-12 text-muted-foreground">
                             <Loader2 className="w-6 h-6 animate-spin" />

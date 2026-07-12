@@ -1,0 +1,256 @@
+{
+  "id": "edu-ops",
+  "title": "Education Ops for a Weekly-Shipping IDE",
+  "shell": "board",
+  "agentName": "VP Customer Education",
+  "agentSub": "Sparring partner for education ops",
+  "explorerLabel": "LAUNCH BOARD",
+  "welcomeTerminal": "Launch Board ready. Type help.",
+  "globalTerminal": {
+    "help": {
+      "ok": true,
+      "output": "help | content deprecate --capability <id> | launch dod | board status"
+    }
+  },
+  "tree": [
+    { "type": "file", "name": "README.md", "path": "README.md" },
+    { "type": "file", "name": "taxonomy-board.md", "path": "taxonomy-board.md" },
+    {
+      "type": "folder",
+      "name": "Backlog",
+      "children": [
+        { "type": "file", "name": "content-architecture.md", "path": "Backlog/content-architecture.md" }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "InLaunch",
+      "children": [
+        { "type": "file", "name": "launch-dod.md", "path": "InLaunch/launch-dod.md" },
+        { "type": "file", "name": "capability-agent-layout.md", "path": "InLaunch/capability-agent-layout.md" }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "Deprecated",
+      "children": [
+        { "type": "file", "name": "old-composer-tutorial.md", "path": "Deprecated/old-composer-tutorial.md" }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "Cases",
+      "children": [
+        { "type": "file", "name": "mid-flight-redesign.md", "path": "Cases/mid-flight-redesign.md" }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "Hiring",
+      "children": [
+        { "type": "file", "name": "education-engineer-rubric.md", "path": "Hiring/education-engineer-rubric.md" }
+      ]
+    }
+  ],
+  "files": {
+    "README.md": {
+      "kind": "md",
+      "content": "# Education Ops for a Weekly-Shipping IDE\n\n> Product changes faster than docs. Your job is launch coupling and lifecycle hygiene.\n\n## What you will learn\n\n- Map artifact types (path / lab / workshop / reference)\n- Write a launch Definition of Done\n- Cut / keep / why when UI changes mid-production\n- Deprecate without orphaning learners\n- Hire education engineers with the right rubric\n\nMisses reduce score. Pass at **70%**."
+    },
+    "Backlog/content-architecture.md": {
+      "kind": "teach",
+      "content": "# Content architecture\n\n- **Path** — sequenced outcomes\n- **Lab** — do-with-product practice\n- **Workshop** — facilitated cohort\n- **Reference** — searchable truth\n\nMisfiling artifacts is how catalogs rot."
+    },
+    "InLaunch/launch-dod.md": {
+      "kind": "lab",
+      "content": "# Launch Definition of Done (edit)\n\nCapability ships with:\n- [ ] tutorial\n- [ ] path update\n- [ ] deprecate note for old UI\n"
+    },
+    "InLaunch/capability-agent-layout.md": {
+      "kind": "md",
+      "content": "# Capability: Agent layout v2\n\nUI moved Agent to the right rail. Old screenshots in Composer tutorial are wrong."
+    },
+    "Deprecated/old-composer-tutorial.md": {
+      "kind": "md",
+      "content": "# DEPRECATED — Composer-only tutorial\n\nKeep conceptual bits; cut UI screenshots; redirect to Agent Fluent path."
+    },
+    "Cases/mid-flight-redesign.md": {
+      "kind": "teach",
+      "content": "# Case — Mid-flight redesign\n\nYou are 60% done filming a Composer walkthrough. Product ships Agent layout v2 tomorrow.\n\nCut brittle UI chrome. Keep durable concepts. Deprecate with redirect."
+    },
+    "Hiring/education-engineer-rubric.md": {
+      "kind": "teach",
+      "content": "# Education engineer rubric\n\n1. Reads code critically\n2. Ships labs not slides\n3. Measures fluency not completion\n4. Comfortable in weekly ship cycles\n5. Cross-functional, customer-obsessed"
+    },
+    "taxonomy-board.md": {
+      "kind": "kanban",
+      "title": "Artifact taxonomy",
+      "blurb": "Drag each card into the correct column, then Validate in Coach.",
+      "columns": [
+        { "id": "path", "title": "Path" },
+        { "id": "lab", "title": "Lab" },
+        { "id": "workshop", "title": "Workshop" },
+        { "id": "reference", "title": "Reference" }
+      ],
+      "cards": [
+        { "id": "c1", "label": "Ordered Fluent → Org → Ops sequence", "defaultColumn": "lab" },
+        { "id": "c2", "label": "Fix broken-feature.tsx in IDE shell", "defaultColumn": "path" },
+        { "id": "c3", "label": "Enable first 50 (facilitated)", "defaultColumn": "reference" },
+        { "id": "c4", "label": "Searchable MCP allowlist doc", "defaultColumn": "workshop" }
+      ]
+    }
+  },
+  "missions": [
+    {
+      "id": "E01",
+      "title": "Taxonomy",
+      "points": 20,
+      "wrongPenalty": 4,
+      "hint": "Place cards, then Validate.",
+      "teachFile": "Backlog/content-architecture.md",
+      "openFile": "taxonomy-board.md",
+      "unlockFiles": ["README.md", "taxonomy-board.md", "Backlog/content-architecture.md"],
+      "teach": "Correct taxonomy keeps the library maintainable as the product ships weekly.",
+      "brief": "Drag cards to the right columns, then Validate placement.",
+      "choices": [
+        {
+          "label": "Validate taxonomy placement",
+          "runCheck": "taxonomy"
+        }
+      ],
+      "checks": {
+        "taxonomy": {
+          "type": "kanban",
+          "expect": { "c1": "path", "c2": "lab", "c3": "workshop", "c4": "reference" },
+          "success": "Taxonomy correct.",
+          "fail": "Check: sequence=path, IDE exercise=lab, facilitated=workshop, searchable doc=reference.",
+          "passMission": "E01"
+        }
+      },
+      "fallbackReply": "Arrange the board, then Validate."
+    },
+    {
+      "id": "E02",
+      "title": "Launch DoD",
+      "points": 20,
+      "wrongPenalty": 4,
+      "hint": "Include tutorial, path, and deprecat…",
+      "teachFile": "InLaunch/capability-agent-layout.md",
+      "openFile": "InLaunch/launch-dod.md",
+      "unlockFiles": ["README.md", "InLaunch/launch-dod.md", "InLaunch/capability-agent-layout.md"],
+      "teach": "Launch coupling means education ships with the capability — not a week later.",
+      "brief": "Edit the DoD so it mentions tutorial, path, and deprecate/deprecation. Then Validate.",
+      "choices": [
+        {
+          "label": "Validate DoD",
+          "runCheck": "dod"
+        }
+      ],
+      "checks": {
+        "dod": {
+          "type": "labContains",
+          "file": "InLaunch/launch-dod.md",
+          "allOf": ["tutorial", "path", "deprecat"],
+          "success": "Launch DoD includes tutorial, path update, and deprecation.",
+          "fail": "Include tutorial + path update + deprecate/deprecation.",
+          "passMission": "E02"
+        }
+      },
+      "fallbackReply": "Edit the DoD file, then Validate."
+    },
+    {
+      "id": "E03",
+      "title": "Mid-flight redesign",
+      "points": 20,
+      "wrongPenalty": 5,
+      "hint": "Cut UI screenshots; keep concepts; redirect.",
+      "teachFile": "Cases/mid-flight-redesign.md",
+      "openFile": "Cases/mid-flight-redesign.md",
+      "unlockFiles": [
+        "README.md",
+        "Cases/mid-flight-redesign.md",
+        "Deprecated/old-composer-tutorial.md",
+        "InLaunch/capability-agent-layout.md"
+      ],
+      "teach": "This is the operating muscle for weekly-shipping products.",
+      "brief": "Product changed mid-production. What do you cut, keep, and why?",
+      "choices": [
+        {
+          "label": "Keep filming old UI — ship late is fine",
+          "correct": false,
+          "feedback": "That creates wrong mental models at scale."
+        },
+        {
+          "label": "Cut UI screenshots; keep concepts; redirect to Agent Fluent; deprecate old module",
+          "correct": true,
+          "feedback": "Correct cut/keep/why. This is how education survives weekly ships.",
+          "passMission": "E03",
+          "setBrowser": "<h2>Learner path</h2><p style='color:#b45309'>Old Composer tutorial marked deprecated</p><p style='color:green'>Redirect → Cursor Fluent M01</p>",
+          "continueLabel": "Complete lesson"
+        },
+        {
+          "label": "Delete everything and start from zero",
+          "correct": false,
+          "feedback": "Wasteful. Keep durable concepts; cut brittle UI chrome."
+        }
+      ],
+      "fallbackReply": "Choose the cut/keep option that preserves concepts and deprecates UI."
+    },
+    {
+      "id": "E04",
+      "title": "Deprecate safely",
+      "points": 20,
+      "wrongPenalty": 4,
+      "hint": "Run content deprecate, then confirm redirect.",
+      "teachFile": "Deprecated/old-composer-tutorial.md",
+      "openFile": "Deprecated/old-composer-tutorial.md",
+      "unlockFiles": ["README.md", "Deprecated/old-composer-tutorial.md"],
+      "teach": "Deprecation without redirect creates orphan learner paths.",
+      "brief": "Run `content deprecate --capability agent-layout-v2`, then confirm the Browser redirect.",
+      "choices": [
+        {
+          "label": "Confirm redirect is live in Browser",
+          "correct": true,
+          "feedback": "Lifecycle hygiene done — no orphan path.",
+          "passMission": "E04",
+          "continueLabel": "Complete lesson"
+        }
+      ],
+      "terminal": {
+        "content deprecate --capability agent-layout-v2": {
+          "ok": true,
+          "output": "deprecated: old-composer-tutorial\nredirect: cursor-fluent#M01\norphan_links=0",
+          "setBrowser": "<h2>Broken? Fixed.</h2><p>Old URL now redirects to Cursor Fluent.</p>",
+          "reply": "Deprecation complete. Confirm in Coach."
+        }
+      },
+      "fallbackReply": "Run the deprecate command, then confirm in Coach."
+    },
+    {
+      "id": "E05",
+      "title": "Hire rubric",
+      "points": 20,
+      "wrongPenalty": 5,
+      "hint": "Labs + fluency beat polished slides.",
+      "teachFile": "Hiring/education-engineer-rubric.md",
+      "openFile": "Hiring/education-engineer-rubric.md",
+      "unlockFiles": ["README.md", "Hiring/education-engineer-rubric.md"],
+      "teach": "Hire for technical editorial judgment, not slide polish.",
+      "brief": "Candidate A: beautiful slides, never reads diffs. Candidate B: ships labs, measures fluency, rough slides. Who do you hire?",
+      "choices": [
+        {
+          "label": "Candidate A — polish wins",
+          "correct": false,
+          "feedback": "Wrong signal. This role needs technical editorial judgment."
+        },
+        {
+          "label": "Candidate B — labs + fluency metrics",
+          "correct": true,
+          "feedback": "Yes. Rubric beat theater. You can hire and develop education engineers.",
+          "passMission": "E05",
+          "continueLabel": "Complete lesson"
+        }
+      ],
+      "fallbackReply": "Pick the candidate who ships labs and measures fluency."
+    }
+  ]
+}

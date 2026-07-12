@@ -1,0 +1,430 @@
+{
+  "id": "cursor-fluent",
+  "title": "Cursor Fluent",
+  "shell": "ide",
+  "agentName": "Fluent Coach",
+  "agentSub": "Guides practice · checks understanding",
+  "explorerLabel": "EXPLORER",
+  "welcomeTerminal": "Lab ready. Type help for commands.",
+  "globalTerminal": {
+    "help": {
+      "ok": true,
+      "output": "help | status | missions\nLesson commands appear in each teaching note."
+    },
+    "status": {
+      "ok": true,
+      "output": "Score reflects correct answers minus misses. Pass at 70%."
+    },
+    "missions": {
+      "ok": true,
+      "output": "M01–M07: mental model → grounding → ship → rules → MCP → diff review → capstone"
+    }
+  },
+  "tree": [
+    { "type": "file", "name": "README.md", "path": "README.md" },
+    { "type": "file", "name": "AGENTS.md", "path": "AGENTS.md" },
+    {
+      "type": "folder",
+      "name": ".cursor",
+      "children": [
+        {
+          "type": "folder",
+          "name": "rules",
+          "children": [{ "type": "file", "name": "fluent.mdc", "path": ".cursor/rules/fluent.mdc" }]
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "lessons",
+      "children": [
+        { "type": "file", "name": "01-mental-model.md", "path": "lessons/01-mental-model.md" },
+        { "type": "file", "name": "02-repo-grounding.md", "path": "lessons/02-repo-grounding.md" },
+        { "type": "file", "name": "03-agent-that-ships.md", "path": "lessons/03-agent-that-ships.md" },
+        { "type": "file", "name": "04-rules-as-infra.md", "path": "lessons/04-rules-as-infra.md" },
+        { "type": "file", "name": "05-mcp.md", "path": "lessons/05-mcp.md" },
+        { "type": "file", "name": "06-read-the-diff.md", "path": "lessons/06-read-the-diff.md" },
+        { "type": "file", "name": "07-capstone.md", "path": "lessons/07-capstone.md" }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "labs",
+      "children": [
+        { "type": "file", "name": "broken-feature.tsx", "path": "labs/broken-feature.tsx" },
+        { "type": "file", "name": "pr-review.diff", "path": "labs/pr-review.diff" }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "src",
+      "children": [{ "type": "file", "name": "app/page.tsx", "path": "src/app/page.tsx" }]
+    }
+  ],
+  "files": {
+    "README.md": {
+      "kind": "md",
+      "content": "# Cursor Fluent\n\n> Learn how professional developers use Cursor to ship real work — not just chat with a model.\n\n## What you will learn\n\n- When to use Chat vs Agent vs Tab\n- How to ground the agent in your repo before generating\n- How to ship a multi-file change with tests\n- How rules and review prevent unsafe accepts\n\n## How this course works\n\n1. Read the **teaching note** in the editor.\n2. Answer Coach questions (wrong answers lower your score).\n3. Use Terminal / labs when asked.\n4. Press **Continue** after feedback before the next lesson.\n\nPass mark: **70%** of total points."
+    },
+    "AGENTS.md": {
+      "kind": "md",
+      "content": "# AGENTS.md — operating brief\n\n- Prefer small, reviewable diffs.\n- Never invent APIs; read files with @ first.\n- Run tests before claiming done.\n- Ask before deleting migrations or auth code."
+    },
+    ".cursor/rules/fluent.mdc": {
+      "kind": "lab",
+      "content": "# Fluent rules (edit me)\n\n- Always use TypeScript strict mode\n- TODO: add a rule that forbids committing secrets\n"
+    },
+    "lessons/01-mental-model.md": {
+      "kind": "teach",
+      "content": "# Lesson 1 — Mental model\n\n## Teaching note\n\nCursor exposes three different surfaces:\n\n- **Chat** — Q&A and advice. It does not reliably apply a 12-file rename.\n- **Agent** — plans and executes multi-file work (edits, tests, commands).\n- **Tab** — predicts the *next edit* while you type; not a refactor engine.\n\n> Failure mode: treating every task as Chat. You get explanations, not shipped diffs.\n\n## Check yourself\n\nAfter reading, answer Coach: which surface owns a cross-file rename with tests?"
+    },
+    "lessons/02-repo-grounding.md": {
+      "kind": "teach",
+      "content": "# Lesson 2 — Repo grounding\n\n## Teaching note\n\nBefore generating code, ground the agent:\n\n1. Open `AGENTS.md` / project rules.\n2. Use `@file` (or equivalent) so the model sees real symbols.\n3. Confirm constraints (tests, auth, migrations).\n\nUngrounded generation invents APIs and breaks builds.\n\n## Practice\n\nOpen `AGENTS.md`, run `cat AGENTS.md` in Terminal, then tell Coach one rule you read."
+    },
+    "lessons/03-agent-that-ships.md": {
+      "kind": "teach",
+      "content": "# Lesson 3 — Agent that ships\n\n## Teaching note\n\nA shipping loop looks like:\n\n1. Reproduce the bug / empty state\n2. Apply a minimal fix\n3. Run tests\n4. Preview the result\n\nIn this lab, `Greeting` renders an empty heading. Put `{name}` in the JSX, then run `npm test`."
+    },
+    "lessons/04-rules-as-infra.md": {
+      "kind": "teach",
+      "content": "# Lesson 4 — Rules as infrastructure\n\n## Teaching note\n\nRules teach the agent what \"good\" means for *your* repo — the same way lint configs teach humans.\n\nA useful rule is specific and enforceable (e.g. \"never commit secrets or .env\").\n\nEdit `.cursor/rules/fluent.mdc` to mention secrets / API keys / `.env`, then run `rules validate`."
+    },
+    "lessons/05-mcp.md": {
+      "kind": "teach",
+      "content": "# Lesson 5 — MCP judgment\n\n## Teaching note\n\nMCP tools help when they pull **external system state** (tickets, PRs, docs search).\n\nThey hurt when they duplicate built-in IDE actions (local rename, format).\n\nRule of thumb: MCP for systems outside the repo; IDE tools for the repo itself."
+    },
+    "lessons/06-read-the-diff.md": {
+      "kind": "teach",
+      "content": "# Lesson 6 — Read the diff\n\n## Teaching note\n\nEducation engineers (and strong ICs) read agent output critically.\n\nIn `labs/pr-review.diff` find:\n\n1. A hardcoded live API key\n2. An unauthenticated destructive delete\n\nAccepting both would be a production incident."
+    },
+    "lessons/07-capstone.md": {
+      "kind": "teach",
+      "content": "# Lesson 7 — Capstone\n\n## Teaching note\n\nProve the full loop: grounded fix → tests → submit.\n\n1. Confirm the greeting lab still contains `{name}`\n2. Run `capstone start` then `capstone submit`\n\nYour final score includes misses from earlier lessons."
+    },
+    "labs/broken-feature.tsx": {
+      "kind": "lab",
+      "content": "export function Greeting({ name }: { name: string }) {\n  // BUG: returns empty string\n  return <h1></h1>\n}\n"
+    },
+    "labs/pr-review.diff": {
+      "kind": "md",
+      "content": "# Simulated PR diff\n\n```\n+ const apiKey = \"sk-live-REALLY-SECRET\"\n+ // skip auth for speed\n+ export async function deleteAllUsers() { await db.users.deleteMany() }\n+ return <Button onClick={save}>Save</Button>\n```\n\nBlock: (1) hardcoded secret (2) dangerous unauthenticated delete."
+    },
+    "src/app/page.tsx": {
+      "kind": "md",
+      "content": "# Preview target\n\nBrowser panel renders lab results here after tests pass."
+    }
+  },
+  "missions": [
+    {
+      "id": "M01",
+      "title": "Mental model",
+      "points": 15,
+      "wrongPenalty": 4,
+      "hint": "Read the teaching note, then pick the right surface.",
+      "teachFile": "lessons/01-mental-model.md",
+      "openFile": "lessons/01-mental-model.md",
+      "unlockFiles": ["README.md", "lessons/01-mental-model.md"],
+      "teach": "Read lessons/01-mental-model.md in the editor. Chat advises; Agent executes multi-file work; Tab predicts the next keystroke.",
+      "brief": "Scenario: rename a symbol across 8 files and update tests. Which surface?",
+      "choices": [
+        {
+          "label": "Chat — ask for a checklist",
+          "correct": false,
+          "feedback": "Chat can list steps, but it will not apply the rename. Agent owns multi-file execution."
+        },
+        {
+          "label": "Agent — multi-file change with tests",
+          "correct": true,
+          "feedback": "Correct. Agent plans and applies the change. Next: you forgot a prop name on a local component.",
+          "nextPrompt": "You need the exact prop name from a file in this repo. Best move?",
+          "nextChoices": [
+            {
+              "label": "Spam Tab until it looks right",
+              "correct": false,
+              "feedback": "Tab helps mid-line. Finding a symbol needs @ grounding or Agent with file context."
+            },
+            {
+              "label": "Chat/Agent with @Component.tsx",
+              "correct": true,
+              "feedback": "Yes — ground with @ before generating. Mental model locked.",
+              "passMission": "M01",
+              "continueLabel": "Complete lesson"
+            }
+          ]
+        },
+        {
+          "label": "Tab — keep accepting suggestions",
+          "correct": false,
+          "feedback": "Tab is next-edit prediction, not a refactor engine. Prefer Agent for cross-file work."
+        }
+      ],
+      "terminal": {
+        "help mental-model": {
+          "ok": true,
+          "output": "Chat = Q&A · Agent = execute · Tab = next edit"
+        }
+      },
+      "fallbackReply": "Pick a choice above, or re-read the teaching note."
+    },
+    {
+      "id": "M02",
+      "title": "Repo grounding",
+      "points": 15,
+      "wrongPenalty": 3,
+      "hint": "Open AGENTS.md, run cat AGENTS.md, then type a keyword from it.",
+      "teachFile": "lessons/02-repo-grounding.md",
+      "openFile": "lessons/02-repo-grounding.md",
+      "unlockFiles": ["README.md", "AGENTS.md", "lessons/02-repo-grounding.md"],
+      "teach": "Grounding means the agent sees real project constraints before it writes code.",
+      "brief": "Open AGENTS.md, run `cat AGENTS.md` in Terminal, then type one keyword from it in chat (e.g. tests, diffs, APIs).",
+      "choices": [
+        {
+          "label": "I opened AGENTS.md — ready for terminal",
+          "correct": true,
+          "feedback": "Good. Now run `cat AGENTS.md`, then type a keyword from the file in chat.",
+          "openFile": "AGENTS.md",
+          "continueLabel": "I will run the command"
+        }
+      ],
+      "freeText": [
+        {
+          "match": ["test", "diff", "api", "migration", "auth", "small", "review"],
+          "reply": "Nice — you read the operating brief like an engineer.",
+          "passMission": "M02"
+        }
+      ],
+      "terminal": {
+        "cat agents.md": {
+          "ok": true,
+          "output": "# AGENTS.md\n- Prefer small, reviewable diffs.\n- Never invent APIs; read files with @ first.\n- Run tests before claiming done.\n- Ask before deleting migrations or auth code.",
+          "reply": "Terminal grounded. Type a keyword from AGENTS.md in chat."
+        },
+        "cat AGENTS.md": {
+          "ok": true,
+          "output": "# AGENTS.md\n- Prefer small, reviewable diffs.\n- Never invent APIs; read files with @ first.\n- Run tests before claiming done.",
+          "reply": "Terminal grounded. Type a keyword from AGENTS.md in chat."
+        }
+      },
+      "fallbackReply": "Run `cat AGENTS.md`, then type a keyword from it."
+    },
+    {
+      "id": "M03",
+      "title": "Agent that ships",
+      "points": 15,
+      "wrongPenalty": 3,
+      "hint": "Put {name} in the heading, validate, then npm test.",
+      "teachFile": "lessons/03-agent-that-ships.md",
+      "openFile": "labs/broken-feature.tsx",
+      "unlockFiles": [
+        "README.md",
+        "lessons/03-agent-that-ships.md",
+        "labs/broken-feature.tsx",
+        "src/app/page.tsx"
+      ],
+      "teach": "Shipping means fix + proof. Empty UI without tests is theater.",
+      "brief": "Fix labs/broken-feature.tsx so the heading includes `{name}`, click Validate, then run `npm test`.",
+      "choices": [
+        {
+          "label": "Validate my buffer",
+          "runCheck": "greetingFix"
+        },
+        {
+          "label": "Skip tests — the UI looks fine",
+          "correct": false,
+          "feedback": "Without tests you cannot claim the fix shipped. Validate the buffer, then npm test."
+        }
+      ],
+      "checks": {
+        "greetingFix": {
+          "type": "labContains",
+          "file": "labs/broken-feature.tsx",
+          "anyOf": ["{name}", "{ name }"],
+          "success": "Buffer looks good. Run `npm test` in Terminal.",
+          "fail": "Still empty — put `{name}` inside the heading."
+        }
+      },
+      "terminal": {
+        "npm test": {
+          "ok": true,
+          "output": "PASS  labs/broken-feature.test.tsx\n  Greeting renders name\n\nTests: 1 passed",
+          "setBrowser": "<h1 style='font-family:system-ui'>Hello, Ada</h1><p style='color:green'>Preview OK — tests passed</p>",
+          "passMission": "M03",
+          "reply": "Tests green. That is an agent workflow that ships."
+        }
+      },
+      "fallbackReply": "Edit the lab, Validate, then `npm test`."
+    },
+    {
+      "id": "M04",
+      "title": "Rules as infra",
+      "points": 15,
+      "wrongPenalty": 3,
+      "hint": "Add a secrets rule, validate, then rules validate.",
+      "teachFile": "lessons/04-rules-as-infra.md",
+      "openFile": ".cursor/rules/fluent.mdc",
+      "unlockFiles": ["README.md", ".cursor/rules/fluent.mdc", "lessons/04-rules-as-infra.md"],
+      "teach": "Rules are curriculum for the agent — specific and enforceable.",
+      "brief": "Edit fluent.mdc to forbid secrets / API keys / .env, Validate, then run `rules validate`.",
+      "choices": [
+        {
+          "label": "Validate my rules file",
+          "runCheck": "rulesSecrets"
+        }
+      ],
+      "checks": {
+        "rulesSecrets": {
+          "type": "labContains",
+          "file": ".cursor/rules/fluent.mdc",
+          "anyOf": ["secret", "api key", "API key", "credentials", ".env"],
+          "success": "Rule present. Run `rules validate`.",
+          "fail": "Add an explicit line forbidding secrets / API keys / .env commits."
+        }
+      },
+      "terminal": {
+        "rules validate": {
+          "ok": true,
+          "output": "OK  fluent.mdc — secrets guardrail detected",
+          "passMission": "M04",
+          "reply": "Rules now teach the agent what good looks like."
+        }
+      },
+      "fallbackReply": "Edit fluent.mdc, Validate, then `rules validate`."
+    },
+    {
+      "id": "M05",
+      "title": "MCP judgment",
+      "points": 10,
+      "wrongPenalty": 3,
+      "hint": "MCP for external systems; IDE tools for local renames.",
+      "teachFile": "lessons/05-mcp.md",
+      "openFile": "lessons/05-mcp.md",
+      "unlockFiles": ["README.md", "lessons/05-mcp.md"],
+      "teach": "MCP is not \"more AI\" — it is controlled access to other systems.",
+      "brief": "Task A: Need live Linear ticket status while planning a fix. Use MCP?",
+      "choices": [
+        {
+          "label": "Yes — Linear MCP reduces tab-switching",
+          "correct": true,
+          "feedback": "Agreed. Task B: Need to rename a local function. Use an MCP?",
+          "nextPrompt": "Local rename across this repo — MCP?",
+          "nextChoices": [
+            {
+              "label": "Yes — always add tools",
+              "correct": false,
+              "feedback": "Cargo cult. Local rename is a built-in IDE/refactor action. MCP adds noise."
+            },
+            {
+              "label": "No — IDE/refactor tools are enough",
+              "correct": true,
+              "feedback": "Correct. MCP when it pulls external state; not for vanity.",
+              "passMission": "M05",
+              "continueLabel": "Complete lesson"
+            }
+          ]
+        },
+        {
+          "label": "No — never use MCP",
+          "correct": false,
+          "feedback": "Too absolute. External systems are exactly when MCP helps."
+        }
+      ],
+      "terminal": {
+        "mcp list": {
+          "ok": true,
+          "output": "linear (approved)\ngithub (approved)\nweather (blocked — not in eng workflow)"
+        }
+      },
+      "fallbackReply": "Use the Coach choices for Task A and B."
+    },
+    {
+      "id": "M06",
+      "title": "Read the diff",
+      "points": 15,
+      "wrongPenalty": 5,
+      "hint": "Find the secret and the dangerous delete.",
+      "teachFile": "lessons/06-read-the-diff.md",
+      "openFile": "labs/pr-review.diff",
+      "unlockFiles": ["README.md", "labs/pr-review.diff", "lessons/06-read-the-diff.md"],
+      "teach": "Editorial judgment: never Accept All on agent output.",
+      "brief": "Open the PR diff. What would you block first?",
+      "choices": [
+        {
+          "label": "Hardcoded API key (sk-live…)",
+          "correct": true,
+          "feedback": "Caught defect 1. What is the second?",
+          "nextPrompt": "Second defect?",
+          "nextChoices": [
+            {
+              "label": "Unauthenticated deleteAllUsers",
+              "correct": true,
+              "feedback": "Both defects caught. That is education-engineer judgment.",
+              "passMission": "M06",
+              "setBrowser": "<h2>PR #482</h2><p style='color:#b91c1c'>Changes requested: secret + dangerous delete</p>",
+              "continueLabel": "Complete lesson"
+            },
+            {
+              "label": "The Save button label",
+              "correct": false,
+              "feedback": "Cosmetic. Look for auth and destructive ops."
+            }
+          ]
+        },
+        {
+          "label": "Looks fine — Accept all",
+          "correct": false,
+          "feedback": "Hard no. There is a live secret and an unauthenticated delete.",
+          "addProblem": { "sev": "error", "text": "Accepted unsafe diff" }
+        }
+      ],
+      "fallbackReply": "Open labs/pr-review.diff and use the choices."
+    },
+    {
+      "id": "M07",
+      "title": "Capstone",
+      "points": 15,
+      "wrongPenalty": 4,
+      "hint": "capstone start → confirm greeting → capstone submit",
+      "teachFile": "lessons/07-capstone.md",
+      "openFile": "lessons/07-capstone.md",
+      "unlockFiles": ["*"],
+      "unlockAllAfterPass": true,
+      "teach": "Capstone proves the loop under scoring pressure.",
+      "brief": "Run `capstone start`, confirm the greeting lab still has `{name}`, then `capstone submit`.",
+      "choices": [
+        {
+          "label": "Validate greeting still fixed",
+          "runCheck": "capstoneGreeting"
+        }
+      ],
+      "checks": {
+        "capstoneGreeting": {
+          "type": "labContains",
+          "file": "labs/broken-feature.tsx",
+          "anyOf": ["{name}", "{ name }"],
+          "success": "Lab still good. Run `capstone submit`.",
+          "fail": "Re-fix the greeting buffer first."
+        }
+      },
+      "terminal": {
+        "capstone start": {
+          "ok": true,
+          "output": "Capstone checklist:\n[ ] greeting lab contains {name}\n[ ] npm test mindset\n[ ] submit",
+          "reply": "Validate the lab, then `capstone submit`."
+        },
+        "npm test": {
+          "ok": true,
+          "output": "PASS  (cached)\nTests: 1 passed",
+          "setBrowser": "<h1>Hello, Ada</h1><p>Capstone preview</p>"
+        },
+        "capstone submit": {
+          "ok": true,
+          "output": "Submitting score…",
+          "passMission": "M07",
+          "reply": "Capstone submitted. Checking final score…"
+        }
+      },
+      "fallbackReply": "Run `capstone start`, validate, then `capstone submit`."
+    }
+  ]
+}

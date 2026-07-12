@@ -631,8 +631,8 @@ export async function POST(request: NextRequest) {
       ? { usage: { orgId: aiDeps.orgId, userId: user.id, admin: aiDeps.usageAdmin } }
       : {}
   const [allCourses, pathList, enrollmentsRes, ragChunks, inCourseRagChunks, kbRagChunks] = await Promise.all([
-    getCachedPublishedCourses(),
-    getCachedPublishedPaths(),
+    getCachedPublishedCourses(aiDeps.orgId ?? null),
+    getCachedPublishedPaths(aiDeps.orgId ?? null),
     admin.from('enrollments').select('course_id, status, progress_pct').eq('user_id', user.id),
     course_id
       ? Promise.resolve([] as Awaited<ReturnType<typeof retrieveChunks>>)

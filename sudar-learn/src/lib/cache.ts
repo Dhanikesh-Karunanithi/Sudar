@@ -29,38 +29,44 @@ function withModuleCount(row: CourseCatalogRow) {
 }
 
 /** Cached published courses list (shared by catalog page and tutor API). */
-export async function getCachedPublishedCourses() {
+export async function getCachedPublishedCourses(orgId?: string | null) {
+  const cacheKey = orgId ? `courses-published-${orgId}` : 'courses-published-all'
   return unstable_cache(
     async () => {
       const admin = createServiceRoleSupabaseClient()
-      const { data } = await admin
+      let query = admin
         .from('courses')
         .select(
           'id, title, description, difficulty, tags, estimated_duration_mins, published_at, thumbnail_url, banner_url, is_external, external_provider, modules(count)',
         )
         .eq('status', 'published')
         .order('published_at', { ascending: false })
+      if (orgId) query = query.eq('org_id', orgId)
+      const { data } = await query
       const rows = (data ?? []) as CourseCatalogRow[]
       return rows.map(withModuleCount)
     },
-    ['courses-published'],
-    { revalidate: CATALOG_REVALIDATE_SECONDS }
+    [cacheKey],
+    { revalidate: CATALOG_REVALIDATE_SECONDS },
   )()
 }
 
 /** Cached published learning paths list. */
-export async function getCachedPublishedPaths() {
+export async function getCachedPublishedPaths(orgId?: string | null) {
+  const cacheKey = orgId ? `paths-published-${orgId}` : 'paths-published-all'
   return unstable_cache(
     async () => {
       const admin = createServiceRoleSupabaseClient()
-      const { data } = await admin
+      let query = admin
         .from('learning_paths')
         .select('id, title, description, courses, is_mandatory, status, issues_certificate, is_adaptive')
         .eq('status', 'published')
         .order('is_mandatory', { ascending: false })
+      if (orgId) query = query.eq('org_id', orgId)
+      const { data } = await query
       return data ?? []
     },
-    ['paths-published'],
-    { revalidate: PATHS_REVALIDATE_SECONDS }
+    [cacheKey],
+    { revalidate: PATHS_REVALIDATE_SECONDS },
   )()
 }

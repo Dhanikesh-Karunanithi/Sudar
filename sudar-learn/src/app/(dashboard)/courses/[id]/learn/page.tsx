@@ -41,10 +41,11 @@ export default async function CourseLearnPage({
 
   const personalizationAccess = await resolvePersonalizationAccess(admin, user.id, id)
 
+  // allow_tutor_discussion may be absent until migration 20260602120000 is applied.
   const { data: course } = await admin
     .from('courses')
     .select(
-      'id, title, description, template, settings, is_external, external_provider, external_url, embed_url, allow_tutor_discussion, org_id, modules(id, title, order_index, sudarplay_map_url, sudarplay_map_id, sim_scenario_id)',
+      'id, title, description, template, settings, is_external, external_provider, external_url, embed_url, org_id, modules(id, title, order_index, sim_scenario_id)',
     )
     .eq('id', id)
     .eq('status', 'published')
@@ -52,6 +53,9 @@ export default async function CourseLearnPage({
     .single()
 
   if (!course) notFound()
+
+  const allowTutorDiscussion =
+    (course as { allow_tutor_discussion?: boolean }).allow_tutor_discussion !== false
 
   let externalCourseData: {
     requires_sign_in?: boolean
@@ -121,7 +125,7 @@ export default async function CourseLearnPage({
         enrollmentProgress={Math.round(enrollment.progress_pct)}
         enrollmentStatus={enrollment.status}
         isModuleComplete={completedModuleIds.has(externalModuleId)}
-        allowTutorDiscussion={course.allow_tutor_discussion !== false}
+        allowTutorDiscussion={allowTutorDiscussion}
         requiresSignIn={externalCourseData?.requires_sign_in}
         signInInstructions={externalCourseData?.sign_in_instructions}
         requireLearnerConsent={requireLearnerConsent}
