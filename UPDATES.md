@@ -19,10 +19,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 ### 2026-07-13 — Learn Worker 1102 mitigation + purge old courses
 
 - **Theme**: Cloudflare Error 1102 on `learn.thesudar.com` course pages; clean catalog for Cursor portfolio demo.
+- **Root cause**: Learn OpenNext Worker on **Cloudflare Free** (≈10ms CPU) — course SSR exceeds the limit.
 - **Shipped**:
-  - Raised Learn Worker `limits.cpu_ms` to 300000; slimmed course detail SSR (plain `<img>` for banners, bounded queries).
-  - Purge script for soft-hidden non–Cursor Education courses (`purge-old-courses.mjs`).
-- **Ops**: Deploy Learn Worker (push `sudar-learn/**` to `main`). Until then use `staging.learn.thesudar.com` or local `:3001`. Restore not available after purge — Cursor org courses untouched.
+  - Slimmed course detail SSR (plain `<img>` for banners, bounded queries).
+  - Purge script + **28** old non–Cursor courses deleted (Cursor Education Portfolio kept).
+  - Proxy `learn.thesudar.com` → `sudar-learn.vercel.app` via `sudar-staging-vercel` (releases production Learn from Free Worker CPU).
+- **Ops**: Prefer Workers **Paid** later if returning OpenNext to the edge; until then Vercel serves Learn behind the CF proxy. Demo also works on `staging.learn.thesudar.com` / local `:3001`.
 
 ### 2026-07-13 — Cursor Education demo access + brand cards
 

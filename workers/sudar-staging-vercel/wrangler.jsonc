@@ -9,6 +9,10 @@
   },
   "routes": [
     {
+      "pattern": "learn.thesudar.com",
+      "custom_domain": true
+    },
+    {
       "pattern": "staging.learn.thesudar.com",
       "custom_domain": true
     },
