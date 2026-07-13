@@ -23,11 +23,5 @@
   },
   "vars": {
     "EARLY_ACCESS_ENABLED": "true"
-  },
-  "routes": [
-    {
-      "pattern": "learn.thesudar.com",
-      "custom_domain": true
-    }
-  ]
+  }
 }
