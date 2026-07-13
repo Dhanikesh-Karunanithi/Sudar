@@ -16,6 +16,14 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-07-13 — Learn Worker 1102 mitigation + purge old courses
+
+- **Theme**: Cloudflare Error 1102 on `learn.thesudar.com` course pages; clean catalog for Cursor portfolio demo.
+- **Shipped**:
+  - Raised Learn Worker `limits.cpu_ms` to 300000; slimmed course detail SSR (plain `<img>` for banners, bounded queries).
+  - Purge script for soft-hidden non–Cursor Education courses (`purge-old-courses.mjs`).
+- **Ops**: Deploy Learn Worker (push `sudar-learn/**` to `main`). Until then use `staging.learn.thesudar.com` or local `:3001`. Restore not available after purge — Cursor org courses untouched.
+
 ### 2026-07-13 — Cursor Education demo access + brand cards
 
 - **Theme**: Job-application demo readiness — accessible courses, Cursor logo cards, catalog scoped to active org.
