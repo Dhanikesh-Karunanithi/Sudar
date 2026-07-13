@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Search, BookOpen, Route, ArrowRight } from 'lucide-react'
 import { getCachedPublishedCourses, getCachedPublishedPaths } from '@/lib/cache'
+import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 
 type SearchPageProps = {
   searchParams?: Promise<{ q?: string }>
@@ -11,8 +12,16 @@ export default async function GlobalSearchPage({ searchParams }: SearchPageProps
   const query = (q ?? '').trim()
   const normalized = query.toLowerCase()
 
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const admin = createServiceRoleSupabaseClient()
+  const { data: profile } = user
+    ? await admin.from('profiles').select('active_org_id, org_id').eq('id', user.id).maybeSingle()
+    : { data: null }
+  const orgId = profile?.active_org_id ?? profile?.org_id ?? null
+
   const [courses, paths] = query
-    ? await Promise.all([getCachedPublishedCourses(), getCachedPublishedPaths()])
+    ? await Promise.all([getCachedPublishedCourses(orgId), getCachedPublishedPaths(orgId)])
     : [[], []]
 
   const filteredCourses = query

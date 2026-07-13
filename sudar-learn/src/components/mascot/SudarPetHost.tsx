@@ -160,6 +160,7 @@ export function SudarPetHost({ userId }: SudarPetHostProps) {
       className="fixed z-[55] pointer-events-none"
       style={{ transform: `translate3d(${renderPos.x}px, ${renderPos.y}px, 0)` }}
       aria-hidden
+      data-sudar-pet-host=""
     >
       <SudarPetSprite state={state} size={SIZE} manifest={DEFAULT_SUDAR_PET_MANIFEST} />
     </div>

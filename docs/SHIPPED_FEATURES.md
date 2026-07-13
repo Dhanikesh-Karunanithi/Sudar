@@ -4,6 +4,23 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## Cursor Education Portfolio (SCORM IDE shells | July 2026)
+
+- **Where**: `portfolio/cursor-education/`; live org **Cursor Education Portfolio** (`cursor-education`); Learn path **Cursor Developer Fluency Program**.
+- **What**: Three SCORM 1.2 interactive courses (Cursor-like IDE, DevEx Console, Launch Board) for the Cursor Product Education Engineering portfolio. Pedagogy: teaching notes, scored choices with Continue-after-feedback, miss penalties (pass ≥70%), completion overlay, scrollable coach chat. Learner-facing descriptions (no shell meta-copy). Cursor brand logo in shell + generated course card/banner images. Catalog/paths filtered by active org; demo prepare script hides non-Cursor published courses (restorable).
+- **Key files**:
+  - `portfolio/cursor-education/shared/shell.js`, `shell.css`, `index.html`, `shared/assets/cursor-logo.png`
+  - `portfolio/cursor-education/brand/` (logo + generated cards)
+  - `portfolio/cursor-education/course-*/course.json`
+  - `portfolio/cursor-education/scripts/build-scorm.mjs`, `upload-to-sudar.mjs`, `make-course-cards.mjs`, `prepare-demo-access.mjs`
+  - `scripts/ops/provision-cursor-education-org.mjs`
+  - `sudar-learn/src/lib/cache.ts`, `sudar-learn/src/lib/security/scormAccess.ts`
+  - `portfolio/cursor-education/DEMO_SCRIPT.md`, `APPLICATION_ANSWERS.md`
+- **Flow**: Build cards → build ZIPs → provision org → upload SCORMs → `prepare-demo-access.mjs` → open Learn as portfolio user → share invite codes with hiring reviewers.
+- **Ops**: `node --env-file=sudar-studio/.env.local scripts/ops/provision-cursor-education-org.mjs`; `node portfolio/cursor-education/scripts/make-course-cards.mjs`; `node portfolio/cursor-education/scripts/build-scorm.mjs`; `node --env-file=sudar-studio/.env.local portfolio/cursor-education/scripts/upload-to-sudar.mjs`; `node --env-file=sudar-studio/.env.local portfolio/cursor-education/scripts/prepare-demo-access.mjs`. Re-upload replaces courses by title and refreshes IDs — re-open catalog links from `APPLICATION_ANSWERS.md`. To restore hidden courses, re-publish IDs from `hidden-courses.restore.local`.
+
+---
+
 ## Account settings (Studio | Learn)
 
 - **Where**: Sudar Studio and Sudar Learn — **Settings** (`/settings`) — **Account** card (above profile photo).
@@ -105,23 +122,42 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
-## SudarSim — roleplay simulation (pilot)
+## SudarSim — roleplay simulation (pilot → Practice OS)
 
-- **Where**: Sudar Studio **`/sudarsim`** (org scenario library + editor, sidebar **SudarSim**); Sudar Learn `/sim/session`, CourseViewer **Sim** tab, ALP `/alp/sim/play`; Moodle `local_sudaralp/sim.php`; voice service `sudar-sim/`. Course modules optionally **link** a scenario (delivery only).
-- **What**: Multi-channel customer roleplay (phone voice via WebSocket/LiveKit, chat, email) with screenshot **CRM overlay** editor, configurable rubric coach, transcript→scenario import, optional module completion gate, Twin memory via `ai_interactions`. Locales: en, fr, es, pt, ta. **Preview simulation** in Studio (draft test in Learn with preview banner) before publish.
+- **Where**: Sudar Studio **`/sudarsim`** (org scenario library + editor, practice blocks, **Export JSON**, sidebar **SudarSim**); Sudar Learn dashboard **Today’s Practice**, `/sim/session`, CourseViewer **Sim** tab (desktop + mobile), ALP `/alp/sim/play`; Moodle `local_sudaralp/sim.php`; voice service `sudar-sim/`. Course modules optionally **link** a scenario (delivery only).
+- **What**: Multi-channel customer roleplay (phone text-over-WS in dev, chat, email) with screenshot **CRM overlay** editor, **Practice Loop** coach (strengths / needs-work / **Practice only X** drills, conversation timeline from `practice_blocks`), Twin writeback (`ai_tutor_context.sim` + `learning_events`), NBA `practice_sim` when weaknesses exist, optional module completion gate. Locales: en, fr, es, pt, ta. **Preview simulation** runs **in Studio**. Portable scenario export for open practice packs.
 - **Key files**:
-  - `docs/SUDAR_SIM_PLAN.md`, `docs/SUDAR_SIM_DEPLOY.md`, `docs/SUDAR_SIM_API.md`
-  - `shared/sudarsim/`, `sudar-sim/main.py`
+  - `docs/SUDARSIM_PRACTICE_OS.md`, `docs/SUDAR_SIM_PLAN.md`, `docs/SUDAR_SIM_SELFHOST.md`, `docs/SUDAR_SIM_DEPLOY.md`, `docs/SUDAR_SIM_API.md`
+  - `shared/sudarsim/` (schemas, portable export), `sudar-sim/main.py`
   - `sudar-intelligence/src/api/routes/sim.py`
-  - `sudar-learn/src/components/sudarsim/`, `src/app/api/sim/`
-  - `sudar-studio/src/app/(dashboard)/sudarsim/`, `src/app/api/sudarsim/scenarios/`, `src/components/sudarsim/`
-  - `supabase/migrations/20260616000000_sudarsim.sql`, `20260622100000_sim_sessions_metadata.sql`
+  - `sudar-learn/src/components/sudarsim/` (`SimWorkspace`, `SimCoachReport`, `TodayPracticeCard`), `src/app/api/sim/`, `src/lib/sim/todayPractice.ts`
+  - `sudar-studio/src/app/(dashboard)/sudarsim/`, `src/app/api/sudarsim/scenarios/`, `.../export/route.ts`, `StudioSimPreview.tsx`
+  - `scripts/dev-with-sudarvid.mjs` — starts SudarVid + Intelligence + **sudar-sim** + Learn/Studio
+  - `supabase/migrations/20260616000000_sudarsim.sql`, `20260622100000_sim_sessions_metadata.sql`, `20260712000000_sudarsim_practice_blocks.sql`
+- **Env**: `SUDAR_SIM_URL`, `NEXT_PUBLIC_SUDAR_SIM_WS_URL`, matching `INTELLIGENCE_SERVICE_SECRET`; Studio uses `SUDAR_INTELLIGENCE_URL` / `BYTEOS_INTELLIGENCE_URL` (default `http://localhost:8001`). Self-host: [SUDAR_SIM_SELFHOST.md](SUDAR_SIM_SELFHOST.md).
 - **Flow**:
-  1. Admin creates scenario in Studio **SudarSim** — use **Preview simulation** to test draft in Learn.
-  2. Publish scenario; optionally link to a course module.
-  3. Learner opens **Sim** tab (published scenarios only) or `/sim/session/new?scenario_id=…`.
-  4. Practices across channels; CRM actions logged.
-  5. Ends session → coach report → optional `module_complete` if rubric passes.
+  1. Admin creates scenario in Studio **SudarSim** (optional practice blocks) — **Preview** / **Export JSON** / **Publish**; link to a course module.
+  2. Learner opens **Today’s Practice** or **Sim** tab (published scenarios only) or `/sim/session/new?scenario_id=…`.
+  3. Practices across channels; CRM actions logged; phone WS replies also saved via BFF.
+  4. Ends session → short coach card → optional **Practice only [weakness]** drill → Twin + NBA update; optional `module_complete` if rubric passes.
+
+---
+
+## Studio Video & Podcast + Learn Watch (overview)
+
+- **Where**: Sudar Studio course editor — **Video & Podcast** panel (`#video-podcast-panel`); Learn course viewer **Watch** (module SudarVid + optional course overview) and **Podcast** tab.
+- **What**: Authors generate a course overview video script and host/expert podcast from module content, then run TTS. Scripts and audio live in `courses.settings` (`video_scenes`, `podcast_dialogue`, `include_video`, `include_podcast`). Learners play overview scenes and podcast segments; per-module Watch still uses SudarVid.
+- **Key files**:
+  - `sudar-studio/src/components/content/VideoPodcastPanel.tsx`
+  - `sudar-studio/src/app/api/studio/video/route.ts` — generates + **persists** scenes
+  - `sudar-studio/src/app/api/studio/podcast/route.ts`, `generate-audio/route.ts`
+  - `sudar-learn/src/app/(dashboard)/courses/[id]/learn/SudarVidCard.tsx`, `CourseVideoCard.tsx`, `CoursePodcastCard.tsx`
+  - `sudar-learn/src/app/api/ai/generate-video/route.ts` — locale-aware SudarVid generate
+- **Env**: `SUDARVID_URL`; TTS via OpenAI and/or Intelligence Edge-TTS.
+- **Flow**:
+  1. Studio course editor → Video & Podcast → Generate script → Generate audio.
+  2. Toggle include flags so Learn shows overview / Podcast tab.
+  3. Learner Watch: module video (SudarVid) and, if authored, course overview below.
 
 ---
 
@@ -354,14 +390,27 @@ This document summarizes **shipped** features that are committed and ready for u
 ## AI course generation quality v2 (Studio + Learn)
 
 - **Where**: Sudar Studio — AI new-course wizard, generation pipeline, per-course **Content quality** page (`/courses/[id]/quality`). Sudar Learn — rich module reader.
-- **What**: Domain-varied module openings (no default “calculator program” scenarios); SME-aware curriculum and module prompts; validated interactives (matching/flipcard/quiz); optional LLM quality scores in `courses.settings.ai_generation.generation_telemetry`; creator **visual identity** controls (domain, theme, brand colors, density); side insights as a **floating hotspot** instead of a permanent sidebar; wider read column; flipcard rendering fix.
+- **What**: Domain-varied module openings (no default “calculator program” scenarios); SME-aware curriculum and module prompts; **domain content-skill playbooks** (mandatory elements, anti-patterns, gold vs slop exemplars); critique/refine scaled to compliance / assessment density / course length; validated interactives (matching/flipcard/quiz); optional LLM quality scores in `courses.settings.ai_generation.generation_telemetry`; creator **visual identity** controls (domain, theme, brand colors, density); side insights as a **floating hotspot** instead of a permanent sidebar; wider read column; flipcard rendering fix.
 - **Key files**:
-  - `sudar-studio/src/lib/ai/courseGeneration/{introductionStrategies,prompts,pipeline,componentValidation}.ts`
+  - `sudar-studio/src/lib/ai/courseGeneration/{introductionStrategies,contentSkills,critiqueGating,prompts,pipeline,componentValidation}.ts`
   - `sudar-studio/src/lib/ai/componentSelector.ts`
+  - `shared/content-generation/prompts.ts` — quiz / flashcards / mindmap / interactive WHEN–WHEN NOT + few-shots
   - `sudar-studio/src/components/generator/BrandSettings.tsx`
   - `sudar-studio/src/app/(dashboard)/courses/[id]/quality/page.tsx`
   - `sudar-learn/src/components/learn/RichModuleContent.tsx`, `sudar-learn/src/lib/courseBodyMarkdown.tsx`
-- **Flow**: Studio AI wizard → BrandSettings + blueprint → `generate-course` → `fillEmptyModulesForCourse` (quality telemetry) → Learn applies `content_theme` / brand colors → learner reads full-width content; taps insight bulb for side context.
+- **Flow**: Studio AI wizard → BrandSettings + blueprint → `generate-course` → `fillEmptyModulesForCourse` (skill playbook + gated critique + quality telemetry) → Learn applies `content_theme` / brand colors → learner reads full-width content; taps insight bulb for side context.
+
+---
+
+## Sudar tutor prompt system (Learn)
+
+- **Where**: Sudar Learn — floating and in-course **Ask Sudar** chat (`POST /api/tutor/query`); related personalization overlays and proactive nudges.
+- **What**: Modular tutor system prompt with pedagogy modes, mode-aware formatting (prose-first for short/exam answers), explicit `choice_group` BLOCKS elicitation rules, wellbeing and anti-over-reliance guidance, and a long-conversation reminder so rules do not drift. Platform navigation answers must follow `help-center/_ai/learn-navigation.md` only.
+- **Key files**:
+  - `sudar-learn/src/lib/tutor/systemPrompt.ts`, `tutorVoice.ts`, `responseContract.ts`
+  - `sudar-learn/src/app/api/tutor/query/route.ts`
+  - `docs/PROMPT_ENGINEERING.md` — full prompt-surface inventory
+- **Flow**: Learner asks Sudar → route builds memory/RAG/modality context → `buildTutorSystemPrompt` → model reply parsed for BLOCKS/ACTIONS → chips and course actions rendered in chat.
 
 ---
 

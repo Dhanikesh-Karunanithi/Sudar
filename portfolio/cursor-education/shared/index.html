@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cursor Education Portfolio</title>
+  <link rel="stylesheet" href="assets/shell.css" />
+</head>
+<body data-shell="ide">
+  <div id="app">
+    <header class="titlebar">
+      <img class="brand-logo" src="assets/cursor-logo.png" width="18" height="18" alt="" />
+      <span class="brand" id="brand">Course</span>
+      <span class="mission-pill" id="mission-pill">—</span>
+      <span class="scorm-pill" id="scorm-pill">SCORM</span>
+    </header>
+    <div class="workspace">
+      <nav class="activity" aria-label="Activity bar">
+        <button type="button" class="active" title="Explorer" aria-label="Explorer">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h7l2 2h9v14H3V4zm2 4v10h14V8H5z"/></svg>
+        </button>
+        <button type="button" title="Search" aria-label="Search" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.5 6.5 0 1 0 14 15.5l.27.28v.79l5 5L21.5 19l-5-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+        </button>
+        <button type="button" title="Source Control" aria-label="Source Control" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3a3 3 0 0 1 2.83 4H11a3 3 0 0 1 2.83 2H17a3 3 0 1 1 0 2h-3.17A3 3 0 0 1 11 15H8.83A3 3 0 1 1 6 13a3 3 0 0 1 2.83-2H11a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H8.83A3 3 0 0 1 6 5V3zm0 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm0 10a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm12-6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg>
+        </button>
+      </nav>
+      <aside class="explorer">
+        <h2 id="explorer-label">Explorer</h2>
+        <div class="tree" id="tree"></div>
+      </aside>
+      <section class="center">
+        <div class="editor">
+          <div class="tabs" id="tabs"></div>
+          <div class="editor-body" id="editor-body"></div>
+        </div>
+        <div class="bottom-panels">
+          <div class="panel-tabs">
+            <button type="button" class="active" data-panel="terminal">Terminal</button>
+            <button type="button" data-panel="problems">Problems</button>
+            <button type="button" data-panel="browser">Browser</button>
+          </div>
+          <div class="panel-body" id="panel-terminal"></div>
+          <div class="panel-body hidden" id="panel-problems"></div>
+          <div class="panel-body hidden" id="panel-browser"></div>
+        </div>
+      </section>
+      <aside class="agent">
+        <div class="agent-header">
+          <span id="agent-name">Coach</span>
+          <span class="sub" id="agent-sub">Teaching coach</span>
+        </div>
+        <div class="chat" id="chat"></div>
+        <div class="chat-input-row">
+          <input id="chat-input" placeholder="Ask about this lesson…" autocomplete="off" />
+          <button type="button" id="chat-send">Send</button>
+        </div>
+      </aside>
+    </div>
+    <footer class="statusbar">
+      <span id="status-score">Score 0/0</span>
+      <span id="status-attempts"></span>
+      <span id="status-hint" class="hint"></span>
+    </footer>
+  </div>
+  <div id="complete-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="complete-title">
+    <div class="overlay-card">
+      <h2 id="complete-title">Course complete</h2>
+      <div class="score" id="complete-score">0 / 0</div>
+      <p id="complete-msg">You finished the learning path.</p>
+      <button type="button" id="complete-dismiss">Continue</button>
+    </div>
+  </div>
+  <script src="assets/course-config.js"></script>
+  <script src="assets/shell.js"></script>
+</body>
+</html>

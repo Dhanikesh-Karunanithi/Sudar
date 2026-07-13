@@ -1,0 +1,8 @@
+# Built SCORM packages (rebuild with scripts/build-scorm.mjs)
+dist/
+
+# Secrets / restore maps
+*.local
+credentials.local
+hidden-courses.restore.local
+hidden-paths.restore.local

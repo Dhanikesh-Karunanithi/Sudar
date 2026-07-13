@@ -117,6 +117,13 @@ body {
   background: var(--shell-bg);
 }
 
+/* Immersive SCORM IDE courses: hide floating chrome that eats the viewport */
+html[data-scorm-immersive] [data-sudar-checkin],
+html[data-scorm-immersive] [data-sudar-floating-chat],
+html[data-scorm-immersive] [data-sudar-pet-host] {
+  display: none !important;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;

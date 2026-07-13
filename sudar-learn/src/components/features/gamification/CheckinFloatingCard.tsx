@@ -92,6 +92,7 @@ export function CheckinFloatingCard() {
           exit={{ opacity: 0, y: 16, scale: 0.97 }}
           transition={{ type: 'spring', bounce: 0.3, duration: 0.4 }}
           className="fixed bottom-6 right-6 z-50 w-80 rounded-2xl border border-border bg-card shadow-xl shadow-black/10 dark:shadow-black/30 overflow-hidden"
+          data-sudar-checkin=""
           role="dialog"
           aria-label="Sudar check-in"
         >

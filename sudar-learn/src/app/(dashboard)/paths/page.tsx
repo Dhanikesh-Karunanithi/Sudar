@@ -17,8 +17,13 @@ export default async function LearnPathsPage({
   const { data: { user } } = await supabase.auth.getUser()
   const admin = createServiceRoleSupabaseClient()
 
+  const { data: profile } = user
+    ? await admin.from('profiles').select('active_org_id, org_id').eq('id', user.id).maybeSingle()
+    : { data: null }
+  const orgId = profile?.active_org_id ?? profile?.org_id ?? null
+
   const [paths, { data: myEnrollments }] = await Promise.all([
-    getCachedPublishedPaths(),
+    getCachedPublishedPaths(orgId),
     admin.from('enrollments').select('path_id, status, progress_pct, personalized_sequence').eq('user_id', user!.id).not('path_id', 'is', null),
   ])
 

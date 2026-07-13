@@ -1,0 +1,253 @@
+{
+  "id": "org-adoption",
+  "title": "From Isolated to Org-Wide",
+  "shell": "console",
+  "agentName": "Adoption Advisor",
+  "agentSub": "Enablement coach for eng leaders",
+  "explorerLabel": "PLAYBOOKS",
+  "welcomeTerminal": "DevEx console ready. Type help.",
+  "globalTerminal": {
+    "help": {
+      "ok": true,
+      "output": "help | adoption diagnose | policy lint | fluency report | workshop run"
+    }
+  },
+  "tree": [
+    { "type": "file", "name": "README.md", "path": "README.md" },
+    {
+      "type": "folder",
+      "name": "Rollout",
+      "children": [
+        { "type": "file", "name": "stages-model.md", "path": "Rollout/stages-model.md" },
+        { "type": "file", "name": "playbook-30-60-90.md", "path": "Rollout/playbook-30-60-90.md" }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "Guardrails",
+      "children": [
+        { "type": "file", "name": "privacy.md", "path": "Guardrails/privacy.md" },
+        { "type": "file", "name": "rules-packs.md", "path": "Guardrails/rules-packs.md" }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "Metrics",
+      "children": [
+        { "type": "file", "name": "fluency-glossary.md", "path": "Metrics/fluency-glossary.md" }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "Workshop",
+      "children": [
+        { "type": "file", "name": "facilitator-guide.md", "path": "Workshop/facilitator-guide.md" }
+      ]
+    }
+  ],
+  "files": {
+    "README.md": {
+      "kind": "md",
+      "content": "# From Isolated to Org-Wide\n\n> Individual Cursor usage is not the same as company fluency.\n\n## What you will learn\n\n- Diagnose adoption stage from signals\n- Draft a 30/60/90 that fits team maturity\n- Choose guardrails that protect without killing velocity\n- Replace completion vanity with fluency metrics\n- Run a workshop for the first 50 engineers\n\nWrong answers reduce your score. Pass at **70%**."
+    },
+    "Rollout/stages-model.md": {
+      "kind": "teach",
+      "content": "# Adoption stages\n\n1. **Pilot** — curious ICs, no shared rules\n2. **Champions** — team norms, office hours\n3. **Guardrails** — privacy, approved MCP, review norms\n4. **Fluency ops** — metrics beyond completion, launch-coupled education\n\nSignals of Pilot: power users exist, managers still ask only for completion %."
+    },
+    "Rollout/playbook-30-60-90.md": {
+      "kind": "lab",
+      "content": "# 30/60/90 draft (edit)\n\nDay 0-30: _____ (pilot scope)\nDay 31-60: _____ (champions)\nDay 61-90: _____ (guardrails + metrics)\n"
+    },
+    "Guardrails/privacy.md": {
+      "kind": "teach",
+      "content": "# Privacy & velocity\n\nGood guardrails: secrets policy, repo allowlists, approved MCP, rules packs.\n\nBad guardrail: ban all AI tools company-wide — it kills learning and drives shadow usage."
+    },
+    "Guardrails/rules-packs.md": {
+      "kind": "md",
+      "content": "# Rules packs\n\nShip org rules the way you ship lint configs — versioned and reviewed."
+    },
+    "Metrics/fluency-glossary.md": {
+      "kind": "teach",
+      "content": "# Fluency metrics (not vanity)\n\n- Activation: first guided mission with Chat+Terminal\n- Agent depth: multi-file change with tests\n- Editorial judgment: rejected unsafe accepts\n- Anti-metric: video completion % alone"
+    },
+    "Workshop/facilitator-guide.md": {
+      "kind": "teach",
+      "content": "# Facilitator guide\n\nDo not demo Chat-only.\nForce a diff-review exercise.\nEnd with named owners for fluency metrics."
+    }
+  },
+  "missions": [
+    {
+      "id": "A01",
+      "title": "Diagnose stage",
+      "points": 20,
+      "wrongPenalty": 5,
+      "hint": "Run adoption diagnose, then pick the stage.",
+      "teachFile": "Rollout/stages-model.md",
+      "openFile": "Rollout/stages-model.md",
+      "unlockFiles": ["README.md", "Rollout/stages-model.md"],
+      "teach": "Stage diagnosis drives the rest of your rollout. Mislabeling Pilot as Fluency ops wastes budget.",
+      "brief": "Signals: 12 power users, no shared rules, managers ask for training completion %. What stage?",
+      "choices": [
+        {
+          "label": "Fluency ops",
+          "correct": false,
+          "feedback": "Too early — no shared rules or guardrails yet. Re-read stages-model.md."
+        },
+        {
+          "label": "Pilot (isolated usage)",
+          "correct": true,
+          "feedback": "Correct. Power users without shared infrastructure = Pilot.",
+          "passMission": "A01",
+          "continueLabel": "Complete lesson"
+        },
+        {
+          "label": "Guardrails complete",
+          "correct": false,
+          "feedback": "Guardrails are not in place. This is still Pilot."
+        }
+      ],
+      "terminal": {
+        "adoption diagnose": {
+          "ok": true,
+          "output": "org=acme\npower_users=12\nshared_rules=false\nkpi_focus=completion%\nstage_hint=pilot"
+        }
+      },
+      "fallbackReply": "Run `adoption diagnose`, then choose the stage."
+    },
+    {
+      "id": "A02",
+      "title": "30/60/90 draft",
+      "points": 20,
+      "wrongPenalty": 4,
+      "hint": "Include pilot, champion, and guardrail language.",
+      "teachFile": "Rollout/stages-model.md",
+      "openFile": "Rollout/playbook-30-60-90.md",
+      "unlockFiles": ["README.md", "Rollout/playbook-30-60-90.md", "Rollout/stages-model.md"],
+      "teach": "A usable 30/60/90 names the stage intent for each window.",
+      "brief": "Edit the playbook so it includes pilot, champion(s), and guardrail(s), then Validate.",
+      "choices": [
+        {
+          "label": "Validate my 30/60/90",
+          "runCheck": "playbook"
+        }
+      ],
+      "checks": {
+        "playbook": {
+          "type": "labContains",
+          "file": "Rollout/playbook-30-60-90.md",
+          "allOf": ["pilot", "champion", "guardrail"],
+          "success": "30/60/90 covers pilot → champions → guardrails.",
+          "fail": "Include the words pilot, champion(s), and guardrail(s).",
+          "passMission": "A02"
+        }
+      },
+      "fallbackReply": "Edit the playbook, then Validate."
+    },
+    {
+      "id": "A03",
+      "title": "Guardrails",
+      "points": 20,
+      "wrongPenalty": 5,
+      "hint": "Pick velocity-safe policy, then policy lint.",
+      "teachFile": "Guardrails/privacy.md",
+      "openFile": "Guardrails/privacy.md",
+      "unlockFiles": ["README.md", "Guardrails/privacy.md", "Guardrails/rules-packs.md"],
+      "teach": "Guardrails should teach safe defaults, not prohibit learning.",
+      "brief": "Which policy kills velocity?",
+      "choices": [
+        {
+          "label": "Ban all AI tools company-wide",
+          "correct": false,
+          "feedback": "That is the anti-pattern — prohibition without enablement.",
+          "addProblem": { "sev": "error", "text": "Velocity-killing ban" }
+        },
+        {
+          "label": "Allowlisted MCP + secrets policy + rules packs",
+          "correct": true,
+          "feedback": "Yes — guardrails that teach. Run `policy lint`.",
+          "continueLabel": "I will run policy lint"
+        }
+      ],
+      "terminal": {
+        "policy lint": {
+          "ok": true,
+          "output": "OK privacy\nOK rules-packs\nWARN: no fluency metric owner yet",
+          "passMission": "A03",
+          "reply": "Policy lint clean enough to move to metrics."
+        }
+      },
+      "fallbackReply": "Choose allowlisted MCP + secrets + rules, then `policy lint`."
+    },
+    {
+      "id": "A04",
+      "title": "Fluency metrics",
+      "points": 20,
+      "wrongPenalty": 5,
+      "hint": "Do not optimize completion alone.",
+      "teachFile": "Metrics/fluency-glossary.md",
+      "openFile": "Metrics/fluency-glossary.md",
+      "unlockFiles": ["README.md", "Metrics/fluency-glossary.md"],
+      "teach": "92% completion with 18% agent depth is a vanity trap.",
+      "brief": "Dashboard: 92% completion, 18% agent depth. What do you report to the VP?",
+      "choices": [
+        {
+          "label": "We are done — 92% completion",
+          "correct": false,
+          "feedback": "Vanity trap. Depth and unsafe accepts matter more."
+        },
+        {
+          "label": "Activation + agent depth + unsafe-accept rate",
+          "correct": true,
+          "feedback": "Exactly. Run `fluency report` to lock the metric set.",
+          "passMission": "A04",
+          "continueLabel": "Complete lesson"
+        }
+      ],
+      "terminal": {
+        "fluency report": {
+          "ok": true,
+          "output": "activation=0.41\nagent_depth=0.18\nunsafe_accept=0.11\ncompletion=0.92  ← do not optimize alone",
+          "setBrowser": "<h2>Fluency Dashboard</h2><p>Depth 18% · Unsafe accept 11% · Completion 92% (vanity)</p>",
+          "passMission": "A04",
+          "reply": "Metric contract set."
+        }
+      },
+      "fallbackReply": "Pick fluency metrics, or run `fluency report`."
+    },
+    {
+      "id": "A05",
+      "title": "Workshop dry-run",
+      "points": 20,
+      "wrongPenalty": 4,
+      "hint": "Force diff review — not Chat-only demos.",
+      "teachFile": "Workshop/facilitator-guide.md",
+      "openFile": "Workshop/facilitator-guide.md",
+      "unlockFiles": ["README.md", "Workshop/facilitator-guide.md"],
+      "teach": "Workshops that only show Chat recreate isolated usage.",
+      "brief": "Confirm your run-of-show for the first 50 engineers.",
+      "choices": [
+        {
+          "label": "Confirm: diff review + metrics owners named",
+          "correct": true,
+          "feedback": "Run-of-show locked. You are ready to enable the org.",
+          "passMission": "A05",
+          "setBrowser": "<h2>Workshop Room</h2><ol><li>Mental model</li><li>Rules pack</li><li>Live lab + diff review</li><li>Metrics contract</li></ol>",
+          "continueLabel": "Complete lesson"
+        },
+        {
+          "label": "Just show Chat-style demos",
+          "correct": false,
+          "feedback": "That recreates isolated usage. Force a lab + diff review."
+        }
+      ],
+      "terminal": {
+        "workshop run": {
+          "ok": true,
+          "output": "Starting facilitator checklist…\n[x] agenda loaded\n[ ] diff review forced\n[ ] metrics owners",
+          "setBrowser": "<h2>Workshop Room</h2><p>Waiting for facilitator confirmation…</p>"
+        }
+      },
+      "fallbackReply": "Run `workshop run`, then confirm diff review in Coach."
+    }
+  ]
+}
