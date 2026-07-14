@@ -21,6 +21,15 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## Learn course learn shell — full-bleed viewer (July 2026)
+
+- **Where**: Sudar Learn — `/courses/[id]/learn`.
+- **What**: Course learn routes set `data-course-learn` on `<html>` so the dashboard app shell drops max-width/padding; a fixed fullscreen loading state avoids the narrow “Loading course…” card while the viewer hydrates. Works with existing `data-scorm-immersive` chrome hiding.
+- **Key files**:
+  - `sudar-learn/src/app/(dashboard)/courses/[id]/learn/CourseLearnShell.tsx`, `layout.tsx`, `loading.tsx`
+  - `sudar-learn/src/app/globals.css` (`html[data-course-learn]`, `html[data-scorm-immersive]`)
+- **Flow**: Open course learn → full-viewport loader → SCORM/module viewer fills the window.
+
 ## Account settings (Studio | Learn)
 
 - **Where**: Sudar Studio and Sudar Learn — **Settings** (`/settings`) — **Account** card (above profile photo).
@@ -37,7 +46,7 @@ This document summarizes **shipped** features that are committed and ready for u
 ## Pilot orgs — multi-org admin + Sudar AI tier (June 2026)
 
 - **Where**: Staging Sudar Studio (`sudar-studio.vercel.app`); org switcher in sidebar; **Platform → Organisations** switch action; **Org settings → Sudar AI (included for pilots)**.
-- **What**: Platform operators can provision Talisma/Foundever pilot orgs with included **Sudar AI** (FreeLLMAPI proxy, white-labeled). Super admins with multiple org memberships switch active workspace in Studio. Chat/tutor routes: org private BYOM → Sudar AI → cloud fallback (Together/OpenAI/Anthropic). Per-org monthly token caps via `ai_entitlements`.
+- **What**: Platform operators can provision Talisma/Foundever pilot orgs with included **Sudar AI** (FreeLLMAPI proxy, white-labeled). Super admins with multiple org memberships switch active workspace in Studio. Chat/tutor routes: org private BYOM → Sudar AI → cloud fallback (Together/OpenAI/Anthropic). If Sudar AI is enabled for an org but FreeLLMAPI env is unset on the host, chat **falls through to cloud** (does not hard-block). Per-org monthly token caps via `ai_entitlements`.
 - **Key files**:
   - `supabase/migrations/20260620100000_profiles_active_org_id.sql`
   - `shared/ai/orgAiPlatform.ts`, `shared/ai/platformChat.ts`
@@ -47,7 +56,8 @@ This document summarizes **shipped** features that are committed and ready for u
   - `scripts/ops/bootstrap-freellmapi.mjs`, `scripts/ops/provision-pilot-org.mjs`
   - `docs/PILOT_ONBOARDING.md`
 - **Env**: `ALLOW_ORG_PLATFORM_AI=true`, `FREELLMAPI_BASE_URL`, `FREELLMAPI_API_KEY`, `TOGETHER_API_KEY` (fallback), `ADMIN_EMAILS`, `EARLY_ACCESS_ENABLED` on staging.
-- **Ops**: `node scripts/ops/provision-pilot-org.mjs` after migration; bootstrap FreeLLMAPI via `node scripts/ops/bootstrap-freellmapi.mjs`.
+- **Ops**: `node scripts/ops/provision-pilot-org.mjs` after migration; bootstrap FreeLLMAPI via `node scripts/ops/bootstrap-freellmapi.mjs`. Keep `TOGETHER_API_KEY` (or other cloud key) on Learn/Studio for fallback.
+- **Key files (fallback)**: `shared/ai/orgAiPlatform.ts` (`getOrgPlatformAiConfigError`), `shared/ai/platformChat.ts` (`chatWithPlatformOrCloudFallback`).
 
 ---
 

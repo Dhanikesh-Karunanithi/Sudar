@@ -91,8 +91,7 @@ export function getOrgPlatformAiConfigError(settings: unknown): string | null {
   if (!isOrgPlatformAiFeatureEnabled()) {
     return 'Sudar AI (included pilot tier) is not enabled on this deployment.'
   }
-  if (!getFreellmapiEnv()?.apiKey) {
-    return 'Sudar AI is enabled for your organisation but the platform operator has not configured the included AI service yet.'
-  }
+  // Platform tier enabled but FreeLLMAPI not wired — fall through to cloud (Together, etc.)
+  if (!getFreellmapiEnv()?.apiKey) return null
   return null
 }
