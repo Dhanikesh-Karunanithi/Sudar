@@ -187,9 +187,6 @@ export async function chatWithPlatformOrCloudFallback(
   options: PlatformChatOptions,
   orgSettings?: unknown
 ): Promise<PlatformChatResult> {
-  const platformErr = getOrgPlatformAiConfigError(orgSettings ?? {})
-  if (platformErr) throw new Error(platformErr)
-
   const platform = buildPlatformAiRuntime(orgSettings ?? {})
   if (platform) {
     try {

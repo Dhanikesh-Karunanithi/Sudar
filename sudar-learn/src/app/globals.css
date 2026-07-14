@@ -124,6 +124,34 @@ html[data-scorm-immersive] [data-sudar-pet-host] {
   display: none !important;
 }
 
+/* Course learn: full viewport (SCORM shells), not the narrow dashboard card */
+html[data-course-learn] [data-sudar-app-shell] {
+  max-width: none;
+  width: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+html[data-course-learn] [data-sudar-app-shell] > main {
+  padding: 0;
+  overflow: hidden;
+}
+html[data-scorm-immersive] [data-sudar-app-shell] {
+  max-width: none;
+  width: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+html[data-scorm-immersive] [data-sudar-app-shell] > main {
+  padding: 0;
+  overflow: hidden;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;

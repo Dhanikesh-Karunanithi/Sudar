@@ -16,6 +16,14 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-07-14 — Learn course shell full-bleed + cloud AI fallback
+
+- **Theme**: Course learn routes use full viewport; tutor/chat no longer hard-fails when included Sudar AI proxy env is unset.
+- **Shipped**:
+  - `data-course-learn` shell + fullscreen learn loading state so SCORM viewers escape the dashboard max-width card.
+  - When org Sudar AI is marked enabled but FreeLLMAPI is not configured on the deployment, chat falls through to cloud providers (Together / OpenAI / Anthropic) instead of blocking with an operator-config error.
+- **Docs**: This entry; `docs/SHIPPED_FEATURES.md` Learn course learn shell + Sudar AI fallback notes.
+
 ### 2026-07-13 — Learn Worker 1102 mitigation + purge old courses
 
 - **Theme**: Cloudflare Error 1102 on `learn.thesudar.com` course pages; clean catalog for Cursor portfolio demo.
