@@ -536,9 +536,10 @@ export async function POST(request: NextRequest) {
   let externalCourseContextBlock = ''
 
   if (course_id) {
+    // allow_tutor_discussion may be absent until migration 20260602120000 is applied.
     const { data: course } = await admin
       .from('courses')
-      .select('title, is_external, allow_tutor_discussion, modules(id, title, content, order_index)')
+      .select('title, is_external, modules(id, title, content, order_index)')
       .eq('id', course_id)
       .eq('status', 'published')
       .order('order_index', { referencedTable: 'modules', ascending: true })
