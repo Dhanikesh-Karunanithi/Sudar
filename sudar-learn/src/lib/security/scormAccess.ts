@@ -1,6 +1,8 @@
 type EnrollmentRow = { id: string } | null
-type CourseRow = { org_id: string | null } | null
-type MemberRow = { id: string } | null
+type CourseRow = { org_id: string | null; status?: string | null } | null
+type MemberRow = { role: string | null } | null
+
+const CONTENT_EDITOR_ROLES = new Set(['ADMIN', 'MANAGER', 'CREATOR'])
 
 type QueryBuilder = {
   select: (columns: string) => QueryBuilder
@@ -24,8 +26,8 @@ export function courseIdFromScormPath(path: string): string | null {
 }
 
 /**
- * Learner may load SCORM assets when enrolled in the course, or when they are
- * a member of the course's organisation (admins reviewing without a fresh enroll).
+ * Learner may load SCORM assets when enrolled in the course, or when they are an
+ * org content editor previewing that org's course (including drafts) without enroll.
  */
 export async function canLearnerAccessScormPath(
   adminClient: unknown,
@@ -47,7 +49,7 @@ export async function canLearnerAccessScormPath(
 
   const { data: course } = (await admin
     .from('courses')
-    .select('org_id')
+    .select('org_id, status')
     .eq('id', courseId)
     .maybeSingle()) as { data: CourseRow }
 
@@ -56,10 +58,14 @@ export async function canLearnerAccessScormPath(
 
   const { data: member } = (await admin
     .from('org_members')
-    .select('id')
+    .select('role')
     .eq('org_id', orgId)
     .eq('user_id', userId)
     .maybeSingle()) as { data: MemberRow }
 
-  return Boolean(member?.id)
+  const role = member?.role
+  if (!role || !CONTENT_EDITOR_ROLES.has(role)) return false
+
+  // Creators may preview draft or published packages; learners must enroll.
+  return course.status === 'draft' || course.status === 'published'
 }
