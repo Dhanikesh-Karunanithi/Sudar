@@ -1,4 +1,6 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { getOrCreateOrg } from '@/lib/org'
+import { getPathForOrg } from '@/lib/paths/verifyPathOrg'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -8,6 +10,9 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createServiceRoleSupabaseClient()
+  const orgId = await getOrCreateOrg(user.id)
+  const path = await getPathForOrg(admin, id, orgId, 'id')
+  if (!path) return NextResponse.json({ error: 'Path not found' }, { status: 404 })
 
   const { data: enrollments, error } = await admin
     .from('enrollments')
