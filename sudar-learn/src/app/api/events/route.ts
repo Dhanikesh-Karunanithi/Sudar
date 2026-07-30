@@ -2,6 +2,7 @@ import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/se
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import type { Json } from '@/types/database'
+import { computeCourseEnrollmentProgress } from '@/lib/enrollment/courseEnrollmentProgress'
 import { recordStruggleTopics } from '@/lib/learner/syncTopicSkills'
 import { evaluateGamification } from '@/lib/gamification/engine'
 
@@ -156,21 +157,10 @@ export async function POST(request: NextRequest) {
 
   // On module_complete — update enrollment progress
   if (event_type === 'module_complete' && course_id) {
-    const { count: totalModules } = await admin
-      .from('modules')
-      .select('id', { count: 'exact', head: true })
-      .eq('course_id', course_id)
+    const enrollmentProgress = await computeCourseEnrollmentProgress(admin, user.id, course_id)
 
-    const { count: completedModules } = await admin
-      .from('learning_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('course_id', course_id)
-      .eq('event_type', 'module_complete')
-
-    if (totalModules && completedModules !== null) {
-      const progress = Math.min(100, Math.round((completedModules / totalModules) * 100))
-      const status = progress >= 100 ? 'completed' : 'in_progress'
+    if (enrollmentProgress) {
+      const { progress, status } = enrollmentProgress
 
       await admin
         .from('enrollments')

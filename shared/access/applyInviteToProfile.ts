@@ -26,13 +26,17 @@ export async function applyInviteToProfile(
     .single()
 
   if (profile?.signup_code_used) {
-    await ensureInviteRedeemed(supabase, userId, profile.signup_code_used)
     return { ok: true, alreadyApplied: true }
   }
 
   const validation = await validateInviteCode(supabase, rawCode)
   if (!validation.valid) {
     return { ok: false, error: validation.error }
+  }
+
+  const redeemResult = await redeemInviteCode(supabase, userId, rawCode)
+  if (!redeemResult.ok) {
+    return { ok: false, error: redeemResult.error }
   }
 
   await supabase
@@ -42,8 +46,6 @@ export async function applyInviteToProfile(
       signup_code_used: validation.code ?? rawCode.trim().toUpperCase(),
     })
     .eq('id', userId)
-
-  await redeemInviteCode(supabase, userId, rawCode)
 
   return { ok: true }
 }
