@@ -5,16 +5,21 @@ export async function loadExternalCourseContext(
   admin: SupabaseClient,
   courseId: string,
 ): Promise<string> {
+  // allow_tutor_discussion may be absent until migration 20260602120000 is applied.
   const { data: course } = await admin
     .from('courses')
     .select(
-      'title, description, external_provider, external_url, allow_tutor_discussion, content_access_mode, external_metadata',
+      'title, description, external_provider, external_url, content_access_mode, external_metadata',
     )
     .eq('id', courseId)
     .eq('is_external', true)
     .maybeSingle()
 
   if (!course) return ''
+
+  if (course.content_access_mode === 'iframe_only') {
+    return `[External course "${course.title}" on ${course.external_provider}. Tutor can recommend but not discuss detailed content — learner views on provider site.]`
+  }
 
   const { data: extRaw } = await admin
     .from('external_course_data' as 'courses')
@@ -30,10 +35,6 @@ export async function loadExternalCourseContext(
     sign_in_instructions?: string | null
   }
   const ext = extRaw as ExtRow | null
-
-  if (course.allow_tutor_discussion === false || course.content_access_mode === 'iframe_only') {
-    return `[External course "${course.title}" on ${course.external_provider}. Tutor can recommend but not discuss detailed content — learner views on provider site.]`
-  }
 
   const meta = (course.external_metadata as Record<string, unknown>) ?? {}
   const ctx = {
