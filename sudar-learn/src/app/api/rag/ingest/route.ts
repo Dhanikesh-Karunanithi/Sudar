@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { embedTexts, EMBED_DIMENSIONS } from '@/lib/embed'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 import { chunkText, extractModuleBody } from '@/lib/rag/chunk'
+import { userCanEditOrgContent } from '@/lib/org/contentEditor'
 import { isAppLocale } from '../../../../../../shared/i18nLocales'
 
 interface IngestChunk {
@@ -38,6 +39,17 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const admin = createServiceRoleSupabaseClient()
+    const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).maybeSingle()
+    const orgId = profile?.org_id as string | undefined
+    if (!orgId) {
+      return NextResponse.json({ error: 'No organisation' }, { status: 400 })
+    }
+
+    const canIngest = await userCanEditOrgContent(supabase, user.id, orgId)
+    if (!canIngest) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     let body: { course_id?: string } = {}
     try {
       body = await request.json()
@@ -50,6 +62,7 @@ export async function POST(request: NextRequest) {
       .from('courses')
       .select('id, org_id, title, description, difficulty, tags')
       .eq('status', 'published')
+      .eq('org_id', orgId)
     if (singleCourseId) query = query.eq('id', singleCourseId) as typeof query
     const { data: courses, error: coursesError } = await query
     if (coursesError || !courses?.length) {
