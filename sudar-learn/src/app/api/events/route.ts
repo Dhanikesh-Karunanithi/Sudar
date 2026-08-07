@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import type { Json } from '@/types/database'
 import { recordStruggleTopics } from '@/lib/learner/syncTopicSkills'
+import { syncEnrollmentProgressAfterModuleComplete } from '@/lib/learner/enrollmentProgress'
 import { evaluateGamification } from '@/lib/gamification/engine'
 
 const eventTypeEnum = z.enum([
@@ -154,63 +155,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: insertError.message }, { status: 500 })
   }
 
-  // On module_complete — update enrollment progress
+  // On module_complete — update enrollment progress (distinct modules, not raw event count)
   if (event_type === 'module_complete' && course_id) {
-    const { count: totalModules } = await admin
-      .from('modules')
-      .select('id', { count: 'exact', head: true })
-      .eq('course_id', course_id)
-
-    const { count: completedModules } = await admin
-      .from('learning_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('course_id', course_id)
-      .eq('event_type', 'module_complete')
-
-    if (totalModules && completedModules !== null) {
-      const progress = Math.min(100, Math.round((completedModules / totalModules) * 100))
-      const status = progress >= 100 ? 'completed' : 'in_progress'
-
-      await admin
-        .from('enrollments')
-        .update({
-          progress_pct: progress,
-          status,
-          ...(status === 'in_progress' && { started_at: new Date().toISOString() }),
-          ...(status === 'completed' && { completed_at: new Date().toISOString() }),
-        })
-        .eq('user_id', user.id)
-        .eq('course_id', course_id)
-
-      // Sync path progress: any path enrollment that includes this course gets its progress_pct recomputed
-      const { data: pathEnrollmentsForSync } = await admin
-        .from('enrollments')
-        .select('id, path_id, personalized_sequence')
-        .eq('user_id', user.id)
-        .not('path_id', 'is', null)
-
-      for (const pe of pathEnrollmentsForSync ?? []) {
-        const seq = (pe.personalized_sequence as Array<{ course_id: string }>) ?? []
-        const courseIdsInPath = seq.map((c) => c.course_id).filter(Boolean)
-        if (!courseIdsInPath.includes(course_id)) continue
-
-        const { data: courseStatuses } = await admin
-          .from('enrollments')
-          .select('course_id, status')
-          .eq('user_id', user.id)
-          .in('course_id', courseIdsInPath)
-
-        const totalInPath = courseIdsInPath.length
-        const completedInPath = (courseStatuses ?? []).filter((e) => e.status === 'completed').length
-        const pathProgressPct = totalInPath ? Math.round((completedInPath / totalInPath) * 100) : 0
-
-        await admin
-          .from('enrollments')
-          .update({ progress_pct: pathProgressPct })
-          .eq('id', pe.id)
-      }
-    }
+    await syncEnrollmentProgressAfterModuleComplete(admin, user.id, course_id)
   }
 
   // On quiz_attempt — feed wrong topics into learner memory as struggles
