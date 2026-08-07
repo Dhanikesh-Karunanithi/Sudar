@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleSupabaseClient, createClient } from '@/lib/supabase/server'
+import { parseNotificationSettingsPatch } from '@/lib/notifications/notificationSettingsPatch'
 import { NOTIFICATION_CATEGORIES } from '../../../../../../shared/notifications/categories'
 
 export async function GET() {
@@ -66,9 +67,13 @@ export async function PATCH(request: NextRequest) {
   const admin = createServiceRoleSupabaseClient()
 
   if (body.settings && typeof body.settings === 'object') {
+    const parsedSettings = parseNotificationSettingsPatch(body.settings)
+    if (!parsedSettings.ok) {
+      return NextResponse.json({ error: parsedSettings.error }, { status: 400 })
+    }
     await admin.from('user_notification_settings').upsert({
+      ...parsedSettings.data,
       user_id: user.id,
-      ...body.settings,
       updated_at: new Date().toISOString(),
     })
   }
