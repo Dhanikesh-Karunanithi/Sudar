@@ -191,6 +191,11 @@ If there's no prior history, make it a genuine warm welcome that references what
     (newCourse.title + ' ' + (newCourse.description ?? '')).toLowerCase().includes(concept.toLowerCase())
   ).slice(0, 5)
 
+  const personalization_signals_used = mergeCourseWelcomeSignals(memoryBundle.signalsUsed, {
+    priorCourseRows: priorEnrollments?.length ?? 0,
+    relevantConceptCount: relevantConcepts.length,
+  })
+
   const welcome = {
     message,
     first_name: firstName,
