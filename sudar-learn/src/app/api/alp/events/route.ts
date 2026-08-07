@@ -6,6 +6,7 @@
  */
 import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { validateAlpKey, getAlpKeyFromRequest, rejectAlpUserOutsideOrg } from '@/lib/alp-auth'
+import { resolveCourseProgressSnapshot } from '@/lib/learner/courseEnrollmentProgress'
 import type { Json } from '@/types/database'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -51,26 +52,17 @@ export async function POST(request: NextRequest) {
   const first = events[0]
   if (first?.event_type === 'module_complete' && first.course_id) {
     const course_id = first.course_id
-    const { count: totalModules } = await admin
-      .from('modules')
-      .select('id', { count: 'exact', head: true })
-      .eq('course_id', course_id)
+    const { progressPct, status, totalModules } = await resolveCourseProgressSnapshot(
+      admin,
+      user_id,
+      course_id
+    )
 
-    const { count: completedModules } = await admin
-      .from('learning_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user_id)
-      .eq('course_id', course_id)
-      .eq('event_type', 'module_complete')
-
-    if (totalModules != null && completedModules != null && totalModules > 0) {
-      const progress = Math.min(100, Math.round((completedModules / totalModules) * 100))
-      const status = progress >= 100 ? 'completed' : 'in_progress'
-
+    if (totalModules > 0) {
       await admin
         .from('enrollments')
         .update({
-          progress_pct: progress,
+          progress_pct: progressPct,
           status,
           ...(status === 'in_progress' && { started_at: new Date().toISOString() }),
           ...(status === 'completed' && { completed_at: new Date().toISOString() }),

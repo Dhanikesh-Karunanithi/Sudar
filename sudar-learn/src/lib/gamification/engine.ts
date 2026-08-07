@@ -20,6 +20,8 @@ interface EngineInput {
   /** Pass the request origin so we can fire internal fetch calls */
   origin?: string
   cookieHeader?: string
+  /** Server-only coin override for trusted org KPI milestones */
+  trustedServerCoins?: number
 }
 
 interface ChallengeProgressRow {
@@ -48,6 +50,27 @@ export async function evaluateGamification(input: EngineInput): Promise<Gamifica
   let xpToAdd = 0
 
   // ── Coin + XP earn rules ────────────────────────────────────────────────────
+  if (eventType === 'module_complete' && moduleId) {
+    const { count } = await admin
+      .from('learning_events')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('course_id', courseId ?? '')
+      .eq('module_id', moduleId)
+      .eq('event_type', 'module_complete')
+    if ((count ?? 0) > 1) {
+      return {
+        coinsEarned: 0,
+        xpEarned: 0,
+        levelUp: null,
+        newAchievements: [],
+        newBalance: currentCoins,
+        newXp: currentXp,
+        newLevel: currentLevel,
+      }
+    }
+  }
+
   if (eventType === 'streak_milestone_hit') {
     const streakDays = (payload.days as number) ?? 0
     const milestone = STREAK_MILESTONE_COINS[streakDays]
@@ -56,7 +79,8 @@ export async function evaluateGamification(input: EngineInput): Promise<Gamifica
       xpToAdd = milestone.xp
     }
   } else if (eventType === 'org_kpi_milestone') {
-    coinsToAdd = (payload.coins as number) ?? 0
+    // Never trust client-supplied coin amounts; only trusted server callers may set coins.
+    coinsToAdd = input.trustedServerCoins ?? 0
     xpToAdd = 50
   } else {
     for (const rule of COIN_EARN_RULES) {
