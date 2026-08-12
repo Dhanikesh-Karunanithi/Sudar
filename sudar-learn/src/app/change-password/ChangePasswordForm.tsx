@@ -23,17 +23,23 @@ export function ChangePasswordForm({ recovery = false }: { recovery?: boolean })
       return
     }
     setLoading(true)
-    const supabase = createClient()
-    const { error: updateError } = await supabase.auth.updateUser({ password })
-    if (updateError) {
-      setError(updateError.message)
-      setLoading(false)
-      return
-    }
     if (!recovery) {
-      const res = await fetch('/api/auth/complete-password-change', { method: 'POST' })
+      const res = await fetch('/api/auth/complete-password-change', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      })
       if (!res.ok) {
-        setError('Failed to complete. Please try again.')
+        const payload = (await res.json().catch(() => null)) as { error?: string } | null
+        setError(payload?.error ?? 'Failed to complete. Please try again.')
+        setLoading(false)
+        return
+      }
+    } else {
+      const supabase = createClient()
+      const { error: updateError } = await supabase.auth.updateUser({ password })
+      if (updateError) {
+        setError(updateError.message)
         setLoading(false)
         return
       }
