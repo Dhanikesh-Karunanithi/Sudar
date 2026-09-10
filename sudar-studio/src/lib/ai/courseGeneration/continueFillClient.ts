@@ -24,6 +24,7 @@ export async function continueCourseModuleFill(courseId: string): Promise<void> 
     if (data.completed) return
     const retryable =
       res.ok ||
+      data.needs_continue === true ||
       res.status === 202 ||
       isRetryableFillMessage(data.error) ||
       isRetryableFillMessage(data.warning)

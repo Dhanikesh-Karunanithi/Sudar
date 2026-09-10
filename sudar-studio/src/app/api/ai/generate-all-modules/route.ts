@@ -79,5 +79,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ...payload, error: result.error }, { status: 502 })
   }
 
-  return NextResponse.json(payload, { status: needsContinue ? 202 : 200 })
+  return NextResponse.json(payload, { status: 200 })
 }

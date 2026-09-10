@@ -355,7 +355,7 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
             ? { error: fillResult.error }
             : {}),
       },
-      { status: retryableLimit || !fillResult.error ? 202 : 502 }
+      { status: retryableLimit || !fillResult.error ? 200 : 502 }
     )
   }
 
