@@ -1,44 +1,43 @@
-import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { getRequestSession } from '@/lib/auth/requestSession'
+import {
+  assembleHtmlExportPayload,
+  assembleScormJsonPayload,
+  sanitizeExportFilename,
+} from '@/lib/export/assembleCourseExport'
 import { buildScorm12ExportZip, type ModuleRow } from '@/lib/export/buildScorm12ExportZip'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { studioCourseEditorUrl } from '@/lib/urls/studioOrigin'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 const QuerySchema = z.object({
-  format: z.enum(['scorm-1.2']),
+  format: z.enum(['scorm-1.2', 'html']),
+  delivery: z.enum(['file', 'json']).optional(),
 })
-
-function sanitizeFilename(title: string): string {
-  const s = title
-    .replace(/[^\w\s\-().]/g, '')
-    .replace(/\s+/g, '-')
-    .trim()
-    .slice(0, 80)
-  return s || 'course'
-}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: courseId } = await params
+  const session = await getRequestSession(request)
+  if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+
   const { searchParams } = new URL(request.url)
-  const parsed = QuerySchema.safeParse({ format: searchParams.get('format') })
+  const parsed = QuerySchema.safeParse({
+    format: searchParams.get('format'),
+    delivery: searchParams.get('delivery') ?? undefined,
+  })
   if (!parsed.success) {
     return NextResponse.json(
-      { success: false, error: 'Invalid or missing format. Use format=scorm-1.2' },
-      { status: 400 }
+      { success: false, error: 'Invalid or missing format. Use format=html or format=scorm-1.2' },
+      { status: 400 },
     )
   }
-
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
 
   const admin = createServiceRoleSupabaseClient()
   const { data: courseRow, error } = await admin
     .from('courses')
     .select('id, title, modules(title, order_index, content)')
     .eq('id', courseId)
-    .eq('created_by', user.id)
+    .eq('created_by', session.user.id)
     .order('order_index', { referencedTable: 'modules', ascending: true })
     .single()
 
@@ -52,14 +51,41 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ success: false, error: 'Course has no modules to export' }, { status: 400 })
   }
 
+  const studioUrl = studioCourseEditorUrl(course.id, request.url)
+
   try {
+    if (parsed.data.format === 'html') {
+      return NextResponse.json({
+        success: true,
+        data: assembleHtmlExportPayload({
+          courseId: course.id,
+          courseTitle: course.title,
+          studioUrl,
+          modules,
+        }),
+      })
+    }
+
+    const wantJson = parsed.data.delivery === 'json'
+
+    if (wantJson) {
+      const data = await assembleScormJsonPayload({
+        admin,
+        courseId: course.id,
+        courseTitle: course.title,
+        studioUrl,
+        modules,
+      })
+      return NextResponse.json({ success: true, data })
+    }
+
     const buf = await buildScorm12ExportZip({
       admin,
-      courseId,
+      courseId: course.id,
       courseTitle: course.title,
       modules,
     })
-    const name = `${sanitizeFilename(course.title)}-scorm12.zip`
+    const name = `${sanitizeExportFilename(course.title)}-scorm12.zip`
     return new NextResponse(new Uint8Array(buf), {
       status: 200,
       headers: {
@@ -71,7 +97,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   } catch (e) {
     return NextResponse.json(
       { success: false, error: e instanceof Error ? e.message : 'Export failed' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

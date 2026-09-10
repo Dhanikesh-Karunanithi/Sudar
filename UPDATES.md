@@ -16,14 +16,219 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-09-10 — ChatGPT/Cursor MCP builds real Studio courses (HTML + SCORM)
+
+- **Theme**: ChatGPT was writing markdown outlines instead of creating Sudar courses. MCP now has `sudar_build_course` so connectors persist a Studio draft and return HTML / SCORM 1.2 like the Studio export dialog.
+- **Shipped**:
+  - MCP: `sudar_build_course`, `sudar_export_course`, server instructions (`packages/sudar-mcp`).
+  - Studio: `GET /api/courses/:id/export?format=html` and `format=scorm-1.2&delivery=json` (Bearer); `POST /api/ai/generate-course` accepts `export_format`.
+  - Worker `[vars]`: `SUDAR_STUDIO_URL`, `SUDAR_LEARN_URL`, `MCP_PUBLIC_URL`.
+- **Docs**: `MCP_CHATGPT_LAUNCH.md`, `MCP_SERVERS.md`, `SHIPPED_FEATURES.md` MCP section.
+
 ### 2026-09-10 — MCP OAuth PKCE for ChatGPT and Cursor
 
 - **Theme**: Production remote MCP (`mcp.thesudar.com`) speaks OAuth 2.1 PKCE S256 + RFC 9728 so ChatGPT and Cursor can connect; Studio login hands the session back to the worker.
 - **Shipped**:
   - Worker: `workers/sudar-mcp-cloudflare/src/oauth.ts` — `code_challenge_methods_supported: ["S256"]`, protected-resource metadata, `WWW-Authenticate`, DCR, `/oauth/complete`.
-  - Studio: `/login?mcp_oauth=1` consent + `completeMcpOAuth`; middleware keeps signed-in users on login for this flow.
+  - Studio: `/login?mcp_oauth=1` consent + `completeMcpOAuth` (`src/lib/mcp/completeMcpOAuth.ts`); middleware keeps signed-in users on login for this flow.
   - Cursor remote example: `packages/sudar-mcp/examples/mcp.json` → `sudar-remote` URL.
-- **Docs**: `MCP_CHATGPT_LAUNCH.md`, `MCP_SERVERS.md`, `SHIPPED_FEATURES.md` (MCP section uses `.com`).
+- **Docs**: `MCP_CHATGPT_LAUNCH.md`, `MCP_SERVERS.md`, `SHIPPED_FEATURES.md` (MCP section now uses `.com`).
+
+### 2026-07-28 — SudarSim real-time streaming voice (LiveKit + Pipecat)
+
+- **Theme**: Duplex phone roleplay — streaming Deepgram STT + Cartesia TTS via Pipecat agent; Learn `SimVoiceShell`; coach reflection step; richer Studio analytics.
+- **Shipped**:
+  - **sudar-sim**: `docker-compose.livekit.yml`, Pipecat agent (`agent/pipeline.py`), room dispatch on `POST /rooms`, `POST /rooms/join`, transcript sync to Learn.
+  - **Learn**: `SimVoiceShell` (LiveKit), phone channel auto-voice with PTT fallback; `SimCoachReflection` before score; `?action=sync_turn` + agent context API.
+  - **Intelligence**: coach accepts `learner_reflection`.
+  - **Studio**: `/api/analytics/sim-sessions` — pass rates, dimension averages, improvement trends, transcript drill-down.
+- **Env**: `LIVEKIT_*`, `DEEPGRAM_API_KEY`, `CARTESIA_API_KEY`, `SUDAR_SIM_URL`, `SUDAR_SIM_SERVICE_SECRET`, `SUDAR_LEARN_URL` (agent).
+- **Docs**: `SHIPPED_FEATURES.md` SudarSim; `sudar-sim/README.md`; `SUDAR_SIM_API.md`.
+
+### 2026-07-28 — SudarSim Studio in-app preview + Deepgram/Cartesia + auth fix
+
+- **Theme**: Preview conversation inside Studio (no Learn tab); fix JWT error on turns; Deepgram STT + Cartesia TTS when keys set.
+- **Shipped**:
+  - **Studio**: `StudioSimPreview` modal + `POST /api/sudarsim/preview-turn` — stateless, no Supabase session for QA.
+  - **Intelligence**: auto-prefer `DEEPGRAM_API_KEY` / `CARTESIA_API_KEY` for sim STT/TTS; Edge/Whisper fallback.
+  - **Learn BFF**: use `INTELLIGENCE_SERVICE_SECRET` before JWT (fixes `SUPABASE_JWT_SECRET` error on typed/voice turns).
+  - Mic errors show specific browser permission messages (not always "denied").
+
+### 2026-07-28 — SudarSim Studio create/save crash fix
+
+- **Theme**: Creating/saving scenarios crashed the Studio client when Zod returned a flatten object as `error`, and new rows were stored with empty `persona`/`rubric`.
+- **Shipped**: Default draft merge on create/save; string API errors; editor hydrates incomplete DB rows and formats errors safely.
+
+### 2026-07-28 — SudarSim session start error render fix
+
+- **Theme**: Fix crash when starting `/sim/session/new` — Zod flatten objects were returned as `error` and rendered as React children.
+- **Shipped**: Session APIs return string `error`; UI formats legacy flatten safely; empty `module_id`/`course_id` query params no longer fail UUID validation.
+
+### 2026-07-28 — SudarSim Voice MVP (PTT + STT/TTS + seed)
+
+- **Theme**: Turn-based phone push-to-talk for SudarSim — Learn BFF → Intelligence Whisper STT + persona + Edge-TTS; seeded contact-center scenarios. Not LiveKit streaming / full Practice Loop.
+- **Shipped**:
+  - **Intelligence**: `POST /api/sim/stt` → `{ success, text }`; persona turn returns `audio_base64` / `audio_mime` (mp3); history roles `learner`/`customer`; LLM content parse fix; `edge_tts_helper` + `hf_client.transcribe_audio`.
+  - **Learn**: `SimWorkspace` PTT (no WS); BFF turn with `audio_base64` → STT then persona; typed fallback; `initialPersonaStateFromScenario` from seed `persona_state_rules.initial_state`.
+  - **Seed**: `scripts/seed-sudarsim-voice-scenarios.mjs` + `scripts/data/sudarsim-voice-mvp-scenarios.json` (3 published scenarios); `docs/SUDAR_SIM_VOICE_SEED.md`.
+- **Ops (required for voice)**: Intelligence `HUGGINGFACE_API_KEY` (+ optional `SIM_STT_MODEL` / `HF_ASR_ENDPOINT_URL`); `pip install edge-tts`; Learn `SUDAR_INTELLIGENCE_URL`; seed with `ORG_ID` + `CREATED_BY` / `CREATED_BY_EMAIL`.
+- **Docs**: This entry; `SHIPPED_FEATURES.md` SudarSim; `SUDAR_SIM_API.md`; Intelligence / Learn `.env.example`.
+
+### 2026-07-28 — SudarNotes project-wide docs and insights
+
+- **Theme**: Propagate SudarNotes + Teaching OS into canonical docs, help, and light learner insights (no UI redesign).
+- **Shipped**:
+  - AGENTS / ECOSYSTEM / README / PROGRESS / STRATEGIC_PATH / PRODUCT_FEATURES / SUDAR_2_0_VISION + trust DATA_FLOWS / AI_SYSTEM_REGISTER.
+  - Help Center article `learners/sudar-notes`; dashboard card when journey enabled; Memory insight for SudarNotes / claim review.
+  - Studio Governance + AI literacy help mention SudarNotes as a conversational teaching surface.
+- **Docs**: This entry; SHIPPED_FEATURES SudarNotes cross-links.
+
+### 2026-07-28 — Teaching OS spine (claim graph + pedagogy + NBA v2)
+
+- **Theme**: Evolve Sudar into a learner-bound Teaching OS — shared claims, mastery, surface-agnostic pedagogy; SudarNotes is one client, not the architecture.
+- **Shipped**:
+  - Contract: `docs/TEACHING_OS.md`; types `sudar-learn/src/types/teaching.ts`; ECOSYSTEM / STRATEGIC_PATH aligned.
+  - Migration `supabase/migrations/20260728120000_teaching_os_spine.sql` (domains, claims, edges, links, mastery, sessions).
+  - Libs: claimGraph, mastery (SM-2-ish), scheduler, session, pedagogyEngine, seedDomainFromCourse, depth helpers.
+  - SudarNotes `turnEngine` delegates mode recommendation to Teaching OS; tutor/query injects claim context + mastery writeback.
+  - NBA v2 prioritizes due/weak/prereq claims; dashboard “Next 15 minutes”; Memory claim mastery list.
+  - Surfaces: quiz/flashcard events → mastery; Sim scenario `metadata.claim_ids`; ALP `GET /api/alp/teaching/next-action`.
+  - Studio **Domains** curator + claim-struggle analytics; seed from course.
+  - Depth APIs: offline review pack, claim credentials, transfer/teach-back/study-plan.
+- **Docs**: This entry; `SHIPPED_FEATURES.md`; `TEACHING_OS.md`.
+
+### 2026-07-27 — SudarNotes: conversational tutor rehaul
+
+- **Theme**: Rename Learn with Sudar → **SudarNotes**; kill roadmap/web-dump tutoring; ship pedagogical turn engine + living notebook.
+- **Branch**: `experiment/sudar-2.0-conversational`.
+- **Shipped**:
+  - Structured `SUDAR_NOTES` turn contract + hybrid modes (`intake` / `socratic` / `teach` / `check` / `replan` / `note_craft`) in `/api/tutor/query`.
+  - Soft check cadence; Twin soft-check breadcrumbs; `ai_interactions` / `learning_events` for SudarNotes without requiring `course_id`.
+  - Living notebook: suggested → accept/dismiss cards; working memory strip; tools use **accepted** notes only.
+  - Disabled soft web enrichment on teach language; resources only on explicit ask / Find resources (topic = goal + active concept).
+  - No auto `lesson_html` dumps (`ensureJourneyNotebookBlocks` gated off for SudarNotes).
+  - Nav/UI rename; `sudar_notes_sessions` migration; vision/storyboard/ship docs.
+- **Docs**: This entry; `SHIPPED_FEATURES.md`; `ENV_REFERENCE.md`; `SUDAR_2_0_VISION.md`; `SUDAR_2_0_STORYBOARD.md`.
+
+### 2026-07-27 — Learn with Sudar: anti-slop visual design lab
+
+- **Theme**: Escape navy/blue “AI SaaS” chrome on Journey only; validate void / warm ink / single signal before any Learn-wide rehaul.
+- **Branch**: `experiment/sudar-2.0-conversational`.
+- **Shipped**:
+  - Journey-scoped tokens under `html[data-sudar-journey]` (`--void`, `--panel`, `--ink`, `--signal`, 2px radius, hairlines).
+  - Inter (conversation) + Space Mono (system labels); typographic chat turns (no bubbles) on docked Journey chat; floating chat unchanged.
+  - Notebook / lesson / resource chrome aligned to the redesign mock; breathing live dot for presence.
+  - Hardened `BLOCKS`/JSON strip + `safeNotebookPreview` so raw payloads do not leak into notebook previews.
+- **Deferred (product)**: Nav restructure; curriculum-graph session view; rewriting `.cursorrules` brand colors — after Journey validates.
+- **Docs**: This entry; `SHIPPED_FEATURES.md`.
+
+### 2026-07-26 — Runtime cost optimization + hardening
+
+- **Theme**: Cut always-on gamification/polling waste; close AI spend and abuse holes from the runtime/security audit.
+- **Shipped**:
+  - Single visibility-aware gamification poller; heartbeats pause when hidden and skip `evaluateGamification`; narrower twin-rollup triggers.
+  - Client coin mint (`POST /api/coins/earn`) returns 403; usage limits fail closed; modality AI + proactive-nudge + Studio generate-module capped.
+  - Next-action freshness before usage burn; no home-load next-action/twin-rollup fan-out; Realtime-first notifications; idle-deferred dashboard hosts.
+  - SudarSim service secret + CORS lock; Intelligence sim learner match; JWT-only learner audio/image proxies.
+  - ALP env key requires `ALP_API_KEY_ORG_ID`; webhook SSRF guard; prod cron header-only; dedicated `SUDARVID_RENDER_GRANT_SECRET` in prod.
+- **Docs**: This entry; `SHIPPED_FEATURES.md`; `ENV_REFERENCE.md`; Learn `.env.example`.
+
+### 2026-07-26 — Learn with Sudar: interactive notebook + verified resources
+
+- **Theme**: Engaging notebook lessons; YouTube/reading that actually attach; tools to reuse notebook content.
+- **Branch**: `experiment/sudar-2.0-conversational`.
+- **Shipped**:
+  - Mini-lesson actions: **Check with Sudar**, **Go deeper**, **Find video & reading**.
+  - Notebook tools: **Summary**, **Learning map**, **Find resources**, **Course draft**, **Export** (.md).
+  - Verified YouTube (`video_embed`) + `resource_card` via CSE when `TUTOR_WEB_ENRICHMENT_ENABLED` + Google keys; Journey soft-triggers during teaching.
+  - `choice_group` can pin to the notebook; starter chip “Find video & reading”.
+- **Ops**: Set `TUTOR_WEB_ENRICHMENT_ENABLED=true` and `GOOGLE_SEARCH_*` on Learn (see `ENV_REFERENCE.md`).
+- **Docs**: This entry; `ENV_REFERENCE.md`; `SHIPPED_FEATURES.md`.
+
+### 2026-07-26 — Learn with Sudar: conversation continuity + beginner teaching
+
+- **Theme**: Stop mid-lesson context loss / false refusals; teach one idea at a time for beginners.
+- **Branch**: `experiment/sudar-2.0-conversational`.
+- **Shipped**:
+  - Guardrail follow-up bypasses (`plan it for me`, `all basics`, …) + optional session-context digest for short continuations.
+  - Journey history window **20** turns + continuity system hint; empty BLOCKS-only replies recover chat text.
+  - Journey teaching prompt: roadmap → teach step 1; no jargon dumps; stay on-topic mid-session.
+  - Client `messagesRef` so `conversation_history` always reflects the latest thread.
+- **Docs**: This entry.
+
+### 2026-07-26 — Learn with Sudar: workspace breathing room + journey mark
+
+- **Theme**: Un-cramp Journey chrome; distinct page mark (not the S-logo).
+- **Branch**: `experiment/sudar-2.0-conversational`.
+- **Shipped**:
+  - Stacked chat header: identity/presence + actions on row 1; **Chats / full title / New** on row 2 (titles no longer fight the logo).
+  - `LearnWithSudarMark` — notebook + learning ember accent for the page title (S-logo stays in nav + chat avatar only).
+  - Tighter page intro copy; presence label `whitespace-nowrap`; slightly balanced notebook/chat columns.
+- **Docs**: This entry.
+
+### 2026-07-26 — Learn with Sudar: titled chat history (Chats)
+
+- **Theme**: Organize tutor conversations like ChatGPT/Claude — titled threads, search, new/rename/delete/pin.
+- **Branch**: `experiment/sudar-2.0-conversational`.
+- **Shipped**:
+  - IndexedDB `tutor-threads` store (DB v2) with auto-title from first user message; migrates legacy single journey/floating transcript.
+  - `ChatHistoryPanel` — search, date groups (Today / Yesterday / …), Pin / Rename / Delete, New chat.
+  - `SudarChatPanel` header: **Chats** + **New** + current title (Journey + floating).
+- **Docs**: This entry; `SHIPPED_FEATURES.md`.
+
+### 2026-07-26 — Learn with Sudar: chat format + notebook fill fix
+
+- **Theme**: Fix raw HTML in chat, narrow user bubbles, empty notebook when BLOCKS fail.
+- **Branch**: `experiment/sudar-2.0-conversational`.
+- **Shipped**:
+  - Normalize leaked HTML → readable markdown in tutor display; Journey synthesizes `lesson_html` notebook pages when the model dumps a lesson into chat without valid BLOCKS.
+  - Stronger BLOCKS JSON extraction; Journey chat hides notebook-only cards (keeps text/choices/quiz).
+  - Fix `.chat-bubble` width collapse (`w-fit` / nested max-width) so user messages stay horizontal.
+- **Docs**: This entry.
+
+### 2026-07-26 — Learn with Sudar: Learning notebook (cards as pages)
+
+- **Theme**: Journey study panel → chronological notebook with highlight → Ask Sudar and learner notes.
+- **Branch**: `experiment/sudar-2.0-conversational`.
+- **Shipped**:
+  - `LearningNotebook` + spine UI; teaching blocks **append** (oldest → newest) and scroll to latest.
+  - Session-local notebook persistence (`sessionStorage`); Clear + **Add a note**.
+  - `NotebookSelectionToolbar` — highlight text → Explain / Simplify / etc. or custom draft into docked chat.
+  - Journey teaching prompt updated for notebook language; vision §5 refreshed.
+- **Docs**: This entry; `SUDAR_2_0_VISION.md`; `SHIPPED_FEATURES.md`.
+
+### 2026-07-26 — Learn with Sudar: voice orb, focus study, YouTube pins
+
+- **Theme**: Journey UX — orb for voice only; expand study space; microlearning + YouTube/resources.
+- **Branch**: `experiment/sudar-2.0-conversational`.
+- **Shipped**:
+  - Text mode shows Sudar logo; Voice toggle shows reactive orb.
+  - **Focus study** collapses the chat rail so materials expand.
+  - Micro-lesson chrome on `lesson_html` (objective, duration, try-this).
+  - New blocks: `video_embed` (allowlisted YouTube), `resource_card` (https links).
+- **Docs**: This entry; `SUDAR_2_0_VISION.md`; `SHIPPED_FEATURES.md`.
+
+### 2026-07-26 — Tutor Journey docked UX + voice orb
+
+- **Theme**: Journey layout polish on experiment branch — canvas left, Sudar docked right.
+- **Branch**: `experiment/sudar-2.0-conversational`.
+- **Shipped**:
+  - Shared `SudarChatPanel`; floating FAB hidden on `/journey`.
+  - Starters live in chat empty state; learning canvas left.
+  - `SudarVoiceOrb` (branded CodePen port) + Voice toggle with mic-reactive breathing.
+- **Docs**: `SUDAR_2_0_VISION.md`, storyboard, this entry; `SHIPPED_FEATURES.md`.
+
+### 2026-07-26 — Sudar 2.0 Phase 0: Tutor Journey experiment (branch)
+
+- **Theme**: Conversational Learning — live Sudar + teaching canvas (coexistence; killable branch).
+- **Branch**: `experiment/sudar-2.0-conversational` (do not merge to main until reviewed).
+- **Shipped (experiment)**:
+  - Vision + storyboard: `docs/SUDAR_2_0_VISION.md`, `docs/SUDAR_2_0_STORYBOARD.md`.
+  - Learn **Tutor Journey** at `/journey` — learning canvas; **reuses Floating Sudar** (no second chat); live `/api/tutor/query`.
+  - New tutor block `lesson_html` (allowlisted HTML lessons pinned to canvas) + Journey teaching prompt (ChatGPT/Claude-style study + materials).
+  - Nav gated by `NEXT_PUBLIC_SUDAR_JOURNEY` (dev default on when unset).
+- **Unchanged**: Course Learn primary UX, Studio authoring, Supabase schema.
+- **Docs**: This entry; `docs/SHIPPED_FEATURES.md`; `docs/ENV_REFERENCE.md`; Learn `.env.example`.
 
 ### 2026-07-14 — Learn course shell full-bleed + cloud AI fallback
 

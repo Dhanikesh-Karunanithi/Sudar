@@ -15,6 +15,7 @@ This is the single source of truth for all environment variables used across Sud
 | `SUPABASE_SERVICE_ROLE_KEY` | Studio, Learn | Supabase service role key (server-only). Same dashboard. |
 | `EARLY_ACCESS_ENABLED` | Studio, Learn | When `true`, new self-signup users need a platform invite code (`signup_code_used` on `profiles`). Org-provisioned and grandfathered users bypass. Default off until migrations + hook are applied. |
 | `NEXT_PUBLIC_EARLY_ACCESS_BANNER` | Studio, Learn | Persistent top-of-app **Early Access** notice on login, signup, and dashboard. **On by default**; set to `false` to hide. |
+| `NEXT_PUBLIC_SUDAR_JOURNEY` | Learn | **SudarNotes** (conversational tutor + living notebook) at `/journey`. `1`/`true` force on; `0`/`false` force off. When unset: on in development, off in production. See [SUDAR_2_0_VISION.md](SUDAR_2_0_VISION.md). Teaching OS claim spine: apply migration `supabase/migrations/20260728120000_teaching_os_spine.sql` — see [TEACHING_OS.md](TEACHING_OS.md). |
 | `ADMIN_EMAILS` | Studio | Comma-separated operator emails for **Early access** admin API (`/api/early-access/admin`) in addition to `super_admin` profile role. |
 | `NEXTAUTH_URL` | Studio, Learn | Base URL of the app (e.g. `http://localhost:3000` for Studio, `http://localhost:3001` for Learn). |
 | `NEXTAUTH_SECRET` | Studio, Learn | Random 32+ character string for session signing. Generate with `openssl rand -base64 32`. |
@@ -104,7 +105,7 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 | `EMBED_PROVIDER` | Learn | `together` \| `openai` \| `huggingface`. Default: first available (Together, then OpenAI, then Hugging Face). | — |
 | `TOGETHER_API_KEY` | Learn | Used for Together embeddings (e.g. BAAI/bge-large-en-v1.5). | Same as Chat. |
 | `OPENAI_API_KEY` | Learn | Used for OpenAI embeddings (text-embedding-3-small, 1024 dims). | Same as Chat. |
-| `HUGGINGFACE_API_KEY` | Learn, Intelligence | [Hugging Face](https://huggingface.co/) — embeddings, rerank, chat, image via Inference API. | [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) |
+| `HUGGINGFACE_API_KEY` | Learn, Intelligence | [Hugging Face](https://huggingface.co/) — embeddings, rerank, chat, image, and SudarSim Whisper STT via Inference API. | [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) |
 | `EMBED_MODEL` | Learn | Override embedding model (Together/OpenAI). For HF prefer `HF_EMBED_MODEL`. | — |
 | `HF_EMBED_MODEL` | Learn | HF embedding model (default `BAAI/bge-m3`, multilingual, 1024 dims). | — |
 | `HF_RERANK_MODEL` | Learn | Cross-encoder reranker (default `BAAI/bge-reranker-v2-m3`). | — |
@@ -112,6 +113,8 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 | `HF_INFERENCE_BASE_URL` | Learn, Intelligence | Optional OpenAI-compatible base (TEI/vLLM). Overrides HF Router for embed/chat when set. | — |
 | `HF_CHAT_MODEL` | Intelligence | HF chat model when `AI_CHAT_PROVIDER=huggingface`. | — |
 | `HF_IMAGE_MODEL` | Intelligence | HF image model when `IMAGE_PROVIDER=huggingface`. | — |
+| `SIM_STT_MODEL` | Intelligence | SudarSim STT model id (default `openai/whisper-large-v3`). Use `openai/whisper-large-v3-turbo` for faster cold starts. | — |
+| `HF_ASR_ENDPOINT_URL` | Intelligence | Optional dedicated HF Inference Endpoint URL for ASR (skips shared Inference API cold starts). | — |
 | `IMAGE_PROVIDER` | Intelligence | `together` (default FLUX) \| `huggingface`. | — |
 | `AI_CHAT_PROVIDER` | All | Add `huggingface` for Intelligence HF Router chat. | — |
 | `EMBED_DIM` | Learn | Vector dimension (default 1024 for RAG; must match pgvector). | — |
@@ -134,9 +137,9 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 
 | Variable | App | Description | Get key |
 |----------|-----|-------------|---------|
-| `GOOGLE_SEARCH_API_KEY` | Studio, Learn | Google Custom Search (images + web for research; Learn uses same keys for optional tutor `media_card` enrichment). | [Google Cloud Console](https://console.cloud.google.com/) → APIs → Custom Search API |
-| `GOOGLE_SEARCH_ENGINE_ID` | Studio, Learn | Custom Search Engine ID (create at [programmablesearchengine.google.com](https://programmablesearchengine.google.com/)). | Same |
-| `TUTOR_WEB_ENRICHMENT_ENABLED` | Learn | When `true`, enables server-side web/image search helper for course tutor when the org also allows it (`settings.ai_compliance.tutor_web_enrichment_enabled` not `false`). Default off if unset. | — |
+| `GOOGLE_SEARCH_API_KEY` | Studio, Learn | Google Custom Search (images + web; Learn also uses it for verified YouTube + `resource_card` / `video_embed` on Journey when enrichment is on). | [Google Cloud Console](https://console.cloud.google.com/) → APIs → Custom Search API |
+| `GOOGLE_SEARCH_ENGINE_ID` | Studio, Learn | Custom Search Engine ID (create at [programmablesearchengine.google.com](https://programmablesearchengine.google.com/)). Prefer an engine that includes the whole web + YouTube. | Same |
+| `TUTOR_WEB_ENRICHMENT_ENABLED` | Learn | When `true`, enables server-side verified web/YouTube attach for the tutor (Journey soft-triggers during teaching; explicit “video/article” always). Org may set `settings.ai_compliance.tutor_web_enrichment_enabled` to `true`/`false` to override. Default off if unset. | — |
 | *(Org JSON)* `ai_compliance.tutor_llm_memory_extraction_policy` | Studio / Learn | `learner_controlled` (default) or `disabled_org_wide` — when `disabled_org_wide`, Learn skips LLM post-message tutor memory extraction and digest summarisation for org members. | Persisted in `organisations.settings` |
 | *(Org JSON)* `ai_compliance.tutor_llm_memory_min_interval_hours` | Studio / Learn | Optional positive integer (hours). Minimum spacing between LLM profile-inference runs from tutor chat; learner cadence cannot be faster than this floor. | Same |
 | *(Org JSON)* `ai_compliance.memory_digest_min_interval_days_org` | Studio / Learn | Optional positive integer (days). Minimum spacing between long-range digest LLM runs; learner digest-day choice cannot be faster than this floor. | Same |
@@ -152,7 +155,8 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 | Variable | App | Description | Get key |
 |----------|-----|-------------|---------|
 | `NEXT_PUBLIC_LEARN_APP_URL` | Studio | Learn app base URL (for Integrations page, embed URL builder). e.g. `http://localhost:3001`. | — |
-| `ALP_API_KEY` | Learn | Optional. If set, POST /api/alp/events requires this key (or keys from Studio → Integrations). | Create in Studio → Integrations |
+| `ALP_API_KEY` | Learn | Optional. If set, POST /api/alp/events requires this key (or keys from Studio → Integrations). **Must** pair with `ALP_API_KEY_ORG_ID` (env key is invalid without it). | Create in Studio → Integrations |
+| `ALP_API_KEY_ORG_ID` | Learn | Org UUID bound to `ALP_API_KEY`. Required whenever the env master key is used so ALP callers cannot impersonate learners outside that org. | Org id from Supabase `organisations` |
 | `ALP_EMBED_SIGNING_SECRET` | Learn | Dedicated signing secret for embed tokens. Required for `/api/alp/embed-token`; do not reuse `ALP_API_KEY`. | Generate a random secret |
 | `ALP_EMBED_SECRET` | Learn | Legacy alias for `ALP_EMBED_SIGNING_SECRET`. Prefer the dedicated variable above. | — |
 | `ALP_LTI_TOOL_JWKS_JSON` | Learn | JSON JWKS document `{ "keys": [ ... ] }` exposed at `GET /api/alp/lti/jwks` for LTI 1.3 tool registration in the LMS. | Generate an RSA keypair and publish the public JWK set |
@@ -166,7 +170,7 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 |----------|-----|-------------|
 | `SUDAR_LEARN_URL` | MCP package / remote worker | Learn base URL for ALP tools |
 | `SUDAR_ALP_API_KEY` | MCP package | Org integration key (Studio → Integrations) |
-| `SUDAR_STUDIO_URL` | MCP package | Studio base URL for admin agent tools |
+| `SUDAR_STUDIO_URL` | MCP package / Cloudflare worker | Studio base URL for creator (`sudar_build_course`) and admin tools. Production worker sets this as wrangler `[vars]` (`https://studio.thesudar.com`). |
 | `SUDAR_INTELLIGENCE_URL` | MCP package | Intelligence URL for `sudar_list_agent_skills` |
 | `SUDAR_ACCESS_TOKEN` | MCP package | Supabase JWT for admin/learner tools |
 | `SUDAR_TOOLSET` | MCP package | `integrator` \| `admin` \| `learner` \| `all` |
@@ -241,8 +245,13 @@ Setup: [KNOWLEDGE_BASE_SETUP.md](KNOWLEDGE_BASE_SETUP.md), [MARKITDOWN_INTEGRATI
 
 | Variable | App | Description |
 |----------|-----|-------------|
-| `CRON_SECRET` | Studio, Learn | Required secret for cron endpoints; cron routes fail closed when this is missing. On **Cloudflare**, deploy `workers/sudar-cron-learn` and `workers/sudar-cron-studio` with the same secret. On **Vercel**, Cron sends `Authorization: Bearer <CRON_SECRET>` (see `vercel.json`). |
+| `CRON_SECRET` | Studio, Learn | Required secret for cron endpoints; cron routes fail closed when this is missing. On **Cloudflare**, deploy `workers/sudar-cron-learn` and `workers/sudar-cron-studio` with the same secret. On **Vercel**, Cron sends `Authorization: Bearer <CRON_SECRET>` (see `vercel.json`). In **production**, query `?secret=` is rejected — use the Bearer header only. |
 | `LEARN_CRON_SECRET` | Learn (optional) | If set and `CRON_SECRET` is unset, Learn’s `rejectInvalidCronRequest` accepts this value instead (dedicated secret name for Learn-only deploys). Prefer `CRON_SECRET` when Studio and Learn share ops. |
+| `SUDARVID_RENDER_GRANT_SECRET` | Learn, Studio | Dedicated HMAC secret for SudarVid iframe render cookies. **Required in production** (service-role fallback disabled). | Generate a random secret |
+| `SUDAR_SIM_SERVICE_SECRET` | Learn, SudarSim | Shared secret; Learn BFF sends `X-Sudar-Sim-Secret` when minting rooms. Required in production on SudarSim if rooms are used. | Generate a random secret |
+| `SUDAR_LEARN_ORIGINS` / `SUDAR_LEARN_ORIGIN` | SudarSim | Comma-separated CORS allowlist for Learn (default `http://localhost:3001`). Do not use `*`. | — |
+| `SIM_DEV_MODE` | SudarSim | `1` enables legacy WS turn loop. Phone PTT in Learn uses BFF → Intelligence STT/persona (no browser WS). Defaults **off** when `ENV`/`NODE_ENV` is production; otherwise defaults on for local when unset. | — |
+| `NEXT_PUBLIC_SUDAR_SIM_WS_URL` | Learn (deprecated) | Legacy browser WS for phone; **not used** by Voice MVP PTT. Prefer Intelligence URL only. | — |
 | `RESEND_API_KEY` | Studio | [Resend](https://resend.com) — email for reminders. |
 | `RESEND_FROM` | Studio | From address (e.g. `Sudar <onboarding@resend.dev>`). |
 | `DOCUMENT_URL_HOST_ALLOWLIST` | Studio | Optional comma-separated host allowlist for document URL ingestion; local/private network targets are blocked even when unset. |

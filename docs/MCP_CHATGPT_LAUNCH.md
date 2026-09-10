@@ -73,11 +73,16 @@ Use returned `access_token` as `Authorization: Bearer` on `/mcp`.
 
 ## Test prompts in ChatGPT
 
-**Creator (Studio):**
+**Creator (Studio) — full course, not a chat outline:**
 
-> Using Sudar, generate a 5-module course outline for "Cybersecurity basics for new hires".
+> Using Sudar, build a microlearning course on Generative AI for instructional designers. Create it in Studio and give me HTML and SCORM.
 
-Expect tool: `sudar_generate_outline`.
+Expect tool: `sudar_build_course`. ChatGPT must **not** write the modules itself. The reply should include:
+- a **Studio URL** (`https://studio.thesudar.com/courses/…`)
+- HTML lesson pages (or `combined_html`)
+- SCORM 1.2 ZIP as `zip_base64` (or a note to download from Studio if the package is large)
+
+If ChatGPT returns a markdown outline with no Studio link, it skipped the tool — reconnect the connector after deploying MCP + Studio, then retry.
 
 **Learner (Learn):**
 
@@ -154,7 +159,8 @@ If MCP connector review is delayed, publish [openapi/sudar-creator-v1.json](../o
 | Studio login returns to dashboard instead of ChatGPT/Cursor | Studio missing `mcp_oauth` bridge; deploy Studio |
 | 401 on creator tools | User must be Studio org member with AI keys configured |
 | 403 on learner agent | Org Sudar Agents toggles / learner opt-outs |
-| Tools missing | Set `SUDAR_TOOLSET=all` on worker |
+| Tools missing | Set `SUDAR_TOOLSET=all` on worker; public Studio/Learn URLs are wrangler `[vars]` |
+| ChatGPT writes a markdown course instead of creating one | Connector did not call `sudar_build_course`. Reconnect Sudar, wait 1–2 minutes (Studio generation is slow), retry the prompt above |
 | Cursor Connect `fetch failed` on local stdio | Learn not running, or placeholder ALP key |
 
 ---

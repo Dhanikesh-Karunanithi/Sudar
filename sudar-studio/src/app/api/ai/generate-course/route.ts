@@ -22,6 +22,12 @@ import {
 import { suggestExperiencePackFromText } from '@/lib/themes/experiencePacks'
 import { fillEmptyModulesForCourse } from '@/lib/ai/courseGeneration'
 import { buildStudioUsageChatCtx, withUsageMetadata } from '@/lib/ai/studioUsageContext'
+import {
+  assembleHtmlExportPayload,
+  assembleScormJsonPayload,
+} from '@/lib/export/assembleCourseExport'
+import type { ModuleRow } from '@/lib/export/buildScorm12ExportZip'
+import { studioCourseEditorUrl } from '@/lib/urls/studioOrigin'
 
 /** Strip markdown code fences and extract/repair JSON for parsing. */
 function extractJson(raw: string): string {
@@ -105,6 +111,7 @@ export async function POST(request: NextRequest) {
     minimize_sidecards,
     strict_component_validation,
     apply_quality_filtering,
+    export_format,
   } = body as {
     title?: string
     /** @deprecated use `brief` — kept for API compatibility; treated as author intent, not final copy */
@@ -129,6 +136,7 @@ export async function POST(request: NextRequest) {
     minimize_sidecards?: boolean
     strict_component_validation?: boolean
     apply_quality_filtering?: boolean
+    export_format?: 'html' | 'scorm12' | 'both' | 'none'
   }
 
   if (!title) return NextResponse.json({ error: 'title required' }, { status: 400 })
@@ -315,6 +323,8 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
     chatAiCtx: withUsageMetadata(chatAiCtx, { course_id: course.id }),
   })
 
+  const studioUrl = studioCourseEditorUrl(course.id, request.url)
+
   if (fillResult.error || !fillResult.completed) {
     return NextResponse.json(
       {
@@ -322,12 +332,55 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
           fillResult.error ??
           'Course was created but module content generation did not finish. You can try again from the course page or contact support.',
         course_id: course.id,
+        studio_url: studioUrl,
         modules_generated: fillResult.modules_generated,
       },
       { status: 502 }
     )
   }
 
+  const { data: filledModules } = await admin
+    .from('modules')
+    .select('title, order_index, content')
+    .eq('course_id', course.id)
+    .order('order_index', { ascending: true })
+
+  const moduleRowsForExport = (filledModules ?? []) as ModuleRow[]
   const moduleResults = moduleTitles.map((t, idx) => ({ title: t, order_index: idx }))
-  return NextResponse.json({ course_id: course.id, modules: moduleResults })
+  const wantHtml = export_format === 'html' || export_format === 'both'
+  const wantScorm = export_format === 'scorm12' || export_format === 'both'
+
+  const payload: {
+    success: true
+    course_id: string
+    studio_url: string
+    modules: { title: string; order_index: number }[]
+    html?: ReturnType<typeof assembleHtmlExportPayload>
+    scorm?: Awaited<ReturnType<typeof assembleScormJsonPayload>>
+  } = {
+    success: true,
+    course_id: course.id,
+    studio_url: studioUrl,
+    modules: moduleResults,
+  }
+
+  if (wantHtml) {
+    payload.html = assembleHtmlExportPayload({
+      courseId: course.id,
+      courseTitle: title,
+      studioUrl,
+      modules: moduleRowsForExport,
+    })
+  }
+  if (wantScorm) {
+    payload.scorm = await assembleScormJsonPayload({
+      admin,
+      courseId: course.id,
+      courseTitle: title,
+      studioUrl,
+      modules: moduleRowsForExport,
+    })
+  }
+
+  return NextResponse.json(payload)
 }
