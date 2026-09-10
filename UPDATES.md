@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-09-10 — ChatGPT course build reuses existing Studio workspace
+
+- **Theme**: `sudar_build_course` reached Studio then failed with `organisations_slug_key` because MCP Bearer sessions could not see cookie memberships and retried creating `workspace-<userId>`.
+- **Shipped**: `getOrCreateOrg` uses the service-role client, selects `joined_at` (not `created_at`) on `org_members`, and attaches the user to an existing personal-workspace slug instead of inserting a duplicate.
+- **Docs**: Troubleshooting row in `MCP_CHATGPT_LAUNCH.md`.
+
 ### 2026-09-10 — ChatGPT course build returns Studio URL before lessons fill
 
 - **Theme**: ChatGPT called `sudar_build_course` then reported HTTP 500 in ~9s because the MCP Worker waited on Studio AI (ChatGPT aborts long tool calls).

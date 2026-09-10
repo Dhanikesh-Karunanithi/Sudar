@@ -1,6 +1,12 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import type { Database } from '@/types/database'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { isUniqueConstraintError, personalWorkspaceSlug } from '@/lib/orgHelpers'
 
 export type OrgRole = 'ADMIN' | 'MANAGER' | 'CREATOR' | 'LEARNER'
+export { isUniqueConstraintError, personalWorkspaceSlug } from '@/lib/orgHelpers'
+
+type AdminClient = SupabaseClient<Database>
 
 export type OrgMembership = {
   org_id: string
@@ -12,17 +18,17 @@ export type OrgMembership = {
 /**
  * Returns the user's first org, or auto-creates a "Personal Workspace"
  * on their first Studio visit. Every course requires an org_id.
- * Uses the admin client (service role) for org/member provisioning to
- * bypass RLS policies that would otherwise block the initial insert.
+ * Uses the admin client (service role) so cookie-less MCP Bearer sessions
+ * can resolve membership, and so a pre-existing personal workspace slug
+ * is reused instead of failing on organisations_slug_key.
  */
 export async function getOrCreateOrg(userId: string): Promise<string> {
-  const supabase = await createClient()
   const admin = createServiceRoleSupabaseClient()
 
   const active = await getActiveOrgId(userId)
   if (active) return active
 
-  const { data: membership } = await supabase
+  const { data: membership } = await admin
     .from('org_members')
     .select('org_id')
     .eq('user_id', userId)
@@ -35,17 +41,23 @@ export async function getOrCreateOrg(userId: string): Promise<string> {
     return membership.org_id
   }
 
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from('profiles')
     .select('full_name')
     .eq('id', userId)
-    .single()
+    .maybeSingle()
 
   const orgName = profile?.full_name
     ? `${profile.full_name}'s Workspace`
     : 'My Workspace'
 
-  const slug = `workspace-${userId.slice(0, 8)}`
+  const slug = personalWorkspaceSlug(userId)
+  const existing = await findOrgIdBySlug(admin, slug)
+  if (existing) {
+    await ensureOrgAdminMembership(admin, existing, userId)
+    await syncActiveOrg(userId, existing)
+    return existing
+  }
 
   const { data: org, error } = await admin
     .from('organisations')
@@ -53,17 +65,53 @@ export async function getOrCreateOrg(userId: string): Promise<string> {
     .select('id')
     .single()
 
-  if (error || !org) throw new Error(`Failed to create org: ${error?.message}`)
+  if (error || !org) {
+    if (isUniqueConstraintError(error)) {
+      const raced = await findOrgIdBySlug(admin, slug)
+      if (raced) {
+        await ensureOrgAdminMembership(admin, raced, userId)
+        await syncActiveOrg(userId, raced)
+        return raced
+      }
+    }
+    throw new Error(`Failed to create org: ${error?.message}`)
+  }
 
-  await admin.from('org_members').insert({
-    org_id: org.id,
+  await ensureOrgAdminMembership(admin, org.id, userId)
+  await syncActiveOrg(userId, org.id)
+  return org.id
+}
+
+async function findOrgIdBySlug(admin: AdminClient, slug: string): Promise<string | null> {
+  const { data } = await admin
+    .from('organisations')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle()
+  return data?.id ?? null
+}
+
+async function ensureOrgAdminMembership(
+  admin: AdminClient,
+  orgId: string,
+  userId: string
+): Promise<void> {
+  const { data: row } = await admin
+    .from('org_members')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (row?.id) return
+
+  const { error } = await admin.from('org_members').insert({
+    org_id: orgId,
     user_id: userId,
     role: 'ADMIN',
   })
-
-  await syncActiveOrg(userId, org.id)
-
-  return org.id
+  if (error && !isUniqueConstraintError(error)) {
+    throw new Error(`Failed to attach org membership: ${error.message}`)
+  }
 }
 
 async function syncActiveOrg(userId: string, orgId: string): Promise<void> {
@@ -90,7 +138,7 @@ export async function getActiveOrgId(userId: string): Promise<string | null> {
 
   const { data: memberships } = await admin
     .from('org_members')
-    .select('org_id, role, created_at, organisations(name, slug)')
+    .select('org_id, role, joined_at, organisations(name, slug)')
     .eq('user_id', userId)
     .order('joined_at', { ascending: true })
 
@@ -163,13 +211,13 @@ export async function isSuperAdmin(userId: string): Promise<boolean> {
  */
 export async function getOrgIdAndRole(userId: string): Promise<{ orgId: string; role: OrgRole }> {
   const orgId = await getOrCreateOrg(userId)
-  const supabase = await createClient()
-  const { data: membership } = await supabase
+  const admin = createServiceRoleSupabaseClient()
+  const { data: membership } = await admin
     .from('org_members')
     .select('role')
     .eq('org_id', orgId)
     .eq('user_id', userId)
-    .single()
+    .maybeSingle()
   const role = (membership?.role ?? 'LEARNER') as OrgRole
   return { orgId, role }
 }
