@@ -658,11 +658,12 @@ This document summarizes **shipped** features that are committed and ready for u
 - **What**: MCP adapter for **Cursor** (stdio or remote URL), **ChatGPT/Claude** (Cloudflare Streamable HTTP + OAuth 2.1 PKCE S256), and LMS integrators (ALP). Toolsets: **integrator** (ALP), **creator** (Studio course AI including `sudar_build_course` → HTML + SCORM 1.2), **admin** (cohort pulse), **learner** (tutor, NBA, agents).
 - **Key files**:
   - `docs/MCP_SERVERS.md`, `docs/MCP_CHATGPT_LAUNCH.md`, `docs/DEPLOY_THESUDAR_COM.md`
-  - `packages/sudar-mcp/src/tools/creator.ts` — Studio generation tools (`sudar_build_course`, `sudar_export_course`)
+  - `packages/sudar-mcp/src/tools/creator.ts` — Studio generation tools (`sudar_build_course`, `sudar_get_course`, `sudar_export_course`)
+  - `packages/sudar-mcp/src/tools/courseFill.ts` — optional fill-until-complete helper (ChatGPT uses background fill + poll)
+  - `sudar-studio/src/app/api/ai/generate-course/route.ts` — `background_fill` returns a draft immediately; optional `export_format`
+  - `sudar-studio/src/app/api/ai/generate-all-modules/route.ts` — Bearer; one module per invocation; `kick:true` continues in `waitUntil`
   - `sudar-studio/src/app/api/courses/[id]/export/route.ts` — HTML JSON + SCORM 1.2 ZIP/JSON (Bearer)
-  - `sudar-studio/src/app/api/ai/generate-course/route.ts` — optional `export_format` html/scorm12/both; fills **one** module then `202 needs_continue`
-  - `sudar-studio/src/app/api/ai/generate-all-modules/route.ts` — Bearer; one module per Worker invocation
-  - `packages/sudar-mcp/src/tools/courseFill.ts` — MCP polls fill until complete, then HTML/SCORM export
+  - `sudar-studio/src/app/api/courses/[id]/route.ts` — Bearer GET includes `remaining_empty` / `generation_completed`
   - `workers/sudar-mcp-cloudflare/` — production remote MCP (`oauth.ts` PKCE + RFC 9728; `/mcp` is **stateless JSON** Streamable HTTP so ChatGPT can `tools/list` across Worker isolates)
   - `sudar-studio/src/middleware.ts` — cookie-less Bearer on `/api/*` for MCP
   - `sudar-studio/src/app/login/LoginClient.tsx`, `sudar-studio/src/lib/mcp/completeMcpOAuth.ts` — Studio OAuth handoff
@@ -671,7 +672,7 @@ This document summarizes **shipped** features that are committed and ready for u
   - `sudar-studio/src/app/api/mcp/audit/route.ts`, `sudar-learn/.../mcp/audit/route.ts`
   - `openapi/sudar-creator-v1.json` — Custom GPT Actions fallback
 - **Env**: `NEXT_PUBLIC_MCP_URL`, `SUDAR_*`, Wrangler secrets — [ENV_REFERENCE.md](ENV_REFERENCE.md).
-- **Flow**: Deploy MCP worker → ChatGPT/Cursor discover PKCE metadata → Studio `/login?mcp_oauth=1` → `/oauth/complete` → `/oauth/token` → ChatGPT lists tools on a **stateless** `/mcp` session → `sudar_build_course` creates a Studio draft, fills modules across Worker invocations, then returns HTML/SCORM.
+- **Flow**: Deploy MCP worker → ChatGPT/Cursor discover PKCE metadata → Studio `/login?mcp_oauth=1` → `/oauth/complete` → `/oauth/token` → ChatGPT lists tools on a **stateless** `/mcp` session → `sudar_build_course` creates a Studio draft immediately → Studio fills lessons in the background → ChatGPT polls `sudar_get_course` → `sudar_export_course` returns HTML/SCORM.
 
 ---
 

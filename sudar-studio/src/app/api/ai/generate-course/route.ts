@@ -21,6 +21,8 @@ import {
 } from '@/lib/courseTags'
 import { suggestExperiencePackFromText } from '@/lib/themes/experiencePacks'
 import { fillEmptyModulesForCourse, isWorkerInvocationLimitError, MODULES_PER_WORKER_INVOCATION } from '@/lib/ai/courseGeneration'
+import { placeholderModuleTitles } from '@/lib/ai/courseGeneration/placeholderModules'
+import { kickBackgroundModuleFill } from '@/lib/ai/courseGeneration/scheduleBackgroundFill'
 import { buildStudioUsageChatCtx, withUsageMetadata } from '@/lib/ai/studioUsageContext'
 import {
   assembleHtmlExportPayload,
@@ -112,6 +114,7 @@ export async function POST(request: NextRequest) {
     strict_component_validation,
     apply_quality_filtering,
     export_format,
+    background_fill,
   } = body as {
     title?: string
     /** @deprecated use `brief` — kept for API compatibility; treated as author intent, not final copy */
@@ -137,6 +140,7 @@ export async function POST(request: NextRequest) {
     strict_component_validation?: boolean
     apply_quality_filtering?: boolean
     export_format?: 'html' | 'scorm12' | 'both' | 'none'
+    background_fill?: boolean
   }
 
   if (!title) return NextResponse.json({ error: 'title required' }, { status: 400 })
@@ -193,10 +197,15 @@ export async function POST(request: NextRequest) {
   }
 
   const authorBrief = (brief ?? description ?? '').trim() || null
+  const backgroundFill = background_fill === true
 
   let aiDescription: string
   let tagLabels: string[]
-  try {
+  if (backgroundFill) {
+    aiDescription = authorBrief || `A microlearning course on ${title}.`
+    tagLabels = []
+  } else {
+    try {
     const meta = await generateCourseMetadata(
       {
         title,
@@ -214,15 +223,16 @@ export async function POST(request: NextRequest) {
     )
     aiDescription = meta.description
     tagLabels = meta.tag_labels
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    return NextResponse.json(
-      { error: `AI course metadata failed: ${message}. See AI & API Keys in Settings.` },
-      { status: 502 }
-    )
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      return NextResponse.json(
+        { error: `AI course metadata failed: ${message}. See AI & API Keys in Settings.` },
+        { status: 502 }
+      )
+    }
   }
 
-  const leanGeneration = content_density === 'concise' || Boolean(export_format)
+  const leanGeneration = content_density === 'concise' || Boolean(export_format) || backgroundFill
   const cover = leanGeneration
     ? { thumbnail_url: null as string | null, banner_url: null as string | null }
     : await suggestCourseCoverImagesFromIntelligence(
@@ -268,16 +278,22 @@ export async function POST(request: NextRequest) {
 
   if (courseError || !course) return NextResponse.json({ error: courseError?.message }, { status: 500 })
 
-  try {
-    const catalog = await fetchOrgTagCatalog(admin, orgId)
-    const orgTagIds = await resolveOrCreateOrgTagsForLabels(admin, orgId, tagLabels, catalog)
-    await setCourseOrgTagIds(admin, course.id, orgTagIds)
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    return NextResponse.json({ error: `Tag assignment failed: ${message}` }, { status: 500 })
+  if (!backgroundFill) {
+    try {
+      const catalog = await fetchOrgTagCatalog(admin, orgId)
+      const orgTagIds = await resolveOrCreateOrgTagsForLabels(admin, orgId, tagLabels, catalog)
+      await setCourseOrgTagIds(admin, course.id, orgTagIds)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      return NextResponse.json({ error: `Tag assignment failed: ${message}` }, { status: 500 })
+    }
   }
 
-  const outlinePrompt = `Create a course outline for:
+  let moduleTitles: string[] = []
+  if (backgroundFill) {
+    moduleTitles = placeholderModuleTitles(title, Number(num_modules) || 3)
+  } else {
+    const outlinePrompt = `Create a course outline for:
 
 Course: "${title}"
 Learner-facing summary: ${aiDescription}
@@ -288,19 +304,19 @@ Modules: ${num_modules}
 Return ONLY a JSON array of ${num_modules} module titles. No other text.
 Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced Topics", "Summary"]`
 
-  let moduleTitles: string[] = []
-  try {
-    const raw = await callAI([{ role: 'user', content: outlinePrompt }], 300, chatAiCtx)
-    const jsonStr = extractJson(raw)
-    if (!jsonStr.startsWith('[')) throw new Error('Outline response did not contain a JSON array')
-    moduleTitles = JSON.parse(jsonStr)
-    if (!Array.isArray(moduleTitles) || moduleTitles.length === 0) throw new Error('Outline must be a non-empty array of module titles')
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    return NextResponse.json(
-      { error: `AI outline generation failed: ${message}. See AI & API Keys in Settings.` },
-      { status: 502 }
-    )
+    try {
+      const raw = await callAI([{ role: 'user', content: outlinePrompt }], 300, chatAiCtx)
+      const jsonStr = extractJson(raw)
+      if (!jsonStr.startsWith('[')) throw new Error('Outline response did not contain a JSON array')
+      moduleTitles = JSON.parse(jsonStr)
+      if (!Array.isArray(moduleTitles) || moduleTitles.length === 0) throw new Error('Outline must be a non-empty array of module titles')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      return NextResponse.json(
+        { error: `AI outline generation failed: ${message}. See AI & API Keys in Settings.` },
+        { status: 502 }
+      )
+    }
   }
 
   for (let i = 0; i < moduleTitles.length; i++) {
@@ -318,6 +334,23 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
     .select('id, title, content, order_index')
     .eq('course_id', course.id)
     .order('order_index', { ascending: true })
+
+  if (backgroundFill) {
+    const studioUrl = studioCourseEditorUrl(course.id, request.url)
+    const moduleResults = moduleTitles.map((t, idx) => ({ title: t, order_index: idx }))
+    await kickBackgroundModuleFill(request, course.id, 0)
+    return NextResponse.json({
+      success: true,
+      needs_continue: true,
+      generation_status: 'running',
+      course_id: course.id,
+      studio_url: studioUrl,
+      modules: moduleResults,
+      modules_generated: 0,
+      remaining_empty: moduleResults.length,
+      poll_after_seconds: 20,
+    })
+  }
 
   const fillResult = await fillEmptyModulesForCourse(admin, {
     course: {

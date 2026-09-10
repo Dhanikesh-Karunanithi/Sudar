@@ -1,13 +1,16 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { getRequestSession } from '@/lib/auth/requestSession'
 import { NextRequest, NextResponse } from 'next/server'
 import { mergeExperienceIntoSettings } from '@/lib/themes/courseSettingsExperience'
 import { setCourseOrgTagIds } from '@/lib/courseTags'
+import { getModuleBodyText } from '@/lib/contentBlocks'
+import type { ModuleContent } from '@/types/content'
 
-export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await getRequestSession(request)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { user } = session
 
   const admin = createServiceRoleSupabaseClient()
 
@@ -28,7 +31,18 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 
   const org_tag_ids = (tagLinks ?? []).map((r) => r.org_tag_id).filter(Boolean)
   const row = data as Record<string, unknown>
-  return NextResponse.json({ ...row, org_tag_ids })
+  const modules = Array.isArray(row.modules) ? row.modules : []
+  const remaining_empty = modules.filter((mod) => {
+    if (!mod || typeof mod !== 'object') return true
+    const content = (mod as { content?: ModuleContent }).content
+    return !getModuleBodyText(content)?.trim()
+  }).length
+  return NextResponse.json({
+    ...row,
+    org_tag_ids,
+    remaining_empty,
+    generation_completed: modules.length > 0 && remaining_empty === 0,
+  })
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

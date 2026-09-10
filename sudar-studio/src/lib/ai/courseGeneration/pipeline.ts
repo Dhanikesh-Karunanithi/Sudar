@@ -10,6 +10,7 @@ import {
   sanitizeVideoComponents,
   type ModuleRole,
   type ComponentType,
+  type SelectedComponent,
 } from '@/lib/ai/componentSelector'
 import type { LessonArchetype } from '@/lib/ai/archetypeSelector'
 import { chatCompletion, type ChatCompletionContext } from '@/lib/ai/chat'
@@ -40,6 +41,7 @@ import {
   inferCourseTypeFromSettings,
 } from './introductionStrategies'
 import type { ModuleQualityRecord } from './types'
+import { syntheticCurriculum } from './placeholderModules'
 
 async function callAI(
   messages: { role: string; content: string }[],
@@ -125,26 +127,31 @@ export async function fillEmptyModulesForCourse(
   const allTitles = modulesOrdered.map((m) => m.title)
   const difficulty = course.difficulty ?? 'intermediate'
   const documentFull = gen?.document_text?.trim() ?? ''
+  const leanMedia = genWithType?.content_density === 'concise'
 
   let curriculum: CurriculumEntry[]
-  try {
-    const planMessages = buildCurriculumPlanPrompt(
-      course.title,
-      course.description,
-      difficulty,
-      allTitles,
-      genWithType,
-      { courseType }
-    )
-    const raw = await callAI(planMessages, 2000, chatAiCtx, 'outline')
-    const match = raw.match(/\[[\s\S]*\]/)
-    if (!match) throw new Error('Curriculum plan response did not contain a JSON array')
-    const parsed = JSON.parse(match[0]) as unknown
-    const rawPlan = curriculumPlanSchema.parse(parsed) as CurriculumEntry[]
-    curriculum = normalizeCurriculumToModules(rawPlan, allTitles)
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    return { completed: false, modules_generated: 0, error: `Curriculum plan generation failed: ${msg}` }
+  if (leanMedia) {
+    curriculum = syntheticCurriculum(allTitles)
+  } else {
+    try {
+      const planMessages = buildCurriculumPlanPrompt(
+        course.title,
+        course.description,
+        difficulty,
+        allTitles,
+        genWithType,
+        { courseType }
+      )
+      const raw = await callAI(planMessages, 2000, chatAiCtx, 'outline')
+      const match = raw.match(/\[[\s\S]*\]/)
+      if (!match) throw new Error('Curriculum plan response did not contain a JSON array')
+      const parsed = JSON.parse(match[0]) as unknown
+      const rawPlan = curriculumPlanSchema.parse(parsed) as CurriculumEntry[]
+      curriculum = normalizeCurriculumToModules(rawPlan, allTitles)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      return { completed: false, modules_generated: 0, error: `Curriculum plan generation failed: ${msg}` }
+    }
   }
 
   const priorSummaries: { title: string; summary: string }[] = []
@@ -174,8 +181,6 @@ export async function fillEmptyModulesForCourse(
     )
     return f.length > 0 ? f : undefined
   })()
-
-  const leanMedia = genWithType?.content_density === 'concise'
 
   for (const mod of emptyModules) {
     if (generated >= maxModules) {
@@ -216,7 +221,7 @@ export async function fillEmptyModulesForCourse(
       let content = await callAI(contentMessages, 1800, chatAiCtx, 'module_fill')
 
       const isCapstone = modIndex >= modulesOrdered.length - 1
-      if (isCapstone) {
+      if (isCapstone && !leanMedia) {
         try {
           const critiqueMessages = buildCritiqueRefinePrompt(
             course.title,
@@ -253,24 +258,26 @@ export async function fillEmptyModulesForCourse(
       }
       const allowVideo = !noExternal && verifiedVideo != null
 
-      let selected = await selectComponentsForModule(mod.title, contentSummary, role, {
-        excludeTypes: recentExcludes(recentComponentTypes),
-        disallowedTypes: forbiddenDisallowed,
-        allowVideoInPrompt: allowVideo,
-        verifiedVideoUrl: verifiedVideo?.url ?? null,
-        chatContext: chatAiCtx,
-        bloomLevel: resolvedEntry.bloomLevel,
-        archetype: resolvedEntry.archetype,
-        learningOutcomes: gen?.learning_outcomes,
-        assessmentDensity: gen?.assessment_density,
-        interactivityLevel: gen?.interactivity_level,
-        primaryPedagogy: gen?.primary_pedagogy,
-        moduleFullText: content,
-        courseTypeCounts: { ...courseComponentCounts },
-        moduleIndex: modIndex,
-        totalModules: modulesOrdered.length,
-        courseType,
-      })
+      let selected: SelectedComponent[] = leanMedia
+        ? []
+        : await selectComponentsForModule(mod.title, contentSummary, role, {
+            excludeTypes: recentExcludes(recentComponentTypes),
+            disallowedTypes: forbiddenDisallowed,
+            allowVideoInPrompt: allowVideo,
+            verifiedVideoUrl: verifiedVideo?.url ?? null,
+            chatContext: chatAiCtx,
+            bloomLevel: resolvedEntry.bloomLevel,
+            archetype: resolvedEntry.archetype,
+            learningOutcomes: gen?.learning_outcomes,
+            assessmentDensity: gen?.assessment_density,
+            interactivityLevel: gen?.interactivity_level,
+            primaryPedagogy: gen?.primary_pedagogy,
+            moduleFullText: content,
+            courseTypeCounts: { ...courseComponentCounts },
+            moduleIndex: modIndex,
+            totalModules: modulesOrdered.length,
+            courseType,
+          })
 
       selected = sanitizeVideoComponents(selected, {
         allowExternalVideo: !noExternal,

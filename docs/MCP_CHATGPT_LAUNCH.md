@@ -77,9 +77,9 @@ Use returned `access_token` as `Authorization: Bearer` on `/mcp`.
 
 > Using Sudar, build a microlearning course on Generative AI for instructional designers. Create it in Studio and give me HTML and SCORM.
 
-Expect tool: `sudar_build_course`. ChatGPT must **not** write the modules itself. The reply should include:
+Expect tool: `sudar_build_course`. ChatGPT must **not** write the modules itself. The first tool result includes a **Studio URL** while lessons generate in the background. ChatGPT should then call `sudar_get_course` until `remaining_empty` is 0, then `sudar_export_course`. The reply should include:
 - a **Studio URL** (`https://studio.thesudar.com/courses/…`)
-- HTML lesson pages (or `combined_html`)
+- HTML lesson pages (or `combined_html`) once generation finishes
 - SCORM 1.2 ZIP as `zip_base64` (or a note to download from Studio if the package is large)
 
 If ChatGPT returns a markdown outline with no Studio link, it skipped the tool — reconnect the connector after deploying MCP + Studio, then retry.
@@ -163,6 +163,7 @@ If MCP connector review is delayed, publish [openapi/sudar-creator-v1.json](../o
 | Plugin connected but ChatGPT says `sudar_build_course` is not exposed | Worker was stateful (`sessionIdGenerator`) on Cloudflare — ChatGPT `tools/list` hit a new isolate. Redeploy stateless JSON MCP, then **new chat** (not the failed thread) |
 | ChatGPT writes a markdown course instead of creating one | Connector did not call `sudar_build_course`. Reconnect Sudar, wait 1–2 minutes (Studio generation is slow), retry the prompt above |
 | Tool runs then “Too many subrequests by single Worker invocation” | Studio was generating every module in one Cloudflare Worker. Current Studio fills one module per request; MCP continues via `generate-all-modules`. Redeploy Studio + MCP worker, then **new chat** |
+| ChatGPT `sudar_build_course` returns HTTP 500 in ~10s | ChatGPT aborts long MCP calls. Current MCP creates the Studio draft immediately and fills lessons in the background. Use a **new chat**, keep the Sudar chip, then poll / wait for `sudar_get_course`. Redeploy Studio + MCP if the worker is older than this fix |
 | Cursor Connect `fetch failed` on local stdio | Learn not running, or placeholder ALP key |
 
 ---

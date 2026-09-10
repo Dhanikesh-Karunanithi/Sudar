@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-09-10 — ChatGPT course build returns Studio URL before lessons fill
+
+- **Theme**: ChatGPT called `sudar_build_course` then reported HTTP 500 in ~9s because the MCP Worker waited on Studio AI (ChatGPT aborts long tool calls).
+- **Shipped**: MCP kickoff creates the Studio draft immediately (`background_fill`) and returns `studio_url`; Studio fills one lesson per Worker via `waitUntil` + `kick:true` on `generate-all-modules`. ChatGPT polls `sudar_get_course` then exports HTML/SCORM. Concise fills skip curriculum/component extra AI calls.
+- **Docs**: Troubleshooting row in `MCP_CHATGPT_LAUNCH.md`.
+
 ### 2026-09-10 — ChatGPT course build survives Cloudflare Worker limits
 
 - **Theme**: `sudar_build_course` reached Studio, then failed mid-save with “Too many subrequests by single Worker invocation” because generate-course filled every module in one OpenNext Worker isolate.
