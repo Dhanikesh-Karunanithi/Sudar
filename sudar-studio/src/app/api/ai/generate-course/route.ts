@@ -22,7 +22,7 @@ import {
 import { suggestExperiencePackFromText } from '@/lib/themes/experiencePacks'
 import { fillEmptyModulesForCourse, isWorkerInvocationLimitError, MODULES_PER_WORKER_INVOCATION } from '@/lib/ai/courseGeneration'
 import { placeholderModuleTitles } from '@/lib/ai/courseGeneration/placeholderModules'
-import { kickBackgroundModuleFill } from '@/lib/ai/courseGeneration/scheduleBackgroundFill'
+import { kickBackgroundModuleFill, runInWaitUntil } from '@/lib/ai/courseGeneration/scheduleBackgroundFill'
 import { buildStudioUsageChatCtx, withUsageMetadata } from '@/lib/ai/studioUsageContext'
 import {
   assembleHtmlExportPayload,
@@ -338,7 +338,11 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
   if (backgroundFill) {
     const studioUrl = studioCourseEditorUrl(course.id, request.url)
     const moduleResults = moduleTitles.map((t, idx) => ({ title: t, order_index: idx }))
-    await kickBackgroundModuleFill(request, course.id, 0)
+    const kick = kickBackgroundModuleFill(request, course.id, 0)
+    const queued = await runInWaitUntil(kick)
+    if (!queued) {
+      void kick
+    }
     return NextResponse.json({
       success: true,
       needs_continue: true,
