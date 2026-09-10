@@ -135,6 +135,7 @@ export interface ModuleRowForGeneration {
 export interface FillEmptyModulesResult {
   completed: boolean
   modules_generated: number
+  remaining_empty?: number
   error?: string
 }
 

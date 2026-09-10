@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-09-10 — ChatGPT course build survives Cloudflare Worker limits
+
+- **Theme**: `sudar_build_course` reached Studio, then failed mid-save with “Too many subrequests by single Worker invocation” because generate-course filled every module in one OpenNext Worker isolate.
+- **Shipped**: Fill **one module per invocation**; MCP and Studio wizard call `POST /api/ai/generate-all-modules` until empty lessons are gone; Bearer auth on that route; concise MCP builds skip cover/image/YouTube extras. Default ChatGPT course is **3** modules.
+- **Docs**: Troubleshooting row in `MCP_CHATGPT_LAUNCH.md`.
+
 ### 2026-09-10 — ChatGPT MCP lists Studio tools after connect
 
 - **Theme**: Sudar showed as connected in ChatGPT but `sudar_build_course` was “not exposed”, then Studio returned Unauthorized. Cloudflare MCP was stateful per request; Studio middleware rejected cookie-less Bearer.

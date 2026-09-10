@@ -1,14 +1,19 @@
-import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { getRequestSession } from '@/lib/auth/requestSession'
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveChatConfigError } from '@/lib/ai/chat'
 import { fetchStudioOrgAiContext, studioMeteringChatCtx } from '@/lib/ai/studioOrgAiChat'
 import { withUsageMetadata } from '@/lib/ai/studioUsageContext'
-import { fillEmptyModulesForCourse } from '@/lib/ai/courseGeneration'
+import {
+  fillEmptyModulesForCourse,
+  isWorkerInvocationLimitError,
+  MODULES_PER_WORKER_INVOCATION,
+} from '@/lib/ai/courseGeneration'
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await getRequestSession(request)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { user } = session
 
   const { course_id } = await request.json()
   if (!course_id) return NextResponse.json({ error: 'course_id required' }, { status: 400 })
@@ -56,17 +61,23 @@ export async function POST(request: NextRequest) {
     },
     modules: modules ?? [],
     chatAiCtx,
+    maxModules: MODULES_PER_WORKER_INVOCATION,
   })
 
-  if (result.error) {
-    return NextResponse.json(
-      {
-        error: result.error,
-        modules_generated: result.modules_generated,
-      },
-      { status: 502 }
-    )
+  const retryableLimit = Boolean(result.error) && isWorkerInvocationLimitError(result.error ?? '')
+  const needsContinue = !result.completed
+  const payload = {
+    course_id: course.id,
+    completed: result.completed,
+    needs_continue: needsContinue,
+    modules_generated: result.modules_generated,
+    remaining_empty: result.remaining_empty ?? 0,
+    ...(result.error ? { warning: result.error } : {}),
   }
 
-  return NextResponse.json({ completed: result.completed, modules_generated: result.modules_generated })
+  if (result.error && !retryableLimit) {
+    return NextResponse.json({ ...payload, error: result.error }, { status: 502 })
+  }
+
+  return NextResponse.json(payload, { status: needsContinue ? 202 : 200 })
 }

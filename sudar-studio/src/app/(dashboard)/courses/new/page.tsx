@@ -9,6 +9,7 @@ import { SudarInlineLoader, SudarBrandLoader } from '@/components/branding/Sudar
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { useBrowserCompletionNotification } from '@/hooks/useBrowserCompletionNotification'
 import type { CourseBlueprintQuestion } from '@/lib/ai/courseGeneration/types'
+import { continueCourseModuleFill } from '@/lib/ai/courseGeneration/continueFillClient'
 import { BrandSettings, DEFAULT_BRAND_SETTINGS, type BrandSettingsValue } from '@/components/generator/BrandSettings'
 import { COURSE_TEMPLATES } from '@/lib/courseTemplates'
 import { cn } from '@/lib/utils'
@@ -220,16 +221,22 @@ export default function NewCoursePage() {
         }),
       })
 
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string }
+      const data = (await res.json()) as {
+        course_id?: string
+        error?: string
+        needs_continue?: boolean
+      }
+      if (!data.course_id) {
         setError(data.error ?? 'Generation failed')
         setCourseBuildExiting(false)
         setLoading(false)
         notifyCourseFailed(title.trim(), data.error)
         return
       }
-
-      const { course_id } = (await res.json()) as { course_id: string }
+      if (data.needs_continue || res.status === 202 || !res.ok) {
+        await continueCourseModuleFill(data.course_id)
+      }
+      const course_id = data.course_id
       notifyCourseReady(title.trim())
       setCourseBuildExiting(true)
       window.setTimeout(() => {

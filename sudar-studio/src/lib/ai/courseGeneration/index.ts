@@ -12,6 +12,6 @@ export type {
 } from './types'
 export { DEFAULT_COURSE_BLUEPRINT_QUESTIONS } from './blueprintCatalog'
 export { mergeBlueprintAnswersIntoSettings } from './blueprintMerge'
-export { fillEmptyModulesForCourse } from './pipeline'
+export { fillEmptyModulesForCourse, isWorkerInvocationLimitError, MODULES_PER_WORKER_INVOCATION } from './pipeline'
 export { getAiGenerationSettings } from './settings'
 export { generateCourseMetadata } from './courseMetadata'

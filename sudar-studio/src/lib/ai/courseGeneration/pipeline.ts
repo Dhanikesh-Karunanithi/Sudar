@@ -84,15 +84,24 @@ function pickImageSectionIndices(sectionCount: number, modIndex: number): number
   return [primary]
 }
 
+/** Cloudflare Workers share one outbound-fetch budget per isolate; fill one lesson per request. */
+export const MODULES_PER_WORKER_INVOCATION = 1
+
+export function isWorkerInvocationLimitError(message: string): boolean {
+  return /too many subrequests|cpu time limit|worker invocation/i.test(message)
+}
+
 export async function fillEmptyModulesForCourse(
   admin: SupabaseClient<Database>,
   input: {
     course: CourseRowForGeneration
     modules: ModuleRowForGeneration[]
     chatAiCtx?: ChatCompletionContext
+    maxModules?: number
   }
 ): Promise<FillEmptyModulesResult> {
   const { course, modules: allModules, chatAiCtx } = input
+  const maxModules = input.maxModules ?? Number.POSITIVE_INFINITY
   const gen = getAiGenerationSettings(course.settings) as AiGenerationCourseSettings | undefined
   const courseType = inferCourseTypeFromSettings(
     gen?.course_type,
@@ -166,7 +175,16 @@ export async function fillEmptyModulesForCourse(
     return f.length > 0 ? f : undefined
   })()
 
+  const leanMedia = genWithType?.content_density === 'concise'
+
   for (const mod of emptyModules) {
+    if (generated >= maxModules) {
+      return {
+        completed: false,
+        modules_generated: generated,
+        remaining_empty: emptyModules.length - generated,
+      }
+    }
     const modIndex = modulesOrdered.findIndex((m) => m.id === mod.id)
     const resolvedEntry = curriculum[modIndex]
     if (!resolvedEntry) {
@@ -228,7 +246,7 @@ export async function fillEmptyModulesForCourse(
                 ? 'deep-dive'
                 : 'core'
 
-      const noExternal = gen?.no_external_video === true
+      const noExternal = gen?.no_external_video === true || leanMedia
       let verifiedVideo: { url: string; title: string } | null = null
       if (!noExternal) {
         verifiedVideo = await searchYouTubeWatchUrl(`${mod.title} ${course.title}`)
@@ -271,7 +289,7 @@ export async function fillEmptyModulesForCourse(
         selected.length > 0 ? toInteractiveElements(selected, resolvedEntry.bloomLevel) : []
 
       const parsedSections = parseMarkdownSections(content)
-      const imageIndices = pickImageSectionIndices(parsedSections.length, modIndex)
+      const imageIndices = leanMedia ? [] : pickImageSectionIndices(parsedSections.length, modIndex)
       const sectionImages = new Map<number, NonNullable<Awaited<ReturnType<typeof getOneImage>>>>()
       for (let imgIdx = 0; imgIdx < imageIndices.length; imgIdx++) {
         const secIdx = imageIndices[imgIdx]!
@@ -300,39 +318,41 @@ export async function fillEmptyModulesForCourse(
             visibility?: 'hidden' | 'floating' | 'visible'
           }
         | undefined
-      try {
-        const moduleOpeningPreview = content.split('\n').slice(0, 8).join('\n')
-        const envelopeMessages = buildEnvelopePrompt(
-          mod.title,
-          content,
-          (resolvedEntry.archetype ?? 'cold-open') as string,
-          {
-            minimizeSideCard: genWithType?.minimize_sidecards !== false,
-            moduleOpeningPreview,
-          }
-        )
-        const envelopeRaw = await callAI(envelopeMessages, 800, chatAiCtx, 'other')
-        const envelope = parseEnvelope(envelopeRaw)
-        if (envelope) {
-          if (
-            envelope.entryState &&
-            !contentHasGenericScenarioDuplication(envelope.entryState.content, content)
-          ) {
-            entryState = envelope.entryState
-          }
-          exitState = envelope.exitState
-          if (envelope.sideCard) {
-            sideCard = {
-              ...envelope.sideCard,
-              visibility: envelope.sideCard.visibility ?? 'hidden',
+      if (!leanMedia) {
+        try {
+          const moduleOpeningPreview = content.split('\n').slice(0, 8).join('\n')
+          const envelopeMessages = buildEnvelopePrompt(
+            mod.title,
+            content,
+            (resolvedEntry.archetype ?? 'cold-open') as string,
+            {
+              minimizeSideCard: genWithType?.minimize_sidecards !== false,
+              moduleOpeningPreview,
+            }
+          )
+          const envelopeRaw = await callAI(envelopeMessages, 800, chatAiCtx, 'other')
+          const envelope = parseEnvelope(envelopeRaw)
+          if (envelope) {
+            if (
+              envelope.entryState &&
+              !contentHasGenericScenarioDuplication(envelope.entryState.content, content)
+            ) {
+              entryState = envelope.entryState
+            }
+            exitState = envelope.exitState
+            if (envelope.sideCard) {
+              sideCard = {
+                ...envelope.sideCard,
+                visibility: envelope.sideCard.visibility ?? 'hidden',
+              }
             }
           }
+        } catch {
+          // envelope optional
         }
-      } catch {
-        // envelope optional
       }
 
-      if (genWithType?.apply_quality_filtering !== false) {
+      if (!leanMedia && genWithType?.apply_quality_filtering !== false) {
         try {
           const quality = await validateContentQuality(
             {
@@ -378,6 +398,7 @@ export async function fillEmptyModulesForCourse(
         return {
           completed: false,
           modules_generated: generated,
+          remaining_empty: emptyModules.length - generated,
           error: `Failed to save module "${mod.title}": ${upErr.message}`,
         }
       }
@@ -389,6 +410,7 @@ export async function fillEmptyModulesForCourse(
       return {
         completed: false,
         modules_generated: generated,
+        remaining_empty: emptyModules.length - generated,
         error: `Content generation failed for "${mod.title}": ${msg}`,
       }
     }

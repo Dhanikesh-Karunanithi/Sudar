@@ -20,7 +20,7 @@ import {
   setCourseOrgTagIds,
 } from '@/lib/courseTags'
 import { suggestExperiencePackFromText } from '@/lib/themes/experiencePacks'
-import { fillEmptyModulesForCourse } from '@/lib/ai/courseGeneration'
+import { fillEmptyModulesForCourse, isWorkerInvocationLimitError, MODULES_PER_WORKER_INVOCATION } from '@/lib/ai/courseGeneration'
 import { buildStudioUsageChatCtx, withUsageMetadata } from '@/lib/ai/studioUsageContext'
 import {
   assembleHtmlExportPayload,
@@ -222,8 +222,16 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const orgUi = await getOrgDefaultUiLocale(admin, orgId)
-  const cover = await suggestCourseCoverImagesFromIntelligence(admin, orgId, title, tagLabels, orgUi)
+  const leanGeneration = content_density === 'concise' || Boolean(export_format)
+  const cover = leanGeneration
+    ? { thumbnail_url: null as string | null, banner_url: null as string | null }
+    : await suggestCourseCoverImagesFromIntelligence(
+        admin,
+        orgId,
+        title,
+        tagLabels,
+        await getOrgDefaultUiLocale(admin, orgId)
+      )
 
   const suggestedPack = suggestExperiencePackFromText(title, tagLabels)
   const settingsPayload: Record<string, unknown> = { ai_generation: aiGeneration }
@@ -321,21 +329,33 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
     },
     modules: moduleRows ?? [],
     chatAiCtx: withUsageMetadata(chatAiCtx, { course_id: course.id }),
+    maxModules: MODULES_PER_WORKER_INVOCATION,
   })
 
   const studioUrl = studioCourseEditorUrl(course.id, request.url)
+  const moduleResults = moduleTitles.map((t, idx) => ({ title: t, order_index: idx }))
+  const remainingEmpty = fillResult.remaining_empty ?? 0
+  const retryableLimit =
+    Boolean(fillResult.error) && isWorkerInvocationLimitError(fillResult.error ?? '')
 
-  if (fillResult.error || !fillResult.completed) {
+  if (!fillResult.completed) {
     return NextResponse.json(
       {
-        error:
-          fillResult.error ??
-          'Course was created but module content generation did not finish. You can try again from the course page or contact support.',
+        success: true,
+        needs_continue: true,
         course_id: course.id,
         studio_url: studioUrl,
+        modules: moduleResults,
         modules_generated: fillResult.modules_generated,
+        remaining_empty: remainingEmpty,
+        ...(fillResult.error ? { warning: fillResult.error } : {}),
+        ...(retryableLimit
+          ? {}
+          : fillResult.error
+            ? { error: fillResult.error }
+            : {}),
       },
-      { status: 502 }
+      { status: retryableLimit || !fillResult.error ? 202 : 502 }
     )
   }
 
@@ -346,12 +366,12 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
     .order('order_index', { ascending: true })
 
   const moduleRowsForExport = (filledModules ?? []) as ModuleRow[]
-  const moduleResults = moduleTitles.map((t, idx) => ({ title: t, order_index: idx }))
   const wantHtml = export_format === 'html' || export_format === 'both'
   const wantScorm = export_format === 'scorm12' || export_format === 'both'
 
   const payload: {
     success: true
+    completed: true
     course_id: string
     studio_url: string
     modules: { title: string; order_index: number }[]
@@ -359,6 +379,7 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
     scorm?: Awaited<ReturnType<typeof assembleScormJsonPayload>>
   } = {
     success: true,
+    completed: true,
     course_id: course.id,
     studio_url: studioUrl,
     modules: moduleResults,

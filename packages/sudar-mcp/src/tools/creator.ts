@@ -9,6 +9,7 @@ import {
   SUDAR_GENERATE_OUTLINE_TOOL,
 } from '../instructions.js'
 import { maybeAuditStudio } from './audit.js'
+import { continueUntilCourseFilled } from './courseFill.js'
 import { ensureStudioUrl, nestedData, parseObject, withStudioDirective } from './creatorFormat.js'
 
 function studioText(ok: boolean, body: string) {
@@ -69,21 +70,23 @@ export function registerCreatorTools(server: McpServer, config: SudarMcpConfig):
         title: args.title,
         brief: args.brief,
         difficulty: args.difficulty ?? 'beginner',
-        num_modules: args.num_modules ?? 6,
+        num_modules: args.num_modules ?? 3,
         target_audience: args.target_audience,
         content_density: 'concise',
-        export_format: exportFormat,
+        apply_quality_filtering: false,
+        no_external_video: true,
       })
-      await maybeAuditStudio(config, 'sudar_build_course', res.ok)
       const parsed = parseObject(res.text)
-      if (!parsed) {
-        return studioText(res.ok, res.text || JSON.stringify({ status: res.status }))
+      const filled = await continueUntilCourseFilled(config, { status: res.status, parsed })
+      await maybeAuditStudio(config, 'sudar_build_course', filled.ok)
+      if (!filled.payload) {
+        return studioText(false, res.text || JSON.stringify({ status: res.status }))
       }
-      let payload = ensureStudioUrl(parsed, config.studioUrl)
-      if (res.ok) {
+      let payload = filled.payload
+      if (filled.ok) {
         payload = await maybeAttachExports(config, payload, exportFormat)
       }
-      return studioText(res.ok, JSON.stringify(payload, null, 2))
+      return studioText(filled.ok, JSON.stringify(payload, null, 2))
     },
   )
 

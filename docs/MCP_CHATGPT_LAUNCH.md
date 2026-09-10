@@ -162,6 +162,7 @@ If MCP connector review is delayed, publish [openapi/sudar-creator-v1.json](../o
 | Tools missing | Set `SUDAR_TOOLSET=all` on worker; public Studio/Learn URLs are wrangler `[vars]` |
 | Plugin connected but ChatGPT says `sudar_build_course` is not exposed | Worker was stateful (`sessionIdGenerator`) on Cloudflare — ChatGPT `tools/list` hit a new isolate. Redeploy stateless JSON MCP, then **new chat** (not the failed thread) |
 | ChatGPT writes a markdown course instead of creating one | Connector did not call `sudar_build_course`. Reconnect Sudar, wait 1–2 minutes (Studio generation is slow), retry the prompt above |
+| Tool runs then “Too many subrequests by single Worker invocation” | Studio was generating every module in one Cloudflare Worker. Current Studio fills one module per request; MCP continues via `generate-all-modules`. Redeploy Studio + MCP worker, then **new chat** |
 | Cursor Connect `fetch failed` on local stdio | Learn not running, or placeholder ALP key |
 
 ---

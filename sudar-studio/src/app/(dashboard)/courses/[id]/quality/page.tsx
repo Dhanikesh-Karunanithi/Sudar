@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ArrowLeft, RefreshCw, ExternalLink, CheckCircle2, AlertTriangle } from 'lucide-react'
 import type { GenerationTelemetry, ModuleQualityRecord } from '@/lib/ai/courseGeneration/types'
 import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
+import { continueCourseModuleFill } from '@/lib/ai/courseGeneration/continueFillClient'
 import { cn } from '@/lib/utils'
 
 type CourseQualityResponse = {
@@ -47,14 +48,10 @@ export default function CourseQualityPage() {
     setRegenerating('all')
     setError(null)
     try {
-      const res = await fetch('/api/ai/generate-all-modules', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ course_id: id }),
-      })
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string }
-        setError(data.error ?? 'Regeneration failed')
+      try {
+        await continueCourseModuleFill(id)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Regeneration failed')
         return
       }
       const refresh = await fetch(`/api/courses/${id}`)
