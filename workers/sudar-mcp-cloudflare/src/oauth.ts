@@ -45,8 +45,10 @@ function pkceS256(verifier: string): string {
 export function corsHeaders(): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Authorization, Content-Type, MCP-Protocol-Version',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers':
+      'Authorization, Content-Type, MCP-Protocol-Version, Mcp-Session-Id, Last-Event-Id',
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Expose-Headers': 'Mcp-Session-Id',
   }
 }
 

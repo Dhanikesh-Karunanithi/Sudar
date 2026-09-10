@@ -75,7 +75,12 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
   const isPublic = isPublicPath(pathname)
-  const delegatesAuth = pathname.startsWith('/api/studio/ai/generate-video/render/')
+  const hasBearer = /^Bearer\s+\S+/i.test(request.headers.get('authorization') ?? '')
+  // Cookie-less MCP / API clients send Authorization only — do not 401 here;
+  // the route still validates the JWT via getRequestSession.
+  const delegatesAuth =
+    pathname.startsWith('/api/studio/ai/generate-video/render/') ||
+    (hasBearer && pathname.startsWith('/api/'))
 
   if (!user && !isPublic && !delegatesAuth) {
     if (pathname.startsWith('/api/')) {

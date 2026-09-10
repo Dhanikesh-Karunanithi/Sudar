@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-09-10 — ChatGPT MCP lists Studio tools after connect
+
+- **Theme**: Sudar showed as connected in ChatGPT but `sudar_build_course` was “not exposed”, then Studio returned Unauthorized. Cloudflare MCP was stateful per request; Studio middleware rejected cookie-less Bearer.
+- **Shipped**: Stateless JSON MCP in `workers/sudar-mcp-cloudflare/src/mcp-handler.ts`. Studio middleware lets `/api/*` through when `Authorization: Bearer` is set.
+- **Docs**: Troubleshooting rows in `MCP_CHATGPT_LAUNCH.md`.
+
 ### 2026-09-10 — ChatGPT/Cursor MCP builds real Studio courses (HTML + SCORM)
 
 - **Theme**: ChatGPT was writing markdown outlines instead of creating Sudar courses. MCP now has `sudar_build_course` so connectors persist a Studio draft and return HTML / SCORM 1.2 like the Studio export dialog.

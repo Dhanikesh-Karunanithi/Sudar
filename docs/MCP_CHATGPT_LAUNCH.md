@@ -157,9 +157,10 @@ If MCP connector review is delayed, publish [openapi/sudar-creator-v1.json](../o
 | ChatGPT: metadata must advertise PKCE S256 | Deploy current `workers/sudar-mcp-cloudflare`; confirm `code_challenge_methods_supported` |
 | 401 on `/mcp` with no `WWW-Authenticate` | Old worker; redeploy |
 | Studio login returns to dashboard instead of ChatGPT/Cursor | Studio missing `mcp_oauth` bridge; deploy Studio |
-| 401 on creator tools | User must be Studio org member with AI keys configured |
+| 401 on creator tools | User must be Studio org member with AI keys configured. Studio middleware must let `/api/*` through when `Authorization: Bearer` is set (cookie-less MCP). |
 | 403 on learner agent | Org Sudar Agents toggles / learner opt-outs |
 | Tools missing | Set `SUDAR_TOOLSET=all` on worker; public Studio/Learn URLs are wrangler `[vars]` |
+| Plugin connected but ChatGPT says `sudar_build_course` is not exposed | Worker was stateful (`sessionIdGenerator`) on Cloudflare — ChatGPT `tools/list` hit a new isolate. Redeploy stateless JSON MCP, then **new chat** (not the failed thread) |
 | ChatGPT writes a markdown course instead of creating one | Connector did not call `sudar_build_course`. Reconnect Sudar, wait 1–2 minutes (Studio generation is slow), retry the prompt above |
 | Cursor Connect `fetch failed` on local stdio | Learn not running, or placeholder ALP key |
 
