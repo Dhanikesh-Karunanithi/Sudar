@@ -22,6 +22,7 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 - **Shipped**:
   - MCP: `sudar_build_course`, `sudar_export_course`, server instructions (`packages/sudar-mcp`).
   - Studio: `GET /api/courses/:id/export?format=html` and `format=scorm-1.2&delivery=json` (Bearer); `POST /api/ai/generate-course` accepts `export_format`.
+  - Studio OAuth handoff: same-origin `POST /api/mcp/complete-oauth` (CSP was blocking browser calls to `mcp.thesudar.com`).
   - Worker `[vars]`: `SUDAR_STUDIO_URL`, `SUDAR_LEARN_URL`, `MCP_PUBLIC_URL`.
 - **Docs**: `MCP_CHATGPT_LAUNCH.md`, `MCP_SERVERS.md`, `SHIPPED_FEATURES.md` MCP section.
 
