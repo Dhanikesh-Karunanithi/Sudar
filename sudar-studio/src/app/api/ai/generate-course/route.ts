@@ -85,6 +85,15 @@ async function callAI(messages: { role: string; content: string }[], maxTokens =
 const emptyModuleContent = { type: 'text', body: '' } as const
 
 export async function POST(request: NextRequest) {
+  try {
+    return await postGenerateCourseInner(request)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return NextResponse.json({ success: false, error: `generate-course crashed: ${message}` }, { status: 500 })
+  }
+}
+
+async function postGenerateCourseInner(request: NextRequest) {
   const session = await getRequestSession(request)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { user } = session
@@ -338,11 +347,11 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
   if (backgroundFill) {
     const studioUrl = studioCourseEditorUrl(course.id, request.url)
     const moduleResults = moduleTitles.map((t, idx) => ({ title: t, order_index: idx }))
-    const kick = kickBackgroundModuleFill(request, course.id, 0)
-    const queued = await runInWaitUntil(kick)
-    if (!queued) {
-      void kick
-    }
+    const queued = await runInWaitUntil(
+      (async () => {
+        await kickBackgroundModuleFill(request, course.id, 0)
+      })(),
+    )
     return NextResponse.json({
       success: true,
       needs_continue: true,
@@ -353,6 +362,7 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
       modules_generated: 0,
       remaining_empty: moduleResults.length,
       poll_after_seconds: 20,
+      kick_queued: queued,
     })
   }
 

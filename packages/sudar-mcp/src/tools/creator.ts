@@ -81,7 +81,13 @@ export function registerCreatorTools(server: McpServer, config: SudarMcpConfig):
         const parsed = parseObject(res.text)
         await maybeAuditStudio(config, 'sudar_build_course', Boolean(parsed && parsed.course_id))
         if (!parsed || typeof parsed.course_id !== 'string') {
-          return studioText(false, res.text || JSON.stringify({ status: res.status }))
+          return studioText(
+            false,
+            JSON.stringify({
+              status: res.status,
+              body: (res.text || '').slice(0, 800),
+            }),
+          )
         }
         const payload = ensureStudioUrl(parsed, config.studioUrl)
         const remaining =
