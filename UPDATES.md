@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-09-10 — ChatGPT course build uses Together when included Sudar AI is off
+
+- **Theme**: After org provisioning, `sudar_build_course` failed with “Sudar AI (included pilot tier) is not enabled on this deployment” because the org toggle was on and Cloudflare production omits `ALLOW_ORG_PLATFORM_AI`.
+- **Shipped**: `getOrgPlatformAiConfigError` falls through to Together/cloud instead of blocking course generation.
+- **Docs**: Troubleshooting row in `MCP_CHATGPT_LAUNCH.md`.
+
 ### 2026-09-10 — ChatGPT course build reuses existing Studio workspace
 
 - **Theme**: `sudar_build_course` reached Studio then failed with `organisations_slug_key` because MCP Bearer sessions could not see cookie memberships and retried creating `workspace-<userId>`.

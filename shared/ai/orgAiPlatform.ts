@@ -88,10 +88,10 @@ export function buildPlatformAiRuntime(settings: unknown): PlatformAiRuntime | n
 export function getOrgPlatformAiConfigError(settings: unknown): string | null {
   const platform = parseOrgAiPlatform(settings)
   if (!platform.enabled) return null
-  if (!isOrgPlatformAiFeatureEnabled()) {
-    return 'Sudar AI (included pilot tier) is not enabled on this deployment.'
-  }
-  // Platform tier enabled but FreeLLMAPI not wired — fall through to cloud (Together, etc.)
+  // Org enabled included Sudar AI on staging, but production Cloudflare often
+  // omits ALLOW_ORG_PLATFORM_AI. Fall through to Together/cloud instead of
+  // blocking generate-course (ChatGPT MCP and Studio wizard).
+  if (!isOrgPlatformAiFeatureEnabled()) return null
   if (!getFreellmapiEnv()?.apiKey) return null
   return null
 }
