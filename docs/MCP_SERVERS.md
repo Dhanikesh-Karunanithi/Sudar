@@ -44,7 +44,7 @@ flowchart LR
 |----------|-----------|----------|
 | [`packages/sudar-mcp`](../packages/sudar-mcp) (`@sudar/mcp-server`) | stdio | Local dev, Cursor, CI |
 | [`workers/sudar-mcp-remote`](../workers/sudar-mcp-remote) | HTTP + SSE | Local/dev remote MCP (API-key token) |
-| [`workers/sudar-mcp-cloudflare`](../workers/sudar-mcp-cloudflare) | Streamable HTTP + OAuth | **Production** — `mcp.thesudar.app` for ChatGPT |
+| [`workers/sudar-mcp-cloudflare`](../workers/sudar-mcp-cloudflare) | Streamable HTTP + OAuth 2.1 PKCE | **Production** — `mcp.thesudar.com` for ChatGPT, Cursor, Claude |
 | [`packages/sudar-mcp/examples/mcp.json`](../packages/sudar-mcp/examples/mcp.json) | — | Copy-paste Cursor config |
 
 ---
@@ -154,6 +154,16 @@ Remote worker additionally:
 
 ## Cursor setup
 
+**Remote (authoring + OAuth, recommended):**
+
+```json
+{ "mcpServers": { "sudar-remote": { "url": "https://mcp.thesudar.com/mcp" } } }
+```
+
+Connect in Cursor Settings → MCP, then sign in on Studio. See [MCP_CHATGPT_LAUNCH.md](MCP_CHATGPT_LAUNCH.md).
+
+**Local stdio (integrator tools):**
+
 1. Studio → **Integrations** → create ALP API key; copy Learn base URL.
 2. Copy [packages/sudar-mcp/examples/mcp.json](../packages/sudar-mcp/examples/mcp.json) into your Cursor MCP config; set `env.SUDAR_LEARN_URL` and `SUDAR_ALP_API_KEY`.
 3. For admin tools, set `SUDAR_TOOLSET=all`, `SUDAR_STUDIO_URL`, and a fresh `SUDAR_ACCESS_TOKEN`.
@@ -162,16 +172,17 @@ Build the server once: `cd packages/sudar-mcp && npm install && npm run build`.
 
 ---
 
-## Remote MCP (production — ChatGPT)
+## Remote MCP (production — ChatGPT, Cursor, Claude)
 
-Deploy [`workers/sudar-mcp-cloudflare`](../workers/sudar-mcp-cloudflare) to **https://mcp.thesudar.app**:
+Deploy [`workers/sudar-mcp-cloudflare`](../workers/sudar-mcp-cloudflare) to **https://mcp.thesudar.com**:
 
 ```bash
 npm run mcp:cloudflare:deploy
 ```
 
-- **MCP URL:** `https://mcp.thesudar.app/mcp`
-- **OAuth:** `/.well-known/oauth-authorization-server`
+- **MCP URL:** `https://mcp.thesudar.com/mcp`
+- **OAuth AS:** `/.well-known/oauth-authorization-server` (PKCE `S256`)
+- **Resource:** `/.well-known/oauth-protected-resource`
 - **Guide:** [MCP_CHATGPT_LAUNCH.md](MCP_CHATGPT_LAUNCH.md)
 
 Dev-only Express remote (`workers/sudar-mcp-remote`): API-key `POST /token` + SSE `/sse`.

@@ -591,18 +591,19 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ## Sudar MCP servers (Integrations + Learn + Studio + ChatGPT)
 
-- **Where**: Sudar Studio → **Integrations** → *Connect via MCP* / *ChatGPT*; `https://mcp.thesudar.app/mcp` (production); repo `packages/sudar-mcp` (`@sudar/mcp-server` v0.2+).
-- **What**: MCP adapter for **Cursor** (stdio), **ChatGPT/Claude** (Cloudflare remote OAuth + Streamable HTTP), and LMS integrators (ALP). Toolsets: **integrator** (ALP), **creator** (Studio course AI), **admin** (cohort pulse), **learner** (tutor, NBA, agents).
+- **Where**: Sudar Studio → **Integrations** → *Connect via MCP* / *ChatGPT*; `https://mcp.thesudar.com/mcp` (production); repo `packages/sudar-mcp` (`@sudar/mcp-server`).
+- **What**: MCP adapter for **Cursor** (stdio or remote URL), **ChatGPT/Claude** (Cloudflare Streamable HTTP + OAuth 2.1 PKCE S256), and LMS integrators (ALP). Toolsets: **integrator** (ALP), **creator** (Studio course AI), **admin** (cohort pulse), **learner** (tutor, NBA, agents).
 - **Key files**:
-  - `docs/MCP_SERVERS.md`, `docs/MCP_CHATGPT_LAUNCH.md`, `docs/DEPLOY_THESUDAR_APP.md`, `docs/DNS_THESUDAR_APP.md`
+  - `docs/MCP_SERVERS.md`, `docs/MCP_CHATGPT_LAUNCH.md`, `docs/DEPLOY_THESUDAR_COM.md`
   - `packages/sudar-mcp/src/tools/creator.ts` — Studio generation tools
-  - `workers/sudar-mcp-cloudflare/` — production remote MCP (OAuth + `/mcp`)
+  - `workers/sudar-mcp-cloudflare/` — production remote MCP (`oauth.ts` PKCE + RFC 9728, `/mcp`)
+  - `sudar-studio/src/app/login/LoginClient.tsx`, `sudar-studio/src/lib/mcp/completeMcpOAuth.ts` — Studio OAuth handoff
   - `workers/sudar-mcp-remote/` — dev Express remote (API-key token)
   - `sudar-studio/src/lib/auth/requestSession.ts` — Bearer on Studio creator routes
   - `sudar-studio/src/app/api/mcp/audit/route.ts`, `sudar-learn/.../mcp/audit/route.ts`
   - `openapi/sudar-creator-v1.json` — Custom GPT Actions fallback
 - **Env**: `NEXT_PUBLIC_MCP_URL`, `SUDAR_*`, Wrangler secrets — [ENV_REFERENCE.md](ENV_REFERENCE.md).
-- **Flow**: Deploy thesudar.app → deploy Cloudflare MCP worker → register ChatGPT connector → user signs in with Sudar → ChatGPT calls `sudar_generate_outline` etc. on Studio.
+- **Flow**: Deploy MCP worker → ChatGPT/Cursor discover PKCE metadata → Studio `/login?mcp_oauth=1` → `/oauth/complete` → `/oauth/token` → tools on `/mcp`.
 
 ---
 

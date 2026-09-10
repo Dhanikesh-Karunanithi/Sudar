@@ -21,6 +21,9 @@
         "SUDAR_TOOLSET": "all",
         "SUDAR_MCP_AUDIT": "true"
       }
+    },
+    "sudar-remote": {
+      "url": "https://mcp.thesudar.com/mcp"
     }
   }
 }

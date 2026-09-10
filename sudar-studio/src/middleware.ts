@@ -102,6 +102,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && (pathname === '/login' || pathname === '/signup')) {
+    const mcpOAuth = request.nextUrl.searchParams.get('mcp_oauth') === '1'
+    if (mcpOAuth && pathname === '/login') {
+      return supabaseResponse
+    }
     if (isEarlyAccessEnabled()) {
       const access = await checkUserInviteAccess(user.id, supabase)
       if (!access.hasAccess) {

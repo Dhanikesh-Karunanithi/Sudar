@@ -16,6 +16,15 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-09-10 — MCP OAuth PKCE for ChatGPT and Cursor
+
+- **Theme**: Production remote MCP (`mcp.thesudar.com`) speaks OAuth 2.1 PKCE S256 + RFC 9728 so ChatGPT and Cursor can connect; Studio login hands the session back to the worker.
+- **Shipped**:
+  - Worker: `workers/sudar-mcp-cloudflare/src/oauth.ts` — `code_challenge_methods_supported: ["S256"]`, protected-resource metadata, `WWW-Authenticate`, DCR, `/oauth/complete`.
+  - Studio: `/login?mcp_oauth=1` consent + `completeMcpOAuth`; middleware keeps signed-in users on login for this flow.
+  - Cursor remote example: `packages/sudar-mcp/examples/mcp.json` → `sudar-remote` URL.
+- **Docs**: `MCP_CHATGPT_LAUNCH.md`, `MCP_SERVERS.md`, `SHIPPED_FEATURES.md` (MCP section uses `.com`).
+
 ### 2026-07-14 — Learn course shell full-bleed + cloud AI fallback
 
 - **Theme**: Course learn routes use full viewport; tutor/chat no longer hard-fails when included Sudar AI proxy env is unset.

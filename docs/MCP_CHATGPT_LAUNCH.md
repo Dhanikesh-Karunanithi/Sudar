@@ -1,14 +1,16 @@
-# ChatGPT + Sudar MCP launch runbook
+# ChatGPT + Cursor + Sudar MCP launch runbook
 
-Operator guide to connect **ChatGPT**, **Claude**, and **Cursor** to Sudar at **thesudar.app**.
+Operator guide to connect **ChatGPT**, **Claude**, and **Cursor** to Sudar at **thesudar.com**.
+
+Production MCP is OAuth 2.1 **PKCE S256** with RFC 9728 protected-resource metadata. ChatGPT and Cursor both require `code_challenge_methods_supported` to include `S256`.
 
 ## Architecture
 
 | URL | Role |
 |-----|------|
-| `https://mcp.thesudar.app` | Remote MCP (Cloudflare Worker) |
-| `https://studio.thesudar.app` | Studio — creator tools |
-| `https://learn.thesudar.app` | Learn — learner + ALP tools |
+| `https://mcp.thesudar.com` | Remote MCP (Cloudflare Worker) |
+| `https://studio.thesudar.com` | Studio — creator tools + OAuth sign-in |
+| `https://learn.thesudar.com` | Learn — learner + ALP tools |
 
 See [MCP_SERVERS.md](MCP_SERVERS.md) for tool catalog.
 
@@ -16,12 +18,11 @@ See [MCP_SERVERS.md](MCP_SERVERS.md) for tool catalog.
 
 ## Prerequisites
 
-1. Complete [DEPLOY_THESUDAR_APP.md](DEPLOY_THESUDAR_APP.md) and [DNS_THESUDAR_APP.md](DNS_THESUDAR_APP.md).
+1. Complete [DEPLOY_THESUDAR_COM.md](DEPLOY_THESUDAR_COM.md) and [DNS_THESUDAR_COM.md](DNS_THESUDAR_COM.md).
 2. Deploy MCP worker:
 
 ```bash
 cd workers/sudar-mcp-cloudflare
-cp .dev.vars.example .dev.vars   # local only
 npx wrangler secret put SUPABASE_URL
 npx wrangler secret put SUPABASE_ANON_KEY
 npx wrangler secret put MCP_TOKEN_SECRET
@@ -31,26 +32,37 @@ npx wrangler secret put MCP_PUBLIC_URL
 npx wrangler deploy
 ```
 
-3. Verify: `curl https://mcp.thesudar.app/health`
+Or from repo root: `npm run mcp:cloudflare:deploy`.
+
+3. Verify:
+
+```bash
+curl -s https://mcp.thesudar.com/health
+curl -s https://mcp.thesudar.com/.well-known/oauth-authorization-server
+# must include: "code_challenge_methods_supported":["S256"]
+curl -s https://mcp.thesudar.com/.well-known/oauth-protected-resource
+```
+
+4. Studio production must include the MCP login bridge (`/login?mcp_oauth=1`). Deploy Studio after changing `LoginClient.tsx` / `middleware.ts`.
 
 ---
 
 ## Register ChatGPT Connector
 
-1. Ensure your OpenAI workspace has **Connectors** / developer MCP enabled.
-2. Open [OpenAI Platform](https://platform.openai.com/) → your project → **Connectors** (or ChatGPT → Settings → Connectors).
-3. **Add connector**:
-   - **MCP server URL:** `https://mcp.thesudar.app/mcp`
-   - **OAuth discovery:** `https://mcp.thesudar.app/.well-known/oauth-authorization-server`
-4. On first use, ChatGPT redirects through **Sudar Studio login** (`/oauth/authorize` → `studio.thesudar.app/login?mcp_oauth=1`).
-5. After sign-in, exchange Supabase access token at `POST /oauth/token` (automatic in connector flow when configured).
+1. ChatGPT → **Settings** → **Security and login** → enable **Developer mode** (or Connectors, depending on plan).
+2. **Create app** / **Add connector**:
+   - **MCP server URL:** `https://mcp.thesudar.com/mcp`
+   - Auth: **OAuth** (discovery is automatic)
+3. ChatGPT registers via `/oauth/register`, then opens `/oauth/authorize`.
+4. Studio login (`studio.thesudar.com/login?mcp_oauth=1&mcp_auth=…`) signs the user in and `POST`s `/oauth/complete`.
+5. Browser returns to ChatGPT with `code` + PKCE; ChatGPT exchanges at `/oauth/token`.
 
 ### Token exchange (manual / debugging)
 
 If your client supports token exchange with a Supabase session JWT:
 
 ```bash
-curl -X POST https://mcp.thesudar.app/oauth/token \
+curl -X POST https://mcp.thesudar.com/oauth/token \
   -H "Content-Type: application/json" \
   -d '{"grant_type":"urn:ietf:params:oauth:grant-type:token-exchange","access_token":"<SUPABASE_ACCESS_JWT>"}'
 ```
@@ -75,6 +87,30 @@ Expect tool: `sudar_learner_next_action` (requires learner account OAuth).
 
 ---
 
+## Cursor (remote HTTP + OAuth)
+
+Add to `.cursor/mcp.json` (or Cursor Settings → MCP):
+
+```json
+{
+  "mcpServers": {
+    "sudar-remote": {
+      "url": "https://mcp.thesudar.com/mcp"
+    }
+  }
+}
+```
+
+Click **Connect**. Cursor uses PKCE with `http://localhost:8787/callback` (desktop) or `https://www.cursor.com/agents/mcp/oauth/callback` (web/agents). Sign in on Studio, then return to Cursor.
+
+Do not run Wrangler (or anything else) on port **8787** during desktop Connect — Cursor falls back to `cursor://` if that port is taken.
+
+## Cursor (local stdio)
+
+Use [packages/sudar-mcp/examples/mcp.json](../packages/sudar-mcp/examples/mcp.json) with Learn running and a real Studio ALP key. Default `SUDAR_TOOLSET=integrator` does **not** include course-authoring tools; use `all` or the remote worker (`SUDAR_TOOLSET=all`).
+
+---
+
 ## Claude Desktop (remote)
 
 `claude_desktop_config.json`:
@@ -84,19 +120,13 @@ Expect tool: `sudar_learner_next_action` (requires learner account OAuth).
   "mcpServers": {
     "sudar": {
       "command": "npx",
-      "args": ["-y", "mcp-remote", "https://mcp.thesudar.app/mcp"]
+      "args": ["-y", "mcp-remote", "https://mcp.thesudar.com/mcp"]
     }
   }
 }
 ```
 
-Complete OAuth in browser when prompted.
-
----
-
-## Cursor (local stdio)
-
-Use [packages/sudar-mcp/examples/mcp.json](../packages/sudar-mcp/examples/mcp.json) with production URLs and `SUDAR_TOOLSET=all`.
+Complete OAuth in the browser when prompted.
 
 ---
 
@@ -111,7 +141,7 @@ If MCP connector review is delayed, publish [openapi/sudar-creator-v1.json](../o
 - Never expose `SUPABASE_SERVICE_ROLE` or `INTELLIGENCE_SERVICE_SECRET` to MCP clients.
 - Rotate `MCP_TOKEN_SECRET` if leaked.
 - Enable org MCP policy toggles when shipped (see org settings roadmap).
-- Privacy policy at `https://thesudar.app/privacy` for connector submission.
+- Privacy policy at `https://thesudar.com/privacy` for connector submission.
 
 ---
 
@@ -119,10 +149,13 @@ If MCP connector review is delayed, publish [openapi/sudar-creator-v1.json](../o
 
 | Issue | Fix |
 |-------|-----|
-| 401 on `/mcp` | Refresh OAuth; confirm Supabase JWT valid |
+| ChatGPT: metadata must advertise PKCE S256 | Deploy current `workers/sudar-mcp-cloudflare`; confirm `code_challenge_methods_supported` |
+| 401 on `/mcp` with no `WWW-Authenticate` | Old worker; redeploy |
+| Studio login returns to dashboard instead of ChatGPT/Cursor | Studio missing `mcp_oauth` bridge; deploy Studio |
 | 401 on creator tools | User must be Studio org member with AI keys configured |
 | 403 on learner agent | Org Sudar Agents toggles / learner opt-outs |
 | Tools missing | Set `SUDAR_TOOLSET=all` on worker |
+| Cursor Connect `fetch failed` on local stdio | Learn not running, or placeholder ALP key |
 
 ---
 
