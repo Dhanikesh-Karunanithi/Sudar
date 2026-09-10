@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-09-10 — ChatGPT course fill kicks one lesson per poll
+
+- **Theme**: ChatGPT got a Studio URL but exported empty shells because nested `waitUntil` fetch-kicks were dropped, and export ran before lessons existed.
+- **Shipped**: generate-course fills the first lesson in the same Worker `waitUntil`; each `sudar_get_course` kicks the next lesson; export refuses while `remaining_empty > 0`. Background builds stay at 3 modules.
+- **Docs**: Troubleshooting row in `MCP_CHATGPT_LAUNCH.md`.
+
 ### 2026-09-10 — ChatGPT course build uses Together when included Sudar AI is off
 
 - **Theme**: After org provisioning, `sudar_build_course` failed with “Sudar AI (included pilot tier) is not enabled on this deployment” because the org toggle was on and Cloudflare production omits `ALLOW_ORG_PLATFORM_AI`.

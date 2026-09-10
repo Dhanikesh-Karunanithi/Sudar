@@ -9,11 +9,7 @@ import {
   isWorkerInvocationLimitError,
   MODULES_PER_WORKER_INVOCATION,
 } from '@/lib/ai/courseGeneration'
-import {
-  kickBackgroundModuleFill,
-  runInWaitUntil,
-  shouldChainBackgroundFill,
-} from '@/lib/ai/courseGeneration/scheduleBackgroundFill'
+import { runInWaitUntil } from '@/lib/ai/courseGeneration/scheduleBackgroundFill'
 
 type FillPayload = {
   course_id: string
@@ -116,26 +112,10 @@ export async function POST(request: NextRequest) {
   }
   const courseId = body.course_id
   if (!courseId) return NextResponse.json({ error: 'course_id required' }, { status: 400 })
-  const fillRound = typeof body.fill_round === 'number' && Number.isFinite(body.fill_round) ? body.fill_round : 0
   const kick = body.kick === true
 
   if (kick) {
-    const queued = await runInWaitUntil(
-      (async () => {
-        const { payload } = await fillOnce(session, courseId)
-        const retryableLimit = Boolean(payload.warning) && isWorkerInvocationLimitError(payload.warning ?? '')
-        if (
-          shouldChainBackgroundFill({
-            needsContinue: payload.needs_continue,
-            modulesGenerated: payload.modules_generated,
-            retryableLimit,
-            fillRound,
-          })
-        ) {
-          await kickBackgroundModuleFill(request, courseId, fillRound + 1)
-        }
-      })(),
-    )
+    const queued = await runInWaitUntil(fillOnce(session, courseId).then(() => undefined))
     if (queued) {
       return NextResponse.json({
         success: true,

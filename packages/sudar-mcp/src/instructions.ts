@@ -15,10 +15,10 @@ export const SUDAR_BUILD_COURSE_TOOL =
   'REQUIRED when the user asks to build, create, generate, author, or design a course, microlearning, training, lesson, HTML course, or SCORM package. Creates a real draft in Sudar Studio immediately and fills HTML lessons in the background. Returns studio_url plus course_id. If generation_status is running, call sudar_get_course until remaining_empty is 0, then sudar_export_course. NEVER write the course yourself. If this tool fails, report the error — do not invent a substitute outline.'
 
 export const SUDAR_GET_COURSE_TOOL =
-  'Poll Studio course generation. Use after sudar_build_course while remaining_empty > 0. When generation_completed is true, call sudar_export_course.'
+  'Poll Studio course generation AND kick the next lesson fill. Use after sudar_build_course while remaining_empty > 0. Do not export until generation_completed is true.'
 
 export const SUDAR_EXPORT_COURSE_TOOL =
-  'Export an existing Sudar Studio course as HTML lesson pages and/or a SCORM 1.2 ZIP (JSON with zip_base64). Requires a course_id from sudar_build_course or sudar_list_courses. Use this when the user already has a Studio course and wants HTML or SCORM.'
+  'Export an existing Sudar Studio course as HTML lesson pages and/or a SCORM 1.2 ZIP. Only call this when sudar_get_course reports generation_completed true / remaining_empty 0. If lessons are still empty, call sudar_get_course again instead.'
 
 export const SUDAR_GENERATE_COURSE_TOOL =
   'Create a full draft course in Sudar Studio from a title/topic (persists modules + HTML content). Prefer sudar_build_course when the user also wants HTML or SCORM output. Do not write the course in chat instead of calling this.'

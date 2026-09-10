@@ -166,6 +166,7 @@ If MCP connector review is delayed, publish [openapi/sudar-creator-v1.json](../o
 | ChatGPT `sudar_build_course` returns HTTP 500 in ~10s | ChatGPT aborts long MCP calls. Current MCP creates the Studio draft immediately and fills lessons in the background. Use a **new chat**, keep the Sudar chip, then poll / wait for `sudar_get_course`. Redeploy Studio + MCP if the worker is older than this fix |
 | `generate-course crashed: … organisations_slug_key` | Studio tried to create a second personal workspace for the OAuth user. Current `getOrCreateOrg` reuses the existing slug. Redeploy Studio, then **new chat** |
 | `Sudar AI (included pilot tier) is not enabled on this deployment` | Org has the included Sudar AI toggle on, but production Cloudflare does not set `ALLOW_ORG_PLATFORM_AI`. Current Studio falls through to Together/cloud. Redeploy Studio, then **new chat** |
+| Studio URL exists but HTML lessons say “no lesson text” | Nested background fill was dropped. Current MCP `sudar_get_course` kicks one lesson per poll; do not export until `remaining_empty` is 0. Redeploy Studio + MCP, then poll `sudar_get_course` on the existing `course_id` |
 | Cursor Connect `fetch failed` on local stdio | Learn not running, or placeholder ALP key |
 
 ---

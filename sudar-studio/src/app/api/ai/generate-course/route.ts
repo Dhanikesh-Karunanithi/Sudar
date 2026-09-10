@@ -22,7 +22,7 @@ import {
 import { suggestExperiencePackFromText } from '@/lib/themes/experiencePacks'
 import { fillEmptyModulesForCourse, isWorkerInvocationLimitError, MODULES_PER_WORKER_INVOCATION } from '@/lib/ai/courseGeneration'
 import { placeholderModuleTitles } from '@/lib/ai/courseGeneration/placeholderModules'
-import { kickBackgroundModuleFill, runInWaitUntil } from '@/lib/ai/courseGeneration/scheduleBackgroundFill'
+import { runInWaitUntil } from '@/lib/ai/courseGeneration/scheduleBackgroundFill'
 import { buildStudioUsageChatCtx, withUsageMetadata } from '@/lib/ai/studioUsageContext'
 import {
   assembleHtmlExportPayload,
@@ -300,7 +300,7 @@ async function postGenerateCourseInner(request: NextRequest) {
 
   let moduleTitles: string[] = []
   if (backgroundFill) {
-    moduleTitles = placeholderModuleTitles(title, Number(num_modules) || 3)
+    moduleTitles = placeholderModuleTitles(title, Math.min(3, Number(num_modules) || 3))
   } else {
     const outlinePrompt = `Create a course outline for:
 
@@ -348,9 +348,18 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
     const studioUrl = studioCourseEditorUrl(course.id, request.url)
     const moduleResults = moduleTitles.map((t, idx) => ({ title: t, order_index: idx }))
     const queued = await runInWaitUntil(
-      (async () => {
-        await kickBackgroundModuleFill(request, course.id, 0)
-      })(),
+      fillEmptyModulesForCourse(admin, {
+        course: {
+          id: course.id,
+          title,
+          description: aiDescription,
+          difficulty,
+          settings: settingsPayload as Record<string, unknown>,
+        },
+        modules: moduleRows ?? [],
+        chatAiCtx: withUsageMetadata(chatAiCtx, { course_id: course.id }),
+        maxModules: MODULES_PER_WORKER_INVOCATION,
+      }),
     )
     return NextResponse.json({
       success: true,
