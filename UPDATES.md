@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-09-11 — ChatGPT delivers HTML + SCORM in chat; Studio is optional
+
+- **Theme**: ChatGPT users were sent to empty Studio preview shells. They want full HTML/SCORM in the chat they are already in, with Sudar as an optional place to host and keep editing.
+- **Shipped**: `sudar_build_course` retries with `course_id` (same tool), returns markdown HTML lessons + a public learner package URL (`/share/p/{token}`) for HTML/SCORM download. Studio editor URL is optional. Lesson titles no longer use “application N”.
+- **Docs**: `MCP_CHATGPT_LAUNCH.md`, `SHIPPED_FEATURES.md` MCP section.
+
 ### 2026-09-10 — ChatGPT course fill kicks one lesson per poll
 
 - **Theme**: ChatGPT got a Studio URL but exported empty shells because nested `waitUntil` fetch-kicks were dropped, and export ran before lessons existed.

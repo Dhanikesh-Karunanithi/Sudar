@@ -29,7 +29,7 @@ import {
   assembleScormJsonPayload,
 } from '@/lib/export/assembleCourseExport'
 import type { ModuleRow } from '@/lib/export/buildScorm12ExportZip'
-import { studioCourseEditorUrl } from '@/lib/urls/studioOrigin'
+import { studioCourseEditorUrl, mintCoursePackageToken, studioCoursePackageUrl } from '@/lib/urls/studioOrigin'
 
 /** Strip markdown code fences and extract/repair JSON for parsing. */
 function extractJson(raw: string): string {
@@ -253,7 +253,9 @@ async function postGenerateCourseInner(request: NextRequest) {
       )
 
   const suggestedPack = suggestExperiencePackFromText(title, tagLabels)
+  const packageToken = backgroundFill ? mintCoursePackageToken() : null
   const settingsPayload: Record<string, unknown> = { ai_generation: aiGeneration }
+  if (packageToken) settingsPayload.mcp_package_token = packageToken
   if (theme_preference?.trim()) {
     settingsPayload.content_theme = theme_preference.trim()
   }
@@ -346,6 +348,7 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
 
   if (backgroundFill) {
     const studioUrl = studioCourseEditorUrl(course.id, request.url)
+    const packageUrl = packageToken ? studioCoursePackageUrl(packageToken, request.url) : null
     const moduleResults = moduleTitles.map((t, idx) => ({ title: t, order_index: idx }))
     const queued = await runInWaitUntil(
       fillEmptyModulesForCourse(admin, {
@@ -367,6 +370,9 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
       generation_status: 'running',
       course_id: course.id,
       studio_url: studioUrl,
+      package_url: packageUrl,
+      html_url: packageUrl,
+      scorm_url: null,
       modules: moduleResults,
       modules_generated: 0,
       remaining_empty: moduleResults.length,

@@ -73,16 +73,16 @@ Use returned `access_token` as `Authorization: Bearer` on `/mcp`.
 
 ## Test prompts in ChatGPT
 
-**Creator (Studio) — full course, not a chat outline:**
+**Creator — full course in this chat (Studio is optional):**
 
-> Using Sudar, build a microlearning course on Generative AI for instructional designers. Create it in Studio and give me HTML and SCORM.
+> Using Sudar, build a microlearning course on Generative AI for instructional designers. Give me the HTML lessons and a SCORM package here. I only want Sudar Studio if I decide to host or keep editing.
 
-Expect tool: `sudar_build_course`. ChatGPT must **not** write the modules itself. The first tool result includes a **Studio URL** while lessons generate in the background. ChatGPT should then call `sudar_get_course` until `remaining_empty` is 0, then `sudar_export_course`. The reply should include:
-- a **Studio URL** (`https://studio.thesudar.com/courses/…`)
-- HTML lesson pages (or `combined_html`) once generation finishes
-- SCORM 1.2 ZIP as `zip_base64` (or a note to download from Studio if the package is large)
+Expect tool: `sudar_build_course`. ChatGPT must **not** write the modules itself. The first tool result includes a **learner package URL** (`/share/p/…`) while lessons generate. ChatGPT should call **`sudar_build_course` again with `course_id`** until `remaining_empty` is 0. The reply should include:
+- HTML lesson pages in the chat (or the package download)
+- SCORM 1.2 ZIP download from the package URL
+- **Optional** Studio editor URL only if the user wants to host, publish, or keep editing in Sudar
 
-If ChatGPT returns a markdown outline with no Studio link, it skipped the tool — reconnect the connector after deploying MCP + Studio, then retry.
+If ChatGPT returns a markdown outline with no package/HTML, it skipped the tool — reconnect the connector after deploying MCP + Studio, then retry in a **new chat**.
 
 **Learner (Learn):**
 
@@ -163,10 +163,10 @@ If MCP connector review is delayed, publish [openapi/sudar-creator-v1.json](../o
 | Plugin connected but ChatGPT says `sudar_build_course` is not exposed | Worker was stateful (`sessionIdGenerator`) on Cloudflare — ChatGPT `tools/list` hit a new isolate. Redeploy stateless JSON MCP, then **new chat** (not the failed thread) |
 | ChatGPT writes a markdown course instead of creating one | Connector did not call `sudar_build_course`. Reconnect Sudar, wait 1–2 minutes (Studio generation is slow), retry the prompt above |
 | Tool runs then “Too many subrequests by single Worker invocation” | Studio was generating every module in one Cloudflare Worker. Current Studio fills one module per request; MCP continues via `generate-all-modules`. Redeploy Studio + MCP worker, then **new chat** |
-| ChatGPT `sudar_build_course` returns HTTP 500 in ~10s | ChatGPT aborts long MCP calls. Current MCP creates the Studio draft immediately and fills lessons in the background. Use a **new chat**, keep the Sudar chip, then poll / wait for `sudar_get_course`. Redeploy Studio + MCP if the worker is older than this fix |
+| ChatGPT `sudar_build_course` returns HTTP 500 in ~10s | ChatGPT aborts long MCP calls. Current MCP creates the draft immediately and returns a learner package URL. Call `sudar_build_course` again with `course_id`. Redeploy Studio + MCP if the worker is older than this fix |
+| Studio URL exists but HTML lessons say “no lesson text” | You opened the Studio **preview** before lessons finished. Use the **learner package** `/share/p/…` (it refreshes until HTML + SCORM are ready), or wait and retry `sudar_build_course` with `course_id`. Do not use the editor preview as the ChatGPT deliverable |
 | `generate-course crashed: … organisations_slug_key` | Studio tried to create a second personal workspace for the OAuth user. Current `getOrCreateOrg` reuses the existing slug. Redeploy Studio, then **new chat** |
 | `Sudar AI (included pilot tier) is not enabled on this deployment` | Org has the included Sudar AI toggle on, but production Cloudflare does not set `ALLOW_ORG_PLATFORM_AI`. Current Studio falls through to Together/cloud. Redeploy Studio, then **new chat** |
-| Studio URL exists but HTML lessons say “no lesson text” | Nested background fill was dropped. Current MCP `sudar_get_course` kicks one lesson per poll; do not export until `remaining_empty` is 0. Redeploy Studio + MCP, then poll `sudar_get_course` on the existing `course_id` |
 | Cursor Connect `fetch failed` on local stdio | Learn not running, or placeholder ALP key |
 
 ---

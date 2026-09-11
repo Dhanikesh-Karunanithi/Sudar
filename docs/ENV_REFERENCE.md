@@ -184,6 +184,8 @@ Used by Sudar Learn for RAG (course search) and optionally by Studio if document
 
 See [MCP_SERVERS.md](MCP_SERVERS.md) and [MCP_CHATGPT_LAUNCH.md](MCP_CHATGPT_LAUNCH.md).
 
+ChatGPT course packages are public Studio URLs at `/share/p/{token}` (token in `courses.settings.mcp_package_token`). HTML/SCORM files download from `/api/share/packages/{token}`. No extra env; production `NEXTAUTH_URL` / `NEXT_PUBLIC_APP_URL` should be `https://studio.thesudar.com` so those links resolve.
+
 ---
 
 ## Video & microservices

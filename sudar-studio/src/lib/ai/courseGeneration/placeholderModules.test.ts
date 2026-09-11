@@ -6,7 +6,9 @@ test('placeholderModuleTitles keeps 3 concise lessons', () => {
   const titles = placeholderModuleTitles('Generative AI', 3)
   assert.equal(titles.length, 3)
   assert.equal(titles[0], 'Foundations of Generative AI')
+  assert.equal(titles[1], 'Apply Generative AI in your workflow')
   assert.equal(titles[2], 'Practice, pitfalls, and next steps')
+  assert.equal(titles.some((t) => /application \d/i.test(t)), false)
 })
 
 test('syntheticCurriculum matches module count and required fields', () => {

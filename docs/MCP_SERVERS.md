@@ -94,7 +94,7 @@ Requires `SUDAR_STUDIO_URL` + `SUDAR_ACCESS_TOKEN` (org member with Studio AI co
 
 | Tool | Description | HTTP |
 |------|-------------|------|
-| `sudar_build_course` | **Primary ChatGPT/Cursor tool.** Creates a Studio draft (HTML lessons) and returns `studio_url` plus HTML and/or SCORM 1.2 ZIP (`zip_base64`) | `POST /api/ai/generate-course` with `export_format`, then `GET /api/courses/:id/export` |
+| `sudar_build_course` | **Primary ChatGPT tool.** Creates a course and returns HTML lessons + a learner package URL (HTML/SCORM download). Retry with `course_id`. Studio editor is optional | `POST /api/ai/generate-course` (`background_fill`), then same tool with `course_id` until filled |
 | `sudar_export_course` | HTML and/or SCORM 1.2 for an existing `course_id` | `GET /api/courses/:id/export?format=html` / `format=scorm-1.2&delivery=json` |
 | `sudar_generate_outline` | Module title outline only | `POST /api/ai/generate-outline` |
 | `sudar_generate_course_metadata` | Title/brief → metadata | `POST /api/ai/generate-course-metadata` |

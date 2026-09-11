@@ -5,11 +5,16 @@ export function placeholderModuleTitles(courseTitle: string, count: number): str
   const n = Math.min(12, Math.max(2, Math.round(count)))
   const topic = courseTitle.trim() || 'this topic'
   if (n === 2) {
-    return [`What is ${topic}?`, `Apply ${topic} in practice`]
+    return [`What is ${topic}?`, `Apply ${topic} in your workflow`]
   }
   const titles = [`Foundations of ${topic}`]
+  const middles = [
+    `Apply ${topic} in your workflow`,
+    `Quality, risks, and responsible use`,
+    `Worked examples for practitioners`,
+  ]
   for (let i = 1; i < n - 1; i += 1) {
-    titles.push(`${topic}: application ${i}`)
+    titles.push(middles[(i - 1) % middles.length] ?? `Practice ${topic}`)
   }
   titles.push('Practice, pitfalls, and next steps')
   return titles

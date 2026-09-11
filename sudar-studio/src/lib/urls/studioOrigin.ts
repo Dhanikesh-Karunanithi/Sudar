@@ -16,3 +16,11 @@ export function studioPublicOrigin(requestUrl?: string): string {
 export function studioCourseEditorUrl(courseId: string, requestUrl?: string): string {
   return `${studioPublicOrigin(requestUrl)}/courses/${courseId}`
 }
+
+export function studioCoursePackageUrl(token: string, requestUrl?: string): string {
+  return `${studioPublicOrigin(requestUrl)}/share/p/${token}`
+}
+
+export function mintCoursePackageToken(): string {
+  return crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '').slice(0, 8)
+}

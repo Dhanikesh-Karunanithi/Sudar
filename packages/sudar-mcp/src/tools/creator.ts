@@ -10,10 +10,17 @@ import {
   SUDAR_GET_COURSE_TOOL,
 } from '../instructions.js'
 import { maybeAuditStudio } from './audit.js'
-import { ensureStudioUrl, nestedData, parseObject, withStudioDirective } from './creatorFormat.js'
+import { ensureStudioUrl, nestedData, parseObject, withStudioDirective, formatChatGptCourseDeliverable } from './creatorFormat.js'
 
 function studioText(ok: boolean, body: string) {
   return { content: [{ type: 'text' as const, text: withStudioDirective(ok, body) }], isError: !ok }
+}
+
+function deliverCourse(ok: boolean, payload: Record<string, unknown>) {
+  return {
+    content: [{ type: 'text' as const, text: withStudioDirective(ok, formatChatGptCourseDeliverable(payload)) }],
+    isError: !ok,
+  }
 }
 
 async function maybeAttachExports(
@@ -50,6 +57,41 @@ async function maybeAttachExports(
   return next
 }
 
+async function collectCourse(
+  config: SudarMcpConfig,
+  courseId: string,
+  exportFormat: 'html' | 'scorm12' | 'both' | 'none',
+  seed?: Record<string, unknown>,
+) {
+  const res = await bearerGet(config.studioUrl, `/api/courses/${courseId}`, config.accessToken)
+  const got = parseObject(res.text)
+  const fromGet = Boolean(got && (got.id === courseId || Array.isArray(got.modules)))
+  const parsed = (fromGet ? got : seed ?? got) as Record<string, unknown> | null
+  if (!parsed) {
+    return studioText(false, res.text || JSON.stringify({ status: res.status }))
+  }
+  const payload = ensureStudioUrl({ ...seed, ...parsed, course_id: courseId }, config.studioUrl)
+  const remaining =
+    typeof payload.remaining_empty === 'number' ? payload.remaining_empty : null
+  if (remaining != null && remaining > 0) {
+    await bearerPost(config.studioUrl, '/api/ai/generate-all-modules', config.accessToken, {
+      course_id: courseId,
+      kick: true,
+    })
+    return deliverCourse(true, {
+      ...payload,
+      generation_status: 'running',
+      poll_after_seconds: 20,
+    })
+  }
+  const completed = payload.generation_completed === true || remaining === 0
+  if (completed && exportFormat !== 'none' && exportFormat !== 'scorm12') {
+    const withExports = await maybeAttachExports(config, payload, 'html')
+    return deliverCourse(true, withExports)
+  }
+  return deliverCourse(true, payload)
+}
+
 export function registerCreatorTools(server: McpServer, config: SudarMcpConfig): void {
   if (!config.studioUrl || !config.accessToken) return
 
@@ -57,7 +99,8 @@ export function registerCreatorTools(server: McpServer, config: SudarMcpConfig):
     'sudar_build_course',
     SUDAR_BUILD_COURSE_TOOL,
     {
-      title: z.string().min(1),
+      title: z.string().min(1).optional(),
+      course_id: z.string().uuid().optional(),
       brief: z.string().optional(),
       difficulty: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
       num_modules: z.number().int().min(2).max(12).optional(),
@@ -67,6 +110,12 @@ export function registerCreatorTools(server: McpServer, config: SudarMcpConfig):
     async (args) => {
       try {
         const exportFormat = args.export_format ?? 'both'
+        if (args.course_id) {
+          return collectCourse(config, args.course_id, exportFormat)
+        }
+        if (!args.title?.trim()) {
+          return studioText(false, JSON.stringify({ error: 'title or course_id required' }))
+        }
         const res = await bearerPost(config.studioUrl, '/api/ai/generate-course', config.accessToken, {
           title: args.title,
           brief: args.brief,
@@ -89,30 +138,7 @@ export function registerCreatorTools(server: McpServer, config: SudarMcpConfig):
             }),
           )
         }
-        const payload = ensureStudioUrl(parsed, config.studioUrl)
-        const remaining =
-          typeof payload.remaining_empty === 'number' ? payload.remaining_empty : null
-        const completed = payload.completed === true || remaining === 0
-        if (completed) {
-          const withExports = await maybeAttachExports(config, payload, exportFormat)
-          return studioText(true, JSON.stringify(withExports, null, 2))
-        }
-        return studioText(
-          true,
-          JSON.stringify(
-            {
-              ...payload,
-              generation_status: payload.generation_status ?? 'running',
-              next_tool: 'sudar_get_course',
-              poll_after_seconds:
-                typeof payload.poll_after_seconds === 'number' ? payload.poll_after_seconds : 20,
-              instruction:
-                'Lessons are generating in Studio. Give the user studio_url now. Call sudar_get_course with this course_id until remaining_empty is 0, then call sudar_export_course. Do not write the course yourself.',
-            },
-            null,
-            2,
-          ),
-        )
+        return collectCourse(config, parsed.course_id, exportFormat, parsed)
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
         return studioText(false, JSON.stringify({ error: message }))
@@ -128,44 +154,7 @@ export function registerCreatorTools(server: McpServer, config: SudarMcpConfig):
     },
     async (args) => {
       try {
-        const res = await bearerGet(config.studioUrl, `/api/courses/${args.course_id}`, config.accessToken)
-        const parsed = parseObject(res.text)
-        await maybeAuditStudio(config, 'sudar_get_course', Boolean(parsed))
-        if (!parsed) {
-          return studioText(false, res.text || JSON.stringify({ status: res.status }))
-        }
-        const payload = ensureStudioUrl(
-          { ...parsed, course_id: args.course_id },
-          config.studioUrl,
-        )
-        const remaining =
-          typeof payload.remaining_empty === 'number' ? payload.remaining_empty : null
-        if (remaining != null && remaining > 0) {
-          await bearerPost(config.studioUrl, '/api/ai/generate-all-modules', config.accessToken, {
-            course_id: args.course_id,
-            kick: true,
-          })
-        }
-        const completed = payload.generation_completed === true
-        if (completed) {
-          const withExports = await maybeAttachExports(config, payload, 'both')
-          return studioText(true, JSON.stringify(withExports, null, 2))
-        }
-        return studioText(
-          true,
-          JSON.stringify(
-            {
-              ...payload,
-              generation_status: 'running',
-              next_tool: 'sudar_get_course',
-              poll_after_seconds: 20,
-              instruction:
-                'Lessons are still generating. Keep the studio_url in your reply. Call sudar_get_course again after poll_after_seconds. Do not export and do not write the course yourself.',
-            },
-            null,
-            2,
-          ),
-        )
+        return collectCourse(config, args.course_id, 'both')
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
         return studioText(false, JSON.stringify({ error: message }))
@@ -180,45 +169,7 @@ export function registerCreatorTools(server: McpServer, config: SudarMcpConfig):
       course_id: z.string().uuid(),
       format: z.enum(['html', 'scorm12', 'both']).optional(),
     },
-    async (args) => {
-      const statusRes = await bearerGet(
-        config.studioUrl,
-        `/api/courses/${args.course_id}`,
-        config.accessToken,
-      )
-      const statusParsed = parseObject(statusRes.text)
-      const remaining =
-        statusParsed && typeof statusParsed.remaining_empty === 'number'
-          ? statusParsed.remaining_empty
-          : null
-      if (remaining != null && remaining > 0) {
-        await bearerPost(config.studioUrl, '/api/ai/generate-all-modules', config.accessToken, {
-          course_id: args.course_id,
-          kick: true,
-        })
-        return studioText(
-          true,
-          JSON.stringify({
-            course_id: args.course_id,
-            remaining_empty: remaining,
-            generation_status: 'running',
-            next_tool: 'sudar_get_course',
-            poll_after_seconds: 20,
-            instruction:
-              'Lessons are still empty. Do not export yet. Call sudar_get_course until remaining_empty is 0.',
-          }),
-        )
-      }
-      const format = args.format ?? 'both'
-      const payload: Record<string, unknown> = { course_id: args.course_id }
-      const filled = await maybeAttachExports(config, payload, format)
-      const ok =
-        (format !== 'html' || filled.html != null) &&
-        (format !== 'scorm12' || filled.scorm != null) &&
-        (format !== 'both' || filled.html != null || filled.scorm != null)
-      await maybeAuditStudio(config, 'sudar_export_course', ok)
-      return studioText(ok, JSON.stringify(ensureStudioUrl(filled, config.studioUrl), null, 2))
-    },
+    async (args) => collectCourse(config, args.course_id, args.format ?? 'both'),
   )
 
   server.tool(

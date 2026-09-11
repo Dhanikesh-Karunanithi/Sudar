@@ -30,7 +30,7 @@ Set \`SUDAR_TOOLSET\` to \`integrator\`, \`creator\`, \`admin\`, \`learner\`, or
 
 ### Creator (course authoring)
 
-- \`sudar_build_course\` — **primary** — create a real Studio draft with HTML lessons + optional SCORM 1.2 ZIP
+- \`sudar_build_course\` — **primary** — create a course and return HTML lessons + SCORM download in chat; Studio hosting is optional
 - \`sudar_export_course\` — export an existing Studio course as HTML and/or SCORM 1.2
 - \`sudar_generate_outline\` — generate course module titles only
 - \`sudar_generate_course_metadata\` — generate description, tags, outcomes

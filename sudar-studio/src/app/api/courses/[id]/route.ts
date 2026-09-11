@@ -5,6 +5,7 @@ import { mergeExperienceIntoSettings } from '@/lib/themes/courseSettingsExperien
 import { setCourseOrgTagIds } from '@/lib/courseTags'
 import { getModuleBodyText } from '@/lib/contentBlocks'
 import type { ModuleContent } from '@/types/content'
+import { studioCoursePackageUrl, studioPublicOrigin } from '@/lib/urls/studioOrigin'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -37,11 +38,26 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const content = (mod as { content?: ModuleContent }).content
     return !getModuleBodyText(content)?.trim()
   }).length
+  const settings = row.settings as Record<string, unknown> | null
+  const packageToken =
+    typeof settings?.mcp_package_token === 'string' ? settings.mcp_package_token : null
+  const origin = studioPublicOrigin(request.url)
   return NextResponse.json({
     ...row,
     org_tag_ids,
     remaining_empty,
     generation_completed: modules.length > 0 && remaining_empty === 0,
+    package_url: packageToken ? studioCoursePackageUrl(packageToken, request.url) : null,
+    html_url:
+      packageToken && remaining_empty === 0
+        ? `${origin}/api/share/packages/${packageToken}?format=html`
+        : packageToken
+          ? studioCoursePackageUrl(packageToken, request.url)
+          : null,
+    scorm_url:
+      packageToken && remaining_empty === 0
+        ? `${origin}/api/share/packages/${packageToken}?format=scorm-1.2`
+        : null,
   })
 }
 

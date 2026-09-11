@@ -17,6 +17,8 @@ const PUBLIC_PATHS = [
   '/api/invite/apply-profile',
   '/api/invite/redeem',
   '/api/waitlist',
+  '/share/p',
+  '/api/share/packages',
 ]
 
 function isPublicPath(pathname: string): boolean {
