@@ -16,6 +16,11 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-09-15 — Fix security:audit service-role matcher
+
+- **Theme**: pm run security:audit\ grepped dead \createAdminClient()\ and reported 0 callsites.
+- **Shipped**: Matcher updated to \createServiceRoleSupabaseClient()\ (+ legacy alias); inventory is 245 callsites / 157 REVIEW. Default exit 0 when matcher works; \SECURITY_AUDIT_STRICT=1\ fails on REVIEW queue. Docs: \docs/trust/SERVICE_ROLE_AUDIT.md\.
+
 ### 2026-09-15 — Revoke public invite codes (EARLY_TALISMA + CURSOR-HIRE-*)
 
 - **Theme**: Public Apache-2.0 repo contained live early-access invite literals; deactivate in DB and stop re-seeding them.
