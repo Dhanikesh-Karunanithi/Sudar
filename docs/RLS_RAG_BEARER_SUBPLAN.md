@@ -1,8 +1,10 @@
 # Sub-plan: RLS / RAG / Bearer hardening (review before schema changes)
 
-**Status:** Awaiting your confirmation — **no migrations applied from this plan.**  
-**Date:** 2026-09-15  
-**Live project:** `qnsrrboprydmjyormlky` (Sudar; Talisma + Foundever orgs on same DB)
+**Status:** Partially superseded for data — see **Clean slate** below.  
+**Date:** 2026-09-15 (updated same day for clean-slate decision)  
+**Live project:** `qnsrrboprydmjyormlky` (Sudar; Talisma + Foundever orgs on same DB — pending wipe)
+
+**Clean slate (2026-09-15):** Pilot orgs and all course/org data will be wiped after backup + confirmation ([CLEAN_SLATE_WIPE_PLAN.md](CLEAN_SLATE_WIPE_PLAN.md)). The earlier **Phase 2 “tighten courses SELECT for existing published cross-tenant data”** work is **moot / shelved for old data**. After wipe + **Cavi** provision, apply the **rebuilt-schema** policy pass: profiles SELECT, org_members INSERT, sim_* policies, invite_codes policies (and courses/modules policies on empty catalog). RAG ingest + Bearer allowlist (Phase 1 app-layer) still apply either before or after wipe.
 
 Related app-layer items (RAG ingest lock, Studio Bearer allowlist) are included so you can sequence them with policy work. They do **not** require a maintenance window.
 

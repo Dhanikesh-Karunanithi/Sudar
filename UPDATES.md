@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-09-15 — Clean-slate wipe + Cavi sandbox org
+
+- **Theme**: End Talisma/Foundever pilot data; rebuild from empty catalog with personal sandbox **Cavi**.
+- **Shipped**: Org/course/telemetry/sim/invite/`sudar_notes_sessions` data wiped (schemas kept; `profiles` retained with nulled org refs). Orphan empty `jobsy_*` tables dropped (no app code in repo). Provision script defaults to Cavi; credentials in `.local-backups/` only. Pilot onboarding archived under `docs/archive/pilots/`. Cloudflare Option B unchanged (Learn via Vercel proxy).
+- **Docs**: `docs/CLEAN_SLATE_WIPE_PLAN.md`, `docs/PILOT_ONBOARDING.md`, migration `20260915180000_clean_slate_drop_jobsy_orphans.sql`.
+
 ### 2026-09-15 — Docs truth-sync + archive move + RLS sub-plan
 
 - **Theme**: Canonical agent docs matched Cloudflare/Learn-NBA/SudarSim reality; historical Phase 1/2 root clutter archived; RLS/RAG/Bearer written for review (no schema change yet).

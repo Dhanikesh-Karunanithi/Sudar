@@ -5,6 +5,7 @@
 !.env.example
 *.local
 .env command
+.local-backups/
 
 # Dependencies
 node_modules/

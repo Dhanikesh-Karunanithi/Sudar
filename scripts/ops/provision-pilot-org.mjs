@@ -1,19 +1,31 @@
 #!/usr/bin/env node
 /**
- * Provision pilot organisations (Talisma, Foundever) and grant platform super_admin.
+ * Provision sandbox / pilot organisations and grant platform super_admin.
  *
- * Usage:
- *   node scripts/ops/provision-pilot-org.mjs [--dry-run]
+ * Historical: originally seeded Talisma + Foundever (2026-06). Those pilots are closed;
+ * defaults now provision **Cavi** (personal sandbox). Pass ORG_* env to customize.
+ *
+ * Usage (from repo root):
+ *   node --env-file=sudar-studio/.env.local scripts/ops/provision-pilot-org.mjs [--dry-run]
  *
  * Requires:
  *   NEXT_PUBLIC_SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
  *
  * Optional:
- *   PILOT_ADMIN_EMAILS — comma-separated (default: connect@ + foundever emails)
+ *   PILOT_ADMIN_EMAILS — comma-separated admins (default: connect@…)
+ *   ORG_NAME — default Cavi
+ *   ORG_SLUG — default cavi
+ *   ORG_PLAN — default enterprise
+ *
+ * Writes local credentials (invite + integration key) to
+ *   .local-backups/cavi-credentials.local.json  (gitignored via .local-backups/)
+ * Never commit invite codes.
  */
 import { createHash, randomBytes } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 const dryRun = process.argv.includes('--dry-run')
 
@@ -28,37 +40,23 @@ const admin = createClient(supabaseUrl, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
 
-const DEFAULT_ADMIN_EMAILS = [
-  'connect@dhanikeshkarunanithi.com',
-  'dhanikesh.karunanithi@foundever.com',
-]
+const DEFAULT_ADMIN_EMAILS = ['connect@dhanikeshkarunanithi.com']
 
 const adminEmails = (process.env.PILOT_ADMIN_EMAILS ?? DEFAULT_ADMIN_EMAILS.join(','))
   .split(',')
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean)
 
-const PILOT_ORGS = [
+/** Historical pilot defs kept for reference — not provisioned unless ORG_SLUG matches. */
+const HISTORICAL_PILOT_SLUGS = ['talisma', 'foundever', 'talisma-early-d737a0']
+
+const ORG_DEFS = [
   {
-    name: 'Talisma',
-    slug: 'talisma',
-    plan: 'enterprise',
+    name: process.env.ORG_NAME ?? 'Cavi',
+    slug: process.env.ORG_SLUG ?? 'cavi',
+    plan: process.env.ORG_PLAN ?? 'enterprise',
     settings: {
-      pilot: true,
-      ai_platform: { enabled: true, label: 'Sudar AI', model: 'auto' },
-      ai_entitlements: {
-        monthly_token_allowance: 50_000_000,
-        warn_threshold_pct: 80,
-        hard_stop: true,
-      },
-    },
-  },
-  {
-    name: 'Foundever',
-    slug: 'foundever',
-    plan: 'enterprise',
-    settings: {
-      pilot: true,
+      sandbox: true,
       ai_platform: { enabled: true, label: 'Sudar AI', model: 'auto' },
       ai_entitlements: {
         monthly_token_allowance: 50_000_000,
@@ -71,6 +69,10 @@ const PILOT_ORGS = [
 
 function hashKey(key) {
   return createHash('sha256').update(key, 'utf8').digest('hex')
+}
+
+function randomInviteCode(prefix) {
+  return `${prefix}-${randomBytes(6).toString('base64url').toUpperCase()}`
 }
 
 async function findUserIdByEmail(email) {
@@ -152,7 +154,7 @@ async function ensureIntegrationKey(orgId, orgName) {
     .from('integration_api_keys')
     .select('id, name')
     .eq('org_id', orgId)
-    .ilike('name', `%pilot%`)
+    .ilike('name', `%sandbox%`)
     .limit(1)
     .maybeSingle()
   if (existing) {
@@ -168,17 +170,40 @@ async function ensureIntegrationKey(orgId, orgName) {
   }
   const { error } = await admin.from('integration_api_keys').insert({
     org_id: orgId,
-    name: `${orgName} pilot provisioning`,
+    name: `${orgName} sandbox provisioning`,
     key_hash: keyHash,
     key_prefix: keyPrefix,
   })
   if (error) throw error
-  console.log('\n*** SAVE INTEGRATION KEY (shown once) ***')
+  console.log('\n*** SAVE INTEGRATION KEY (shown once) — also written to .local-backups ***')
   console.log(`${orgName}: ${rawKey}\n`)
   return rawKey
 }
 
+async function ensureInviteCode() {
+  const code = randomInviteCode('CAVI')
+  if (dryRun) {
+    console.log('[dry-run] would create invite:', code)
+    return code
+  }
+  const { error } = await admin.from('invite_codes').insert({
+    code,
+    type: 'early_access',
+    grants_tier: 'early_access',
+    bonus_credits: 0,
+    max_uses: 20,
+    is_active: true,
+  })
+  if (error) throw error
+  console.log('Created invite code (local only):', code)
+  return code
+}
+
 async function provisionOrg(def) {
+  if (HISTORICAL_PILOT_SLUGS.includes(def.slug)) {
+    console.warn('Refusing historical pilot slug:', def.slug)
+    return null
+  }
   const { data: existing } = await admin
     .from('organisations')
     .select('id, name, slug, settings')
@@ -221,7 +246,7 @@ async function setActiveOrg(userId, orgId) {
 }
 
 async function main() {
-  console.log('Pilot provisioning', dryRun ? '(dry-run)' : '')
+  console.log('Org provisioning', dryRun ? '(dry-run)' : '', '→', ORG_DEFS.map((o) => o.name).join(', '))
   const userIds = []
   for (const email of adminEmails) {
     const userId = await ensureAuthUser(email)
@@ -230,14 +255,30 @@ async function main() {
   }
 
   const orgIds = []
-  for (const def of PILOT_ORGS) {
+  const credentials = {
+    provisionedAt: new Date().toISOString(),
+    orgs: [],
+    admins: userIds.map((u) => u.email),
+    inviteCode: null,
+    note: 'Local only — do not commit. Share invite out-of-band.',
+  }
+
+  for (const def of ORG_DEFS) {
     const orgId = await provisionOrg(def)
-    if (orgId) orgIds.push({ name: def.name, orgId })
+    if (orgId) orgIds.push({ name: def.name, slug: def.slug, orgId })
     for (const { userId } of userIds) {
       await ensureOrgMembership(orgId, userId, 'ADMIN')
     }
-    await ensureIntegrationKey(orgId, def.name)
+    const integrationKey = await ensureIntegrationKey(orgId, def.name)
+    credentials.orgs.push({
+      name: def.name,
+      slug: def.slug,
+      orgId,
+      integrationKey,
+    })
   }
+
+  credentials.inviteCode = await ensureInviteCode()
 
   if (userIds.length > 0 && orgIds.length > 0) {
     const firstOrg = orgIds[0].orgId
@@ -247,10 +288,18 @@ async function main() {
     }
   }
 
+  if (!dryRun) {
+    const outDir = join(process.cwd(), '.local-backups')
+    mkdirSync(outDir, { recursive: true })
+    const outPath = join(outDir, 'cavi-credentials.local.json')
+    writeFileSync(outPath, JSON.stringify(credentials, null, 2), 'utf8')
+    console.log('\nWrote credentials to', outPath)
+  }
+
   console.log('\nDone. Next steps:')
-  console.log('1. Apply migration 20260620100000_profiles_active_org_id.sql if not applied.')
-  console.log('2. Set staging env: FREELLMAPI_*, ALLOW_ORG_PLATFORM_AI=true, ADMIN_EMAILS.')
-  console.log('3. Log into Studio staging and use org switcher to manage Talisma / Foundever.')
+  console.log('1. Log into Studio/Learn; active org should be Cavi for provisioned admins.')
+  console.log('2. Share invite from .local-backups/cavi-credentials.local.json out-of-band only.')
+  console.log('3. Staging remains Vercel behind CF proxy (Option B) — unchanged.')
 }
 
 main().catch((err) => {
