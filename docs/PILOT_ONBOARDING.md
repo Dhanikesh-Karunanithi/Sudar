@@ -102,7 +102,7 @@ curl -X POST "https://staging.studio.thesudar.com/api/org/provisioning/users" \
 
 Roles: `ADMIN` | `MANAGER` | `CREATOR` | `LEARNER`.
 
-**Early access:** Talisma can also use invite code `EARLY_TALISMA` (see migration `20260617000002_seed_early_talisma_invite.sql`).
+**Early access:** Do **not** use historical public codes (e.g. the revoked `EARLY_TALISMA` seed). Create single-use invite codes in Studio early-access admin and share them out-of-band.
 
 ---
 

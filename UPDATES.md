@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-09-15 — Revoke public invite codes (EARLY_TALISMA + CURSOR-HIRE-*)
+
+- **Theme**: Public Apache-2.0 repo contained live early-access invite literals; deactivate in DB and stop re-seeding them.
+- **Shipped**: Migration supabase/migrations/20260915120000_revoke_public_invite_codes.sql applied on Sudar project (is_active=false for EARLY_TALISMA, CURSOR-HIRE-01/02/03). PILOT_ONBOARDING.md no longer publishes a code. Cursor portfolio provisioner generates random codes into credentials.local only. Historical seed no longer re-activates on conflict.
+- **Ops**: Issue replacement single-use codes via Studio early-access admin; share out-of-band.
+
 ### 2026-07-14 — Learn course shell full-bleed + cloud AI fallback
 
 - **Theme**: Course learn routes use full viewport; tutor/chat no longer hard-fails when included Sudar AI proxy env is unset.
