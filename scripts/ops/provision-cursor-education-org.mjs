@@ -343,17 +343,17 @@ async function main() {
   credentials.integrationKey = await ensureIntegrationKey(orgId)
   credentials.inviteCodes = await ensureInviteCodes()
 
-  const outPath = join(repoRoot, 'portfolio/cursor-education/credentials.local')
+  const outPath = join(repoRoot, 'archive/portfolio-cursor-education/cursor-education/credentials.local')
   if (!dryRun) {
-    mkdirSync(join(repoRoot, 'portfolio/cursor-education'), { recursive: true })
+    mkdirSync(join(repoRoot, 'archive/portfolio-cursor-education/cursor-education'), { recursive: true })
     writeFileSync(outPath, JSON.stringify(credentials, null, 2), 'utf8')
-    console.log('\nWrote credentials to portfolio/cursor-education/credentials.local')
+    console.log('\nWrote credentials to archive/portfolio-cursor-education/cursor-education/credentials.local')
     console.log('(gitignored via *.local — do not commit)')
   }
 
   console.log('\nDone. Next:')
-  console.log('1. Build SCORMs: node portfolio/cursor-education/scripts/build-scorm.mjs')
-  console.log('2. Upload: node --env-file=sudar-studio/.env.local portfolio/cursor-education/scripts/upload-to-sudar.mjs')
+  console.log('1. Build SCORMs: node archive/portfolio-cursor-education/cursor-education/scripts/build-scorm.mjs')
+  console.log('2. Upload: node --env-file=sudar-studio/.env.local archive/portfolio-cursor-education/cursor-education/scripts/upload-to-sudar.mjs')
   console.log('3. Share invite codes from credentials.local out-of-band (never commit them).')
 }
 

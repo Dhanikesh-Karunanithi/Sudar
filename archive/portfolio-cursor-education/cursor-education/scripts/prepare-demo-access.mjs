@@ -7,7 +7,7 @@
  * - Upload Cursor brand covers onto the three courses
  *
  * Usage:
- *   node --env-file=sudar-studio/.env.local portfolio/cursor-education/scripts/prepare-demo-access.mjs
+ *   node --env-file=sudar-studio/.env.local archive/portfolio-cursor-education/cursor-education/scripts/prepare-demo-access.mjs
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'

@@ -21,10 +21,10 @@ These two commands are **how you rebuild and push** the interactive SCORM packag
 
 ```bash
 # 1) Compile course JSON + IDE shell into SCORM 1.2 ZIPs under dist/
-node portfolio/cursor-education/scripts/build-scorm.mjs
+node archive/portfolio-cursor-education/cursor-education/scripts/build-scorm.mjs
 
 # 2) Upload those ZIPs into the Cursor Education Portfolio org (courses + path + enrollments)
-node --env-file=sudar-studio/.env.local portfolio/cursor-education/scripts/upload-to-sudar.mjs
+node --env-file=sudar-studio/.env.local archive/portfolio-cursor-education/cursor-education/scripts/upload-to-sudar.mjs
 ```
 
 Re-run only when you change course content or the shell.
@@ -33,7 +33,7 @@ Re-run only when you change course content or the shell.
 
 - **Org:** Cursor Education Portfolio (`cursor-education`)
 - **Path:** Cursor Developer Fluency Program (certificate enabled)
-- **Invite codes:** `CURSOR-HIRE-01`, `CURSOR-HIRE-02`, `CURSOR-HIRE-03`
+- **Invite codes:** generate via provision script into `credentials.local` (do not commit)
 - **Test users:** see `credentials.local` (not committed)
 
 ## Design principle

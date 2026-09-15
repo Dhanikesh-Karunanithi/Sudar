@@ -2,7 +2,7 @@
 /**
  * Build SCORM 1.2 ZIPs for Cursor Education Portfolio courses.
  *
- * Usage: node portfolio/cursor-education/scripts/build-scorm.mjs
+ * Usage: node archive/portfolio-cursor-education/cursor-education/scripts/build-scorm.mjs
  */
 import { readFileSync, writeFileSync, mkdirSync, cpSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
@@ -108,4 +108,4 @@ function buildCourse(course) {
 
 mkdirSync(dist, { recursive: true })
 for (const c of COURSES) buildCourse(c)
-console.log('Done. Upload with: node --env-file=sudar-studio/.env.local portfolio/cursor-education/scripts/upload-to-sudar.mjs')
+console.log('Done. Upload with: node --env-file=sudar-studio/.env.local archive/portfolio-cursor-education/cursor-education/scripts/upload-to-sudar.mjs')

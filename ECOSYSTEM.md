@@ -58,15 +58,16 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
 ╠═════════════════════════╩════════════════════════════════════════════╣
 ║             SUDAR INTELLIGENCE (Python FastAPI)                    ║
 ║   Port: 8001 (default with dev script; not 8000 when SudarVid runs) ║
-║   Adaptive Engine · AI Tutor · (modality recommend: see Learn API)   ║
+║   Tutor · TTS · Agents · Sim coach (NBA / twin: Learn APIs)           ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                   SUPABASE (Single Source of Truth)                 ║
 ║   Auth · Learner Profiles · Content · Events · Analytics           ║
 ╚══════════════════════════════════════════════════════════════════════╝
 ```
 
+Also in-repo (not shown in the ASCII banner): **SudarVid** (`sudar_vid`), **SudarSim** (`sudar-sim`), **MCP** (`packages/sudar-mcp` + Cloudflare worker), **ALP** plugins (`integrations/`), **teachwithsudar** marketing, shared TS (`shared/`), migrations (`supabase/migrations/`).
 ### 3.1 Sudar Studio (`/sudar-studio`)
-- **Base**: SudarLab (Next.js 15 App Router, TypeScript, Tailwind CSS, Prisma → Supabase)
+- **Base**: SudarLab (Next.js 15 App Router, TypeScript, Tailwind CSS, Supabase JS — Prisma is leftover, not the runtime ORM)
 - **Purpose**: The admin/creator surface where L&D teams build courses
 - **Key capabilities**:
   - AI-powered course generation from any source (PDF, DOCX, URL, text prompt)
@@ -80,19 +81,23 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
   - Content fact-checking and validation
   - Learning path builder (assign ordered course sequences to teams)
   - Analytics dashboard (completions, skill gaps, drop-off analysis)
-  - White-label config per organization
+  - White-label config per organization (partial / roadmap for full brand portals)
   - Role-based access (Admin, Manager, Creator, Learner)
   - Compliance tracking (mandatory training, certifications, due dates)
+  - Teaching OS **Domains** curator; SudarSim scenario library; MCP OAuth handoff
 
 ### 3.2 Sudar Learn (`/sudar-learn`)
-- **Base**: SudarVerse-LMS (Next.js 15 App Router, TypeScript, Tailwind CSS, Prisma → Supabase)
+- **Base**: SudarVerse-LMS (Next.js 15 App Router, TypeScript, Tailwind CSS, Supabase JS)
 - **Purpose**: The learner-facing delivery platform
 - **Key capabilities**:
   - Personalized learner dashboard (based on Supabase learner profile)
-  - Modality switching: Text, Listen (TTS), Watch (SudarVid / prebuilt video), Map (mindmap), Flashcards, SCORM; **SudarFeed** and **SudarPlay** are partial or roadmap (see `docs/STRATEGIC_PATH.md`)
+  - Modality switching: Text, Listen (TTS), Watch (SudarVid / prebuilt video), Map (mindmap), Flashcards, SCORM; optional **Sim** tab when a scenario is linked; **SudarFeed** and **SudarPlay** are partial or roadmap (see `docs/STRATEGIC_PATH.md`)
   - AI Tutor: RAG over course content (content_chunks + pgvector, ingest API in Learn); Floating Sudar Chat (global); reactive Q&A + **proactive nudges with tap-to-reply chips** (idle on module, session welcome on home, contextual prompts on navigation) + longitudinal memory; structured response blocks (enroll, continue, review); quick memory preferences; outcome logging (`tutor_action_taken`, `proactive_choice`). My Memory page with insights carousel.
+  - **SudarNotes** (`/journey`, flag `NEXT_PUBLIC_SUDAR_JOURNEY`): conversational learning — living notebook + pedagogical modes; client of **Teaching OS** claim/mastery spine (see `docs/TEACHING_OS.md`, `docs/SUDAR_2_0_VISION.md`). Coexists with course Learn; does not replace authored courses. Session state in `sudar_notes_sessions`.
+  - Teaching OS: domain claim graphs, `learner_claim_mastery`, unified NBA v2 (reviews → gaps → continue); Studio **Domains** curator.
+  - **SudarSim**: roleplay sessions (`/sim/`, voice via `sudar-sim` + Intelligence STT/TTS)
   - Skills graph and knowledge gap visualization
-  - Next Best Action recommendations
+  - Next Best Action recommendations (**canonical scorer in Learn**)
   - Learning path enrollment and progress tracking
   - Certification management
   - Digital Learner Twin (the accumulation of all signals about a learner)
@@ -101,21 +106,28 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
 
 ### 3.3 Sudar Intelligence (`/sudar-intelligence`)
 - **Base**: bytengine (Python FastAPI)
-- **Purpose**: Heavy AI computation (tutor, TTS, generation). **Not** the sole owner of adaptation: next-best-action and twin rollups are implemented in **Learn** (`/api/intelligence/next-action`, `/api/learner/twin-rollup`); some Intelligence learner routes remain stubs until consolidated.
+- **Purpose**: Heavy AI computation (tutor, TTS, generation, Agents, Sim coach). **Not** the sole owner of adaptation: next-best-action and twin rollups are implemented in **Learn** (`/api/intelligence/next-action`, `/api/learner/twin-rollup`); some Intelligence learner routes proxy to Learn or remain stubs.
 - **Key capabilities**:
-  - Adaptive difficulty engine (adjusts content complexity per learner)
-  - AI Tutor engine (RAG-powered; proactive **`/api/tutor/nudge`** may return structured **choices** for ALP / embed clients). Longitudinal context is loaded via Supabase from Learn-managed data.
-  - Content generation engine (multi-format, multi-provider)
-  - Learner profile scoring (where implemented); **no shipped in-repo fine-tuning pipeline** today (provider fine-tunes are a future/ops concern)
-  - Event processing (where wired to Intelligence)
+  - AI Tutor engine (RAG-aware when called; proactive **`/api/tutor/nudge`** may return structured **choices** for ALP / embed clients). Longitudinal context is loaded via Supabase from Learn-managed data.
+  - Content generation helpers (multi-format, multi-provider)
+  - SudarSim STT/TTS + coach evaluation
+  - Sudar Agents gateway (`/api/agents/*`)
+  - Learner profile scoring (where implemented); **no shipped in-repo fine-tuning pipeline** today
 
 **Sudar Agents (gateway)** — Bounded task orchestration (`/api/agents/*` on Intelligence): synchronous and streaming agent runs backed by **`agent_runs`** in Postgres (plans, tool traces, artefacts). Learn and Studio forward **JWT-authenticated** BFF routes; learner tools can call Learn’s **`/api/internal/agent-tools/*`** behind a shared secret for NBA parity with the canonical scorer in Learn. Product documentation: [docs/AGENTS_PLATFORM.md](docs/AGENTS_PLATFORM.md). Org-level enablement and features live in **`organisations.settings.sudar_agents`**.
 
-### 3.4 Microservices (standalone, called by Intelligence layer)
-- **sudar-vid** (`/sudar_vid`) — SudarVid: Python FastAPI, Together AI (slide planning + image generation), Edge-TTS, FFmpeg, Playwright. Canonical video generation microservice for the Watch modality. Runs on port 8000 (separate from Intelligence); Learn proxies to it via `SUDARVID_URL`. Standalone creator UI is preserved at `/` for direct use outside Sudar.
-- **byteos-feed** — shayshay (TikTok-style feed): absorbed into Sudar Learn as a modality
-- **byteos-play** — SudarPlay (game generator): Phaser.js, called as modality from Learn
-- **byteos-mind** — SudarMind (mindmap): embedded as modality component in Learn
+### 3.4 Adjacent services (not separate `byteos-*` repos)
+
+There are **no** top-level `byteos-feed` / `byteos-play` / `byteos-mind` folders in this repo.
+
+- **`sudar_vid/`** — SudarVid: Python FastAPI, Together AI (slide planning + image generation), Edge-TTS, FFmpeg, Playwright. Canonical video generation for Watch. Port **8000**; Learn proxies via `SUDARVID_URL`.
+- **`sudar-sim/`** — Voice roleplay (LiveKit / Pipecat); Learn BFF + Intelligence coach.
+- **Mindmap** — Generated via Learn API (`/api/ai/generate-mindmap`), not a standalone microservice.
+- **SudarFeed** — Roadmap / placeholder (not a shipped course modality tab).
+- **SudarPlay** — Partial (Intelligence router + Learn launch path + `workadventure/` bridge stub); not a full game modality. See `docs/SUDARPLAY_STATUS.md`.
+- **`packages/sudar-mcp` + `workers/`** — MCP and cron/staging workers.
+- **`integrations/`** — Moodle/Canvas ALP distribution.
+- **`teachwithsudar/`** — Marketing site.
 
 ### 3.5 Audio and AI model selection
 - **Listen modality**: Audiobook/podcast-style high-quality TTS only. No browser fallback; when Intelligence is unavailable the client shows “Audio unavailable” and Retry. TTS is generated by Sudar Intelligence (Edge-TTS by default; optional Sarvam AI when `SARVAM_API_KEY` is set and voice is `sarvam_*`). Voice and rate are configurable; long text is chunked and concatenated.
@@ -131,17 +143,17 @@ Sudar is composed of three primary surfaces and one shared intelligence + data l
 | Studio & Learn frontend | Next.js 15 (App Router) | Current app `package.json` targets Next 15 |
 | Styling | Tailwind CSS 3 | Consistent across all projects |
 | Language (frontend) | TypeScript 5 | Type safety across the board |
-| ORM | Prisma | Already configured in ByteLab & ByteVerse-LMS |
 | Database | Supabase (PostgreSQL) | Single source of truth, auth included |
-| Animation | Framer Motion | Already in ByteVerse-LMS |
-| State management | Zustand | Lightweight, already used in SudarMind & ByteVerse-LMS |
-| AI providers | Together AI (primary), OpenAI (secondary), Anthropic (tertiary) | Cost-effective, multi-model |
+| ORM / data access | Supabase JS + `supabase/migrations/` | Canonical schema and runtime; Prisma leftover in apps is not the live path |
+| Animation | Framer Motion | Learner UI motion |
+| State management | Zustand | Complex client state where used |
+| AI providers | OpenRouter → Together → OpenAI → Anthropic (+ org BYOM / Sudar AI / custom) | Multi-key fallback; see ENV_REFERENCE |
 | Backend AI engine | Python FastAPI | Best for ML/AI operations and orchestration |
 | Video generation | SudarVid — Python FastAPI + Together AI + Edge-TTS + FFmpeg + Playwright | Slide deck + TTS narration; HTML-first (iframe), optional MP4 |
-| Game engine | Phaser.js | SudarPlay |
-| Auth | Supabase Auth | Shared across Studio + Learn |
+| Game engine | Phaser.js / WorkAdventure (SudarPlay — partial) | Roadmap / stub |
+| Auth | Supabase Auth | Shared across Studio + Learn (not NextAuth) |
 | File storage | Supabase Storage | RAG source docs, media assets |
-| Deployment target | Vercel (Studio + Learn) + Railway/Render (FastAPI) | Standard for Next.js |
+| Deployment target | **Cloudflare Workers/Pages** (Studio, Learn, marketing) + Railway/Render/OCI (Intelligence/Vid/Sim) + Wrangler (MCP/cron) | Staging may still use Vercel hostnames |
 
 ---
 
@@ -260,11 +272,22 @@ learner_profiles (
   last_active_at timestamptz,
   -- AI-computed
   overall_engagement_score float DEFAULT 0.5,
-  next_best_action jsonb,   -- {type, target_id, reason, computed_at}
-  ai_tutor_context jsonb,   -- last N interactions summary for longitudinal memory
+  next_best_action jsonb,   -- {type, target_id, reason, computed_at} — NBA v2 may cite claim_ids
+  ai_tutor_context jsonb,   -- Twin control plane + tutor memory (goals, struggles, teaching_os slice)
   generative_ai_consent_at timestamptz,  -- learner accepted org-required AI personalization
   updated_at timestamptz DEFAULT now()
 )
+```
+
+### Teaching OS — claim graph & mastery (see docs/TEACHING_OS.md)
+```sql
+learning_domains (id, org_id, title, source, source_course_id, version, ...)
+learning_claims (id, domain_id, stem, misconceptions, bloom, evidence_types, ...)
+claim_edges (from_claim_id, to_claim_id, kind)  -- prerequisite | related
+claim_content_links (claim_id, link_kind, target_id)  -- module | chunk | sim_scenario | flashcard_set
+learner_claim_mastery (user_id, claim_id, p_know, next_review_at, ...)
+learning_sessions (user_id, surface, domain_id, state jsonb, ...)
+-- learning_events also: claim_check | claim_mastery_update | review_due_served | session_replan
 ```
 
 ### Learner performance data (institution-aware)
@@ -432,7 +455,9 @@ learning_events (
                             -- 'ai_tutor_open' | 'ai_tutor_query' | 'modality_switch' |
                             -- 'session_end' (payload: active_secs, reason e.g. pagehide) |
                             -- 'drop_off' (incomplete module leave; payload: active_secs, completed: false) |
-                            -- 'streak_broken' | 'streak_maintained'
+                            -- 'streak_broken' | 'streak_maintained' |
+                            -- Teaching OS: 'claim_check' | 'claim_mastery_update' |
+                            -- 'review_due_served' | 'session_replan'
   payload jsonb,            -- event-specific data (e.g. module_complete: active_secs, idle_secs;
  -- modality_switch: from_modality, to_modality;
                             -- video_play|video_pause: scene_index, scene_count;
@@ -524,39 +549,24 @@ POST /api/game/generate       — trigger SudarPlay game generation
 ## 7. Project Folder Structure
 
 ```
-ByteOS/
-├── ECOSYSTEM.md              ← THIS FILE (read first, always)
-├── AGENTS.md                 ← Cursor AI instructions
-├── .cursorrules              ← Coding standards
-├── docs/
-│   ├── PRD.md
-│   ├── PITCH_DECK.md
-│   ├── MARKETING_DECK.md
-│   ├── PRODUCT_FEATURES.md
-│   ├── USER_PERSONAS.md
-│   └── USER_FLOWS.md
-├── sudar-studio/            ← Next.js 15 (SudarLab base)
-│   ├── app/
-│   ├── components/
-│   ├── lib/
-│   ├── prisma/
-│   └── package.json
-├── sudar-learn/             ← Next.js 15 (SudarVerse-LMS base)
-│   ├── app/
-│   ├── components/
-│   ├── lib/
-│   ├── prisma/
-│   └── package.json
-├── sudar-intelligence/      ← Python FastAPI (bytengine base)
-│   ├── src/
-│   │   ├── api/
-│   │   ├── adaptive/
-│   │   ├── tutor/
-│   │   ├── generation/
-│   │   └── models/
-│   └── requirements.txt
-├── sudar_vid/                ← SudarVid (Watch modality; Python FastAPI)
-└── archive/                  ← All deprecated/backup projects
+Sudar/
+├── ECOSYSTEM.md
+├── AGENTS.md
+├── .cursorrules
+├── docs/                     ← trust, ALP, ship memory, strategic path
+├── shared/                   ← shared TypeScript modules
+├── supabase/migrations/      ← canonical schema
+├── help-center/
+├── sudar-studio/             ← Next.js 15 admin/creator
+├── sudar-learn/              ← Next.js 15 learner
+├── sudar-intelligence/       ← Python FastAPI (api/, core/, agents/, sudarplay/)
+├── sudar_vid/                ← Watch modality
+├── sudar-sim/                ← Voice Sim service
+├── packages/sudar-mcp/
+├── workers/                  ← MCP, cron, staging
+├── integrations/             ← Moodle / Canvas / alp-sdk
+├── teachwithsudar/           ← Marketing
+└── docs/archive/             ← Historical Phase 1/2 notes (when present)
 ```
 
 ---
@@ -605,6 +615,7 @@ ByteOS/
 - [ ] SudarPlay game modality wired into Learn
 - [ ] shayshay SudarFeed modality
 - [x] SudarMind (mindmap) modality in Learn (on-demand generation where configured)
+- [x] SudarNotes conversational learning (`/journey`) + Teaching OS claim/mastery spine (see `docs/TEACHING_OS.md`)
 - [x] Compliance tracking + certifications
 - [ ] White-label per org
 - [ ] HRIS integration hooks (Workday, BambooHR)
@@ -626,15 +637,18 @@ ByteOS/
 
 ## 10. Naming Conventions
 
-- **Product**: Sudar (repo/folders remain ByteOS / byteos-* for compatibility)
+- **Product**: Sudar (directories use `sudar-*` names; ByteOS is legacy branding only)
 - **Admin surface**: Sudar Studio (runs in `sudar-studio/`)
 - **Learner surface**: Sudar Learn (runs in `sudar-learn/`)
 - **AI engine**: Sudar Intelligence (runs in `sudar-intelligence/`)
-- **Video modality**: Sudar Video (powered by Remotion + SudarVid)
-- **Game modality**: SudarPlay (branded feature within Sudar Learn)
-- **Feed modality**: SudarFeed (branded feature within Sudar Learn)
-- **Mindmap modality**: SudarMind (branded feature within Sudar Learn)
+- **Video modality**: SudarVid (`sudar_vid/`)
+- **Sim modality**: SudarSim (`sudar-sim/` + Learn `/sim/`)
+- **Game modality**: SudarPlay (branded feature — partial / stub)
+- **Feed modality**: SudarFeed (roadmap)
+- **Mindmap modality**: SudarMind (Learn on-demand generation)
 - **AI Tutor**: "Sudar" (the tutor's name — short, memorable, on-brand)
+- **SudarNotes**: Conversational learning surface in Learn (`/journey`) — living notebook + pedagogical tutor; Teaching OS client
+- **Teaching OS**: Shared claim/mastery spine (domains, claims, mastery, pedagogy engine, NBA v2)
 - **The learner data profile**: Digital Learner Twin
 
 ---
@@ -668,12 +682,13 @@ ByteOS/
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-NEXTAUTH_SECRET=
-NEXTAUTH_URL=
+NEXT_PUBLIC_APP_URL=           # canonical app origin (preferred)
+NEXTAUTH_URL=                  # legacy alias for app origin only — not NextAuth
 SUDAR_INTELLIGENCE_URL=http://localhost:8001
 # Legacy alias still supported in code: BYTEOS_INTELLIGENCE_URL
 ```
 
+Auth is **Supabase Auth**. Do not configure `NEXTAUTH_SECRET` — it is unused.
 ### AI (at least one chat provider)
 ```env
 AI_CHAT_PROVIDER=openrouter|together|openai|anthropic|custom
@@ -705,5 +720,5 @@ REMOTION_SERVER_URL=http://localhost:3040
 
 ---
 
-*Last updated: April 2026 | Sudar v1.0 Foundation (credibility pass: ports, Next 15, personas vs templates)*
-*This document is the single source of truth for the Sudar ecosystem.*
+*Last updated: September 2026 | Sudar (docs truth-sync: Cloudflare prod, Learn NBA, SudarSim/MCP, Supabase Auth)*
+*This document is the single source of truth for the Sudar ecosystem architecture; ship status lives in UPDATES.md.*

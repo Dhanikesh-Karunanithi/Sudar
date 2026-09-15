@@ -2,7 +2,7 @@
 /**
  * Build Cursor-branded course card / banner PNGs with sharp.
  *
- * Usage: node portfolio/cursor-education/scripts/make-course-cards.mjs
+ * Usage: node archive/portfolio-cursor-education/cursor-education/scripts/make-course-cards.mjs
  */
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'

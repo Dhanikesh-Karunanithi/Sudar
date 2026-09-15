@@ -4,7 +4,7 @@
 **Org:** Cursor Education Portfolio  
 **Path:** Cursor Developer Fluency Program  
 
-Credentials: `portfolio/cursor-education/credentials.local` (gitignored).
+Credentials: `archive/portfolio-cursor-education/cursor-education/credentials.local` (gitignored).
 
 ---
 

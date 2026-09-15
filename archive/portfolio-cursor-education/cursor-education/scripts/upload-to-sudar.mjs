@@ -3,7 +3,7 @@
  * Upload built SCORM ZIPs into the Cursor Education Portfolio org and wire a certified path.
  *
  * Usage:
- *   node --env-file=sudar-studio/.env.local portfolio/cursor-education/scripts/upload-to-sudar.mjs
+ *   node --env-file=sudar-studio/.env.local archive/portfolio-cursor-education/cursor-education/scripts/upload-to-sudar.mjs
  */
 import { readFileSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'

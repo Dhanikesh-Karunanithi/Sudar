@@ -4,8 +4,8 @@
  * for the job demo. Cursor Education Portfolio courses are never touched.
  *
  * Usage:
- *   node --env-file=sudar-studio/.env.local portfolio/cursor-education/scripts/purge-old-courses.mjs
- *   node --env-file=sudar-studio/.env.local portfolio/cursor-education/scripts/purge-old-courses.mjs --dry-run
+ *   node --env-file=sudar-studio/.env.local archive/portfolio-cursor-education/cursor-education/scripts/purge-old-courses.mjs
+ *   node --env-file=sudar-studio/.env.local archive/portfolio-cursor-education/cursor-education/scripts/purge-old-courses.mjs --dry-run
  */
 import { readFileSync, existsSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
