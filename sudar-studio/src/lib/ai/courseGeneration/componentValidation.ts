@@ -91,11 +91,18 @@ export function shouldIncludeComponent(
     case 'quiz': {
       const q = data.question
       const opts = data.options
-      return (
-        isNonEmptyString(q, 12) &&
-        Array.isArray(opts) &&
-        opts.filter((o) => isNonEmptyString(o, 2)).length >= 3
-      )
+      if (!isNonEmptyString(q, 12) || !Array.isArray(opts)) return false
+      const valid = opts.filter((o): o is string => isNonEmptyString(o, 2)).map((o) => o.trim().toLowerCase())
+      if (valid.length < 3 || valid.length !== opts.length) return false
+      if (new Set(valid).size !== valid.length) return false
+      const answer = data.correctAnswer
+      if (typeof answer === 'number') return Number.isInteger(answer) && answer >= 0 && answer < valid.length
+      if (typeof answer === 'string') {
+        const trimmed = answer.trim()
+        if (/^\d+$/.test(trimmed)) return Number(trimmed) < valid.length
+        return valid.includes(trimmed.toLowerCase())
+      }
+      return false
     }
     case 'timeline': {
       const steps = data.steps

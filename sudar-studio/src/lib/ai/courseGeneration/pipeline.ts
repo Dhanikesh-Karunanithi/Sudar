@@ -33,9 +33,10 @@ import {
 import { normalizeCurriculumToModules } from './curriculumResolve'
 import { extractSummary, parseEnvelope, parseMarkdownSections } from './parse'
 import { getAiGenerationSettings } from './settings'
-import { validateContentQuality, runPedagogicalChecklist } from './qualityValidator'
+import { gateModuleMarkdown, qualityGateConfig, toStoredQuality } from './qualityGate'
+import { selectRelevantDocumentChunk } from './grounding'
+import { validateQuizQuality, type QualityIssue } from '@shared-content-generation/quality'
 import {
-  contentHasBannedOpening,
   contentHasGenericScenarioDuplication,
   inferCourseTypeFromSettings,
 } from './introductionStrategies'
@@ -60,11 +61,22 @@ async function callAI(
   return content
 }
 
-function documentChunkForModule(full: string, moduleIndex: number, totalModules: number, chunkSize: number): string {
-  if (!full.trim()) return ''
-  const n = Math.max(1, totalModules)
-  const start = Math.min(moduleIndex * (full.length / n), Math.max(0, full.length - chunkSize))
-  return full.slice(Math.max(0, start), start + chunkSize)
+/** Quiz-type interactives: answer key must be one of the options, no duplicates. */
+function interactiveQuizIssues(elements: { type: string; data?: Record<string, unknown> }[]): QualityIssue[] {
+  const questions = elements
+    .filter((e) => e.type === 'quiz' && e.data)
+    .map((e) => ({
+      question: String(e.data!.question ?? ''),
+      options: Array.isArray(e.data!.options) ? (e.data!.options as unknown[]).map(String) : [],
+      ...(typeof e.data!.correctAnswer === 'number'
+        ? { correct: e.data!.correctAnswer }
+        : typeof e.data!.correctAnswer === 'string' && !/^\d+$/.test(e.data!.correctAnswer.trim())
+          ? { correctAnswer: e.data!.correctAnswer }
+          : typeof e.data!.correctAnswer === 'string'
+            ? { correct: Number(e.data!.correctAnswer.trim()) }
+            : {}),
+    }))
+  return validateQuizQuality(questions)
 }
 
 /** Last 1–2 component types used in this generation run (cross-module variety). */
@@ -156,6 +168,8 @@ export async function fillEmptyModulesForCourse(
   let qualityScoreSum = 0
   let qualityScoreCount = 0
   let totalQualityIssues = 0
+  let modulesNeedingReview = 0
+  const gateConfig = qualityGateConfig()
 
   const validTypes = new Set(COMPONENT_PROFILES.map((p) => p.type))
   const forbiddenDisallowed: ComponentType[] | undefined = (() => {
@@ -179,7 +193,11 @@ export async function fillEmptyModulesForCourse(
 
     const docChunk =
       documentFull && gen?.source === 'document'
-        ? documentChunkForModule(documentFull, modIndex, modulesOrdered.length, 12000)
+        ? selectRelevantDocumentChunk(
+            documentFull,
+            { title: mod.title, brief: resolvedEntry.brief, headings: resolvedEntry.sectionStructure },
+            12000
+          )
         : undefined
 
     const contentMessages = buildModuleContentPrompt(
@@ -195,26 +213,32 @@ export async function fillEmptyModulesForCourse(
     )
 
     try {
-      let content = await callAI(contentMessages, 1800, chatAiCtx, 'module_fill')
+      const draft = await callAI(contentMessages, 2200, chatAiCtx, 'module_fill')
 
-      const isCapstone = modIndex >= modulesOrdered.length - 1
-      if (isCapstone) {
-        try {
-          const critiqueMessages = buildCritiqueRefinePrompt(
-            course.title,
-            mod.title,
-            gen?.learning_outcomes,
-            content
+      const gate = await gateModuleMarkdown({
+        courseTitle: course.title,
+        moduleTitle: mod.title,
+        draft,
+        learningOutcomes: genWithType?.learning_outcomes,
+        bloomLevel: resolvedEntry.bloomLevel,
+        documentGrounding: docChunk,
+        judgeEnabled: genWithType?.apply_quality_filtering !== false,
+        chatCtx: chatAiCtx,
+        regenerate: async (previous, critique) => {
+          const refined = await callAI(
+            buildCritiqueRefinePrompt(course.title, mod.title, gen?.learning_outcomes, previous, {
+              critique,
+              documentGrounding: docChunk,
+            }),
+            2400,
+            chatAiCtx,
+            'critique'
           )
-          const refined = await callAI(critiqueMessages, 2200, chatAiCtx, 'critique')
-          if (refined.trim()) {
-            content = refined
-            critiquePasses++
-          }
-        } catch {
-          // keep draft
-        }
-      }
+          critiquePasses++
+          return refined
+        },
+      })
+      const content = gate.content
 
       const contentSummary = content.slice(0, 500)
       const role: ModuleRole =
@@ -332,32 +356,25 @@ export async function fillEmptyModulesForCourse(
         // envelope optional
       }
 
-      if (genWithType?.apply_quality_filtering !== false) {
-        try {
-          const quality = await validateContentQuality(
-            {
-              moduleTitle: mod.title,
-              moduleContent: content,
-              courseContext: course.title,
-              learningOutcomes: genWithType?.learning_outcomes,
-            },
-            chatAiCtx
-          )
-          const checklistIssues = runPedagogicalChecklist(content)
-          const issuesCount = quality.issues.length + checklistIssues.length
-          qualityScoreSum += quality.overall
-          qualityScoreCount++
-          totalQualityIssues += issuesCount
-          moduleQualityRecords.push({
-            module_id: mod.id,
-            module_title: mod.title,
-            quality_score: quality.overall,
-            issues_count: issuesCount,
-          })
-        } catch {
-          // quality optional
-        }
+      const storedQuality = toStoredQuality(gate, interactiveQuizIssues(interactiveElements))
+      const hasCriticalAfterInteractives = storedQuality.issues.some((i) => i.severity === 'critical')
+      const reviewStatus =
+        gate.review_status === 'needs_review' || hasCriticalAfterInteractives ? 'needs_review' : 'draft'
+      if (reviewStatus === 'needs_review') modulesNeedingReview++
+      if (storedQuality.overall != null) {
+        qualityScoreSum += storedQuality.overall
+        qualityScoreCount++
       }
+      totalQualityIssues += storedQuality.issues.length
+      moduleQualityRecords.push({
+        module_id: mod.id,
+        module_title: mod.title,
+        quality_score: storedQuality.overall,
+        issues_count: storedQuality.issues.length,
+        critical_issues: storedQuality.issues.filter((i) => i.severity === 'critical').length,
+        review_status: reviewStatus,
+        attempts: gate.attempts.length,
+      })
 
       const richContent = {
         type: 'rich',
@@ -369,10 +386,21 @@ export async function fillEmptyModulesForCourse(
         ...(sideCard ? { sideCard } : {}),
       }
 
-      const { error: upErr } = await admin
+      let { error: upErr } = await admin
         .from('modules')
-        .update({ content: richContent as unknown as Json })
+        .update({
+          content: richContent as unknown as Json,
+          review_status: reviewStatus,
+          quality: storedQuality as unknown as Json,
+        })
         .eq('id', mod.id)
+      if (upErr && /review_status|quality/.test(upErr.message)) {
+        // Environments that haven't applied the review/quality migration still get the content.
+        ;({ error: upErr } = await admin
+          .from('modules')
+          .update({ content: richContent as unknown as Json })
+          .eq('id', mod.id))
+      }
 
       if (upErr) {
         return {
@@ -415,14 +443,11 @@ export async function fillEmptyModulesForCourse(
             archetypes_used: telemetryArchetypes,
             component_types_used: telemetryComponents,
             critique_passes: critiquePasses,
-            ...(avgQuality != null
-              ? {
-                  quality_score: avgQuality,
-                  quality_issues_found: totalQualityIssues,
-                  average_quality_score: avgQuality,
-                  module_quality: moduleQualityRecords,
-                }
-              : {}),
+            quality_issues_found: totalQualityIssues,
+            module_quality: moduleQualityRecords,
+            modules_needing_review: modulesNeedingReview,
+            quality_threshold: gateConfig.threshold,
+            ...(avgQuality != null ? { quality_score: avgQuality, average_quality_score: avgQuality } : {}),
           },
         },
       } as unknown as Json,

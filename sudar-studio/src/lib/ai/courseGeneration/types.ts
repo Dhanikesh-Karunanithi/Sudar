@@ -36,8 +36,12 @@ export interface CourseBlueprintQuestion {
 export interface ModuleQualityRecord {
   module_id: string
   module_title: string
-  quality_score: number
+  /** Null when the automated judge could not assess the module. */
+  quality_score: number | null
   issues_count: number
+  critical_issues?: number
+  review_status?: 'draft' | 'needs_review' | 'approved'
+  attempts?: number
 }
 
 export interface GenerationTelemetry {
@@ -50,6 +54,8 @@ export interface GenerationTelemetry {
   /** Average quality across modules in this run. */
   average_quality_score?: number
   module_quality?: ModuleQualityRecord[]
+  modules_needing_review?: number
+  quality_threshold?: number
 }
 
 export type ThemePreference =

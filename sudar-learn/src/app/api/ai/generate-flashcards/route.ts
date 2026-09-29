@@ -5,6 +5,7 @@ import { learnMeteringChatCtx, loadOrgAiChatContext } from '@/lib/org/orgAiChatC
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 import { capabilitySupported, parseOrgAiRuntimePolicy } from '@/types/orgAiInference'
 import { checkAndIncrementUsage, usageLimitErrorResponse } from '@/lib/usage-limits'
+import { parseFlashcardsFromAi } from '@shared-content-generation/parsers'
 
 export interface FlashcardPair {
   front: string
@@ -79,19 +80,11 @@ JSON array:`
   })
   const rawStr = raw ?? ''
 
-  // Parse JSON array from response (may be wrapped in markdown code block)
-  let jsonStr = rawStr
-  const match = rawStr.match(/\[[\s\S]*\]/)
-  if (match) jsonStr = match[0]
-
   let cards: FlashcardPair[] = []
   try {
-    cards = JSON.parse(jsonStr)
-    if (!Array.isArray(cards)) cards = []
-    cards = cards
-      .filter((c: unknown) => c && typeof c === 'object' && 'front' in c && 'back' in c)
-      .map((c: { front?: string; back?: string }) => ({ front: String(c.front ?? '').slice(0, 300), back: String(c.back ?? '').slice(0, 500) }))
-      .filter((c) => c.front.trim() && c.back.trim())
+    cards = parseFlashcardsFromAi(rawStr)
+      .map((c) => ({ front: c.front.slice(0, 300), back: c.back.slice(0, 500) }))
+      .filter((c) => c.front.trim() && c.back.trim() && c.front.trim().toLowerCase() !== c.back.trim().toLowerCase())
   } catch {
     cards = []
   }
