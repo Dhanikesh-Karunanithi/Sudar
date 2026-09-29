@@ -22,7 +22,9 @@ Last reviewed: 2026-09-29.
 ## Security and ops
 | Gap | Impact | Plan |
 |---|---|---|
-| One Supabase project for prod and staging | Tester data sits beside the sandbox org | Testers get an isolated beta org; staging branch later |
+| One Supabase project for prod and staging | Tester data sits beside the sandbox org | Testers are in the **Sudar Beta** org (D-020); staging branch later |
+| Rate limiting covers invite codes only (plus per-user AI usage caps) | Other unauthenticated endpoints (waitlist) can be hammered | Reuse `shared/access/rateLimit.ts` on waitlist + auth callbacks |
+| Studio and Learn `tsc` report stale generated DB types (~150 / ~290 errors; builds ignore type errors) | Type regressions can slip through | Regenerate `types/database.ts` from Supabase, then drop `ignoreBuildErrors` |
 | CSP still allows `unsafe-inline` / `unsafe-eval` | Weaker XSS defence | Nonce-based CSP after beta |
 | FORCE RLS (Phase 3 of the sub-plan) deferred | Service-role code paths are the main guard | Keep `security:audit` REVIEW queue shrinking |
 | `security:audit` is non-blocking in CI (157 REVIEW callsites) | New unscoped service-role use isn't blocked | Burn down queue, then `SECURITY_AUDIT_STRICT=1` |

@@ -4,6 +4,16 @@ Short ADR-style entries. Newest first. Each entry: context, decision, consequenc
 
 ---
 
+### D-021 (2026-09-29) Studio Bearer auth is allowlisted and validated in middleware
+- **Context:** D-012 let any `Authorization: Bearer …` header skip middleware auth and the invite gate on every `/api/*` route.
+- **Decision:** Bearer is honoured only on routes that call `getRequestSession` (`sudar-studio/src/lib/security/bearerRoutes.ts`); middleware validates the JWT and applies the invite gate to Bearer users. Cron, org provisioning and render-grant routes are listed as self-authenticating. Supersedes the "follow-up" in D-012.
+- **Consequence:** A new MCP-callable Studio route must be added to `BEARER_API_ROUTES`, or MCP calls to it get 401.
+
+### D-020 (2026-09-29) Testers use a separate "Sudar Beta" org on the prod database
+- **Context:** Prod and staging share one Supabase project, so a staging branch would not isolate data without extra infra. Invite codes grant platform access but no org.
+- **Decision:** Testers join the **Sudar Beta** org (`slug: sudar-beta`, non-sandbox), provisioned by `scripts/ops/provision-pilot-org.mjs` with `KEEP_ACTIVE_ORG=1 SKIP_INVITE_CODE=1`. Testers are invited by email from Studio → Users while Sudar Beta is active; the org invite adds them to the org and grants the `early_access` tier (which enables in-app feedback). Enrollment and Sim are org-scoped, so tester activity stays inside the beta org.
+- **Consequence:** Wiping beta data = deleting one org's rows. A Supabase staging branch stays a post-beta option.
+
 ### D-019 (2026-09-29) SudarNotes persists to `sudar_notes_sessions`, not a new table
 - **Context:** The notebook lived only in `sessionStorage`; an owner-RLS table `sudar_notes_sessions` already existed but was never written.
 - **Decision:** One row per learner with `thread_key = 'journey'`; `state` holds a sanitised `JourneyNotebookSnapshot` (pages, working memory, pedagogy session). `/api/journey/notebook` GET/PUT/DELETE; `sessionStorage` stays as a fast local cache. Server copy wins on load.
@@ -32,7 +42,7 @@ Short ADR-style entries. Newest first. Each entry: context, decision, consequenc
 ### D-013 (2026-09-15) Migrations applied via Supabase MCP
 - **Decision:** Prod migrations are applied through the Supabase MCP `apply_migration` tool. Remote versions differ from filenames by design; verify by name. No `supabase db push` to prod.
 
-### D-012 (2026-09-10) Studio middleware passes Bearer requests to `/api/*`
+### D-012 (2026-09-10) Studio middleware passes Bearer requests to `/api/*` (superseded by D-021)
 - **Context:** ChatGPT/Cursor MCP calls Studio APIs without cookies.
 - **Decision:** Middleware lets `Authorization: Bearer` through; routes authenticate themselves. An explicit allowlist of Bearer-capable routes is the follow-up (security Phase 1).
 
