@@ -74,6 +74,8 @@ Sudar/  (repo: Dhanikesh-Karunanithi/Sudar)
 
 **Status truth order:** [UPDATES.md](UPDATES.md) Latest → [docs/SHIPPED_FEATURES.md](docs/SHIPPED_FEATURES.md) → code → then this file / ECOSYSTEM.md.
 
+**Project memory for agents:** [docs/memory/](docs/memory/README.md): decision log (`DECISIONS.md`), glossary, feature map (routes/tables/flags/tests per feature), known gaps, and lessons mined from past chats (`LEARNED_FROM_CHATS.md`). Scoped rules live in `.cursor/rules/`: `sharp-edges.mdc` (always on), plus `learn.mdc`, `studio.mdc`, `intelligence.mdc`, `migrations.mdc` and `content-generation.mdc`. Docs index: [docs/README.md](docs/README.md).
+
 ---
 
 ## The Three Apps — Know Which One You're In

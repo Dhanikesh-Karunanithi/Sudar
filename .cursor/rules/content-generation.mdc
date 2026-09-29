@@ -1,0 +1,21 @@
+---
+description: Quality gate contract for any AI-generated learning content (courses, modules, quizzes, flashcards, mindmaps, sims)
+globs: sudar-studio/src/lib/courseGeneration/**, sudar-studio/src/app/api/ai/**, sudar-learn/src/app/api/ai/**, shared/content-generation/**, packages/sudar-mcp/src/tools/**
+alwaysApply: false
+---
+
+# Content generation quality contract
+
+Sudar's differentiator is premium, evidence-based content. Every generator that produces learner-facing content must:
+
+1. **Validate structure** with a Zod schema from `shared/content-generation/schemas.ts` (never `as SomeType` on model output). Repair JSON once, then fail loudly.
+2. **Moderate** output via `moderateContent()` (`shared/content-generation/moderation.ts`) before it is persisted or shown. Blocked content is not saved.
+3. **Score** with the pedagogy rubric (`qualityValidator.ts`): objective alignment, Bloom fit, retrieval practice, worked example/fading, cognitive load, accuracy risk, interactivity, clarity, engagement. Scores are validated with Zod.
+4. **Gate**: below threshold -> regenerate with the critique (max 2 retries, see `qualityGate.ts`). Persist the final score **and per-issue details** so `/courses/[id]/quality` can show what to fix.
+5. **Ground**: when sources exist, every `[N]` citation must resolve to a provided source (`verifyCitations`). Document mode picks chunks by relevance, not position.
+6. **Assessments**: `correctAnswer` in range, no duplicate options, one question per objective where objectives exist (`validateQuizQuality`).
+7. **Review**: modules carry `review_status` (`draft` | `needs_review` | `approved`). Publish is blocked while any module has unresolved high-severity issues.
+
+Pedagogy the prompts must enforce structurally (not just name-drop): Merrill (problem-centred, activate, demonstrate, apply, integrate), retrieval practice every module, worked example then faded practice, chunking under cognitive-load limits, interleaving across modules, Bloom progression.
+
+When changing prompts or models, run `npm run eval:content` (golden set in `scripts/evals/`) and note the score delta in the PR.

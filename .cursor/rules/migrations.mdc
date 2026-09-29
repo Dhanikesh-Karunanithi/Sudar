@@ -1,0 +1,14 @@
+---
+description: Supabase migration rules (RLS, defaults, how prod is applied)
+globs: supabase/migrations/**
+alwaysApply: false
+---
+
+# Supabase migrations
+
+- Filename: `YYYYMMDDHHMMSS_snake_case_name.sql`, timestamp later than the newest file in the folder.
+- Every table: `id uuid primary key default gen_random_uuid()`, `created_at timestamptz not null default now()`, `alter table ... enable row level security;` and explicit policies in the same file.
+- Policies are org-scoped (`org_id in (select org_id from org_members where user_id = auth.uid())`) or owner-scoped (`user_id = auth.uid()`). No `using (true)` for authenticated users on tenant data.
+- Make migrations idempotent (`create table if not exists`, `drop policy if exists` before `create policy`) — they may be re-applied by hand.
+- Applying to prod: use the Supabase MCP `apply_migration` tool with the file's name. It records its own version; verify by **name** in `supabase_migrations.schema_migrations`. Never `supabase db push` to prod.
+- After adding tables used by Learn/Studio, update `sudar-*/src/types/database.ts` types and `docs/memory/FEATURE_MAP.md`.

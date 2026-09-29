@@ -9,9 +9,11 @@ This file is a short pointer so you and Cursor can quickly see the **Next 3** wi
 
 Update this list after each milestone (and keep it in sync with STRATEGIC_PATH Section 3).
 
-1. **Security / trust** — Complete RLS/RAG/Bearer sub-plan after review ([docs/RLS_RAG_BEARER_SUBPLAN.md](docs/RLS_RAG_BEARER_SUBPLAN.md)); keep [docs/CLOUDFLARE_PAGES_DEPLOY.md](docs/CLOUDFLARE_PAGES_DEPLOY.md) current for Studio/Learn prod.
+1. **Beta readiness (testers)** — Content quality gate enforced; learner loop connected (course → tutor → sim → Teaching OS mastery → NBA); security Phase 1 closed; tester guide + demo seed. See [docs/TESTER_GUIDE.md](docs/TESTER_GUIDE.md) and [docs/CONTENT_QUALITY.md](docs/CONTENT_QUALITY.md).
 2. **Visibility** — Record Sudar memory / SudarNotes demo video (1–2 min); add 2–4 screenshots to [docs/screenshots/](docs/screenshots/) and link from README.
-3. **Teaching OS loop** — Prove closed loop on the seeded domain (checks → mastery → NBA “Next 15 minutes”); expand Studio Domains curator as needed. See [docs/TEACHING_OS.md](docs/TEACHING_OS.md).
+3. **Teaching OS loop at scale** — Expand beyond the seeded domain; Studio Domains curator depth; claim analytics. See [docs/TEACHING_OS.md](docs/TEACHING_OS.md).
+
+Agent memory (decisions, glossary, feature map, known gaps): [docs/memory/](docs/memory/README.md).
 
 ---
 

@@ -1,0 +1,33 @@
+---
+description: Known traps in the Sudar repo that have bitten agents before. Read before touching auth, migrations, env, deploy, or AI generation.
+alwaysApply: true
+---
+
+# Sudar sharp edges (always on)
+
+Status truth order: `UPDATES.md` Latest -> `docs/SHIPPED_FEATURES.md` -> code -> `AGENTS.md` / `ECOSYSTEM.md`.
+Deeper memory lives in `docs/memory/` (DECISIONS, GLOSSARY, FEATURE_MAP, KNOWN_GAPS, LEARNED_FROM_CHATS).
+
+## Database and migrations
+- One Supabase project (`qnsrrboprydmjyormlky`) serves prod **and** staging (split by hostname/org only). Anything you run against it hits real users.
+- Prod migrations are applied with the Supabase MCP `apply_migration` tool, which assigns its **own** version timestamp. Remote versions never match local filenames. Do **not** run `supabase db push` against prod, and do not rename files to "fix" ordering. Check `supabase_migrations.schema_migrations` by **name**.
+- New tables: RLS on, `created_at timestamptz default now()`, `gen_random_uuid()` PKs, org-scoped policies. See `.cursor/rules/migrations.mdc`.
+
+## Auth and security
+- Studio `middleware.ts` lets cookie-less `Authorization: Bearer` requests through to `/api/*` (MCP needs it). Every Studio API route must therefore authenticate itself; never assume middleware did.
+- Service-role (`createServiceRoleSupabaseClient`) bypasses RLS. When you use it, scope every query by `org_id` / ownership explicitly. `npm run security:audit` inventories callsites.
+- `checkAndIncrementUsage` (Learn + Studio `lib/usage-limits.ts`) fails **closed** in production when metering RPC errors (spend protection) and open in development.
+- CSP is built in `shared/security/contentSecurityPolicy.mjs` and applies in dev too. New external origins (LiveKit `wss:`, providers) must be added there or the browser silently blocks them.
+
+## Env and deploy
+- Studio + Learn prod = Cloudflare Workers via OpenNext. `NEXT_PUBLIC_*` must exist at **build** time (set in the GitHub workflow), not only as Worker secrets.
+- Deploy workflows now `needs: verify` (lint + tests). Don't bypass by pushing straight to `main`.
+- Local ports: Studio 3000, Learn 3001, SudarVid 8000, Intelligence 8001, SudarSim 8090, LiveKit 7880. `node scripts/dev-all.mjs --check` validates env before starting.
+
+## AI and content
+- Provider chain in code is **OpenRouter -> Together -> OpenAI -> Anthropic** (`shared/ai/platformChat.ts`), after org BYOM / Sudar AI runtime. `.cursorrules` older text saying "Together first" is superseded.
+- Authored content must pass the quality gate contract in `.cursor/rules/content-generation.mdc`. Don't add a generator that writes to the DB without schema validation + moderation.
+
+## Tests
+- Learn: `npm test` (vitest, `src/**/*.test.ts`). Studio: `npm test` (vitest). Intelligence: `pytest` in `sudar-intelligence/tests`. MCP: `npm test` in `packages/sudar-mcp`.
+- Windows/PowerShell is the owner's shell: use `;` not `&&` in PowerShell 5, and `GIT_LITERAL_PATHSPECS=1` when `git add`ing Next.js paths with `[id]` or `(group)`.
