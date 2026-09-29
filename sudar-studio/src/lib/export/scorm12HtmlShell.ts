@@ -71,14 +71,19 @@ table.ix-cards th,table.ix-cards td{border:1px solid #3f3f46;padding:0.35rem 0.5
 .empty{color:#a1a1aa;}
 `
 
-export function buildNativeScoHtml(params: {
-  courseTitle: string
-  moduleTitle: string
-  moduleContent: unknown
+export function buildExportHtmlDocument(params: {
+  pageTitle: string
+  courseTitle?: string
+  innerHtml: string
+  includeScormApi?: boolean
 }): string {
-  const inner = moduleContentJsonToExportHtmlFragment(params.moduleContent, params.moduleTitle)
-  const title = escapeHtml(params.moduleTitle)
-  const ct = escapeHtml(params.courseTitle)
+  const title = escapeHtml(params.pageTitle)
+  const ct = params.courseTitle ? escapeHtml(params.courseTitle) : ''
+  const header =
+    ct && ct !== title
+      ? `<header><p style="font-size:0.75rem;color:#a1a1aa;margin:0 0 0.25rem;">${ct}</p><h1>${title}</h1></header>`
+      : `<header><h1>${title}</h1></header>`
+  const scorm = params.includeScormApi === false ? '' : `<script>${SCORM_COMPLETE_SCRIPT}</script>\n`
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -86,13 +91,26 @@ export function buildNativeScoHtml(params: {
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>${title}</title>
 <style>${EXPORT_CSS}</style>
-<script>${SCORM_COMPLETE_SCRIPT}</script>
-</head>
+${scorm}</head>
 <body>
-<header><p style="font-size:0.75rem;color:#a1a1aa;margin:0 0 0.25rem;">${ct}</p><h1>${title}</h1></header>
+${header}
 <main>
-${inner}
+${params.innerHtml}
 </main>
 </body>
 </html>`
+}
+
+export function buildNativeScoHtml(params: {
+  courseTitle: string
+  moduleTitle: string
+  moduleContent: unknown
+}): string {
+  const inner = moduleContentJsonToExportHtmlFragment(params.moduleContent, params.moduleTitle)
+  return buildExportHtmlDocument({
+    pageTitle: params.moduleTitle,
+    courseTitle: params.courseTitle,
+    innerHtml: inner,
+    includeScormApi: true,
+  })
 }
