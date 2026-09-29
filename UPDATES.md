@@ -16,6 +16,12 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-09-15 — Post-wipe RLS policy tighten (Cavi)
+
+- **Theme**: Close the permissive-policy loop on the clean schema before Cavi accumulates real usage.
+- **Shipped**: Migration `supabase/migrations/20260915190000_post_wipe_rls_tighten.sql` applied on live Supabase — profiles SELECT scoped; courses/modules no cross-tenant published; org_members/organisations open inserts removed; sim_* policies added; invite_codes stay service-role-only (commented). Studio smoke after apply: empty Cavi dashboard still loads for `connect@…`.
+- **Docs**: [docs/RLS_RAG_BEARER_SUBPLAN.md](docs/RLS_RAG_BEARER_SUBPLAN.md) marked Phase 2 applied; Phase 1 RAG/Bearer still open.
+
 ### 2026-09-15 — Clean-slate wipe + Cavi sandbox org
 
 - **Theme**: End Talisma/Foundever pilot data; rebuild from empty catalog with personal sandbox **Cavi**.

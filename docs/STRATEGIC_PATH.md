@@ -53,11 +53,16 @@ Every new feature or fix should map to at least one of these pillars. If it does
 
 **Sudar Agents (v1 scaffold — shipped / in motion)** — Gateway on Sudar Intelligence, Learn/Studio BFFs, `agent_runs` persistence, Studio **Sudar Agents** observability runs table, cohort pulse wiring, spacing-nudge cron gates, organisation settings (`sudar_agents`). Roadmap / architecture: **[docs/AGENTS_PLATFORM.md](AGENTS_PLATFORM.md)**.
 
+**SudarNotes (live experiment)** — Conversational learning at Learn **`/journey`** (nav **SudarNotes**; flag `NEXT_PUBLIC_SUDAR_JOURNEY`). Living notebook + pedagogical modes; coexists with course Learn. Vision: **[docs/SUDAR_2_0_VISION.md](SUDAR_2_0_VISION.md)**. Catalog: **[docs/SHIPPED_FEATURES.md](SHIPPED_FEATURES.md)**.
+
+**Teaching OS (spine shipped)** — Shared claim/mastery spine, pedagogy engine, unified NBA v2, Studio domain curator. Canonical contract: **[docs/TEACHING_OS.md](TEACHING_OS.md)**. SudarNotes is one delivery surface of this spine, not the architecture.
+
 **Remaining gaps vs. ultimate goal**  
 - **Modality**: Text, Flashcards, and Listen (Audio TTS) live; Video/Podcast/MindMap use pre-generated or on-demand content; SudarFeed/SudarPlay still placeholders.  
 - **Polish**: Server-generated certificate PDF is implemented (`GET /api/certificates/[code]/pdf`); further polish (branding, locale) as needed.  
 - **Scale**: No white-label, SSO, or HRIS hooks yet (explicitly later phase).
 - **Analytics engine depth**: v1 hybrid analytics engine scaffolded (rollups + admin/learner insight APIs + risk signals + recommendation feedback), now needs production rollout tuning and scheduled refresh orchestration.
+- **Teaching OS rollout**: Expand surface wiring and claim analytics beyond the seeded domain (see TEACHING_OS.md phases).
 
 ---
 

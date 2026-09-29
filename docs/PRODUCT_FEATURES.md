@@ -276,6 +276,8 @@
 | Cite sources | Sudar references which section of the course it's drawing from | 3 |
 | Conversation history | View previous Sudar conversations within a session | 3 |
 | Memory insights | Insight cards built from learner profile/events; InsightsCarousel on My Memory page | 3 |
+| **SudarNotes** | Conversational learning at `/journey` (living notebook + pedagogical modes); flag `NEXT_PUBLIC_SUDAR_JOURNEY`; coexists with courses | 5 |
+| Teaching OS claims | Shared claim graph + mastery + NBA v2; SudarNotes/courses/Sim write the same mastery; Studio Domains curator | 5 |
 
 ---
 

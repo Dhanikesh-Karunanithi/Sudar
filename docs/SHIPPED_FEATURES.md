@@ -38,6 +38,18 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## Post-wipe RLS policy tighten (Supabase | Sept 2026)
+
+- **Where**: Shared Supabase project (`qnsrrboprydmjyormlky`) after clean-slate + **Cavi** org.
+- **What**: Authenticated client policies no longer allow global profile directory reads, cross-tenant published course/module reads, or open `org_members` / `organisations` inserts. SudarSim tables gained org/learner-scoped policies; `invite_codes` / `integration_api_keys` remain service-role-only (RLS on, 0 client policies). Studio/Learn BFFs continue to use the service role for privileged paths.
+- **Key files**:
+  - `supabase/migrations/20260915190000_post_wipe_rls_tighten.sql`
+  - [docs/RLS_RAG_BEARER_SUBPLAN.md](RLS_RAG_BEARER_SUBPLAN.md)
+- **Database**: Applied on live project 2026-09-15.
+- **Flow**: Browser anon/authenticated Supabase client → tightened SELECT/INSERT policies; admin/invite/course APIs unchanged via service-role.
+
+---
+
 ## SudarNotes — conversational tutor (Learn | July 2026)
 
 - **Where**: Sudar Learn — **SudarNotes** nav + `/journey` (flag `NEXT_PUBLIC_SUDAR_JOURNEY`).

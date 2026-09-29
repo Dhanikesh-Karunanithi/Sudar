@@ -7,7 +7,7 @@ order: 8
 marketing: true
 ---
 
-Use **Governance** in Studio to see high-level protections for your organisation (tutor safety, personalization, retention fields).
+Use **Governance** in Studio to see high-level protections for your organisation (tutor safety, personalization, retention fields). Learner AI surfaces covered by those controls include the in-course tutor and **SudarNotes** (conversational teaching) when your deployment enables it.
 
 The technical trust pack in the Sudar repository describes data flows, subprocessors, and threat considerations, share it with security reviewers.
 
