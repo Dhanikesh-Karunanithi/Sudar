@@ -30,3 +30,5 @@ Last reviewed: 2026-09-29.
 | FORCE RLS (Phase 3 of the sub-plan) deferred | Service-role code paths are the main guard | Keep `security:audit` REVIEW queue shrinking |
 | `security:audit` is non-blocking in CI (157 REVIEW callsites) | New unscoped service-role use isn't blocked | Burn down queue, then `SECURITY_AUDIT_STRICT=1` |
 | Intelligence, sudar-sim, SudarVid, MCP worker deploy manually | Drift between repo and prod services | Add deploy workflows post-beta |
+| `npm audit --omit=dev` still fails in Learn/Studio (7 high: Next's bundled `postcss`, `sharp`, `ws`, `next-intl`, `adm-zip`, `file-type`) after the Next 15.5.26 patch | Security checks job stays red; fixes need major bumps | Upgrade `next-intl` / `sharp` / Next 16 after beta, one PR each |
+| Beta PR stack (#112–#117) slices are not individually buildable (e.g. #112 imports modules added in #113) | Merging only the bottom PR would break `main` | Land the whole stack together, top-down |
