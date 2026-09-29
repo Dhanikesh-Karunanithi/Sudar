@@ -16,6 +16,17 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-09-29 — Beta readiness (content quality, one learning loop, hardening)
+
+- **Theme**: Get Sudar ready for invited testers: consistent AI content with enforced validation, SudarSim / SudarNotes / Teaching OS / tutor working as one loop, agent memory, and security + monitoring fit for outside users.
+- **Content quality**: Every Studio generator that saves learner content is Zod-validated, moderated, rubric-scored and regenerated below threshold; modules carry `review_status` + per-issue `quality`; publish is blocked (409) on unresolved critical issues; Quality review page per course. Golden-set eval (`npm run eval:content`) runs in CI. See [docs/CONTENT_QUALITY.md](docs/CONTENT_QUALITY.md).
+- **Learning loop (Learn)**: "What you'll master" claim strip in the course viewer; dashboard **Next 15 minutes**; NBA recomputed after module/Sim completion; **Practice** page for SudarSim with visible voice → push-to-talk fallback; SudarNotes notebook persisted to Supabase with real voice (STT/TTS via Intelligence) and org Domains instead of a mock curriculum.
+- **Hardening**: Studio Bearer allowlist + JWT validation in middleware; RAG ingest and enrollment org-scoped; invite code rate limits (`api_rate_limits` migration, applied); CSRF origin checks on tutor/SudarNotes writes; Sim secret fails closed; Learn middleware now admits the sudar-sim agent's secret-authenticated calls (voice sessions previously could not load context).
+- **Ops**: Sentry error reporting (Studio, Learn, Intelligence; no PII); Studio **Feedback** button for testers; Playwright smoke in `e2e/` + **E2E smoke** workflow; **Sudar Beta** org provisioned for testers (invite by email from Studio → Users).
+- **Memory**: `docs/memory/` (decisions D-011…D-021, glossary, feature map, known gaps, learnings from chats) + scoped Cursor rules.
+- **Docs**: [docs/TESTER_GUIDE.md](docs/TESTER_GUIDE.md), [docs/trust/SUBPROCESSORS.md](docs/trust/SUBPROCESSORS.md) refresh, [docs/RLS_RAG_BEARER_SUBPLAN.md](docs/RLS_RAG_BEARER_SUBPLAN.md) §7, [docs/ENV_REFERENCE.md](docs/ENV_REFERENCE.md) (Sentry, content quality, E2E).
+- **Operators before deploy**: set `SUDAR_SIM_SERVICE_SECRET` in Learn (now required in every environment); optionally `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN`; new MCP-callable Studio routes must be added to `sudar-studio/src/lib/security/bearerRoutes.ts`.
+
 ### 2026-09-15 — Post-wipe RLS policy tighten (Cavi)
 
 - **Theme**: Close the permissive-policy loop on the clean schema before Cavi accumulates real usage.

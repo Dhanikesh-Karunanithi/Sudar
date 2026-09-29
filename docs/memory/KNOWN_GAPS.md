@@ -8,7 +8,8 @@ Last reviewed: 2026-09-29.
 | Gap | Impact | Plan |
 |---|---|---|
 | Fact-checking is citation-level only (each `[N]` must map to a real source); claims are not verified against source text | Plausible but wrong statements can survive in un-sourced modules | Claim-level entailment check against retrieved chunks; flag for human review |
-| Moderation uses OpenAI `omni-moderation` when `OPENAI_API_KEY` is set, else a local keyword screen | Weaker screening in keyless environments | Add Llama Guard via Together as primary once key budget is confirmed |
+| Moderation chain (`CONTENT_MODERATION_MODE=auto`): Llama Guard via Together → OpenAI moderation → local keyword screen | Environments without Together/OpenAI keys only get the keyword screen | Keep Together key set in every deployed env; monitor moderation fallbacks |
+| Learn-side generators (flashcards, mind map, personalised audio/video scripts) are moderated but not rubric-scored | Lower quality floor than authored modules | Route through `shared/content-generation/quality.ts` gate |
 | Golden-set eval runs in CI as non-blocking | Prompt regressions are visible but not blocking | Make blocking once 3 baseline runs are stable |
 | SudarVid content planner calls Together directly (outside the shared provider chain) | Video scripts skip the Studio quality gate | Route planner output through the shared gate |
 

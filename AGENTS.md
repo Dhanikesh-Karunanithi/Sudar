@@ -259,10 +259,10 @@ Pull requests use **[.github/pull_request_template.md](.github/pull_request_temp
 ## Current Build Status
 
 **Phase**: Phases 1–4 complete; Phase 5 (Engagement & Scale) partially in motion. Teaching OS, SudarNotes, SudarSim, MCP (ChatGPT/Cursor) shipped — see **UPDATES.md** Latest.
-**Priority**: Security/RLS policy tighten (see [docs/RLS_RAG_BEARER_SUBPLAN.md](docs/RLS_RAG_BEARER_SUBPLAN.md)); visibility (demo/screenshots); Teaching OS loop on seeded domains; enterprise packaging later.
+**Priority**: Run the invited-tester beta ([docs/TESTER_GUIDE.md](docs/TESTER_GUIDE.md), Sudar Beta org); visibility (demo/screenshots); Teaching OS loop beyond seeded domains; enterprise packaging later. Security Phase 1 is done ([docs/RLS_RAG_BEARER_SUBPLAN.md](docs/RLS_RAG_BEARER_SUBPLAN.md) §7).
 **Production frontends**: Studio + Learn on **Cloudflare Workers (OpenNext)** — [docs/CLOUDFLARE_PAGES_DEPLOY.md](docs/CLOUDFLARE_PAGES_DEPLOY.md). Staging may still use Vercel. Intelligence/Vid/Sim/MCP workers are manual/ops deploy today.
 
-**Recent ship**: MCP OAuth + course build tools; SudarSim voice; SudarNotes; Teaching OS; Personalization v2; trust pack. See **UPDATES.md** (Latest) and **docs/SHIPPED_FEATURES.md**. Structural cleanup board: [docs/STRUCTURAL_CLEANUP_AUDIT.md](docs/STRUCTURAL_CLEANUP_AUDIT.md).
+**Recent ship**: Beta readiness (2026-09-29) — enforced content quality gate, Learn loop (mastery strip, Next 15, Practice, SudarNotes persistence/voice), Security Phase 1, Sentry, Playwright smoke; earlier MCP OAuth, SudarSim voice, SudarNotes, Teaching OS. New MCP-callable Studio routes must be added to `sudar-studio/src/lib/security/bearerRoutes.ts`. See **UPDATES.md** (Latest) and **docs/SHIPPED_FEATURES.md**. Structural cleanup board: [docs/STRUCTURAL_CLEANUP_AUDIT.md](docs/STRUCTURAL_CLEANUP_AUDIT.md).
 
 For up-to-date state and next priorities, see **docs/STRATEGIC_PATH.md** and **docs/ACTION_PLANS.md**.
 See `ECOSYSTEM.md` Section 8 for the full build roadmap with checkboxes.
