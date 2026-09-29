@@ -39,6 +39,7 @@ jobs:
           cache-dependency-path: sudar-studio/package-lock.json
       - run: npm ci
       - run: npm run lint
+      - run: npm test
       - run: npm run build
 
   dependency-audit:
