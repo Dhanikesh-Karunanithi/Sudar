@@ -3,6 +3,7 @@ import { getOrgIdAndRole } from '@/lib/org'
 import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { fetchStudioOrgAiContext, studioMeteringChatCtx } from '@/lib/ai/studioOrgAiChat'
+import { checkAndIncrementStudioUsage } from '@/lib/usage-limits'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -11,6 +12,19 @@ export async function POST(request: NextRequest) {
 
   const { orgId } = await getOrgIdAndRole(user.id)
   const admin = createServiceRoleSupabaseClient()
+  const usage = await checkAndIncrementStudioUsage(admin, user.id)
+  if (!usage.allowed) {
+    if (usage.reason === 'metering_unavailable') {
+      return NextResponse.json(
+        { error: 'Usage metering temporarily unavailable. Please try again shortly.' },
+        { status: 503 },
+      )
+    }
+    return NextResponse.json(
+      { error: `Daily module generation limit (${usage.limit}) reached. Try again tomorrow.` },
+      { status: 429 },
+    )
+  }
   const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
   const configError = resolveChatConfigError(orgSettings, privateRuntime)
   if (configError) return NextResponse.json({ error: configError }, { status: 500 })

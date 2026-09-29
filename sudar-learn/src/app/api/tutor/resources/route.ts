@@ -45,6 +45,12 @@ export async function GET(request: NextRequest) {
 
   const usage = await checkAndIncrementUsage(admin, user.id, 'generic')
   if (!usage.allowed) {
+    if (usage.reason === 'metering_unavailable') {
+      return NextResponse.json(
+        { error: 'Usage metering temporarily unavailable. Please try again shortly.' },
+        { status: 503 },
+      )
+    }
     return NextResponse.json(
       { error: `Daily limit (${usage.limit}) reached. Try again tomorrow.` },
       { status: 429 },

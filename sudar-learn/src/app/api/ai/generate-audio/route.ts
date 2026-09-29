@@ -11,9 +11,9 @@ import { normalizeTtsVoiceId, TTS_VOICE_OPTIONS_BY_ID } from '@/lib/audio/voices
 import { defaultVoiceIdForContentLocale } from '@/lib/audio/ttsContentLocale'
 import { sarvamTargetLanguageFromContentLocale } from '@/lib/audio/sarvamLanguageCode'
 import { resolveLearnerPreferences } from '@/lib/learner/learnerPreferences'
+import { checkAndIncrementUsage, usageLimitErrorResponse } from '@/lib/usage-limits'
 
 const INTELLIGENCE_URL = (process.env.SUDAR_INTELLIGENCE_URL ?? process.env.BYTEOS_INTELLIGENCE_URL)?.replace(/\/$/, '')
-const INTELLIGENCE_SERVICE_SECRET = process.env.INTELLIGENCE_SERVICE_SECRET?.trim()
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -25,6 +25,11 @@ export async function POST(request: NextRequest) {
   if (!text) return NextResponse.json({ error: 'text required' }, { status: 400 })
 
   const admin = createServiceRoleSupabaseClient()
+  const usage = await checkAndIncrementUsage(admin, user.id, 'generic')
+  if (!usage.allowed) {
+    const err = usageLimitErrorResponse(usage)
+    return NextResponse.json(err.body, { status: err.status })
+  }
   const blockedAudio = await rejectSensitiveLearnerAiInput(admin, user.id, [text])
   if (blockedAudio) return blockedAudio
 
@@ -76,7 +81,6 @@ export async function POST(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
-  if (INTELLIGENCE_SERVICE_SECRET) headers['X-Intelligence-Service-Secret'] = INTELLIGENCE_SERVICE_SECRET
 
   try {
     const res = await fetch(`${INTELLIGENCE_URL}/api/audio/generate`, {

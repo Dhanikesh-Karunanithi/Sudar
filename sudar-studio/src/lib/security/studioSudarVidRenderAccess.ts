@@ -42,11 +42,10 @@ const COOKIE_NAME = 'sudar_vid_render'
 const GRANT_TTL_SEC = 7200
 
 function grantSecret(): string {
-  const s =
-    process.env.SUDARVID_RENDER_GRANT_SECRET?.trim()
-    || process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
-    || ''
-  return s
+  const dedicated = process.env.SUDARVID_RENDER_GRANT_SECRET?.trim()
+  if (dedicated) return dedicated
+  if (process.env.NODE_ENV === 'production') return ''
+  return process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || ''
 }
 
 function sign(bodyB64: string): string {

@@ -3,6 +3,7 @@ Supabase JWT verification for Learn/Studio → Intelligence requests.
 Validates Authorization: Bearer <supabase_jwt> and enforces body.user_id == JWT sub.
 Optionally allows X-Intelligence-Service-Secret for server-to-server (ALP) calls from Learn.
 """
+import hmac
 import os
 from typing import Annotated
 
@@ -42,7 +43,12 @@ async def verify_supabase_jwt_or_service(
     - Else: 401. Route must call require_learner_match(request, body.user_id) after parsing body.
     """
     configured = _get_service_secret()
-    if configured and service_secret and service_secret == configured:
+    if (
+        configured
+        and service_secret
+        and len(service_secret) == len(configured)
+        and hmac.compare_digest(service_secret, configured)
+    ):
         request.state.auth_method = "service"
         return None
 

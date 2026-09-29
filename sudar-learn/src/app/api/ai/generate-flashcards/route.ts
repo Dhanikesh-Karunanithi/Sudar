@@ -4,6 +4,7 @@ import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { learnMeteringChatCtx, loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 import { capabilitySupported, parseOrgAiRuntimePolicy } from '@/types/orgAiInference'
+import { checkAndIncrementUsage, usageLimitErrorResponse } from '@/lib/usage-limits'
 
 export interface FlashcardPair {
   front: string
@@ -15,9 +16,15 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const admin = createServiceRoleSupabaseClient()
+  const usage = await checkAndIncrementUsage(admin, user.id, 'generic')
+  if (!usage.allowed) {
+    const err = usageLimitErrorResponse(usage)
+    return NextResponse.json(err.body, { status: err.status })
+  }
+
   const { content, module_title } = await request.json()
   const text = (content ?? '').trim().slice(0, 4000)
-  const admin = createServiceRoleSupabaseClient()
   const { orgId, orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, { userId: user.id })
   const runtimePolicy = parseOrgAiRuntimePolicy(orgSettings)
   if (

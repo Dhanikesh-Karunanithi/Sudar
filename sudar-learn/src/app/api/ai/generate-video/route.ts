@@ -19,6 +19,7 @@ import {
   presetToEngineMode,
   type SudarVidVideoPreset,
 } from '@/lib/sudarvidPresets'
+import { checkAndIncrementUsage, usageLimitErrorResponse } from '@/lib/usage-limits'
 
 const SUDARVID_URL = getSudarVidBaseUrl()
 
@@ -74,6 +75,13 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const adminEarly = createServiceRoleSupabaseClient()
+  const usage = await checkAndIncrementUsage(adminEarly, user.id, 'generic')
+  if (!usage.allowed) {
+    const err = usageLimitErrorResponse(usage)
+    return NextResponse.json(err.body, { status: err.status })
+  }
 
   const raw = await request.json().catch(() => null)
   const parsed = GenerateVideoBodySchema.safeParse(raw)

@@ -9,6 +9,7 @@ import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { learnMeteringChatCtx, loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 import { capabilitySupported, parseOrgAiRuntimePolicy } from '@/types/orgAiInference'
+import { checkAndIncrementUsage, usageLimitErrorResponse } from '@/lib/usage-limits'
 
 const MODULE_CONTENT_CAP = 6000
 const COURSE_TOTAL_CAP = 15000
@@ -54,6 +55,11 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createServiceRoleSupabaseClient()
+  const usage = await checkAndIncrementUsage(admin, user.id, 'generic')
+  if (!usage.allowed) {
+    const err = usageLimitErrorResponse(usage)
+    return NextResponse.json(err.body, { status: err.status })
+  }
 
   const body = await request.json().catch(() => ({} as Record<string, unknown>))
   const courseId = typeof body.course_id === 'string' ? body.course_id : null

@@ -22,7 +22,15 @@ export async function validateAlpKey(key: string | null): Promise<AlpKeyResult> 
   if (!key?.trim()) return { valid: false }
 
   const envKey = process.env.ALP_API_KEY
-  if (envKey && key === envKey) return { valid: true }
+  if (envKey && key === envKey) {
+    const orgId = process.env.ALP_API_KEY_ORG_ID?.trim()
+    if (!orgId) {
+      // Env master key must be org-bound so rejectAlpUserOutsideOrg always runs
+      if (process.env.NODE_ENV === 'production') return { valid: false }
+      return { valid: false }
+    }
+    return { valid: true, orgId }
+  }
 
   const keyHash = hashKey(key)
   const admin = createServiceRoleSupabaseClient()
