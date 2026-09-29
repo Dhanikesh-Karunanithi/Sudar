@@ -2,43 +2,89 @@
 
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AuthMarketingDecor } from '@/components/auth/AuthMarketingDecor'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { GoogleIcon } from '@/components/ui/GoogleIcon'
 import { buildAuthCallbackUrl, safeNextPath } from '@shared-access/authIntent'
 import { resolveAuthLoginError } from '@shared-access/constants'
+import { MCP_OAUTH_COPY } from '@/constants/mcpOAuth'
+import { completeMcpOAuth } from '@/lib/mcp/completeMcpOAuth'
 import { createClient } from '@/lib/supabase/client'
+
+function mcpLoginReturnPath(mcpAuth: string): string {
+  const params = new URLSearchParams()
+  params.set('mcp_oauth', '1')
+  params.set('mcp_auth', mcpAuth)
+  return `/login?${params.toString()}`
+}
 
 export function LoginClient() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mcpStatus, setMcpStatus] = useState<'idle' | 'completing' | 'failed'>('idle')
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
+  const mcpAttempted = useRef(false)
   const searchParams = useSearchParams()
   const errorCode = searchParams?.get('error')
+  const mcpOAuth = searchParams?.get('mcp_oauth') === '1'
+  const mcpAuth = searchParams?.get('mcp_auth')?.trim() || ''
 
   useEffect(() => {
     const message = resolveAuthLoginError(errorCode)
     if (message) setError(message)
   }, [errorCode])
 
+  const finishMcpOAuth = useCallback(async (accessToken: string): Promise<boolean> => {
+    if (!mcpOAuth || !mcpAuth) return false
+    setMcpStatus('completing')
+    try {
+      const redirectTo = await completeMcpOAuth(mcpAuth, accessToken)
+      window.location.assign(redirectTo)
+      return true
+    } catch {
+      setMcpStatus('failed')
+      setError(MCP_OAUTH_COPY.failed)
+      return false
+    }
+  }, [mcpOAuth, mcpAuth])
+
+  useEffect(() => {
+    if (!mcpOAuth || !mcpAuth || mcpAttempted.current) return
+    let cancelled = false
+    void (async () => {
+      const { data } = await supabase.auth.getSession()
+      const token = data.session?.access_token
+      if (!token || cancelled) return
+      mcpAttempted.current = true
+      await finishMcpOAuth(token)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [mcpOAuth, mcpAuth, finishMcpOAuth, supabase])
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       setError('Invalid email or password. Please try again.')
       setLoading(false)
-    } else {
-      router.push('/')
-      router.refresh()
+      return
     }
+
+    const token = data.session?.access_token
+    if (token && (await finishMcpOAuth(token))) return
+
+    router.push('/')
+    router.refresh()
   }
 
   async function handleGoogleSignIn() {
@@ -48,7 +94,10 @@ export function LoginClient() {
 
       await fetch('/api/invite/clear-oauth-prep', { method: 'POST' }).catch(() => {})
 
-      const nextParam = safeNextPath(searchParams?.get('next') ?? undefined)
+      const nextParam =
+        mcpOAuth && mcpAuth
+          ? mcpLoginReturnPath(mcpAuth)
+          : safeNextPath(searchParams?.get('next') ?? undefined)
       const redirectTo = buildAuthCallbackUrl({
         origin: window.location.origin,
         next: nextParam,
@@ -133,8 +182,18 @@ export function LoginClient() {
           </div>
 
           <div className="space-y-1.5">
-            <h1 className="font-display text-2xl font-semibold text-white">Welcome back</h1>
-            <p className="text-sm text-zinc-500">Sign in to your Studio workspace</p>
+            <h1 className="font-display text-2xl font-semibold text-white">
+              {mcpOAuth ? MCP_OAUTH_COPY.title : 'Welcome back'}
+            </h1>
+            <p className="text-sm text-zinc-500">
+              {mcpOAuth ? MCP_OAUTH_COPY.subtitle : 'Sign in to your Studio workspace'}
+            </p>
+            {mcpOAuth && <p className="text-xs leading-relaxed text-zinc-500">{MCP_OAUTH_COPY.consent}</p>}
+            {mcpStatus === 'completing' && (
+              <p className="text-sm text-cyan-300" role="status" aria-live="polite">
+                {MCP_OAUTH_COPY.completing}
+              </p>
+            )}
           </div>
 
           {error && (
@@ -185,7 +244,7 @@ export function LoginClient() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || mcpStatus === 'completing'}
               className="mt-2 w-full rounded-full bg-[#FF4500] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#FF5722] disabled:cursor-not-allowed disabled:bg-[#FF4500]/40"
             >
               {loading ? 'Signing in...' : 'Sign in'}
@@ -201,7 +260,7 @@ export function LoginClient() {
           <button
             type="button"
             onClick={handleGoogleSignIn}
-            disabled={loading}
+            disabled={loading || mcpStatus === 'completing'}
             className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/[0.1] bg-white/[0.04] py-2.5 text-sm font-medium text-zinc-200 transition-colors hover:border-white/[0.16] hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <GoogleIcon size={18} className="shrink-0" />

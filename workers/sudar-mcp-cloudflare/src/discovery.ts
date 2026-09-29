@@ -30,7 +30,9 @@ Set \`SUDAR_TOOLSET\` to \`integrator\`, \`creator\`, \`admin\`, \`learner\`, or
 
 ### Creator (course authoring)
 
-- \`sudar_generate_outline\` — generate course module outline
+- \`sudar_build_course\` — **primary** — create a real Studio draft with HTML lessons + optional SCORM 1.2 ZIP
+- \`sudar_export_course\` — export an existing Studio course as HTML and/or SCORM 1.2
+- \`sudar_generate_outline\` — generate course module titles only
 - \`sudar_generate_course_metadata\` — generate description, tags, outcomes
 - \`sudar_generate_course\` — generate full draft course from topic
 - \`sudar_generate_quiz\` — generate quiz questions for a module
@@ -52,7 +54,7 @@ Set \`SUDAR_TOOLSET\` to \`integrator\`, \`creator\`, \`admin\`, \`learner\`, or
 
 ## Example prompts (ChatGPT / Claude)
 
-- "Generate a 5-module outline for cybersecurity awareness training using Sudar MCP."
+- "Using Sudar, build a microlearning course on Generative AI for instructional designers and give me HTML and SCORM."
 - "List my draft courses in Sudar Studio."
 - "What should this learner do next? Use sudar_learner_next_action."
 
@@ -78,7 +80,7 @@ export function buildMcpDiscoveryJson(base: string, studioUrl: string, learnUrl:
     name: "Sudar MCP Server",
     description:
       "Model Context Protocol server for Sudar — forever-free, open AI-powered Learning Operating System. Connect ChatGPT, Claude, Cursor, and other AI agents.",
-    version: "0.2.0",
+    version: "0.3.0",
     platform: {
       name: "Sudar",
       mission: "Learns with you, for you.",

@@ -1,15 +1,115 @@
 import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { bearerPost } from '../clients/bearer.js'
+import { bearerGet, bearerPost } from '../clients/bearer.js'
 import type { SudarMcpConfig } from '../config.js'
+import {
+  SUDAR_BUILD_COURSE_TOOL,
+  SUDAR_EXPORT_COURSE_TOOL,
+  SUDAR_GENERATE_COURSE_TOOL,
+  SUDAR_GENERATE_OUTLINE_TOOL,
+} from '../instructions.js'
 import { maybeAuditStudio } from './audit.js'
+import { ensureStudioUrl, nestedData, parseObject, withStudioDirective } from './creatorFormat.js'
+
+function studioText(ok: boolean, body: string) {
+  return { content: [{ type: 'text' as const, text: withStudioDirective(ok, body) }], isError: !ok }
+}
+
+async function maybeAttachExports(
+  config: SudarMcpConfig,
+  payload: Record<string, unknown>,
+  exportFormat: 'html' | 'scorm12' | 'both' | 'none',
+): Promise<Record<string, unknown>> {
+  if (exportFormat === 'none') return payload
+  const courseId = typeof payload.course_id === 'string' ? payload.course_id : null
+  if (!courseId) return payload
+  const wantHtml = (exportFormat === 'html' || exportFormat === 'both') && payload.html == null
+  const wantScorm = (exportFormat === 'scorm12' || exportFormat === 'both') && payload.scorm == null
+  if (!wantHtml && !wantScorm) return payload
+
+  const next = { ...payload }
+  if (wantHtml) {
+    const htmlRes = await bearerGet(
+      config.studioUrl,
+      `/api/courses/${courseId}/export?format=html`,
+      config.accessToken,
+    )
+    const parsed = parseObject(htmlRes.text)
+    if (htmlRes.ok && parsed) next.html = nestedData(parsed)
+  }
+  if (wantScorm) {
+    const scormRes = await bearerGet(
+      config.studioUrl,
+      `/api/courses/${courseId}/export?format=scorm-1.2&delivery=json`,
+      config.accessToken,
+    )
+    const parsed = parseObject(scormRes.text)
+    if (scormRes.ok && parsed) next.scorm = nestedData(parsed)
+  }
+  return next
+}
 
 export function registerCreatorTools(server: McpServer, config: SudarMcpConfig): void {
   if (!config.studioUrl || !config.accessToken) return
 
   server.tool(
+    'sudar_build_course',
+    SUDAR_BUILD_COURSE_TOOL,
+    {
+      title: z.string().min(1),
+      brief: z.string().optional(),
+      difficulty: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+      num_modules: z.number().int().min(2).max(12).optional(),
+      target_audience: z.string().optional(),
+      export_format: z.enum(['html', 'scorm12', 'both', 'none']).optional(),
+    },
+    async (args) => {
+      const exportFormat = args.export_format ?? 'both'
+      const res = await bearerPost(config.studioUrl, '/api/ai/generate-course', config.accessToken, {
+        title: args.title,
+        brief: args.brief,
+        difficulty: args.difficulty ?? 'beginner',
+        num_modules: args.num_modules ?? 6,
+        target_audience: args.target_audience,
+        content_density: 'concise',
+        export_format: exportFormat,
+      })
+      await maybeAuditStudio(config, 'sudar_build_course', res.ok)
+      const parsed = parseObject(res.text)
+      if (!parsed) {
+        return studioText(res.ok, res.text || JSON.stringify({ status: res.status }))
+      }
+      let payload = ensureStudioUrl(parsed, config.studioUrl)
+      if (res.ok) {
+        payload = await maybeAttachExports(config, payload, exportFormat)
+      }
+      return studioText(res.ok, JSON.stringify(payload, null, 2))
+    },
+  )
+
+  server.tool(
+    'sudar_export_course',
+    SUDAR_EXPORT_COURSE_TOOL,
+    {
+      course_id: z.string().uuid(),
+      format: z.enum(['html', 'scorm12', 'both']).optional(),
+    },
+    async (args) => {
+      const format = args.format ?? 'both'
+      const payload: Record<string, unknown> = { course_id: args.course_id }
+      const filled = await maybeAttachExports(config, payload, format)
+      const ok =
+        (format !== 'html' || filled.html != null) &&
+        (format !== 'scorm12' || filled.scorm != null) &&
+        (format !== 'both' || filled.html != null || filled.scorm != null)
+      await maybeAuditStudio(config, 'sudar_export_course', ok)
+      return studioText(ok, JSON.stringify(ensureStudioUrl(filled, config.studioUrl), null, 2))
+    },
+  )
+
+  server.tool(
     'sudar_generate_outline',
-    'Generate a course module outline (JSON array of module titles) in Sudar Studio.',
+    SUDAR_GENERATE_OUTLINE_TOOL,
     {
       course_title: z.string().min(1),
       description: z.string().optional(),
@@ -53,7 +153,7 @@ export function registerCreatorTools(server: McpServer, config: SudarMcpConfig):
 
   server.tool(
     'sudar_generate_course',
-    'Generate a full draft course (modules + content) in Sudar Studio from a title/topic.',
+    SUDAR_GENERATE_COURSE_TOOL,
     {
       title: z.string().min(1),
       brief: z.string().optional(),
@@ -64,10 +164,11 @@ export function registerCreatorTools(server: McpServer, config: SudarMcpConfig):
     async (args) => {
       const res = await bearerPost(config.studioUrl, '/api/ai/generate-course', config.accessToken, args)
       await maybeAuditStudio(config, 'sudar_generate_course', res.ok)
-      return {
-        content: [{ type: 'text', text: res.text || JSON.stringify({ status: res.status }) }],
-        isError: !res.ok,
-      }
+      const parsed = parseObject(res.text)
+      const body = parsed
+        ? JSON.stringify(ensureStudioUrl(parsed, config.studioUrl), null, 2)
+        : res.text || JSON.stringify({ status: res.status })
+      return studioText(res.ok, body)
     },
   )
 
@@ -124,7 +225,7 @@ export function registerCreatorTools(server: McpServer, config: SudarMcpConfig):
 
   server.tool(
     'sudar_create_course',
-    'Create a draft course shell in Studio (returns course id).',
+    'Create a draft course shell in Studio (returns course id). Prefer sudar_build_course for a full generated course.',
     {
       title: z.string().min(1),
       description: z.string().optional(),
