@@ -81,10 +81,23 @@ export async function searchImagesForTutor(query: string, count = 2): Promise<Im
 }
 
 /**
- * Heuristic: learner is asking for external references or visuals.
+ * Heuristic: learner is asking for external references, visuals, or video.
  */
 export function detectsTutorResourceIntent(message: string): boolean {
-  return /\b(image|images|picture|pictures|diagram|photo|illustration|visual|search the web|from the web|wikipedia|source|reference|further reading|read more|external)\b/i.test(
+  return /\b(image|images|picture|pictures|diagram|photo|illustration|visual|search the web|from the web|wikipedia|source|reference|further reading|read more|external|article|articles|link|links|resource|resources|documentation|docs|tutorial|tutorials)\b/i.test(
     message,
   )
+}
+
+/** Explicit ask for video / YouTube. */
+export function detectsTutorVideoIntent(message: string): boolean {
+  return /\b(youtube|video|videos|watch|clip|explainer)\b/i.test(message)
+}
+
+/**
+ * SudarNotes / Journey: attach verified resources only on explicit ask
+ * (or Find resources tooling). Soft teach/learn triggers removed — they polluted notebooks.
+ */
+export function shouldAttachJourneyResources(message: string): boolean {
+  return detectsTutorResourceIntent(message) || detectsTutorVideoIntent(message)
 }

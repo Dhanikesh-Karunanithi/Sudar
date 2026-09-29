@@ -107,6 +107,40 @@ function parseBlockArray(candidate: string | null): { blocks: unknown[]; malform
   }
 }
 
+/** Extract a top-level JSON array starting at the first `[`, respecting strings/escapes. */
+function extractJsonArraySlice(source: string): string | null {
+  const start = source.indexOf('[')
+  if (start < 0) return null
+  let depth = 0
+  let inString = false
+  let escape = false
+  for (let i = start; i < source.length; i++) {
+    const ch = source[i]
+    if (inString) {
+      if (escape) {
+        escape = false
+        continue
+      }
+      if (ch === '\\') {
+        escape = true
+        continue
+      }
+      if (ch === '"') inString = false
+      continue
+    }
+    if (ch === '"') {
+      inString = true
+      continue
+    }
+    if (ch === '[') depth += 1
+    else if (ch === ']') {
+      depth -= 1
+      if (depth === 0) return source.slice(start, i + 1)
+    }
+  }
+  return null
+}
+
 /**
  * Strips a trailing BLOCKS: JSON array (or ```tutor_blocks``` fence) from model output.
  * Run after `parseTutorActionsFromText` if both ACTIONS and BLOCKS are present; put ACTIONS after BLOCKS in the prompt.
@@ -120,26 +154,32 @@ export function parseTutorBlocksFromText(rawResponse: string): {
   let textPart = raw
   let blocksPart: string | null = null
 
-  const markerMatch = raw.match(/\nBLOCKS:\s*([\s\S]+)$/i)
+  const markerMatch = raw.match(/(?:\n|^)\s*BLOCKS:\s*/i)
   if (markerMatch && typeof markerMatch.index === 'number') {
     textPart = raw.slice(0, markerMatch.index).trimEnd()
-    blocksPart = markerMatch[1].trim()
+    const after = raw.slice(markerMatch.index + markerMatch[0].length).trim()
+    blocksPart = extractJsonArraySlice(after) ?? (after.startsWith('[') ? after : null)
   } else {
     const fenceMatch = raw.match(/```tutor_blocks\s*([\s\S]*?)\s*```\s*$/i)
     if (fenceMatch && typeof fenceMatch.index === 'number') {
       const fenced = fenceMatch[1].trim()
-      if (fenced.startsWith('[')) {
+      const extracted = extractJsonArraySlice(fenced)
+      if (extracted) {
         textPart = raw.slice(0, fenceMatch.index).trimEnd()
-        blocksPart = fenced
+        blocksPart = extracted
       }
     }
   }
 
   const parsed = parseBlockArray(blocksPart)
+  // If we found a BLOCKS marker but could not parse, still strip a broken tail when possible
+  if (parsed.malformed && markerMatch && typeof markerMatch.index === 'number') {
+    textPart = raw.slice(0, markerMatch.index).trimEnd()
+  }
   return {
     text: cleanTutorDisplayText(textPart),
     rawBlocks: parsed.blocks,
-    malformedBlocks: parsed.malformed,
+    malformedBlocks: Boolean(blocksPart) && parsed.malformed,
   }
 }
 
@@ -182,7 +222,12 @@ export function validateTutorQueryResponsePayload(payload: unknown): TutorQueryR
   const safeBlocks: TutorBlock[] | undefined = data.blocks?.length
     ? sanitizeTutorBlocks(data.blocks)
     : undefined
-  return { ...data, blocks: safeBlocks }
+  const recordSudar = (payload as Record<string, unknown>).sudar_notes
+  const sudar_notes =
+    recordSudar && typeof recordSudar === 'object' && !Array.isArray(recordSudar)
+      ? (recordSudar as TutorQueryResponse['sudar_notes'])
+      : undefined
+  return { ...data, blocks: safeBlocks, ...(sudar_notes ? { sudar_notes } : {}) }
 }
 
 function pickTutorErrorMessage(record: Record<string, unknown>): string | undefined {
@@ -202,7 +247,17 @@ export function parseTutorQueryHttpResponse(text: string, status: number): Tutor
   }
 
   try {
-    return validateTutorQueryResponsePayload(JSON.parse(trimmed))
+    const parsed = validateTutorQueryResponsePayload(JSON.parse(trimmed))
+    // Preserve sudar_notes even when Zod strips unknown keys from the outer schema
+    try {
+      const raw = JSON.parse(trimmed) as Record<string, unknown>
+      if (raw.sudar_notes && typeof raw.sudar_notes === 'object' && !parsed.sudar_notes) {
+        return { ...parsed, sudar_notes: raw.sudar_notes as TutorQueryResponse['sudar_notes'] }
+      }
+    } catch {
+      // ignore
+    }
+    return parsed
   } catch {
     const looksHtml = trimmed.startsWith('<')
     return {

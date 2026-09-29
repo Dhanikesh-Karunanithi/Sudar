@@ -126,6 +126,14 @@ describe('parseTutorBlocksFromText', () => {
     expect(p.text).toBe('Here is the answer.')
     expect(p.rawBlocks).toHaveLength(1)
   })
+
+  it('extracts BLOCKS array even with trailing prose after the JSON', () => {
+    const raw =
+      'Lesson time.\nBLOCKS: [{"id":"c1","type":"concept_card","payload":{"title":"T","key_idea":"K"}}]\nThanks!'
+    const p = parseTutorBlocksFromText(raw)
+    expect(p.text).toContain('Lesson time')
+    expect(p.rawBlocks).toHaveLength(1)
+  })
 })
 
 describe('parseTutorModelOutput', () => {
@@ -176,6 +184,57 @@ describe('sanitizeTutorBlock', () => {
       payload: { component_id: 'arbitrary_hack' },
     })
     expect(b).toBeNull()
+  })
+
+  it('sanitizes lesson_html and strips scripts', () => {
+    const b = sanitizeTutorBlock({
+      id: 'l1',
+      type: 'lesson_html',
+      payload: {
+        title: 'Demo',
+        objective: 'Learn X',
+        duration_mins: 3,
+        try_this: 'Try Y',
+        html: '<h2>Hi</h2><p>Safe</p><script>alert(1)</script><a href="javascript:alert(1)">x</a>',
+      },
+    })
+    expect(b?.type).toBe('lesson_html')
+    const html = (b?.payload as { html: string }).html
+    expect(html).toContain('<h2>Hi</h2>')
+    expect(html).toContain('<p>Safe</p>')
+    expect(html.toLowerCase()).not.toContain('<script')
+    expect(html.toLowerCase()).not.toContain('javascript:')
+    expect((b?.payload as { duration_mins?: number }).duration_mins).toBe(3)
+  })
+
+  it('accepts youtube video_embed and rejects non-youtube', () => {
+    const ok = sanitizeTutorBlock({
+      id: 'v1',
+      type: 'video_embed',
+      payload: { title: 'Intro', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', why: 'Clear demo' },
+    })
+    expect(ok?.type).toBe('video_embed')
+    expect((ok?.payload as { embed_url: string }).embed_url).toContain('youtube.com/embed/')
+
+    const bad = sanitizeTutorBlock({
+      id: 'v2',
+      type: 'video_embed',
+      payload: { url: 'https://evil.example/video' },
+    })
+    expect(bad).toBeNull()
+  })
+
+  it('accepts https resource_card', () => {
+    const b = sanitizeTutorBlock({
+      id: 'r1',
+      type: 'resource_card',
+      payload: {
+        title: 'MDN',
+        url: 'https://developer.mozilla.org/',
+        why: 'Authoritative docs',
+      },
+    })
+    expect(b?.type).toBe('resource_card')
   })
 })
 

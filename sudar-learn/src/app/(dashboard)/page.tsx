@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = { title: 'Learn' }
-import { BookOpen, ArrowRight, GraduationCap, CheckCircle2, Flame, Clock, TrendingUp, Zap, Calendar, Route, Lock, ChevronRight, Activity } from 'lucide-react'
+import { BookOpen, ArrowRight, GraduationCap, CheckCircle2, Flame, Clock, TrendingUp, Zap, Calendar, Route, Lock, ChevronRight, Activity, NotebookPen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { loadLearnerAgentsAccess, learnerRunBlockedReason } from '@/lib/org/sudarAgentsAccess'
 import { resolveSudarAgentsLearnerPrefs } from '../../../../shared/sudarAgentsOrgSettings'
@@ -16,6 +16,7 @@ import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { QuestCard } from '@/components/features/gamification/QuestCard'
 import { AchievementShelf } from '@/components/features/gamification/AchievementShelf'
 import { ProfileCompletenessBar } from '@/components/features/gamification/ProfileCompletenessBar'
+import { isJourneyEnabled } from '@/lib/journey/isJourneyEnabled'
 
 function toLocalDateKey(d: Date): string {
   const y = d.getFullYear()
@@ -69,21 +70,11 @@ export default async function DashboardPage() {
     await admin.from('learner_profiles').insert({ user_id: user!.id })
   }
 
-  // Refresh next best action in background (non-blocking)
+  // Cookie/host for internal SSR fetches (e.g. agents week plan) — not used for NBA/twin spam
   const headersList = await headers()
   const cookieHeader = headersList.get('cookie') ?? ''
   const host = headersList.get('host') ?? 'localhost:3001'
   const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
-  fetch(`${protocol}://${host}/api/intelligence/next-action`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
-    body: JSON.stringify({ force: false }),
-  }).catch(() => {})
-  fetch(`${protocol}://${host}/api/learner/twin-rollup`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
-    body: JSON.stringify({ force: false }),
-  }).catch(() => {})
 
   const today = new Date().toISOString().slice(0, 10)
 
@@ -717,6 +708,28 @@ export default async function DashboardPage() {
           </BentoCard>
         )}
 
+        {/* SudarNotes entry — when journey experiment is enabled */}
+        {isJourneyEnabled() && (
+          <BentoCard padding="md" className="bg-accent/5 border-accent/20 flex items-start gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-accent/15 flex items-center justify-center shrink-0">
+              <NotebookPen className="w-5 h-5 text-accent" aria-hidden />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-card-foreground">Try SudarNotes</p>
+              <p className="text-muted-foreground text-xs mt-0.5">
+                Conversational learning with a living notebook — say what you want to learn, then teach with Sudar alongside your courses.
+              </p>
+            </div>
+            <Link
+              href="/journey"
+              className="text-xs font-medium text-accent hover:opacity-90 px-3 py-1.5 rounded-button hover:bg-accent/10 shrink-0"
+              aria-label="Open SudarNotes"
+            >
+              Open →
+            </Link>
+          </BentoCard>
+        )}
+
         {/* Sudar memory card */}
         {interactionCount > 0 && (
           <BentoCard padding="md" className="bg-primary/5 border-primary/20 flex items-start gap-4">
@@ -737,16 +750,20 @@ export default async function DashboardPage() {
           </BentoCard>
         )}
 
-        {/* Next best action — Sudar recommends */}
-        {nba?.course_id && (
+        {/* Next best action — Sudar recommends (course or Teaching OS claim) */}
+        {(nba?.course_id || nba?.teaching_os || nba?.claim_ids) && (
           <BentoCard padding="md" variant="elevated" className="rounded-5xl border-primary/20">
             <div className="flex items-start gap-4">
               <div className="w-11 h-11 rounded-2xl bg-primary flex items-center justify-center shadow-md shrink-0">
                 <Zap className="w-5 h-5 text-primary-foreground" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">Sudar recommends</p>
-                <p className="text-base font-bold text-card-foreground line-clamp-1">{nba.course_title as string}</p>
+                <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">
+                  {nba.teaching_os ? 'Next 15 minutes' : 'Sudar recommends'}
+                </p>
+                <p className="text-base font-bold text-card-foreground line-clamp-2">
+                  {(nba.title as string) || (nba.course_title as string) || 'Continue learning'}
+                </p>
                 <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{nba.reason as string}</p>
                 {nba.course_difficulty && (
                   <span className="inline-block mt-2 text-[11px] px-2 py-0.5 bg-primary/10 text-primary rounded-pill font-medium capitalize">
@@ -755,12 +772,21 @@ export default async function DashboardPage() {
                 )}
               </div>
             </div>
-            <Link
-              href={`/courses/${nba.course_id}`}
-              className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 bg-primary hover:opacity-90 text-primary-foreground text-sm font-semibold rounded-button transition-all"
-            >
-              <BookOpen className="w-4 h-4" /> Start this course <ArrowRight className="w-4 h-4" />
-            </Link>
+            {nba.course_id ? (
+              <Link
+                href={`/courses/${nba.course_id}`}
+                className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 bg-primary hover:opacity-90 text-primary-foreground text-sm font-semibold rounded-button transition-all"
+              >
+                <BookOpen className="w-4 h-4" /> Start this course <ArrowRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <Link
+                href="/memory"
+                className="mt-4 flex items-center justify-center gap-2 w-full py-2.5 bg-primary hover:opacity-90 text-primary-foreground text-sm font-semibold rounded-button transition-all"
+              >
+                Review in My Memory <ArrowRight className="w-4 h-4" />
+              </Link>
+            )}
           </BentoCard>
         )}
 

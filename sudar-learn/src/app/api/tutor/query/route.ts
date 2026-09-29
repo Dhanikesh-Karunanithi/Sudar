@@ -35,23 +35,63 @@ import { buildStruggleSignalsSummary } from '@/lib/learner/struggleSignals'
 import { loadSkillGapSummary, recordMasteredTopics, recordStruggleTopics } from '@/lib/learner/syncTopicSkills'
 import { parseTutorModelOutput } from '@/lib/tutor/responseContract'
 import { sanitizeTutorBlocks } from '@/lib/tutor/tutorBlockSanitize'
+import { ensureJourneyNotebookBlocks } from '@/lib/tutor/ensureJourneyNotebookBlocks'
+import { normalizeTutorDisplayText } from '@/lib/tutor/normalizeTutorDisplayText'
 import { runTutorInputGuardrail, type TutorGuardrailAiDeps } from '@/lib/tutor/runInputGuardrail'
+import { buildGuardrailSessionContext } from '@/lib/tutor/guardrailSessionContext'
 import { buildTutorUsageChatCtx } from '@/lib/tutor/tutorUsageContext'
 import { buildTutorActionAllowlists } from '@/lib/tutor/tutorActionAllowlists'
 import { loadExternalCourseContext } from '@/lib/external/externalCourseContext'
 import {
   detectsTutorResourceIntent,
+  detectsTutorVideoIntent,
   searchImagesForTutor,
   searchWebForTutor,
+  shouldAttachJourneyResources,
 } from '@/lib/tutor/webResources'
+import { searchYouTubeWatchUrlForTutor } from '@/lib/tutor/youtubeSearch'
 import { buildPlatformAiRuntime } from '../../../../../../shared/ai/orgAiPlatform'
 import { SUDAR_LEARN_PLATFORM_KNOWLEDGE } from '@/content/learnPlatformKnowledge.generated'
+import { isSudarNotesRoute, parseSudarNotesModelOutput } from '@/lib/sudarNotes/turnContract'
+import {
+  applySudarNotesTurnToSession,
+  buildSudarNotesTeachingBlock,
+  recommendSudarNotesMode,
+} from '@/lib/sudarNotes/turnEngine'
+import { buildPedagogyPromptBlock, runPedagogyEngine } from '@/lib/teaching/pedagogyEngine'
+import { claimsForModule, loadDomainGraph } from '@/lib/teaching/claimGraph'
+import { getLearningSession, updateLearningSessionState } from '@/lib/teaching/session'
+import { recordClaimEvidence } from '@/lib/teaching/mastery'
+import { sudarNotesToLearningState } from '@/lib/sudarNotes/teachingAdapter'
+import type { LearningClaim } from '@/types/teaching'
+import { noteOpsToTutorBlocks } from '@/types/journeyNotebook'
+import { emptySudarNotesSession, emptyWorkingMemory, type SudarNotesSessionState } from '@/types/sudarNotes'
 const GUARDRAIL_REFUSAL_MESSAGE = "I'm here to help with your courses and learning. I can't help with that. What would you like to learn today?"
 const SENSITIVE_DATA_REFUSAL_MESSAGE = (
   "I'm here to help with learning. I can't process payment card numbers, government ID numbers, bank details, or private keys in chat. Remove sensitive details and ask again."
 )
 const PLATFORM_CONTEXT_CATALOG_LIMIT = 25
 const MAX_TUTOR_MESSAGE_LENGTH = 2000
+const sudarNotesSessionSchema = z
+  .object({
+    mode: z.enum(['intake', 'socratic', 'teach', 'check', 'replan', 'note_craft']),
+    working_memory: z
+      .object({
+        goal: z.string().nullable(),
+        active_concept: z.string().nullable(),
+        open_questions: z.array(z.string()),
+        known: z.array(z.string()),
+        gaps: z.array(z.string()),
+      })
+      .optional(),
+    turns_since_check: z.number().int().min(0).max(100),
+    substantive_turn_count: z.number().int().min(0).max(500),
+    intake_complete: z.boolean(),
+    last_check_prompt: z.string().nullable().optional(),
+    next_hint: z.string().nullable().optional(),
+  })
+  .optional()
+
 const tutorQueryBodySchema = z.object({
   message: z.string().min(1).max(MAX_TUTOR_MESSAGE_LENGTH),
   course_id: z.string().uuid().optional(),
@@ -70,6 +110,12 @@ const tutorQueryBodySchema = z.object({
     .optional(),
   route: z.string().optional(),
   pedagogy_mode: z.enum(['explain', 'guide', 'exam_focus']).optional(),
+  /** SudarNotes pedagogical session state from the client. */
+  sudar_notes_session: sudarNotesSessionSchema,
+  /** Teaching OS session + domain (surface-agnostic). */
+  learning_session_id: z.string().uuid().optional(),
+  domain_id: z.string().uuid().optional(),
+  claim_ids: z.array(z.string().uuid()).max(20).optional(),
 })
 
 type TutorAiDeps = TutorGuardrailAiDeps
@@ -168,20 +214,67 @@ function isTutorWebEnrichmentEnabled(org: OrgAiCompliance): boolean {
 }
 
 /**
- * When org/env allows and the learner’s message asks for web/images, attach cited resource cards.
+ * When org/env allows, attach verified YouTube + web resource cards (never invented URLs).
+ * SudarNotes / Journey: only on explicit resource/video ask (no soft teach triggers).
+ * Prefer session goal + active concept over polluted notebook titles.
  */
 async function buildTutorResourceBlocks(
   org: OrgAiCompliance,
   userMessage: string,
   courseTitle: string,
   moduleTitle: string,
+  opts?: { isJourney?: boolean; topicHint?: string },
 ): Promise<TutorBlock[]> {
   if (!isTutorWebEnrichmentEnabled(org)) return []
-  if (!detectsTutorResourceIntent(userMessage)) return []
-  const q = [moduleTitle, courseTitle, userMessage].filter(Boolean).join(' ').trim().slice(0, 200)
+  const isJourney = opts?.isJourney === true
+  const wantsVideo = detectsTutorVideoIntent(userMessage)
+  const wantsResources = detectsTutorResourceIntent(userMessage)
+  const journeyExplicit = isJourney && shouldAttachJourneyResources(userMessage)
+  if (!wantsVideo && !wantsResources && !journeyExplicit) return []
+  if (isJourney && !journeyExplicit) return []
+
+  const hint = (opts?.topicHint ?? '').trim()
+  const topicParts = [hint, moduleTitle, courseTitle].filter(Boolean)
+  const topicQ = topicParts.join(' ').trim()
+  const q = topicQ.length >= 4
+    ? topicQ.slice(0, 200)
+    : [topicQ, userMessage].filter(Boolean).join(' ').trim().slice(0, 200)
   if (q.length < 4) return []
-  const [web, images] = await Promise.all([searchWebForTutor(q, 1), searchImagesForTutor(q, 1)])
+
+  const searchVideo = wantsVideo || (isJourney && detectsTutorVideoIntent(userMessage))
+  const searchWeb = wantsResources || (isJourney && detectsTutorResourceIntent(userMessage))
+  const searchImages = wantsResources && !isJourney
+
+  const [web, images, youtube] = await Promise.all([
+    searchWeb ? searchWebForTutor(q, isJourney ? 2 : 1) : Promise.resolve([]),
+    searchImages ? searchImagesForTutor(q, 1) : Promise.resolve([]),
+    searchVideo ? searchYouTubeWatchUrlForTutor(q, 4) : Promise.resolve(null),
+  ])
+
   const raw: TutorBlock[] = []
+  if (youtube) {
+    raw.push({
+      id: 'tutor-res-youtube',
+      type: 'video_embed',
+      payload: {
+        title: youtube.title.slice(0, 200),
+        url: youtube.url,
+        why: 'Verified search result — watch to reinforce this lesson.',
+      },
+    })
+  }
+  for (const [i, hit] of web.slice(0, isJourney ? 2 : 1).entries()) {
+    raw.push({
+      id: `tutor-res-web-${i}`,
+      type: 'resource_card',
+      payload: {
+        title: hit.title.slice(0, 200) || 'Further reading',
+        url: hit.link,
+        source_label: 'Web search',
+        why: hit.snippet.slice(0, 400) || 'Cross-check with what Sudar taught you.',
+      },
+    })
+  }
   if (images[0]) {
     raw.push({
       id: 'tutor-res-image',
@@ -193,19 +286,6 @@ async function buildTutorResourceBlocks(
         snippet: images[0].alt,
         attribution: images[0].attribution,
         source_label: 'Image search (verify with your course)',
-      },
-    })
-  }
-  if (web[0]) {
-    raw.push({
-      id: 'tutor-res-web',
-      type: 'media_card',
-      payload: {
-        title: web[0].title.slice(0, 200),
-        snippet: web[0].snippet,
-        link_url: web[0].link,
-        source_label: 'Web result',
-        attribution: 'Cross-check with your module; web results may be incomplete.',
       },
     })
   }
@@ -355,6 +435,10 @@ export async function POST(request: NextRequest) {
       available_modalities,
       route: routeParam,
       pedagogy_mode: pedagogyParam,
+      sudar_notes_session: sudarNotesSessionRaw,
+      learning_session_id: learningSessionIdRaw,
+      domain_id: domainIdRaw,
+      claim_ids: claimIdsRaw,
     } = body
 
     if (course_id) {
@@ -427,6 +511,12 @@ export async function POST(request: NextRequest) {
 
     const usage = await checkAndIncrementUsage(admin, user.id, 'tutor')
     if (!usage.allowed) {
+      if (usage.reason === 'metering_unavailable') {
+        return NextResponse.json(
+          { error: 'Usage metering temporarily unavailable. Please try again shortly.' },
+          { status: 503 }
+        )
+      }
       return NextResponse.json(
         { error: `Daily tutor request limit (${usage.limit}) reached. Try again tomorrow.` },
         { status: 429 }
@@ -458,7 +548,12 @@ export async function POST(request: NextRequest) {
       .slice(0, MAX_TUTOR_MESSAGE_LENGTH)
 
     // ── Input guardrail: refuse off-topic / harmful requests ─────────────────
-    const guardrail = await runTutorInputGuardrail(message, aiDeps)
+    // Pass a short digest of recent turns so continuations like "plan it for me"
+    // are not refused mid-lesson (digest is truncated; not a full-history bypass).
+    const sessionContext = buildGuardrailSessionContext(
+      Array.isArray(conversation_history) ? conversation_history : undefined,
+    )
+    const guardrail = await runTutorInputGuardrail(message, aiDeps, { sessionContext })
     if (!guardrail.pass) {
       return NextResponse.json(
         { response: GUARDRAIL_REFUSAL_MESSAGE, guardrail_refused: true },
@@ -860,6 +955,87 @@ ${modalityLines.map((l) => `- ${l}`).join('\n')}
 When the learner asks how to switch modality or where to find one, refer to the platform navigation guide above.`
   }
 
+  const isJourneyRoute = isSudarNotesRoute(
+    typeof routeParam === 'string' ? routeParam : undefined,
+  )
+
+  const sudarNotesSession: SudarNotesSessionState = (() => {
+    if (!isJourneyRoute) return emptySudarNotesSession()
+    if (!sudarNotesSessionRaw) return emptySudarNotesSession()
+    return {
+      mode: sudarNotesSessionRaw.mode,
+      working_memory: {
+        ...emptyWorkingMemory(),
+        ...(sudarNotesSessionRaw.working_memory ?? {}),
+      },
+      turns_since_check: sudarNotesSessionRaw.turns_since_check,
+      substantive_turn_count: sudarNotesSessionRaw.substantive_turn_count,
+      intake_complete: sudarNotesSessionRaw.intake_complete,
+      last_check_prompt: sudarNotesSessionRaw.last_check_prompt ?? null,
+      next_hint: sudarNotesSessionRaw.next_hint ?? null,
+    }
+  })()
+
+  const recommendedSudarNotesMode = isJourneyRoute
+    ? recommendSudarNotesMode(sudarNotesSession, rawMessage)
+    : 'teach'
+
+  let teachingClaims: LearningClaim[] = []
+  if (module_id) {
+    try {
+      teachingClaims = await claimsForModule(admin, module_id)
+    } catch {
+      teachingClaims = []
+    }
+  }
+  if (!teachingClaims.length && domainIdRaw) {
+    try {
+      const graph = await loadDomainGraph(admin, domainIdRaw)
+      teachingClaims = graph?.claims.slice(0, 12) ?? []
+    } catch {
+      teachingClaims = []
+    }
+  }
+  if (claimIdsRaw?.length && teachingClaims.length) {
+    const want = new Set(claimIdsRaw)
+    teachingClaims = teachingClaims.filter((c) => want.has(c.id))
+  }
+
+  const learningSessionRow = learningSessionIdRaw
+    ? await getLearningSession(admin, learningSessionIdRaw, user.id)
+    : null
+
+  const pedagogyLearningState = learningSessionRow
+    ? learningSessionRow.state
+    : sudarNotesToLearningState(sudarNotesSession)
+
+  if (teachingClaims[0] && !pedagogyLearningState.active_claim_ids.length) {
+    pedagogyLearningState.active_claim_ids = [teachingClaims[0].id]
+  }
+
+  const pedagogyOut = runPedagogyEngine({
+    twin: (memory ?? {}) as Record<string, unknown>,
+    session: pedagogyLearningState,
+    active_claims: teachingClaims,
+    user_message: rawMessage,
+  })
+
+  const teachingOsBlock =
+    teachingClaims.length || isJourneyRoute || learningSessionRow
+      ? `\n${buildPedagogyPromptBlock({
+          mode: pedagogyOut.mode,
+          output: pedagogyOut,
+          claims: teachingClaims,
+        })}\n`
+      : ''
+
+  const journeyTeachingBlock = isJourneyRoute
+    ? buildSudarNotesTeachingBlock({
+        session: sudarNotesSession,
+        recommendedMode: recommendedSudarNotesMode,
+      }) + teachingOsBlock
+    : teachingOsBlock
+
   const systemPrompt = `You are **Sudar**, the AI learning tutor built into Sudar Learn. Your name is Sudar — always.
 When asked "who are you?", "what is your name?", "what are you?", or any similar identity question, always respond: "I'm **Sudar**, your AI learning tutor on Sudar Learn. I'm here to help you learn, recommend courses, track your progress, and answer any questions about your studies."
 Never say you don't have a name. Never refuse to introduce yourself. Identity questions are always welcome.
@@ -879,6 +1055,7 @@ ${
       ? `- **Exam / quick recall mode**: Be dense and minimal. Lead with the facts. Avoid long narrative and optional interactive BLOCKS unless the learner asks for depth.`
       : `- **Explain mode**: When they ask a concrete question, start with the direct answer, then explain with structure and examples.`
 }
+${journeyTeachingBlock}
 
 Formatting & Engagement (always apply):
 - Use **bold** for key terms, *italic* for emphasis or analogies, and \`code\` for technical snippets.
@@ -887,8 +1064,7 @@ Formatting & Engagement (always apply):
 - Use relatable real-world analogies and concrete examples — make abstract ideas tangible.
 - ${effectiveMode === 'exam_focus' ? 'Skip lengthy follow-up nudges unless the learner asks for more.' : 'For longer explanations, end with a short follow-up nudge like "Want me to go deeper on any part?" or a quick question to check understanding.'}
 - When the question is vague, offers multiple valid angles, or you want to match the learner's style, you may add tap-to-continue **choice_group** options via the BLOCKS line below. Keep labels short. Do not repeat your full answer inside BLOCKS.${effectiveMode === 'exam_focus' ? ' Omit choice_group in this mode unless clearly useful.' : ''}
-- Optional **BLOCKS** (place after your answer; before ACTIONS when you use both). One line: BLOCKS: followed by a JSON array of objects with "id", "type", "payload". Valid types: **choice_group** (payload: question optional, choices: [{id, label, follow_up_message}]), **concept_card** (title, key_idea, analogy?, misconception?), **diagram** (title?, nodes: [{id, label}], edges?: [{from, to, label?}]), **timeline** (title?, items: [{id, title, description?}]), **media_card** (title, snippet?, image_url?, link_url?, only use URLs you are confident are safe https links), **interactive_demo** (component_id: molecule_viewer|cell_model|physics_demo|placeholder, label?, params object). Do not invent file URLs. Example:
-BLOCKS: [{"id":"c1","type":"choice_group","payload":{"question":"How should we continue?","choices":[{"id":"a","label":"Use a simple analogy","follow_up_message":"Explain using a simple analogy."},{"id":"b","label":"Step-by-step","follow_up_message":"Walk me through step by step."}]}}]
+- ${isJourneyRoute ? 'On SudarNotes: prefer SUDAR_NOTES note_ops over lesson_html dumps. Optional BLOCKS for choice_group only. Never invent video/resource URLs.' : 'Optional **BLOCKS** (place after your answer; before ACTIONS when you use both). One line: BLOCKS: followed by a JSON array of objects with "id", "type", "payload". Valid types: **lesson_html** (title?, objective?, duration_mins?, try_this?, html), **video_embed** (title?, url or video_id, why? — YouTube only, never invent ids), **resource_card** (title, url https, source_label?, why?), **choice_group** (question optional, choices: [{id, label, follow_up_message}]), **concept_card** (title, key_idea, analogy?, misconception?), **diagram** (title?, nodes: [{id, label}], edges?: [{from, to, label?}]), **timeline** (title?, items: [{id, title, description?}]), **media_card** (title, snippet?, image_url?, link_url?, only safe https), **interactive_demo** (component_id: molecule_viewer|cell_model|physics_demo|placeholder, label?, params). Do not invent file URLs. Example:\nBLOCKS: [{"id":"c1","type":"choice_group","payload":{"question":"How should we continue?","choices":[{"id":"a","label":"Use a simple analogy","follow_up_message":"Explain using a simple analogy."},{"id":"b","label":"Step-by-step","follow_up_message":"Walk me through step by step."}]}}]'}
 - Never dump a wall of prose. Even short answers should be well-structured and easy to skim.
 
 Reasoning: When answering, think step by step (what did they ask → what context is relevant → best answer/action). Use the course content and learner context below to personalize every response.
@@ -916,15 +1092,39 @@ How to personalize:
 - Never skip foundational content — personalize HOW you explain it, not WHETHER`
 
   // ── 4. Build message history ───────────────────────────────────────────
-  // Future: multi-turn tool loop — LLM returns tool_calls (e.g. search_courses, get_learner_context);
-  // server runs tools, appends results to messages, re-calls LLM until final answer.
+  // Journey needs a longer window so multi-step mini-lessons stay coherent.
+  const historyWindow = isJourneyRoute ? 20 : 8
+  const historyTurns = (Array.isArray(conversation_history) ? conversation_history : [])
+    .slice(-historyWindow)
+    .map((m: { role?: string; content?: string }) => {
+      const role = m.role === 'assistant' ? 'assistant' : 'user'
+      const content = String(m.content ?? '').trim()
+      return content ? { role, content: content.slice(0, 4000) } : null
+    })
+    .filter((m): m is { role: string; content: string } => m != null)
+
+  const continuityHint =
+    isJourneyRoute && historyTurns.length > 0
+      ? `\n\nSession continuity: There are ${historyTurns.length} prior turns. Continue the same learning thread. Do not restart with a fresh greeting or "what would you like to learn today?" unless the learner clearly changed topics.`
+      : ''
+
   const messages = [
-    { role: 'system', content: systemPrompt },
-    ...(Array.isArray(conversation_history) ? conversation_history.slice(-8) : []).map((m: { role?: string; content?: string }) => ({ role: m.role ?? 'user', content: String(m.content ?? '') })),
+    { role: 'system', content: systemPrompt + continuityHint },
+    ...historyTurns,
     { role: 'user', content: message },
   ]
 
-  const maxTokens = preferredResponseLength === 'one_line' ? 150 : preferredResponseLength === 'detailed' ? 1400 : 600
+  const maxTokens = isJourneyRoute
+    ? preferredResponseLength === 'one_line'
+      ? 400
+      : preferredResponseLength === 'detailed'
+        ? 2200
+        : 1400
+    : preferredResponseLength === 'one_line'
+      ? 150
+      : preferredResponseLength === 'detailed'
+        ? 1400
+        : 600
 
   let aiResponse: string
   try {
@@ -938,11 +1138,130 @@ How to personalize:
     )
   }
 
-  // ── Parse and validate ACTIONS + optional BLOCKS from response (output guardrails) ──
-  const modelOut = parseTutorModelOutput(aiResponse)
-  let responseText = modelOut.text
+  // ── Parse SUDAR_NOTES (Journey) then ACTIONS + optional BLOCKS ───────────
+  const notesParse = isJourneyRoute ? parseSudarNotesModelOutput(aiResponse) : null
+  const forBlocksActions = isJourneyRoute
+    ? aiResponse.replace(/\n?SUDAR_NOTES:\s*\{[\s\S]*$/i, '\n').trim()
+    : aiResponse
+  const modelOut = parseTutorModelOutput(forBlocksActions)
+  let responseText = notesParse?.chatMarkdown?.trim()
+    ? notesParse.chatMarkdown
+    : modelOut.text
   const rawActions = modelOut.rawActions
-  const modelBlocksFromParse = sanitizeTutorBlocks(modelOut.rawBlocks).filter((b) => b.type !== 'text')
+  let modelBlocksFromParse = sanitizeTutorBlocks(modelOut.rawBlocks).filter((b) => b.type !== 'text')
+
+  let sudarNotesTurn = notesParse?.turn ?? null
+  if (isJourneyRoute && recommendedSudarNotesMode === 'check' && !sudarNotesTurn?.check?.prompt) {
+    // Soft repair: ensure a check prompt exists when cadence demanded it
+    sudarNotesTurn = {
+      mode: 'check',
+      working_memory_patch: sudarNotesTurn?.working_memory_patch ?? null,
+      note_ops: sudarNotesTurn?.note_ops ?? [],
+      check: {
+        type: 'explain_back',
+        prompt:
+          sudarNotesSession.working_memory.active_concept
+            ? `In one sentence, explain “${sudarNotesSession.working_memory.active_concept}” in your own words.`
+            : 'In one sentence, what is the main idea we just covered?',
+      },
+      next_hint: sudarNotesTurn?.next_hint ?? null,
+    }
+    if (!responseText.includes('?')) {
+      responseText = `${responseText.trim()}\n\n${sudarNotesTurn.check.prompt}`.trim()
+    }
+  }
+
+  if (isJourneyRoute && sudarNotesTurn?.note_ops?.length) {
+    const fromOps = noteOpsToTutorBlocks(sudarNotesTurn.note_ops)
+    modelBlocksFromParse = [...modelBlocksFromParse, ...fromOps]
+  }
+
+  if (isJourneyRoute && sudarNotesTurn?.check?.prompt) {
+    modelBlocksFromParse.push({
+      id: `check-${Date.now().toString(36)}`,
+      type: 'choice_group',
+      payload: {
+        question: sudarNotesTurn.check.prompt,
+        choices: [
+          {
+            id: 'try',
+            label: 'I will answer in chat',
+            follow_up_message: `Here is my answer to: ${sudarNotesTurn.check.prompt}`,
+          },
+          {
+            id: 'hint',
+            label: 'Give me a hint first',
+            follow_up_message: `Give me a short hint for: ${sudarNotesTurn.check.prompt}`,
+          },
+        ],
+      },
+    })
+  }
+
+  const updatedSudarNotesSession = isJourneyRoute
+    ? applySudarNotesTurnToSession(sudarNotesSession, sudarNotesTurn, {
+        forcedMode: recommendedSudarNotesMode,
+        hadSoftCheck: Boolean(sudarNotesTurn?.check?.prompt) || recommendedSudarNotesMode === 'check',
+      })
+    : sudarNotesSession
+
+  if (learningSessionRow && pedagogyOut.session_patch) {
+    try {
+      await updateLearningSessionState(admin, learningSessionRow.id, user.id, pedagogyOut.session_patch)
+    } catch (e) {
+      console.error('[tutor] learning_session update error:', e)
+    }
+  }
+  const checkClaimIds =
+    pedagogyOut.check_spec?.claim_ids?.length
+      ? pedagogyOut.check_spec.claim_ids
+      : sudarNotesTurn?.check?.prompt && teachingClaims[0]
+        ? [teachingClaims[0].id]
+        : []
+  if (checkClaimIds.length && (isJourneyRoute || learningSessionRow || teachingClaims.length)) {
+    for (const claimId of checkClaimIds) {
+      try {
+        await recordClaimEvidence(admin, {
+          userId: user.id,
+          claimId,
+          evidence_type: pedagogyOut.check_spec?.type ?? 'explain_back',
+          correct: null,
+          score: 0.55,
+          courseId: course_id ?? null,
+          moduleId: module_id ?? null,
+          modality: isJourneyRoute ? 'conversational' : 'text',
+        })
+      } catch (e) {
+        console.error('[tutor] claim mastery error:', e)
+      }
+    }
+  }
+
+  // Recovery: models sometimes emit only BLOCKS (empty chat body) or strip everything.
+  if (!responseText.trim()) {
+    const lesson = modelBlocksFromParse.find((b) => b.type === 'lesson_html')
+    const title =
+      lesson && typeof lesson.payload.title === 'string' ? lesson.payload.title.trim() : ''
+    if (title) {
+      responseText = `Here's **${title}** — I suggested it for your notebook so you can accept and revisit it.`
+    } else if (modelBlocksFromParse.length > 0) {
+      responseText =
+        'Here is the next step. I suggested details for your notebook — accept what you want to keep.'
+    } else {
+      const fallback = aiResponse
+        .replace(/\n?SUDAR_NOTES:\s*[\s\S]*$/i, '')
+        .replace(/\n?BLOCKS:\s*[\s\S]*$/i, '')
+        .replace(/\n?ACTIONS:\s*[\s\S]*$/i, '')
+        .trim()
+      responseText =
+        fallback.slice(0, 2000) ||
+        'I had trouble formatting that answer. Please ask again and I will retry.'
+    }
+  }
+
+  if (notesParse?.malformed) {
+    responseText = `${responseText}\n\n_(I had trouble updating your notebook structure — your chat answer is still above.)_`
+  }
 
   if (orgAiCompliance.tutor_redact_echoed_secrets !== false) {
     responseText = redactEchoedSensitiveDigits(responseText)
@@ -951,27 +1270,36 @@ How to personalize:
     responseText = applyStrictOutputRedaction(responseText)
   }
   const actions = validateActions(rawActions, allowedCourseIds, allowedPathIds, enrollmentByCourseId)
-  if (!responseText) {
-    responseText = 'I had trouble formatting that answer. Please ask again and I will retry.'
-  }
-  if (modelOut.malformedBlocks && /\nBLOCKS:\s*/i.test(aiResponse)) {
+
+  if (modelOut.malformedBlocks && /(?:\n|^)\s*BLOCKS:\s*/i.test(aiResponse)) {
     responseText = `${responseText}\n\nI could not parse structured learning cards for that answer. Try asking again, or request a specific format.`
   }
   if (modelOut.malformedActions && actions.length === 0) {
     responseText = `${responseText}\n\nI could not generate quick action buttons for that response yet.`
   }
 
-  // ── 5. Save interaction (non-blocking; don't fail the request) ───────────
-  if (course_id) {
+  // Normalize leaked HTML in chat prose (all routes)
+  responseText = normalizeTutorDisplayText(responseText)
+
+  // ── 5. Save interaction (course-bound OR SudarNotes without course_id) ───
+  const persistTutorTelemetry = Boolean(course_id) || isJourneyRoute
+  if (persistTutorTelemetry) {
     try {
       await admin.from('ai_interactions').insert({
         user_id: user.id,
-        course_id,
+        course_id: course_id ?? null,
         module_id: module_id ?? null,
         interaction_type: 'question',
         user_message: message,
         ai_response: responseText,
-        context_used: { module_id, course_title: courseTitle, memory_used: !!memory },
+        context_used: {
+          module_id,
+          course_title: courseTitle,
+          memory_used: !!memory,
+          surface: isJourneyRoute ? 'sudar_notes' : 'course',
+          route: typeof routeParam === 'string' ? routeParam : null,
+          sudar_notes_mode: isJourneyRoute ? updatedSudarNotesSession.mode : null,
+        },
       })
     } catch (e) {
       console.error('[tutor] ai_interactions insert error:', e)
@@ -979,10 +1307,17 @@ How to personalize:
     try {
       await admin.from('learning_events').insert({
         user_id: user.id,
-        course_id,
+        course_id: course_id ?? null,
         module_id: module_id ?? null,
         event_type: 'ai_tutor_query',
-        modality: 'text',
+        modality: isJourneyRoute ? 'conversational' : 'text',
+        payload: isJourneyRoute
+          ? {
+              surface: 'sudar_notes',
+              mode: updatedSudarNotesSession.mode,
+              had_check: Boolean(sudarNotesTurn?.check?.prompt),
+            }
+          : null,
       })
     } catch (e) {
       console.error('[tutor] learning_events insert error:', e)
@@ -990,15 +1325,16 @@ How to personalize:
     try {
       await admin.from('learning_events').insert({
         user_id: user.id,
-        course_id,
+        course_id: course_id ?? null,
         module_id: module_id ?? null,
         event_type: routing.fallback_used ? 'ai_runtime_fallback' : 'ai_runtime_route',
-        modality: 'text',
+        modality: isJourneyRoute ? 'conversational' : 'text',
         payload: {
           decision: routing.decision,
           provider_id: routing.provider_id,
           model: routing.model,
           fallback_reason: routing.fallback_reason ?? null,
+          surface: isJourneyRoute ? 'sudar_notes' : 'course',
         },
       })
     } catch (e) {
@@ -1019,16 +1355,43 @@ How to personalize:
     orgPolicy: memPolicy,
     lastExtractionAt: lastMemLlmAt,
   })
+  // Soft checks always leave a Twin breadcrumb (no quiz vibes; invisible signal).
+  if (isJourneyRoute && sudarNotesTurn?.check?.prompt) {
+    patchSudarNotesSoftCheckMemory(user.id, admin, {
+      checkPrompt: sudarNotesTurn.check.prompt,
+      checkType: sudarNotesTurn.check.type,
+      goal: updatedSudarNotesSession.working_memory.goal,
+      activeConcept: updatedSudarNotesSession.working_memory.active_concept,
+    }).catch(() => {})
+  }
   if (runMemLlm) {
-    updateLearnerMemory(user.id, message, responseText, admin, aiDeps).catch(() => {})
+    const memResponse =
+      isJourneyRoute && sudarNotesTurn?.check?.prompt
+        ? `${responseText}\n\n[Soft check posed: ${sudarNotesTurn.check.type} — ${sudarNotesTurn.check.prompt}]`
+        : responseText
+    updateLearnerMemory(user.id, message, memResponse, admin, aiDeps).catch(() => {})
   }
 
   // ── 7. Optional web/image resource cards (org + env gated) ─────────────
-  const resourceBlocks = await buildTutorResourceBlocks(orgAiCompliance, message, courseTitle, currentModuleTitle)
+  const topicHint = isJourneyRoute
+    ? [
+        updatedSudarNotesSession.working_memory.goal,
+        updatedSudarNotesSession.working_memory.active_concept,
+      ]
+        .filter(Boolean)
+        .join(' ')
+    : ''
+  const resourceBlocks = await buildTutorResourceBlocks(
+    orgAiCompliance,
+    message,
+    courseTitle,
+    currentModuleTitle,
+    { isJourney: isJourneyRoute, topicHint },
+  )
 
-  // ── 8. Quiz block (if quiz intent detected) ───────────────────────────
+  // ── 8. Quiz block (if quiz intent detected; skip on SudarNotes soft-check path) ─
   let quizBlock: { id: string; type: 'quiz'; payload: Record<string, unknown> } | null = null
-  if (detectsQuizIntent(message)) {
+  if (!isJourneyRoute && detectsQuizIntent(message)) {
     const conversationContext = Array.isArray(conversation_history)
       ? conversation_history.slice(-4).map((m: { content?: string }) => String(m.content ?? '')).join(' ')
       : ''
@@ -1050,11 +1413,39 @@ How to personalize:
   }
   if (quizBlock) blocks.push(quizBlock)
 
+  let finalResponse = responseText
+  let finalBlocks = blocks
+  if (isJourneyRoute) {
+    const proseForNotebook = responseText
+    const ensured = ensureJourneyNotebookBlocks(
+      proseForNotebook,
+      blocks.filter((b) => b.type !== 'text'),
+      { allowAutoLesson: false },
+    )
+    finalResponse = ensured.responseText
+    const nonText = ensured.blocks.filter((b) => b.type !== 'text')
+    finalBlocks = [{ id: 'text-1', type: 'text', payload: { content: finalResponse } }, ...nonText]
+  }
+
   return NextResponse.json({
-    response: responseText,
+    response: finalResponse,
     ...(actions.length > 0 ? { actions } : {}),
-    blocks,
+    blocks: finalBlocks,
     routing,
+    teaching_os: {
+      mode: pedagogyOut.mode,
+      claim_ids: pedagogyOut.session_patch.active_claim_ids ?? [],
+      learning_session_id: learningSessionRow?.id ?? learningSessionIdRaw ?? null,
+      check: pedagogyOut.check_spec,
+    },
+    ...(isJourneyRoute
+      ? {
+          sudar_notes: {
+            turn: sudarNotesTurn,
+            session: updatedSudarNotesSession,
+          },
+        }
+      : {}),
   })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
@@ -1064,6 +1455,58 @@ How to personalize:
       { status: 500 }
     )
   }
+}
+
+/**
+ * Invisible Twin breadcrumb for SudarNotes soft checks (no quiz vibes).
+ */
+async function patchSudarNotesSoftCheckMemory(
+  userId: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any,
+  args: {
+    checkPrompt: string
+    checkType: string
+    goal: string | null
+    activeConcept: string | null
+  },
+) {
+  const { data: profile } = await admin
+    .from('learner_profiles')
+    .select('ai_tutor_context')
+    .eq('user_id', userId)
+    .single()
+  const existing = (profile?.ai_tutor_context as Record<string, unknown>) ?? {}
+  const gaps = Array.isArray(existing.struggles_with)
+    ? [...(existing.struggles_with as string[])]
+    : []
+  const concept = args.activeConcept?.trim()
+  if (concept && !gaps.includes(concept)) {
+    // Pending check on a concept — track as soft focus until mastery extract upgrades it.
+    gaps.push(`checking:${concept}`)
+  }
+  const goals = Array.isArray(existing.learning_goals)
+    ? [...(existing.learning_goals as string[])]
+    : []
+  if (args.goal?.trim() && !goals.includes(args.goal.trim())) {
+    goals.push(args.goal.trim())
+  }
+  await admin
+    .from('learner_profiles')
+    .update({
+      ai_tutor_context: {
+        ...existing,
+        struggles_with: gaps.slice(-10),
+        learning_goals: goals.slice(-10),
+        last_soft_check: {
+          type: args.checkType,
+          prompt: args.checkPrompt.slice(0, 400),
+          at: new Date().toISOString(),
+        },
+        last_updated: new Date().toISOString(),
+      },
+    })
+    .eq('user_id', userId)
 }
 
 /**

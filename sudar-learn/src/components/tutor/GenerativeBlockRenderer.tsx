@@ -11,6 +11,9 @@ import type {
   TimelineBlockPayload,
   MediaCardBlockPayload,
   InteractiveDemoBlockPayload,
+  LessonHtmlBlockPayload,
+  VideoEmbedBlockPayload,
+  ResourceCardBlockPayload,
 } from '@/types/tutor'
 import type { QuizBlockPayload, QuizOption } from '@/types/tutor'
 import { TUTOR_BLOCK_TYPES } from '@/types/tutor'
@@ -18,6 +21,8 @@ import { ExternalLink, CheckCircle2, XCircle, RefreshCw, Trophy, Brain, Sparkles
 import { SudarInlineLoader } from '@/components/branding/SudarBrandLoader'
 import { cn } from '@/lib/utils'
 import { ChatMarkdown } from './ChatMarkdown'
+import { youtubeWatchUrlFromEmbed } from '@/lib/tutor/youtubeEmbed'
+import { normalizeTutorDisplayText } from '@/lib/tutor/normalizeTutorDisplayText'
 
 function isSafeHref(href: string): boolean {
   if (href.startsWith('/')) return true
@@ -31,7 +36,170 @@ function isSafeImageUrl(url: string | undefined): boolean {
 
 function TextBlock({ payload }: { payload: Record<string, unknown> }) {
   const content = (payload.content as string) ?? ''
-  return <div className="text-sm">{content.trim() ? <ChatMarkdown text={content} /> : null}</div>
+  const normalized = normalizeTutorDisplayText(content)
+  return <div className="text-sm">{normalized.trim() ? <ChatMarkdown text={normalized} /> : null}</div>
+}
+
+function LessonHtmlBlock({
+  payload,
+  onLessonAction,
+}: {
+  payload: Record<string, unknown>
+  onLessonAction?: (prompt: string) => void
+}) {
+  const p = payload as LessonHtmlBlockPayload
+  const title = p.title
+  const html = p.html
+  const objective = p.objective
+  const durationMins = p.duration_mins
+  const tryThis = p.try_this
+  if (!html?.trim()) return null
+  const topic = title?.trim() || 'this lesson'
+  return (
+    <article className="journey-lesson mt-2 overflow-hidden rounded-[2px] border border-border bg-card">
+      <header className="space-y-2 border-b border-border px-4 py-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="journey-mono text-[10px] text-muted-foreground">
+            {typeof durationMins === 'number' ? `Lesson · ${durationMins} min` : 'Lesson'}
+          </span>
+        </div>
+        {title ? (
+          <h3 className="text-[17px] font-medium text-card-foreground">{title}</h3>
+        ) : null}
+        {objective ? (
+          <p className="journey-lesson-objective text-sm leading-relaxed">{objective}</p>
+        ) : null}
+      </header>
+      <div
+        className="lesson-html max-w-none space-y-2 px-4 py-3 text-sm leading-relaxed text-card-foreground
+          [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold
+          [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5
+          [&_a]:text-primary [&_a]:underline [&_code]:rounded-[2px] [&_code]:bg-muted [&_code]:px-1
+          [&_pre]:overflow-x-auto [&_pre]:rounded-[2px] [&_pre]:bg-muted [&_pre]:p-3
+          [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1
+          [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1"
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+      {tryThis ? (
+        <div className="border-t border-border px-4 py-3">
+          <p className="journey-mono text-[10px] text-muted-foreground">Try this</p>
+          <p className="mt-1 text-sm text-card-foreground">{tryThis}</p>
+        </div>
+      ) : null}
+      {onLessonAction ? (
+        <div
+          className="flex flex-wrap gap-2 border-t border-border px-3 py-3"
+          data-notebook-no-select
+        >
+          <button
+            type="button"
+            onClick={() =>
+              onLessonAction(
+                tryThis
+                  ? `I am working on: "${tryThis}". Check my understanding of ${topic} and help if I am stuck.`
+                  : `Quiz me lightly on ${topic} to check I understood.`,
+              )
+            }
+            className="inline-flex items-center gap-1 rounded-[2px] border border-border px-2.5 py-1.5 text-[11px] font-medium text-card-foreground journey-action-btn"
+          >
+            Check with Sudar
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onLessonAction(
+                `Explain ${topic} more simply with a beginner analogy, then one tiny practice step.`,
+              )
+            }
+            className="inline-flex items-center gap-1 rounded-[2px] border border-border px-2.5 py-1.5 text-[11px] font-medium text-card-foreground journey-action-btn"
+          >
+            Go deeper
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onLessonAction(
+                `Find a short YouTube explainer and one good article about ${topic}. Put them in my notebook.`,
+              )
+            }
+            className="inline-flex items-center gap-1 rounded-[2px] border border-border px-2.5 py-1.5 text-[11px] font-medium text-card-foreground journey-action-btn"
+          >
+            Find video & reading
+          </button>
+        </div>
+      ) : null}
+    </article>
+  )
+}
+
+function VideoEmbedBlock({ payload }: { payload: Record<string, unknown> }) {
+  const title = (payload as VideoEmbedBlockPayload & { embed_url?: string }).title
+  const why = (payload as VideoEmbedBlockPayload).why
+  const embedUrl = (payload as { embed_url?: string }).embed_url
+  if (!embedUrl || !/^https:\/\/www\.youtube\.com\/embed\//i.test(embedUrl)) return null
+  const watchUrl = youtubeWatchUrlFromEmbed(embedUrl)
+  return (
+    <article className="journey-lesson mt-2 overflow-hidden rounded-[2px] border border-border bg-card">
+      <header className="flex items-start justify-between gap-2 border-b border-border px-4 py-2.5">
+        <div className="min-w-0">
+          <p className="journey-mono text-[10px] text-muted-foreground">Video</p>
+          {title ? (
+            <h3 className="truncate text-sm font-medium text-card-foreground">{title}</h3>
+          ) : null}
+        </div>
+        {watchUrl && (
+          <a
+            href={watchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="journey-resource-open inline-flex shrink-0 items-center gap-1 text-xs font-medium hover:underline"
+          >
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+            YouTube
+          </a>
+        )}
+      </header>
+      <div className="relative aspect-video w-full bg-black">
+        <iframe
+          src={embedUrl}
+          title={title ?? 'YouTube video'}
+          className="absolute inset-0 h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+      </div>
+      {why ? (
+        <p className="px-4 py-2.5 text-xs text-muted-foreground">
+          <span className="font-medium text-card-foreground">Why this helps: </span>
+          {why}
+        </p>
+      ) : null}
+    </article>
+  )
+}
+
+function ResourceCardBlock({ payload }: { payload: Record<string, unknown> }) {
+  const p = payload as ResourceCardBlockPayload
+  if (!p.title?.trim() || !isSafeHref(p.url) || !/^https:\/\//i.test(p.url)) return null
+  return (
+    <a
+      href={p.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="journey-resource mt-2 block rounded-[2px] border border-border bg-card p-4 transition-colors hover:border-primary"
+    >
+      <p className="journey-mono text-[10px] text-muted-foreground">
+        {p.source_label?.trim() || 'Resource'}
+      </p>
+      <h3 className="mt-1 text-sm font-medium text-card-foreground">{p.title}</h3>
+      {p.why ? <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{p.why}</p> : null}
+      <p className="journey-resource-open mt-2 inline-flex items-center gap-1 text-xs">
+        Open link →
+      </p>
+    </a>
+  )
 }
 
 function ActionGroupBlock({
@@ -472,6 +640,7 @@ type BlockRendererProps = {
   onActionClick?: (action: TutorAction) => void
   onQuizRetry?: () => void
   onTutorChoice?: (d: TutorChoiceDetail) => void
+  onLessonAction?: (prompt: string) => void
 }
 
 const BLOCK_RENDERERS: Record<string, (props: BlockRendererProps) => React.ReactNode> = {
@@ -489,6 +658,11 @@ const BLOCK_RENDERERS: Record<string, (props: BlockRendererProps) => React.React
   timeline: ({ payload }) => <TimelineBlock payload={payload} />,
   media_card: ({ payload }) => <MediaCardBlock payload={payload} />,
   interactive_demo: ({ payload }) => <InteractiveDemoBlock payload={payload} />,
+  lesson_html: ({ payload, onLessonAction }) => (
+    <LessonHtmlBlock payload={payload} onLessonAction={onLessonAction} />
+  ),
+  video_embed: ({ payload }) => <VideoEmbedBlock payload={payload} />,
+  resource_card: ({ payload }) => <ResourceCardBlock payload={payload} />,
 }
 
 export interface GenerativeBlockRendererProps {
@@ -497,6 +671,8 @@ export interface GenerativeBlockRendererProps {
   onQuizRetry?: () => void
   /** Fired when learner taps an inline clarification choice (sends follow-up to tutor). */
   onTutorChoice?: (d: TutorChoiceDetail) => void
+  /** Notebook mini-lesson actions (check / deeper / find resources). */
+  onLessonAction?: (prompt: string) => void
   className?: string
 }
 
@@ -505,6 +681,7 @@ export function GenerativeBlockRenderer({
   onActionClick,
   onQuizRetry,
   onTutorChoice,
+  onLessonAction,
   className,
 }: GenerativeBlockRendererProps) {
   if (!blocks?.length) return null
@@ -529,6 +706,7 @@ export function GenerativeBlockRenderer({
               onActionClick={onActionClick}
               onQuizRetry={onQuizRetry}
               onTutorChoice={onTutorChoice}
+              onLessonAction={onLessonAction}
             />
           </div>
         )

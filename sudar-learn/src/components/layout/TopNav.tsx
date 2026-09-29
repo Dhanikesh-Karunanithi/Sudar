@@ -28,6 +28,7 @@ import { RewardCatalogModal } from '@/components/features/gamification/RewardCat
 import { NotificationCenter } from '@/components/features/notifications/NotificationCenter'
 import { NotificationToasts } from '@/components/features/notifications/NotificationToasts'
 import { UserAvatar } from '@/components/ui/UserAvatar'
+import { isJourneyEnabled } from '@/lib/journey/isJourneyEnabled'
 
 interface TopNavProps {
   user: {
@@ -46,7 +47,7 @@ const PALETTES: { id: PaletteId; label: string; swatch: string }[] = [
   { id: 'sunset', label: 'Sunset', swatch: 'bg-[#d97706]' },
 ]
 
-const mainNavItems: { label: string; href: string }[] = [
+const baseMainNavItems: { label: string; href: string }[] = [
   { label: 'Learn', href: '/' },
   { label: 'Courses', href: '/courses' },
   { label: 'Paths', href: '/paths' },
@@ -54,10 +55,20 @@ const mainNavItems: { label: string; href: string }[] = [
   { label: 'Memory', href: '/memory' },
 ]
 
+function getMainNavItems(): { label: string; href: string }[] {
+  if (!isJourneyEnabled()) return baseMainNavItems
+  return [
+    baseMainNavItems[0],
+    { label: 'SudarNotes', href: '/journey' },
+    ...baseMainNavItems.slice(1),
+  ]
+}
+
 export function TopNav({ user, showOnboardingNudge, coinBalance = 0 }: TopNavProps) {
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const mainNavItems = getMainNavItems()
   const [moreOpen, setMoreOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [rewardModalOpen, setRewardModalOpen] = useState(false)

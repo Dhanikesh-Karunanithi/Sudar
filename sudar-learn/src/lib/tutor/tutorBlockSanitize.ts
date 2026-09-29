@@ -1,5 +1,7 @@
 import { z } from 'zod'
 import { isSafeTutorHttpUrl } from '@/lib/tutor/tutorBlockUrl'
+import { sanitizeLessonHtml } from '@/lib/tutor/sanitizeLessonHtml'
+import { resolveYoutubeEmbedUrl } from '@/lib/tutor/youtubeEmbed'
 import { TUTOR_BLOCK_TYPES, type TutorBlock } from '@/types/tutor'
 import { tutorActionSchema } from './tutorBlockSchemas'
 
@@ -73,6 +75,28 @@ const interactivePayloadSchema = z.object({
   component_id: z.enum(['molecule_viewer', 'cell_model', 'physics_demo', 'placeholder']),
   label: z.string().max(120).optional(),
   params: z.record(z.unknown()).optional(),
+})
+
+const lessonHtmlPayloadSchema = z.object({
+  title: z.string().trim().max(200).optional(),
+  objective: z.string().trim().max(400).optional(),
+  duration_mins: z.number().int().min(1).max(30).optional(),
+  try_this: z.string().trim().max(500).optional(),
+  html: z.string().trim().min(1).max(40_000),
+})
+
+const videoEmbedPayloadSchema = z.object({
+  title: z.string().trim().max(200).optional(),
+  url: z.string().trim().max(2048).optional(),
+  video_id: z.string().trim().max(32).optional(),
+  why: z.string().trim().max(500).optional(),
+})
+
+const resourceCardPayloadSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  url: z.string().trim().min(1).max(2048),
+  source_label: z.string().trim().max(80).optional(),
+  why: z.string().trim().max(500).optional(),
 })
 
 const textPayloadSchema = z.object({ content: z.string().max(100_000) })
@@ -250,6 +274,56 @@ export function sanitizeTutorBlock(raw: unknown): TutorBlock | null {
         id,
         type: 'interactive_demo',
         payload: { ...p.data, params: safeParams } as unknown as Record<string, unknown>,
+      }
+    }
+    case 'lesson_html': {
+      const p = lessonHtmlPayloadSchema.safeParse(o.payload)
+      if (!p.success) return null
+      const html = sanitizeLessonHtml(p.data.html)
+      if (!html) return null
+      return {
+        id,
+        type: 'lesson_html',
+        payload: {
+          ...(p.data.title ? { title: p.data.title.slice(0, 200) } : {}),
+          ...(p.data.objective ? { objective: p.data.objective.slice(0, 400) } : {}),
+          ...(p.data.duration_mins != null ? { duration_mins: p.data.duration_mins } : {}),
+          ...(p.data.try_this ? { try_this: p.data.try_this.slice(0, 500) } : {}),
+          html,
+        } as unknown as Record<string, unknown>,
+      }
+    }
+    case 'video_embed': {
+      const p = videoEmbedPayloadSchema.safeParse(o.payload)
+      if (!p.success) return null
+      const embedUrl = resolveYoutubeEmbedUrl({
+        url: p.data.url,
+        video_id: p.data.video_id,
+      })
+      if (!embedUrl) return null
+      return {
+        id,
+        type: 'video_embed',
+        payload: {
+          ...(p.data.title ? { title: p.data.title } : {}),
+          ...(p.data.why ? { why: p.data.why } : {}),
+          embed_url: embedUrl,
+        } as unknown as Record<string, unknown>,
+      }
+    }
+    case 'resource_card': {
+      const p = resourceCardPayloadSchema.safeParse(o.payload)
+      if (!p.success) return null
+      if (!isSafeTutorHttpUrl(p.data.url)) return null
+      return {
+        id,
+        type: 'resource_card',
+        payload: {
+          title: p.data.title,
+          url: p.data.url,
+          ...(p.data.source_label ? { source_label: p.data.source_label } : {}),
+          ...(p.data.why ? { why: p.data.why } : {}),
+        } as unknown as Record<string, unknown>,
       }
     }
     default:

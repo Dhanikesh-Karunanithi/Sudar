@@ -6,8 +6,10 @@ import { FloatingSudarChatClient } from '@/components/tutor/FloatingSudarChatCli
 import { ProactiveSudarHost } from '@/components/tutor/ProactiveSudarHost'
 import { CheckinFloatingCard } from '@/components/features/gamification/CheckinFloatingCard'
 import { GamificationToasts } from '@/components/features/gamification/GamificationToasts'
+import { GamificationSyncHost } from '@/components/features/gamification/GamificationSyncHost'
 import { NotificationSoundShell } from '@/components/features/notifications/NotificationSoundShell'
 import { SudarPetHost } from '@/components/mascot/SudarPetHost'
+import { IdleDeferHost } from '@/components/layout/IdleDeferHost'
 
 export default async function DashboardLayout({
   children,
@@ -60,10 +62,13 @@ export default async function DashboardLayout({
             <PageTransition>{children}</PageTransition>
           </main>
           <FloatingSudarChatClient userId={user.id} />
-          <SudarPetHost userId={user.id} />
-          <ProactiveSudarHost />
-          <CheckinFloatingCard />
-          <GamificationToasts />
+          <IdleDeferHost>
+            <GamificationSyncHost initialBalance={coinBalance} />
+            <SudarPetHost userId={user.id} />
+            <ProactiveSudarHost />
+            <CheckinFloatingCard />
+            <GamificationToasts />
+          </IdleDeferHost>
         </div>
       </div>
     </NotificationSoundShell>

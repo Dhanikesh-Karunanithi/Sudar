@@ -671,7 +671,7 @@ export function CourseViewer({
         body: JSON.stringify({
           course_id: course.id,
           module_id: currentModuleId,
-          reason: 'idle_90s',
+          reason: 'idle_180s',
         }),
       })
         .then(async (r) => {
@@ -685,12 +685,12 @@ export function CourseViewer({
             setProactiveBanner({
               message: data.message,
               choices: data.choices?.length ? data.choices : idleNudgeFallbackChoices(),
-              trigger: 'idle_90s',
+              trigger: 'idle_180s',
             })
           }
         })
         .catch(() => {})
-    }, 90000)
+    }, 180000)
   }, [tutorOpen, course.id, currentModuleId, learnerPrefs])
 
   const runModulePersonalize = useCallback(
@@ -742,9 +742,10 @@ export function CourseViewer({
     return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [])
 
-  // Heartbeat every 30s for section time (so admin sees time even if learner leaves without completing)
+  // Heartbeat every 30s for section time — only while tab is visible (pause when hidden)
   useEffect(() => {
-    heartbeatIntervalRef.current = setInterval(() => {
+    function sendHeartbeat() {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
       const totalMs = Date.now() - startTimeRef.current
       const activeSecs = getLiveActiveSecs()
       const totalSecs = Math.round(totalMs / 1000)
@@ -767,8 +768,28 @@ export function CourseViewer({
           },
         }),
       }).catch(() => {})
-    }, 30000)
+    }
+
+    function startHeartbeatInterval() {
+      if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current)
+      heartbeatIntervalRef.current = null
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+      heartbeatIntervalRef.current = setInterval(sendHeartbeat, 30000)
+    }
+
+    function handleVisibilityForHeartbeat() {
+      if (document.visibilityState === 'visible') {
+        startHeartbeatInterval()
+      } else if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current)
+        heartbeatIntervalRef.current = null
+      }
+    }
+
+    startHeartbeatInterval()
+    document.addEventListener('visibilitychange', handleVisibilityForHeartbeat)
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityForHeartbeat)
       if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current)
       heartbeatIntervalRef.current = null
     }
@@ -2154,6 +2175,19 @@ export function CourseViewer({
                   <FlashcardsCard
                     cards={flashcardsByModule[currentModuleId] ?? []}
                     loading={flashcardsLoading}
+                    onReview={(cardIndex, correct) => {
+                      void fetch('/api/events', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          event_type: 'flashcard_review',
+                          course_id: course.id,
+                          module_id: currentModuleId,
+                          modality: 'flashcards',
+                          payload: { correct, card_index: cardIndex },
+                        }),
+                      })
+                    }}
                     onRetry={() => {
                       setFlashcardsByModule((prev) => {
                         const next = { ...prev }
