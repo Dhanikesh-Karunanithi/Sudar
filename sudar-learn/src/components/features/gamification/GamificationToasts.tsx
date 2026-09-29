@@ -1,39 +1,20 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Award, Sparkles, TrendingUp, X } from 'lucide-react'
 import { useNotificationSound } from '@/components/features/notifications/NotificationSoundProvider'
-
-type ToastKind = 'level-up' | 'achievement'
-
-interface ToastItem {
-  id: string
-  kind: ToastKind
-  title: string
-  subtitle: string
-}
-
-interface AchievementUnlock {
-  id: string
-  title: string
-  rarity: 'common' | 'rare' | 'epic' | 'legendary'
-}
-
-const rarityCopy: Record<AchievementUnlock['rarity'], string> = {
-  common: 'Common badge unlocked',
-  rare: 'Rare badge unlocked',
-  epic: 'Epic badge unlocked',
-  legendary: 'Legendary badge unlocked',
-}
+import {
+  useGamificationSyncStore,
+  type GamificationToastItem,
+} from '@/lib/gamification/gamificationSyncStore'
 
 export function GamificationToasts() {
   const { playChime } = useNotificationSound()
-  const [queue, setQueue] = useState<ToastItem[]>([])
-  const [visible, setVisible] = useState<ToastItem | null>(null)
+  const toastQueue = useGamificationSyncStore((s) => s.toastQueue)
+  const shiftToast = useGamificationSyncStore((s) => s.shiftToast)
+  const [visible, setVisible] = useState<GamificationToastItem | null>(null)
   const [reduceMotion, setReduceMotion] = useState(false)
-  const levelRef = useRef<number | null>(null)
-  const seenAchievements = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -44,77 +25,20 @@ export function GamificationToasts() {
   }, [])
 
   useEffect(() => {
-    if (!visible && queue.length > 0) {
-      const [next, ...rest] = queue
-      setVisible(next)
-      setQueue(rest)
-      playChime('celebration')
+    if (!visible && toastQueue.length > 0) {
+      const next = shiftToast()
+      if (next) {
+        setVisible(next)
+        playChime('celebration')
+      }
     }
-  }, [queue, visible, playChime])
+  }, [toastQueue, visible, playChime, shiftToast])
 
   useEffect(() => {
     if (!visible) return
     const timeout = setTimeout(() => setVisible(null), 3500)
     return () => clearTimeout(timeout)
   }, [visible])
-
-  useEffect(() => {
-    let mounted = true
-
-    async function poll() {
-      try {
-        const [coinsRes, achievementsRes] = await Promise.all([
-          fetch('/api/coins/balance', { cache: 'no-store' }),
-          fetch('/api/achievements', { cache: 'no-store' }),
-        ])
-        if (!mounted || !coinsRes.ok || !achievementsRes.ok) return
-
-        const coinsJson = await coinsRes.json() as { data?: { level?: number; title?: string } }
-        const achievementsJson = await achievementsRes.json() as {
-          data?: { newUnlocks?: Array<{ id: string; title: string; rarity: AchievementUnlock['rarity'] }> }
-        }
-
-        const nextToasts: ToastItem[] = []
-
-        const currentLevel = coinsJson.data?.level ?? null
-        const currentTitle = coinsJson.data?.title ?? 'Scholar'
-        if (levelRef.current !== null && currentLevel !== null && currentLevel > levelRef.current) {
-          nextToasts.push({
-            id: `lvl-${Date.now()}`,
-            kind: 'level-up',
-            title: `Level ${currentLevel} reached`,
-            subtitle: `You are now ${currentTitle}.`,
-          })
-        }
-        if (currentLevel !== null) levelRef.current = currentLevel
-
-        const newUnlocks = achievementsJson.data?.newUnlocks ?? []
-        for (const ach of newUnlocks) {
-          if (seenAchievements.current.has(ach.id)) continue
-          seenAchievements.current.add(ach.id)
-          nextToasts.push({
-            id: `ach-${ach.id}`,
-            kind: 'achievement',
-            title: ach.title,
-            subtitle: rarityCopy[ach.rarity],
-          })
-        }
-
-        if (nextToasts.length > 0) {
-          setQueue((prev) => [...prev, ...nextToasts])
-        }
-      } catch {
-        // best-effort notification layer
-      }
-    }
-
-    poll()
-    const interval = setInterval(poll, 20000)
-    return () => {
-      mounted = false
-      clearInterval(interval)
-    }
-  }, [])
 
   const icon = useMemo(() => {
     if (!visible) return null
@@ -164,4 +88,3 @@ export function GamificationToasts() {
     </div>
   )
 }
-
