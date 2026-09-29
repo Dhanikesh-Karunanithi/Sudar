@@ -6,6 +6,7 @@ import { validateAlpKey, getAlpKeyFromRequest, validateEmbedToken, isUserInOrg }
 import { NextRequest, NextResponse } from 'next/server'
 import { pickNextFifteenMinutes, buildClaimSchedulerCandidates } from '@/lib/teaching/scheduler'
 import { loadMasteryForUser } from '@/lib/teaching/mastery'
+import { computeNextBestActionForUser } from '@/lib/intelligence/nextBestActionEngine'
 
 export async function GET(request: NextRequest) {
   const authHeader = getAlpKeyFromRequest(request)
@@ -40,5 +41,8 @@ export async function GET(request: NextRequest) {
   const claimIds = [...new Set(queue.flatMap((c) => c.claim_ids))]
   const mastery = claimIds.length ? await loadMasteryForUser(admin, user_id, claimIds) : []
 
-  return NextResponse.json({ success: true, data: { next, queue, mastery } })
+  const nba = await computeNextBestActionForUser(admin, user_id, { force: false }).catch(() => null)
+  const next_best_action = nba && 'action' in nba ? (nba.action ?? null) : null
+
+  return NextResponse.json({ success: true, data: { next, queue, mastery, next_best_action } })
 }

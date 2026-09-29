@@ -240,6 +240,14 @@ def _dispatch_agent(room_name: str, session_id: str, user_id: str, locale: str) 
 
             )
 
+        except asyncio.CancelledError:
+
+            raise
+
+        except Exception:
+
+            logger.exception("sim voice agent failed for room %s (session %s)", room_name, session_id)
+
         finally:
 
             _active_agents.pop(room_name, None)

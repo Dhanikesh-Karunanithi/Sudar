@@ -92,6 +92,17 @@ export interface LearningDomain {
   updated_at?: string
 }
 
+/** Learner-facing claim summary for a course module (`GET /api/teaching/module-claims`). */
+export interface ModuleClaimWithMastery {
+  id: string
+  stem: string
+  bloom: string | null
+  /** null = no evidence yet */
+  p_know: number | null
+  mastered: boolean
+  next_review_at: string | null
+}
+
 export interface LearnerClaimMastery {
   id?: string
   user_id: string

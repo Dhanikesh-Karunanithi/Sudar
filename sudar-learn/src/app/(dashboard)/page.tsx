@@ -17,6 +17,7 @@ import { QuestCard } from '@/components/features/gamification/QuestCard'
 import { AchievementShelf } from '@/components/features/gamification/AchievementShelf'
 import { ProfileCompletenessBar } from '@/components/features/gamification/ProfileCompletenessBar'
 import { isJourneyEnabled } from '@/lib/journey/isJourneyEnabled'
+import { NextFifteenCard } from '@/components/features/teaching/NextFifteenCard'
 
 function toLocalDateKey(d: Date): string {
   const y = d.getFullYear()
@@ -564,6 +565,8 @@ export default async function DashboardPage() {
 
         {/* Daily quests */}
         <QuestCard />
+
+        <NextFifteenCard journeyEnabled={isJourneyEnabled()} />
 
         {/* KPI row + Activity chart */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
