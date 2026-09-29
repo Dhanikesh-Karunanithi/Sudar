@@ -4,6 +4,16 @@ Short ADR-style entries. Newest first. Each entry: context, decision, consequenc
 
 ---
 
+### D-019 (2026-09-29) SudarNotes persists to `sudar_notes_sessions`, not a new table
+- **Context:** The notebook lived only in `sessionStorage`; an owner-RLS table `sudar_notes_sessions` already existed but was never written.
+- **Decision:** One row per learner with `thread_key = 'journey'`; `state` holds a sanitised `JourneyNotebookSnapshot` (pages, working memory, pedagogy session). `/api/journey/notebook` GET/PUT/DELETE; `sessionStorage` stays as a fast local cache. Server copy wins on load.
+- **Consequence:** Notebooks follow the learner across devices. Multi-notebook support later = more `thread_key` values, no migration.
+
+### D-018 (2026-09-29) Two tutor surfaces, one engine
+- **Context:** The beta plan asked to merge the course viewer's inline tutor with `SudarChatPanel`. The inline tutor is tied to module context (text selection, memory validation, quiz retry, proactive chips, resizable dock) inside a 2.6k-line `CourseViewer`.
+- **Decision:** Keep two UI shells for beta: `SudarChatPanel` (floating chat + SudarNotes dock) and the course inline tutor. Both call `/api/tutor/query`, share `responseContract`, `GenerativeBlockRenderer` and `ChatMarkdown`. The floating launcher is hidden on course learn routes so learners never see two tutors at once. Next-best-action has one engine (`nextBestActionEngine.ts`); `/api/alp/teaching/next-action` returns its result alongside the claim queue.
+- **Consequence:** Tutor behaviour changes go in `/api/tutor/query` and shared renderers; a UI merge is a post-beta refactor.
+
 ### D-017 (2026-09-29) Authored content must pass a quality gate before it is saved
 - **Context:** Quality scores were computed and ignored; no moderation; docs overclaimed Llama Guard and fact-checking.
 - **Decision:** Every generator that persists learner-facing content validates with Zod, moderates, scores with the pedagogy rubric, regenerates below threshold, and records per-issue details. Publishing is blocked while high-severity issues are unresolved. Contract: `.cursor/rules/content-generation.mdc`.
