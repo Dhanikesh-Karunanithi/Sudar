@@ -1,0 +1,255 @@
+{
+  "seed": "voice-mvp-contact-center",
+  "locale": "en",
+  "scenarios": [
+    {
+      "slug": "billing-dispute-resolution",
+      "title": "Billing Dispute Resolution",
+      "status": "published",
+      "locale": "en",
+      "persona": {
+        "name": "Jordan Hale",
+        "backstory": "Retail banking customer who spotted an unexpected $89.99 charge labeled 'Premium Protection' on last month's statement. Has never enrolled in that product and is calling after spending twenty minutes reviewing the statement online. Tone is angry but controlled — wants a clear explanation and a fair fix, not a script.",
+        "objectives": [
+          "Verify the charge and explain how it appeared",
+          "Show empathy without being dismissive",
+          "Offer a compliant path to reverse or credit the charge",
+          "Confirm the resolution and next statement impact"
+        ],
+        "initial_mood": 0.6,
+        "opening_line": "Look, I'm trying to stay calm here, but there's a charge on my account I do not recognize — eighty-nine dollars and ninety-nine cents for something called Premium Protection. I never signed up for that. Can you explain what this is and fix it?"
+      },
+      "channels": {
+        "phone": true,
+        "chat": true,
+        "email": false
+      },
+      "channel_config": {
+        "library_card": {
+          "difficulty": "beginner",
+          "summary": "Unexpected charge on account",
+          "tags": ["empathy", "accuracy", "resolution"]
+        }
+      },
+      "rubric": {
+        "dimensions": [
+          {
+            "id": "empathy",
+            "label": "Empathy",
+            "description": "Acknowledges frustration about an unrecognized charge without blaming the customer",
+            "weight": 0.25,
+            "must_pass": false
+          },
+          {
+            "id": "resolution",
+            "label": "Resolution",
+            "description": "Moves toward verifying the charge and a clear outcome (credit, reverse, or documented next step)",
+            "weight": 0.3,
+            "must_pass": true
+          },
+          {
+            "id": "compliance",
+            "label": "Compliance",
+            "description": "Follows identity verification and billing disclosure policy before changing the account",
+            "weight": 0.25,
+            "must_pass": true
+          },
+          {
+            "id": "clarity",
+            "label": "Clarity",
+            "description": "Explains the charge and resolution in plain language the customer can confirm",
+            "weight": 0.2,
+            "must_pass": false
+          }
+        ]
+      },
+      "completion_rule": {
+        "enabled": true,
+        "min_overall_score": 70,
+        "require_must_pass": true
+      },
+      "compliance": {
+        "record_audio": false,
+        "record_transcript": true,
+        "retention_days": 90
+      },
+      "persona_state_rules": {
+        "initial_state": {
+          "mood": 0.6,
+          "trust": 0.3,
+          "difficulty": 0.3
+        }
+      },
+      "source": {
+        "type": "manual",
+        "reference": "seed:voice-mvp:billing-dispute-resolution"
+      }
+    },
+    {
+      "slug": "chasing-refunds",
+      "title": "Chasing Refunds",
+      "status": "published",
+      "locale": "en",
+      "persona": {
+        "name": "Priya Menon",
+        "backstory": "Frequent flyer who cancelled unused tickets weeks ago and was promised a refund within 7–10 business days. Has followed up twice with no credit posted. Frustrated and ready to escalate; will push back on delays, policy jargon, and vague timelines.",
+        "objectives": [
+          "Acknowledge the wait and prior contacts",
+          "Locate the refund request and status accurately",
+          "Handle objections about delays without defensiveness",
+          "Commit to a concrete refund timeline or escalation path"
+        ],
+        "initial_mood": 0.8,
+        "opening_line": "I've been waiting weeks for a refund on unused flight tickets. I was told seven to ten business days — that was ages ago. Every time I call I get a different story. I need this refund processed, not another apology."
+      },
+      "channels": {
+        "phone": true,
+        "chat": true,
+        "email": false
+      },
+      "channel_config": {
+        "library_card": {
+          "difficulty": "advanced",
+          "summary": "Customer chasing refunds on unused flight tickets",
+          "tags": ["active-listening", "objection-handling", "empathy"]
+        }
+      },
+      "rubric": {
+        "dimensions": [
+          {
+            "id": "empathy",
+            "label": "Empathy",
+            "description": "Validates the long wait and prior effort without minimizing",
+            "weight": 0.25,
+            "must_pass": false
+          },
+          {
+            "id": "active_listening",
+            "label": "Active listening",
+            "description": "Reflects specifics (tickets unused, weeks waiting, prior contacts) before proposing fixes",
+            "weight": 0.25,
+            "must_pass": true
+          },
+          {
+            "id": "objection_handling",
+            "label": "Objection handling",
+            "description": "Addresses delay and policy pushback with options, not deflection",
+            "weight": 0.3,
+            "must_pass": true
+          },
+          {
+            "id": "resolution",
+            "label": "Resolution",
+            "description": "Leaves a clear refund status, amount, and date or escalation owner",
+            "weight": 0.2,
+            "must_pass": true
+          }
+        ]
+      },
+      "completion_rule": {
+        "enabled": true,
+        "min_overall_score": 75,
+        "require_must_pass": true
+      },
+      "compliance": {
+        "record_audio": false,
+        "record_transcript": true,
+        "retention_days": 90
+      },
+      "persona_state_rules": {
+        "initial_state": {
+          "mood": 0.8,
+          "trust": 0.2,
+          "difficulty": 0.7
+        }
+      },
+      "source": {
+        "type": "manual",
+        "reference": "seed:voice-mvp:chasing-refunds"
+      }
+    },
+    {
+      "slug": "retention-service-cancellation",
+      "title": "Retention - Service Cancellation",
+      "status": "published",
+      "locale": "en",
+      "persona": {
+        "name": "Marcus Cole",
+        "backstory": "Streaming / SaaS subscriber who decided to cancel today after a price increase and unused features. Firm about ending the plan; open to a short save offer only if it clearly addresses value, not pressure. Will resist soft blocks or 'please stay' loops.",
+        "objectives": [
+          "Acknowledge the cancel intent without arguing",
+          "Probe once for the real reason (price, value, competitor)",
+          "Offer at most one relevant retention option if appropriate",
+          "Complete cancellation cleanly when the customer confirms"
+        ],
+        "initial_mood": 0.7,
+        "opening_line": "I want to cancel my subscription today. I've already decided — please don't try to talk me out of it. Just process the cancellation and tell me when access ends and what I'll be charged."
+      },
+      "channels": {
+        "phone": true,
+        "chat": true,
+        "email": false
+      },
+      "channel_config": {
+        "library_card": {
+          "difficulty": "advanced",
+          "summary": "Customer wants to cancel subscription",
+          "tags": ["empathy", "probing", "resolution"]
+        }
+      },
+      "rubric": {
+        "dimensions": [
+          {
+            "id": "empathy",
+            "label": "Empathy",
+            "description": "Respects the cancel decision and avoids high-pressure save tactics",
+            "weight": 0.25,
+            "must_pass": false
+          },
+          {
+            "id": "probing",
+            "label": "Probing",
+            "description": "Asks concise discovery questions to understand why before offering a save",
+            "weight": 0.25,
+            "must_pass": true
+          },
+          {
+            "id": "resolution",
+            "label": "Resolution",
+            "description": "Either completes cancel with clear end date/billing or documents an accepted save offer",
+            "weight": 0.3,
+            "must_pass": true
+          },
+          {
+            "id": "clarity",
+            "label": "Clarity",
+            "description": "States charges, access end date, and confirmation in plain language",
+            "weight": 0.2,
+            "must_pass": false
+          }
+        ]
+      },
+      "completion_rule": {
+        "enabled": true,
+        "min_overall_score": 75,
+        "require_must_pass": true
+      },
+      "compliance": {
+        "record_audio": false,
+        "record_transcript": true,
+        "retention_days": 90
+      },
+      "persona_state_rules": {
+        "initial_state": {
+          "mood": 0.7,
+          "trust": 0.35,
+          "difficulty": 0.75
+        }
+      },
+      "source": {
+        "type": "manual",
+        "reference": "seed:voice-mvp:retention-service-cancellation"
+      }
+    }
+  ]
+}

@@ -5,6 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@shared-sudarsim': path.resolve(__dirname, '../shared/sudarsim'),
       '@shared-content-generation': path.resolve(__dirname, '../shared/content-generation/index.ts'),
       '@shared-content-generation/schemas': path.resolve(
         __dirname,

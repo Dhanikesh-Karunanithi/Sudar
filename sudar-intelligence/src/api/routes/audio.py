@@ -7,10 +7,7 @@ Requires Supabase JWT or X-Intelligence-Service-Secret.
 import base64
 import io
 import os
-import re
-import tempfile
 import asyncio
-from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -18,20 +15,21 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 
 from src.api.auth import verify_supabase_jwt_or_service
+from src.core.edge_tts_helper import (
+    DEFAULT_RATE,
+    apply_brand_pronunciation,
+    expression_rate_multiplier,
+    split_into_chunks,
+    synthesize_edge_mp3,
+)
 
 router = APIRouter()
 
 # Best Edge-TTS voices (no API key): Aria (narrative), Jenny (host), Guy (expert)
 DEFAULT_VOICE = "en-US-AriaNeural"
-# Rate: 1.0 = normal; 0.9 = slower; 1.1 = faster. Mapped to edge-tts "+X%" format.
-DEFAULT_RATE = 1.0
-# Max characters per chunk when chunking (avoids timeouts, improves prosody).
-CHUNK_MAX_CHARS = 2000
 # Sarvam API: voice prefix and max chars per request (Bulbul v3).
 SARVAM_VOICE_PREFIX = "sarvam_"
 SARVAM_MAX_CHARS = 2500
-BRAND_NAME = "Sudar"
-BRAND_CANONICAL_SPOKEN_FORM = "Su-dar"
 
 
 class AudioGenerateRequest(BaseModel):
@@ -50,7 +48,7 @@ def _generate_sarvam_sync(text: str, speaker: str, target_language_code: str) ->
     if not key:
         raise HTTPException(status_code=501, detail="Sarvam TTS not configured (SARVAM_API_KEY)")
     # Chunk for Sarvam limit
-    chunks = _split_into_chunks(text, max_chars=SARVAM_MAX_CHARS)
+    chunks = split_into_chunks(text, max_chars=SARVAM_MAX_CHARS)
     if not chunks:
         raise HTTPException(status_code=400, detail="text is required")
     audios: list[bytes] = []
@@ -85,56 +83,6 @@ def _generate_sarvam_sync(text: str, speaker: str, target_language_code: str) ->
     return out.getvalue()
 
 
-def _rate_to_edge(rate: float) -> str:
-    """Convert numeric rate to edge-tts rate string, e.g. 0.9 -> '-10%', 1.1 -> '+10%'."""
-    if rate <= 0 or rate > 2.0:
-        return "+0%"
-    pct = round((rate - 1.0) * 100)
-    if pct == 0:
-        return "+0%"
-    return f"{'+' if pct > 0 else ''}{pct}%"
-
-
-def _split_into_chunks(text: str, max_chars: int = CHUNK_MAX_CHARS) -> list[str]:
-    """Split text into chunks by sentence boundaries, each under max_chars."""
-    if len(text) <= max_chars:
-        return [text] if text.strip() else []
-    sentences = re.split(r"(?<=[.!?])\s+", text)
-    chunks: list[str] = []
-    current: list[str] = []
-    current_len = 0
-    for s in sentences:
-        s = s.strip()
-        if not s:
-            continue
-        if current_len + len(s) + 1 <= max_chars:
-            current.append(s)
-            current_len += len(s) + 1
-        else:
-            if current:
-                chunks.append(" ".join(current))
-            current = [s]
-            current_len = len(s)
-    if current:
-        chunks.append(" ".join(current))
-    return chunks
-
-
-def _apply_brand_pronunciation(text: str) -> str:
-    # TTS-only normalization so "Sudar" is spoken consistently.
-    return re.sub(rf"\b{BRAND_NAME}\b", BRAND_CANONICAL_SPOKEN_FORM, text)
-
-
-def _expression_rate_multiplier(expression: str | None) -> float:
-    value = (expression or "").strip().lower()
-    return {
-        "calm": 0.92,
-        "empathetic": 0.95,
-        "serious": 0.9,
-        "energetic": 1.08,
-    }.get(value, 1.0)
-
-
 @router.post("/generate")
 async def generate_audio(
     request: AudioGenerateRequest,
@@ -149,7 +97,7 @@ async def generate_audio(
         raise HTTPException(status_code=400, detail="text is required")
     if len(text) > 15000:
         text = text[:15000] + "…"
-    text = _apply_brand_pronunciation(text)
+    text = apply_brand_pronunciation(text)
 
     voice = (request.voice or DEFAULT_VOICE).strip() or DEFAULT_VOICE
 
@@ -176,52 +124,17 @@ async def generate_audio(
         )
 
     base_rate = request.rate if request.rate is not None else DEFAULT_RATE
-    rate_val = max(0.5, min(2.0, base_rate * _expression_rate_multiplier(request.expression)))
-    rate_str = _rate_to_edge(rate_val)
+    rate_val = max(0.5, min(2.0, base_rate * expression_rate_multiplier(request.expression)))
 
     try:
-        import edge_tts
-    except ImportError:
-        raise HTTPException(
-            status_code=501,
-            detail="edge-tts not installed. Run: pip install edge-tts",
-        )
-
-    chunks = _split_into_chunks(text)
-    if not chunks:
-        raise HTTPException(status_code=400, detail="text is required")
-
-    async def _generate_one(chunk: str, out_path: str) -> None:
-        comm = edge_tts.Communicate(chunk, voice, rate=rate_str)
-        await comm.save(out_path)
-
-    async def _generate_all() -> bytes:
-        """
-        Edge-TTS writes per-chunk MP3 files. Prefer byte concatenation so we do not
-        require ffmpeg/ffprobe (pydub) on dev machines — missing binaries caused 502s
-        on Windows and left temp files locked during failed pydub cleanup.
-        """
-        parts: list[bytes] = []
-        for chunk in chunks:
-            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
-                path = f.name
-            try:
-                await _generate_one(chunk, path)
-                parts.append(Path(path).read_bytes())
-            finally:
-                Path(path).unlink(missing_ok=True)
-        if len(parts) == 1:
-            return parts[0]
-        return b"".join(parts)
-
-    try:
-        audio_bytes = await asyncio.wait_for(_generate_all(), timeout=180.0)
+        audio_bytes = await synthesize_edge_mp3(text, voice=voice, rate=rate_val, timeout=180.0)
     except asyncio.TimeoutError:
         raise HTTPException(status_code=504, detail="TTS generation timed out")
+    except ImportError as e:
+        raise HTTPException(status_code=501, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        import traceback
-        print(f"[audio] Edge-TTS error: {e}")
-        traceback.print_exc()
         raise HTTPException(status_code=502, detail=str(e))
 
     return Response(

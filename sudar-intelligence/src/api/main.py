@@ -8,10 +8,12 @@ from dotenv import load_dotenv
 
 # Load sudar-intelligence/.env.local then .env before any os.getenv (matches Next.js local dev workflow).
 _intel_root = Path(__file__).resolve().parents[2]
-for _env_fname in (".env.local", ".env"):
-    _env_path = _intel_root / _env_fname
-    if _env_path.is_file():
-        load_dotenv(_env_path)
+_env_local = _intel_root / ".env.local"
+_env_file = _intel_root / ".env"
+if _env_local.is_file():
+    load_dotenv(_env_local, override=True)
+if _env_file.is_file():
+    load_dotenv(_env_file, override=False)
 
 import os
 from fastapi import FastAPI
@@ -54,6 +56,13 @@ _redoc_url = None if _is_production else "/redoc"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Sudar Intelligence starting up...")
+    _dg = bool(os.getenv("DEEPGRAM_API_KEY", "").strip())
+    _hf = bool(os.getenv("HUGGINGFACE_API_KEY", "").strip())
+    _svc = bool(os.getenv("INTELLIGENCE_SERVICE_SECRET", "").strip())
+    print(
+        f"Voice config: service_auth={'yes' if _svc else 'NO'}, "
+        f"stt={'deepgram' if _dg else 'hf' if _hf else 'NONE'}"
+    )
     if not os.getenv("SUPABASE_JWT_SECRET", "").strip():
         print(
             "WARNING: SUPABASE_JWT_SECRET is unset. Bearer JWT routes (Sudar Agents, tutor, ...) "

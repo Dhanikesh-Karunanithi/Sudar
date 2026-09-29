@@ -55,9 +55,20 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
   const body = await request.json()
   const publish = body.publish === true
-  const scenarioParsed = simScenarioSchema.partial().safeParse(body.scenario ?? body)
+  // Strip DB-only columns before Zod — editor state is the full row.
+  const rawScenario = (body.scenario ?? body) as Record<string, unknown>
+  const {
+    id: _id,
+    org_id: _orgId,
+    created_by: _createdBy,
+    created_at: _createdAt,
+    updated_at: _updatedAt,
+    ...scenarioInput
+  } = rawScenario
+  const scenarioParsed = simScenarioSchema.partial().safeParse(scenarioInput)
   if (!scenarioParsed.success) {
-    return NextResponse.json({ error: scenarioParsed.error.flatten() }, { status: 400 })
+    const message = scenarioParsed.error.issues.map((i) => i.message).join('; ') || 'Invalid request'
+    return NextResponse.json({ success: false, error: message }, { status: 400 })
   }
 
   if (publish) {
@@ -68,13 +79,19 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const title = draft.title?.trim() || (existing.title as string | undefined)?.trim()
 
     if (!title) {
-      return NextResponse.json({ error: 'Title is required before publishing' }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Title is required before publishing' }, { status: 400 })
     }
     if (!personaName) {
-      return NextResponse.json({ error: 'Customer persona name is required before publishing' }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: 'Customer persona name is required before publishing' },
+        { status: 400 },
+      )
     }
     if (!hasChannel) {
-      return NextResponse.json({ error: 'Enable at least one channel before publishing' }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: 'Enable at least one channel before publishing' },
+        { status: 400 },
+      )
     }
   }
 
