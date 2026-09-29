@@ -7,10 +7,12 @@ import {
   ArrowLeft,
   ChevronRight,
   Mic,
-  MicOff,
   PanelRightClose,
   PanelRightOpen,
   RefreshCw,
+  Square,
+  Volume2,
+  VolumeX,
 } from 'lucide-react'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
 import { LearnWithSudarMark } from '@/components/branding/LearnWithSudarMark'
@@ -28,6 +30,9 @@ import {
   loadSudarNotesSession,
   saveSudarNotesSession,
 } from '@/lib/sudarNotes/sessionClient'
+import { clearRemoteNotebook, fetchRemoteNotebook, saveRemoteNotebook } from '@/lib/journey/notebookSync'
+import { useJourneyVoice } from '@/hooks/useJourneyVoice'
+import { JourneyDomainPicker, loadJourneyDomainId } from './JourneyDomainPicker'
 import type { NotebookPage } from '@/types/journeyNotebook'
 import type { SudarNotesSessionState, SudarNotesWorkingMemory } from '@/types/sudarNotes'
 import { emptySudarNotesSession, emptyWorkingMemory } from '@/types/sudarNotes'
@@ -41,6 +46,16 @@ const SudarChatPanel = dynamic(
 )
 
 const CHAT_COLLAPSE_KEY = 'sudar.journey.chatCollapsed'
+const REMOTE_SAVE_DEBOUNCE_MS = 1500
+
+type NotebookSyncState = 'idle' | 'pending' | 'saved' | 'local_only'
+
+const SYNC_LABELS: Record<NotebookSyncState, string> = {
+  idle: '',
+  pending: 'Saving…',
+  saved: 'Saved to your account',
+  local_only: 'Saved on this device only',
+}
 
 const JOURNEY_STARTERS: ProactivePromptChoice[] = [
   {
@@ -96,7 +111,16 @@ export function JourneyWorkspace({ userId }: JourneyWorkspaceProps) {
   const [chatCollapsed, setChatCollapsed] = useState(false)
   const [pendingSend, setPendingSend] = useState<string | null>(null)
   const [pendingDraft, setPendingDraft] = useState<string | null>(null)
+  const [remoteLoaded, setRemoteLoaded] = useState(false)
+  const [syncState, setSyncState] = useState<NotebookSyncState>('idle')
+  /** The first state change after the remote load is the load itself — don't echo it back. */
+  const skipNextRemoteSaveRef = useRef(true)
   const newChatFnRef = useRef<(() => Promise<void>) | null>(null)
+  const voice = useJourneyVoice()
+  const [domainId, setDomainId] = useState<string | null>(null)
+  useEffect(() => {
+    setDomainId(loadJourneyDomainId())
+  }, [])
 
   useEffect(() => {
     try {
@@ -106,11 +130,45 @@ export function JourneyWorkspace({ userId }: JourneyWorkspaceProps) {
     } catch {
       // ignore
     }
-    setPages(loadNotebookPages())
+    const localPages = loadNotebookPages()
+    const localSession = loadSudarNotesSession()
+    setPages(localPages)
     setWorkingMemory(loadWorkingMemory())
-    setSession(loadSudarNotesSession())
+    setSession(localSession)
     setNotebookHydrated(true)
+
+    let cancelled = false
+    void fetchRemoteNotebook().then((remote) => {
+      if (cancelled) return
+      if (remote && (remote.pages.length > 0 || remote.session)) {
+        setPages(remote.pages)
+        setWorkingMemory(remote.working_memory)
+        if (remote.session) setSession(remote.session)
+        setSyncState('saved')
+      } else if (localPages.length > 0) {
+        skipNextRemoteSaveRef.current = false
+      }
+      setRemoteLoaded(true)
+    })
+    return () => {
+      cancelled = true
+    }
   }, [])
+
+  useEffect(() => {
+    if (!remoteLoaded) return
+    if (skipNextRemoteSaveRef.current) {
+      skipNextRemoteSaveRef.current = false
+      return
+    }
+    setSyncState('pending')
+    const timer = window.setTimeout(() => {
+      void saveRemoteNotebook({ pages, working_memory: workingMemory, session }).then((ok) =>
+        setSyncState(ok ? 'saved' : 'local_only'),
+      )
+    }, REMOTE_SAVE_DEBOUNCE_MS)
+    return () => window.clearTimeout(timer)
+  }, [pages, workingMemory, session, remoteLoaded])
 
   useEffect(() => {
     try {
@@ -167,13 +225,49 @@ export function JourneyWorkspace({ userId }: JourneyWorkspaceProps) {
 
   function toggleVoice() {
     if (voiceOn) {
+      voice.stopSpeaking()
+      void voice.stopRecording()
       setVoiceOn(false)
       setPresence('idle')
       return
     }
+    voice.clearError()
     setVoiceOn(true)
-    setPresence('listening')
+    setPresence('idle')
   }
+
+  async function toggleRecording() {
+    if (voice.phase === 'recording') {
+      const text = await voice.stopRecording()
+      if (text) {
+        ensureChatOpen()
+        setPendingSend(text)
+      }
+      return
+    }
+    await voice.startRecording()
+  }
+
+  const voiceOnRef = useRef(voiceOn)
+  useEffect(() => {
+    voiceOnRef.current = voiceOn
+  }, [voiceOn])
+
+  const onAssistantReply = useCallback(
+    (text: string) => {
+      if (voiceOnRef.current) void voice.speak(text)
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- voice.speak is stable
+    [],
+  )
+
+  useEffect(() => {
+    if (!voiceOn) return
+    if (voice.phase === 'recording') setPresence('listening')
+    else if (voice.phase === 'transcribing') setPresence('thinking')
+    else if (voice.phase === 'speaking') setPresence('speaking')
+    else setPresence((p) => (p === 'thinking' ? p : 'idle'))
+  }, [voice.phase, voiceOn])
 
   const ensureChatOpen = useCallback(() => {
     setChatCollapsed(false)
@@ -265,6 +359,9 @@ export function JourneyWorkspace({ userId }: JourneyWorkspaceProps) {
   async function handleNewSession() {
     clearNotebookState()
     clearSudarNotesSession()
+    skipNextRemoteSaveRef.current = true
+    setSyncState('idle')
+    void clearRemoteNotebook()
     setPages([])
     setWorkingMemory(emptyWorkingMemory())
     setSession(emptySudarNotesSession())
@@ -295,10 +392,7 @@ export function JourneyWorkspace({ userId }: JourneyWorkspaceProps) {
           </button>
         </div>
         <div className="flex items-start gap-3">
-          <LearnWithSudarMark
-            className="mt-0.5 h-9 w-9 shrink-0 md:h-10 md:w-10"
-            starFill="var(--background)"
-          />
+          <LearnWithSudarMark className="mt-0.5 h-9 w-9 shrink-0 md:h-10 md:w-10" />
           <div className="min-w-0 flex-1">
             <h1 className="text-xl font-medium tracking-tight text-card-foreground md:text-2xl">
               SudarNotes
@@ -307,6 +401,14 @@ export function JourneyWorkspace({ userId }: JourneyWorkspaceProps) {
               A personal tutor in conversation — suggested notes you own, soft checks, lasting
               understanding.
             </p>
+            <div className="mt-2">
+              <JourneyDomainPicker value={domainId} onChange={setDomainId} />
+            </div>
+            {SYNC_LABELS[syncState] ? (
+              <p className="journey-mono mt-1 text-[11px] text-muted-foreground" aria-live="polite">
+                {SYNC_LABELS[syncState]}
+              </p>
+            ) : null}
           </div>
         </div>
       </header>
@@ -376,6 +478,8 @@ export function JourneyWorkspace({ userId }: JourneyWorkspaceProps) {
               sudarNotesSession={session}
               onSudarNotesSessionUpdate={onSudarNotesSessionUpdate}
               onPresenceChange={setPresence}
+              onAssistantReply={onAssistantReply}
+              domainId={domainId}
               pendingSendMessage={pendingSend}
               onPendingSendConsumed={() => setPendingSend(null)}
               pendingDraftInput={pendingDraft}
@@ -386,7 +490,7 @@ export function JourneyWorkspace({ userId }: JourneyWorkspaceProps) {
               headerSlot={
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   {voiceOn ? (
-                    <SudarVoiceOrb mode={presence} reactive />
+                    <SudarVoiceOrb mode={presence} reactive={voice.phase === 'recording'} />
                   ) : (
                     <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[2px] border border-border bg-card p-1">
                       <SudarLogoMark className="h-7 w-auto text-primary" starFill="var(--card)" />
@@ -411,11 +515,44 @@ export function JourneyWorkspace({ userId }: JourneyWorkspaceProps) {
                       />
                       {presenceLabel(presence)}
                     </p>
+                    {voiceOn && voice.error ? (
+                      <p className="text-xs text-destructive" role="alert">
+                        {voice.error}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               }
               headerActions={
                 <div className="flex items-center gap-1.5">
+                  {voiceOn ? (
+                    <button
+                      type="button"
+                      onClick={() => void toggleRecording()}
+                      disabled={voice.phase === 'transcribing'}
+                      className={cn(
+                        'journey-action-btn inline-flex items-center gap-1.5 disabled:opacity-50',
+                        voice.phase === 'recording' && 'border-destructive text-destructive',
+                      )}
+                      aria-pressed={voice.phase === 'recording'}
+                      aria-label={
+                        voice.phase === 'recording' ? 'Stop and send what you said' : 'Talk to Sudar'
+                      }
+                    >
+                      {voice.phase === 'recording' ? (
+                        <Square className="h-3.5 w-3.5" aria-hidden />
+                      ) : (
+                        <Mic className="h-3.5 w-3.5" aria-hidden />
+                      )}
+                      <span className="hidden sm:inline">
+                        {voice.phase === 'recording'
+                          ? 'Send'
+                          : voice.phase === 'transcribing'
+                            ? 'Listening…'
+                            : 'Talk'}
+                      </span>
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     onClick={toggleVoice}
@@ -424,12 +561,16 @@ export function JourneyWorkspace({ userId }: JourneyWorkspaceProps) {
                       voiceOn && 'border-primary text-card-foreground',
                     )}
                     aria-pressed={voiceOn}
-                    aria-label={voiceOn ? 'Turn voice presence off' : 'Turn voice presence on'}
+                    aria-label={
+                      voiceOn
+                        ? 'Turn voice mode off'
+                        : 'Turn voice mode on — talk to Sudar and hear replies'
+                    }
                   >
                     {voiceOn ? (
-                      <Mic className="h-3.5 w-3.5" aria-hidden />
+                      <Volume2 className="h-3.5 w-3.5" aria-hidden />
                     ) : (
-                      <MicOff className="h-3.5 w-3.5" aria-hidden />
+                      <VolumeX className="h-3.5 w-3.5" aria-hidden />
                     )}
                     <span className="hidden sm:inline">Voice</span>
                   </button>

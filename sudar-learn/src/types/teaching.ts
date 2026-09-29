@@ -92,6 +92,13 @@ export interface LearningDomain {
   updated_at?: string
 }
 
+/** Domain option for the SudarNotes topic picker (`GET /api/journey/domains`). */
+export interface LearnerDomainSummary {
+  id: string
+  title: string
+  description: string | null
+}
+
 /** Learner-facing claim summary for a course module (`GET /api/teaching/module-claims`). */
 export interface ModuleClaimWithMastery {
   id: string

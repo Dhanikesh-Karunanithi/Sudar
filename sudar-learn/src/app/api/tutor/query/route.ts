@@ -990,7 +990,9 @@ When the learner asks how to switch modality or where to find one, refer to the 
   }
   if (!teachingClaims.length && domainIdRaw) {
     try {
-      const graph = await loadDomainGraph(admin, domainIdRaw)
+      const { domainVisibleToLearner } = await import('@/lib/teaching/domainAccess')
+      const allowed = await domainVisibleToLearner(admin, user.id, domainIdRaw)
+      const graph = allowed ? await loadDomainGraph(admin, domainIdRaw) : null
       teachingClaims = graph?.claims.slice(0, 12) ?? []
     } catch {
       teachingClaims = []
