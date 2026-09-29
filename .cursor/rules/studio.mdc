@@ -9,7 +9,7 @@ alwaysApply: false
 Admin / L&D creator surface, Next.js 15 App Router, port 3000.
 
 ## Where things live
-- Course generation pipeline: `src/lib/courseGeneration/` (`pipeline.ts`, `prompts.ts`, `qualityValidator.ts`, `qualityGate.ts`, `componentValidation.ts`). Routes: `src/app/api/ai/generate-*`.
+- Course generation pipeline: `src/lib/ai/courseGeneration/` (`pipeline.ts`, `prompts.ts`, `qualityValidator.ts`, `qualityGate.ts`, `componentValidation.ts`). Routes: `src/app/api/ai/generate-*`.
 - Quality review UI: `src/app/(dashboard)/courses/[id]/quality`.
 - SudarSim authoring: `src/components/sudarsim/`, `src/app/api/sudarsim/*`, schemas in `shared/sudarsim/schemas.ts`.
 - Teaching OS Domains curator: `src/app/(dashboard)/domains`, `src/app/api/domains/*`.

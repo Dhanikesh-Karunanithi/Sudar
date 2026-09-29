@@ -6,7 +6,7 @@ Where each feature lives end to end. Update the row when you add routes, tables,
 
 | Feature | UI | API | Core lib | Tables | Env / flags | Tests |
 |---|---|---|---|---|---|---|
-| Course generation | `app/(dashboard)/courses/new`, course editor | `api/ai/generate-course`, `generate-all-modules`, `generate-from-document`, `generate-module`, `generate-module-with-research` | `lib/courseGeneration/*` (pipeline, prompts, qualityValidator, qualityGate, componentValidation) | `courses`, `modules`, `generation_telemetry` | `OPENROUTER_API_KEY`, `TOGETHER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` | `lib/courseGeneration/*.test.ts`, `scripts/evals` |
+| Course generation | `app/(dashboard)/courses/new`, course editor | `api/ai/generate-course`, `generate-all-modules`, `generate-from-document`, `generate-module`, `generate-module-with-research` | `lib/ai/courseGeneration/*` (pipeline, prompts, qualityValidator, qualityGate, componentValidation) | `courses`, `modules`, `generation_telemetry` | `OPENROUTER_API_KEY`, `TOGETHER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` | `lib/ai/courseGeneration/*.test.ts`, `scripts/evals` |
 | Quiz generation | module editor | `api/ai/generate-quiz` | `shared/content-generation/prompts.ts`, `schemas.ts`, `quizQuality.ts` | `modules.quiz` | same | `shared` tests via Studio vitest |
 | Quality review | `courses/[id]/quality` | `api/courses/[id]/quality` | `qualityValidator.ts` | `generation_telemetry`, `modules.review_status`, `modules.quality_issues` | — | — |
 | Publish | course editor | `api/courses/[id]/publish` | — | `courses.status` | — | — |

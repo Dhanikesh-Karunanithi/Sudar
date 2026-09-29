@@ -1,6 +1,6 @@
 ---
 description: Quality gate contract for any AI-generated learning content (courses, modules, quizzes, flashcards, mindmaps, sims)
-globs: sudar-studio/src/lib/courseGeneration/**, sudar-studio/src/app/api/ai/**, sudar-learn/src/app/api/ai/**, shared/content-generation/**, packages/sudar-mcp/src/tools/**
+globs: sudar-studio/src/lib/ai/courseGeneration/**, sudar-studio/src/app/api/ai/**, sudar-learn/src/app/api/ai/**, shared/content-generation/**, packages/sudar-mcp/src/tools/**
 alwaysApply: false
 ---
 
