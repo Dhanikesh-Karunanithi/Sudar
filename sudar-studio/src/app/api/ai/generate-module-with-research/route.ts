@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { searchWeb } from '@/lib/search/webSearch'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { fetchStudioOrgAiContext, studioMeteringChatCtx } from '@/lib/ai/studioOrgAiChat'
+import { gateModuleMarkdown } from '@/lib/ai/courseGeneration/qualityGate'
+import { buildCritiqueRefinePrompt } from '@/lib/ai/courseGeneration/prompts'
 
 export interface GenerateModuleWithResearchBody {
   topic: string
@@ -134,8 +136,43 @@ Write the full module content now.${webResults.length > 0 ? ' Use the web search
       title: r.title,
       link: r.link,
     }))
+    const sourceIds = references.map((r) => r.index)
+    const moduleTitle = module_title || topic
+    const sourceList = webResults.map((r, i) => `[${i + 1}] ${r.title} — ${r.snippet}`).join('\n')
 
-    return NextResponse.json({ content, references })
+    const gate = await gateModuleMarkdown({
+      courseTitle: course_title || 'General Course',
+      moduleTitle,
+      draft: content,
+      sourceIds,
+      documentGrounding: sourceList || undefined,
+      chatCtx: chatAiCtx,
+      regenerate: async (previous, critique) => {
+        const { content: refined } = await chatCompletion(
+          {
+            messages: buildCritiqueRefinePrompt(course_title || 'General Course', moduleTitle, undefined, previous, {
+              critique: `${critique}\nOnly cite sources [1]–[${sourceIds.length}] from the list; keep the ## References section accurate.`,
+              documentGrounding: sourceList || undefined,
+            }) as { role: 'system' | 'user'; content: string }[],
+            max_tokens: 2400,
+            temperature: 0.5,
+          },
+          chatAiCtx
+        )
+        return refined
+      },
+    })
+
+    return NextResponse.json({
+      content: gate.content,
+      references,
+      quality: {
+        overall: gate.assessment.overall,
+        review_status: gate.review_status,
+        blocked: gate.blocked,
+        issues: gate.issues,
+      },
+    })
   } catch (err) {
     return NextResponse.json({ error: `Generation failed: ${err}` }, { status: 500 })
   }
