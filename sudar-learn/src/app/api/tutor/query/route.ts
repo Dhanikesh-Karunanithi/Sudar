@@ -1,5 +1,6 @@
 import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { getRequestSession } from '@/lib/auth/requestSession'
+import { rejectCrossSiteRequest } from '@/lib/security/sameOrigin'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import type { TutorAction, TutorActionType, TutorBlock } from '@/types/tutor'
@@ -405,6 +406,8 @@ Rules:
 }
 
 export async function POST(request: NextRequest) {
+  const crossSite = rejectCrossSiteRequest(request)
+  if (crossSite) return crossSite
   try {
     const session = await getRequestSession(request)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

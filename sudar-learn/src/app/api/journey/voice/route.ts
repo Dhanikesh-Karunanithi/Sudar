@@ -4,6 +4,7 @@ import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/se
 import { isJourneyEnabled } from '@/lib/journey/isJourneyEnabled'
 import { callIntelligenceSim, extractSttText, normalizeAudioMime, type SimSttResult } from '@/lib/sim/simSession'
 import { checkAndIncrementUsage, usageLimitErrorResponse } from '@/lib/usage-limits'
+import { rejectCrossSiteRequest } from '@/lib/security/sameOrigin'
 
 /** ~90s of opus audio as base64; keeps Workers request bodies small. */
 const MAX_AUDIO_BASE64_CHARS = 2_500_000
@@ -40,6 +41,8 @@ function speakableText(markdown: string): string {
 /** SudarNotes voice: speech-to-text and Sudar's spoken replies via Intelligence (Deepgram/HF STT, Cartesia → Edge TTS). */
 export async function POST(request: NextRequest) {
   if (!isJourneyEnabled()) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 })
+  const crossSite = rejectCrossSiteRequest(request)
+  if (crossSite) return crossSite
   const supabase = await createClient()
   const {
     data: { user },

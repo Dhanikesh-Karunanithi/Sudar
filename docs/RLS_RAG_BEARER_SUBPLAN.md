@@ -1,6 +1,6 @@
 # Sub-plan: RLS / RAG / Bearer hardening (review before schema changes)
 
-**Status:** Clean slate done; **Phase 2 policy tighten applied** on prod (`20260915190000_post_wipe_rls_tighten`). Phase 1 RAG/Bearer app-layer still open.  
+**Status:** Clean slate done; **Phase 2 policy tighten applied** on prod (`20260915190000_post_wipe_rls_tighten`). **Phase 1 RAG/Bearer app-layer done (2026-09-29)** — see §7.  
 **Date:** 2026-09-15 (updated after Cavi provision + RLS apply)  
 **Live project:** `qnsrrboprydmjyormlky` (Sudar; sole org **Cavi**)
 
@@ -116,12 +116,26 @@ Migration: `supabase/migrations/20260915190000_post_wipe_rls_tighten.sql` (appli
 | `invite_codes` / `integration_api_keys` | Still 0 authenticated policies; table COMMENTs document service-role-only |
 | `sim_*` | Org-scoped / learner-own policies added (APIs remain service-role) |
 
-**Still open:** Phase 1 RAG ingest lock + Studio Bearer allowlist; Phase 3 FORCE RLS (not recommended yet); sign `docs/trust/RLS_STORAGE_AUDIT_CHECKLIST.md`.
+**Still open:** Phase 3 FORCE RLS (not recommended yet); sign `docs/trust/RLS_STORAGE_AUDIT_CHECKLIST.md`.
 
 ---
 
 ## 6. Next
 
-1. Phase 1 PR: RAG + Bearer (app only) when you want that loop closed.  
-2. Optional: prune stale `profiles` / `auth.users` from pilot leftovers (human keep-list).  
-3. Sign trust checklist after a quiet week with Cavi.
+1. Optional: prune stale `profiles` / `auth.users` from pilot leftovers (human keep-list).  
+2. Sign trust checklist after a quiet week with Cavi.
+
+---
+
+## 7. Phase 1 applied (2026-09-29, app layer)
+
+| Area | Change | Files |
+|------|--------|-------|
+| RAG ingest | Caller must be org ADMIN/MANAGER/CREATOR (or super admin); courses pinned to caller's active org; Zod body | `sudar-learn/src/app/api/rag/ingest/route.ts`, `sudar-learn/src/lib/security/contentEditorAccess.ts` |
+| RAG ingest-external | Same editor check for session callers + cross-org `course_id` → 404; internal secret compared in constant time | `sudar-learn/src/app/api/rag/ingest-external/route.ts` |
+| Studio Bearer | Bearer only honoured on an explicit allowlist of `getRequestSession` routes; JWT validated in middleware; invite gate applies to Bearer users; cron / provisioning / render-grant routes self-authenticate | `sudar-studio/src/middleware.ts`, `sudar-studio/src/lib/security/bearerRoutes.ts` |
+| CSRF | Origin check on `POST /api/tutor/query` and SudarNotes notebook/voice writes | `sudar-learn/src/lib/security/sameOrigin.ts` callers |
+| Invite brute force | 10 attempts / 10 min per hashed IP on validate, prepare-oauth, redeem (both apps); Postgres-backed so it holds across Workers isolates | `shared/access/rateLimit.ts`, `supabase/migrations/20260929140000_api_rate_limits.sql` |
+| Sim internal auth | `verifySimServiceSecret` fails closed in every environment | `sudar-learn/src/lib/sim/simInternalAuth.ts` |
+
+Smoke after deploy: Studio login, Learn course open, MCP Bearer course build (`generate-course`, `courses`, export), ALP provisioning key path, cron with `CRON_SECRET`.
