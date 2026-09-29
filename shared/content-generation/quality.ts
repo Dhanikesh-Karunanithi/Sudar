@@ -70,6 +70,47 @@ export const judgeOutputSchema = z.object({
 })
 export type JudgeOutput = z.infer<typeof judgeOutputSchema>
 
+export interface JudgeInput {
+  moduleTitle: string
+  courseContext?: string
+  learningOutcomes?: string[]
+  bloomLevel?: string
+  /** Present when the course is grounded in a source document; the judge checks faithfulness. */
+  groundingExcerpt?: string
+}
+
+export function buildJudgeMessages(
+  input: JudgeInput,
+  chunk: string,
+  part: { index: number; total: number } = { index: 0, total: 1 },
+): { role: 'system' | 'user'; content: string }[] {
+  const rubric = RUBRIC_DIMENSIONS.map((d) => `- ${d}: ${RUBRIC_DESCRIPTIONS[d]}`).join('\n')
+  const system = `You are a strict learning-science reviewer (Merrill's First Principles, retrieval practice, worked-example effect, cognitive load theory, Bloom's revised taxonomy).
+Score the module content on each dimension from 1 (poor) to 10 (excellent). Be critical: 7 means "good enough to ship to paying learners"; reserve 9–10 for exemplary work.
+
+Rubric:
+${rubric}
+
+Report concrete issues. Use severity "critical" ONLY for: factual errors, invented statistics/citations, unsafe advice, content that contradicts the source excerpt, or content unrelated to the module title. Use "warning" for pedagogy gaps and "info" for polish.
+
+Return ONLY JSON:
+{"scores":{${RUBRIC_DIMENSIONS.map((d) => `"${d}":n`).join(',')}},"issues":[{"dimension":"<rubric key>","severity":"info|warning|critical","description":"...","suggestion":"...","quote":"short excerpt"}],"summary":"one sentence"}`
+
+  const user = `Module: "${input.moduleTitle}"${input.bloomLevel ? `\nTarget Bloom level: ${input.bloomLevel}` : ''}
+${input.courseContext ? `Course: ${input.courseContext}` : ''}
+${input.learningOutcomes?.length ? `Learning outcomes:\n${input.learningOutcomes.map((o, i) => `${i + 1}. ${o}`).join('\n')}` : ''}
+${input.groundingExcerpt ? `\n--- SOURCE EXCERPT (content must be faithful to this) ---\n${input.groundingExcerpt.slice(0, 6000)}\n--- END SOURCE ---` : ''}
+${part.total > 1 ? `\nThis is part ${part.index + 1} of ${part.total} of the module; judge only what you see but consider it a section of a longer lesson.` : ''}
+
+--- CONTENT TO REVIEW ---
+${chunk}`
+
+  return [
+    { role: 'system', content: system },
+    { role: 'user', content: user },
+  ]
+}
+
 export interface QualityAssessment {
   /** False when the judge could not produce a valid assessment (never silently scored). */
   ok: boolean
@@ -171,8 +212,17 @@ export function runDeterministicChecks(markdown: string, opts: { requireRetrieva
   const text = markdown.trim()
   const words = text.split(/\s+/).filter(Boolean).length
 
+  if (words < 150) {
+    issues.push({
+      dimension: 'objective_alignment',
+      severity: 'warning',
+      description: `Module is very thin (${words} words).`,
+      suggestion: 'Expand with a worked example, an application task, and recall questions.',
+    })
+  }
+
   const hasExample = /(for example|for instance|e\.g\.|worked example|case study|scenario|imagine|suppose)/i.test(text)
-  if (!hasExample && words > 250) {
+  if (!hasExample && words > 80) {
     issues.push({
       dimension: 'worked_examples',
       severity: 'warning',
@@ -183,7 +233,7 @@ export function runDeterministicChecks(markdown: string, opts: { requireRetrieva
 
   const hasRetrieval =
     /\?\s*$/m.test(text) || /\[apply\]|your turn|try this|now you try|practice|reflect|pause and/i.test(text)
-  if ((opts.requireRetrieval ?? true) && !hasRetrieval && words > 200) {
+  if ((opts.requireRetrieval ?? true) && !hasRetrieval && words > 80) {
     issues.push({
       dimension: 'retrieval_practice',
       severity: 'warning',

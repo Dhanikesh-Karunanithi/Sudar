@@ -475,15 +475,31 @@ This document summarizes **shipped** features that are committed and ready for u
 ## AI course generation quality v2 (Studio + Learn)
 
 - **Where**: Sudar Studio — AI new-course wizard, generation pipeline, per-course **Content quality** page (`/courses/[id]/quality`). Sudar Learn — rich module reader.
-- **What**: Domain-varied module openings (no default “calculator program” scenarios); SME-aware curriculum and module prompts; **domain content-skill playbooks** (mandatory elements, anti-patterns, gold vs slop exemplars); critique/refine scaled to compliance / assessment density / course length; validated interactives (matching/flipcard/quiz); optional LLM quality scores in `courses.settings.ai_generation.generation_telemetry`; creator **visual identity** controls (domain, theme, brand colors, density); side insights as a **floating hotspot** instead of a permanent sidebar; wider read column; flipcard rendering fix.
+- **What**: Domain-varied module openings (no default “calculator program” scenarios); SME-aware curriculum and module prompts (`smeContexts.ts`); validated interactives (matching/flipcard/quiz); creator **visual identity** controls (domain, theme, brand colors, density); side insights as a **floating hotspot** instead of a permanent sidebar; wider read column; flipcard rendering fix. *Superseded for quality by* **Content quality gate** below (the earlier capstone-only critique and optional first-2,000-character scoring were replaced; "content-skill playbooks" and "critique gating" files described in the original entry never landed).
 - **Key files**:
-  - `sudar-studio/src/lib/ai/courseGeneration/{introductionStrategies,contentSkills,critiqueGating,prompts,pipeline,componentValidation}.ts`
+  - `sudar-studio/src/lib/ai/courseGeneration/{introductionStrategies,smeContexts,prompts,pipeline,componentValidation}.ts`
   - `sudar-studio/src/lib/ai/componentSelector.ts`
   - `shared/content-generation/prompts.ts` — quiz / flashcards / mindmap / interactive WHEN–WHEN NOT + few-shots
   - `sudar-studio/src/components/generator/BrandSettings.tsx`
   - `sudar-studio/src/app/(dashboard)/courses/[id]/quality/page.tsx`
   - `sudar-learn/src/components/learn/RichModuleContent.tsx`, `sudar-learn/src/lib/courseBodyMarkdown.tsx`
-- **Flow**: Studio AI wizard → BrandSettings + blueprint → `generate-course` → `fillEmptyModulesForCourse` (skill playbook + gated critique + quality telemetry) → Learn applies `content_theme` / brand colors → learner reads full-width content; taps insight bulb for side context.
+- **Flow**: Studio AI wizard → BrandSettings + blueprint → `generate-course` → `fillEmptyModulesForCourse` (quality gate per module) → Learn applies `content_theme` / brand colors → learner reads full-width content; taps insight bulb for side context.
+
+---
+
+## Content quality gate (Studio)
+
+- **Where**: Sudar Studio — every AI module generation path (`generate-course`, `generate-from-document`, `generate-all-modules`, `generate-module`, `generate-module-with-research`), quiz generation, **Content quality** page (`/courses/[id]/quality`), publish.
+- **What**: Full-module LLM judge (chunked, Zod-validated, no fake neutral scores) against a 9-dimension learning-science rubric; deterministic checks (worked example, retrieval prompt, wall-of-text, thin content, unsourced statistics, banned openings); citation verification (`[N]` must map to a real source); regenerate-with-critique below `CONTENT_QUALITY_THRESHOLD` up to `CONTENT_QUALITY_MAX_RETRIES`; output moderation (Llama Guard → OpenAI → local, `CONTENT_MODERATION_MODE`); relevance-selected document grounding; objective-aligned quiz generation with answer-key validation; per-module `review_status` + `quality` persisted; publish blocked (409) while any non-approved module has unresolved critical issues; reviewers resolve issues / approve modules (audited to `audit_events`). Prompts structurally require activation, a worked example, an `[apply]` task, and a "Check yourself" retrieval block (interleaving after module 1). The toggles `vary_introductions` and `strict_component_validation` now actually change behaviour. Generic fallback quizzes were removed.
+- **Key files**:
+  - `shared/content-generation/{quality,moderation,schemas,prompts}.ts`
+  - `sudar-studio/src/lib/ai/courseGeneration/{qualityGate,qualityValidator,grounding,pipeline,componentValidation,prompts,parse}.ts`
+  - `sudar-studio/src/lib/courses/courseAccess.ts` (creator or org ADMIN/MANAGER)
+  - `sudar-studio/src/app/api/courses/[id]/{quality,publish}/route.ts`, `sudar-studio/src/app/(dashboard)/courses/[id]/quality/page.tsx`
+  - Tests: `sudar-studio/src/lib/ai/courseGeneration/{quality,contentEval}.test.ts`; golden set `scripts/evals/golden/content-golden.json`; `npm run eval:content`
+  - Migration: `supabase/migrations/20260929130000_module_review_quality.sql`
+- **Env**: `CONTENT_QUALITY_THRESHOLD` (7), `CONTENT_QUALITY_MAX_RETRIES` (2), `CONTENT_MODERATION_MODE` (`auto`/`local`/`off`), `CONTENT_MODERATION_MODEL` (optional Llama Guard model id).
+- **Flow**: draft → judge + checks → (below threshold) regenerate with critique → moderation → save with `review_status` (`draft` passed / `needs_review`) → Quality page review → publish (blocked on unresolved critical issues). Docs: [CONTENT_QUALITY.md](CONTENT_QUALITY.md).
 
 ---
 

@@ -230,6 +230,8 @@ Streaming voice needs all of LiveKit, Deepgram, and Cartesia. When any is missin
 | `CONTENT_QUALITY_THRESHOLD` | Studio | `7` | Rubric score (1–10) below which a module is regenerated with critique. |
 | `CONTENT_QUALITY_MAX_RETRIES` | Studio | `2` | Regeneration attempts before a module is saved as `needs_review`. |
 | `CONTENT_MODERATION_MODE` | Studio, Learn | `auto` | `auto` (Llama Guard via Together, then OpenAI moderation, then local screen), `local` (keyword screen only), `off` (dev only). |
+| `CONTENT_MODERATION_MODEL` | Studio, Learn | `meta-llama/Llama-Guard-4-12B` | Together Llama Guard model id used by `moderateContent()`. |
+| `EVAL_JUDGE` / `EVAL_JUDGE_MODEL` | CI / local eval | unset | `EVAL_JUDGE=1` enables LLM judge calibration in `npm run eval:content`; model override optional. See [CONTENT_QUALITY.md](CONTENT_QUALITY.md). |
 | `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN` | Studio, Learn, Intelligence | unset | Error monitoring; no-op when unset. |
 
 ---

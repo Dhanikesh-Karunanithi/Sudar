@@ -80,8 +80,9 @@ describe('chunkForJudge', () => {
 })
 
 describe('runDeterministicChecks', () => {
-  it('passes a module with example, retrieval, and short paragraphs', () => {
-    expect(runDeterministicChecks(GOOD_MODULE).filter((i) => i.severity !== 'info')).toHaveLength(0)
+  it('passes a module with example, retrieval, and short paragraphs (only flagged as short)', () => {
+    const warnings = runDeterministicChecks(GOOD_MODULE).filter((i) => i.severity !== 'info')
+    expect(warnings.map((i) => i.dimension)).toEqual(['objective_alignment'])
   })
 
   it('flags unsourced statistics', () => {
@@ -250,6 +251,12 @@ describe('component and envelope validation', () => {
     expect(shouldIncludeComponent('quiz', { ...base, correctAnswer: 'Ignore' })).toBe(false)
     expect(shouldIncludeComponent('quiz', { ...base })).toBe(false)
     expect(shouldIncludeComponent('quiz', { ...base, options: ['Same', 'same', 'Other'], correctAnswer: 0 })).toBe(false)
+  })
+  it('non-strict mode keeps low-value but valid interactives', () => {
+    const oneCard = { cards: [{ front: 'Empathy', back: 'Naming the feeling before solving the problem.' }] }
+    expect(shouldIncludeComponent('flipcard', oneCard)).toBe(false)
+    expect(shouldIncludeComponent('flipcard', oneCard, undefined, { strict: false })).toBe(true)
+    expect(shouldIncludeComponent('quiz', { ...base, correctAnswer: 9 }, undefined, { strict: false })).toBe(false)
   })
   it('degrades invalid envelope parts to null instead of failing', () => {
     const env = moduleEnvelopeSchema.parse({

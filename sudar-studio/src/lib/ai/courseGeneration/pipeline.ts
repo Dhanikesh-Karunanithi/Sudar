@@ -276,6 +276,7 @@ export async function fillEmptyModulesForCourse(
         moduleIndex: modIndex,
         totalModules: modulesOrdered.length,
         courseType,
+        strictValidation: genWithType?.strict_component_validation !== false,
       })
 
       selected = sanitizeVideoComponents(selected, {
