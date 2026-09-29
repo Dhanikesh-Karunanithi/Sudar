@@ -8,6 +8,7 @@ import { getLocale, getMessages, setRequestLocale } from 'next-intl/server'
 import { isRtlLocale } from '../../../shared/i18nLocales'
 import { bodyFontClassForLocale } from '@/lib/i18n/localeFonts'
 import { EarlyAccessBanner } from '@/components/branding/EarlyAccessBanner'
+import { ErrorReportingHost } from '@/components/layout/ErrorReportingHost'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -85,6 +86,7 @@ export default async function RootLayout({
           <div className="flex min-h-screen flex-col">
             <ThemeProvider>
               <EarlyAccessBanner />
+              <ErrorReportingHost />
               <div className="flex min-h-0 flex-1 flex-col">{children}</div>
             </ThemeProvider>
           </div>
