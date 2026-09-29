@@ -37,6 +37,25 @@ export async function resolveContentEditorScope(
   return CONTENT_EDITOR_ROLES.has(role) ? { orgId, isSuperAdmin: false } : null
 }
 
+/** True when the user belongs to the org via profile (home/active org) or an org_members row. */
+export async function userInOrg(admin: SupabaseClient, userId: string, orgId: string | null): Promise<boolean> {
+  if (!orgId) return false
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('active_org_id, org_id')
+    .eq('id', userId)
+    .maybeSingle()
+  const row = profile as { active_org_id: string | null; org_id: string | null } | null
+  if (row?.active_org_id === orgId || row?.org_id === orgId) return true
+  const { data: membership } = await admin
+    .from('org_members')
+    .select('org_id')
+    .eq('org_id', orgId)
+    .eq('user_id', userId)
+    .maybeSingle()
+  return Boolean(membership)
+}
+
 export async function courseBelongsToOrg(admin: SupabaseClient, courseId: string, orgId: string): Promise<boolean> {
   const { data } = await admin.from('courses').select('org_id').eq('id', courseId).maybeSingle()
   return (data as { org_id: string | null } | null)?.org_id === orgId

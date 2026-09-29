@@ -1,6 +1,11 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { dispatchUserNotification } from '@/lib/notifications/dispatch'
 import { NextRequest, NextResponse } from 'next/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { z } from 'zod'
+import { userInOrg } from '@/lib/security/contentEditorAccess'
+
+const enrollBodySchema = z.object({ course_id: z.string().uuid() })
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -8,17 +13,21 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createServiceRoleSupabaseClient()
-  const { course_id } = await request.json()
-  if (!course_id) return NextResponse.json({ error: 'course_id required' }, { status: 400 })
+  const parsed = enrollBodySchema.safeParse(await request.json().catch(() => ({})))
+  if (!parsed.success) return NextResponse.json({ error: 'course_id required' }, { status: 400 })
+  const { course_id } = parsed.data
 
   const { data: course } = await admin
     .from('courses')
-    .select('id, title')
+    .select('id, title, org_id')
     .eq('id', course_id)
     .eq('status', 'published')
     .single()
 
-  if (!course) return NextResponse.json({ error: 'Course not found or not published' }, { status: 404 })
+  // Enrollment grants course read access via RLS, so it must not cross tenants.
+  if (!course || !(await userInOrg(admin as unknown as SupabaseClient, user.id, course.org_id))) {
+    return NextResponse.json({ error: 'Course not found or not published' }, { status: 404 })
+  }
 
   // Check if already enrolled — return existing
   const { data: existing } = await admin

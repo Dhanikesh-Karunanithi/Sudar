@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
   const isPublicPath = isLearnPublicPath(pathname)
-  const delegatesAuth = isLearnApiDelegatedAuthPath(pathname)
+  const delegatesAuth = isLearnApiDelegatedAuthPath(pathname, request.headers)
 
   if (!user && !isPublicPath && !delegatesAuth) {
     if (pathname.startsWith('/api/')) {
