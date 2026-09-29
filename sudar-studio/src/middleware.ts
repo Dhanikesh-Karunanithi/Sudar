@@ -1,5 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
-import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js'
+import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
 import { checkUserInviteAccess, isEarlyAccessEnabled } from '@shared-access'
@@ -83,9 +83,9 @@ export async function middleware(request: NextRequest) {
   let accessClient: SupabaseClient = supabase
   let bearerAuthenticated = false
   if (!user && bearerToken && isBearerApiRoute(pathname)) {
-    const bearerClient = createClient(supabaseUrl, anonKey, {
+    const bearerClient = createServerClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: `Bearer ${bearerToken}` }, fetch: fetchWithDeadline() },
-      auth: { persistSession: false, autoRefreshToken: false },
+      cookies: { getAll: () => [], setAll: () => {} },
     })
     try {
       const { data, error } = await bearerClient.auth.getUser(bearerToken)
