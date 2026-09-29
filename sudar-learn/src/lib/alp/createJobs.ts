@@ -112,7 +112,52 @@ export async function runContentGenerationJob(
   }
 }
 
+async function isSafeWebhookUrl(rawUrl: string): Promise<boolean> {
+  let parsed: URL
+  try {
+    parsed = new URL(rawUrl)
+  } catch {
+    return false
+  }
+  if (parsed.protocol !== 'https:') return false
+  const host = parsed.hostname.toLowerCase()
+  if (
+    host === 'localhost'
+    || host === 'metadata.google.internal'
+    || host.endsWith('.local')
+    || host.endsWith('.internal')
+  ) {
+    return false
+  }
+
+  const { lookup } = await import('dns/promises')
+  try {
+    const records = await lookup(host, { all: true })
+    for (const rec of records) {
+      const ip = rec.address
+      if (
+        ip === '127.0.0.1'
+        || ip === '::1'
+        || ip.startsWith('10.')
+        || ip.startsWith('192.168.')
+        || ip.startsWith('169.254.')
+        || /^172\.(1[6-9]|2\d|3[0-1])\./.test(ip)
+        || ip.startsWith('fc')
+        || ip.startsWith('fd')
+        || ip.startsWith('fe80:')
+      ) {
+        return false
+      }
+    }
+  } catch {
+    return false
+  }
+  return true
+}
+
 async function deliverWebhook(url: string, payload: Record<string, unknown>): Promise<void> {
+  if (!(await isSafeWebhookUrl(url))) return
+
   const secret = process.env.ALP_WEBHOOK_HMAC_SECRET?.trim()
   const body = JSON.stringify(payload)
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }

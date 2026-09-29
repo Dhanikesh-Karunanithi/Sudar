@@ -17,6 +17,8 @@ export type InsightType =
   | 'strength_spotlight'
   | 'adaptive_path'
   | 'quiz_followup'
+  | 'sudar_notes'
+  | 'claim_review'
 
 export interface Insight {
   id: string

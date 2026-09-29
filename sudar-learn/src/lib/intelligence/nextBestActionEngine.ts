@@ -6,6 +6,8 @@ import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { gapTopicLabelsForUser } from '@/lib/learner/syncTopicSkills'
 import { computeFocusRatio } from '@/types/analytics'
+import { buildClaimSchedulerCandidates } from '@/lib/teaching/scheduler'
+import { resumeLatestSession } from '@/lib/teaching/session'
 
 export interface ActivityFeatures {
   focusRatio: number
@@ -32,6 +34,8 @@ export type NextBestActionResult =
   | { ok: true; skipped?: undefined; action?: Record<string, unknown> }
 
 const STALE_HOURS = 4
+
+export { STALE_HOURS as NEXT_BEST_ACTION_STALE_HOURS }
 
 export async function computeNextBestActionForUser(
   admin: SupabaseClient,
@@ -88,6 +92,31 @@ export async function computeNextBestActionForUser(
   if (!force && existing?.computed_at) {
     const ageHours = (Date.now() - new Date(existing.computed_at as string).getTime()) / 3600000
     if (ageHours < STALE_HOURS) return { ok: true, skipped: 'fresh', action: existing }
+  }
+
+  // Teaching OS NBA v2: reviews → weak claims → prereq gaps before course catalog scoring
+  const claimCandidates = await buildClaimSchedulerCandidates(admin, userId, { limit: 5 })
+  const topClaim = claimCandidates[0]
+  if (topClaim && (topClaim.type === 'review_claim' || topClaim.type === 'remediate_claim' || topClaim.type === 'fill_prereq')) {
+    const openSession = await resumeLatestSession(admin, userId)
+    const action = {
+      type: topClaim.type,
+      action_type: topClaim.type,
+      target: {
+        claim_ids: topClaim.claim_ids,
+        learning_session_id: openSession?.id ?? null,
+        domain_id: openSession?.domain_id ?? null,
+      },
+      claim_ids: topClaim.claim_ids,
+      recommended_duration_mins: 15,
+      reason: topClaim.reason,
+      title: topClaim.title ?? null,
+      confidence: 0.88,
+      computed_at: new Date().toISOString(),
+      teaching_os: true,
+    }
+    await admin.from('learner_profiles').update({ next_best_action: action }).eq('user_id', userId)
+    return { ok: true, action }
   }
 
   const { data: enrollments } = await admin

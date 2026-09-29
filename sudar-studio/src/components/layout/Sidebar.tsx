@@ -50,6 +50,7 @@ const contentNavItems = [
   { label: 'Gamification', href: '/tools/gamification', icon: Trophy },
   { label: 'Tag library', href: '/settings/tags', icon: Tags },
   { label: 'Learning Paths', href: '/paths', icon: Route },
+  { label: 'Domains', href: '/domains', icon: GraduationCap },
   { label: 'Analytics', href: '/analytics', icon: BarChart2 },
   { label: 'AI usage', href: '/analytics/ai-usage', icon: Cpu },
   { label: 'Training compliance', href: '/compliance', icon: Shield },

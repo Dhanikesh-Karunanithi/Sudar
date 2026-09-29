@@ -42,7 +42,7 @@ function patternForType(type: InsightType): string {
     'digital_twin', 'concepts_engaged', 'areas_strengthening', 'how_you_learn',
     'preferred_modality', 'sudar_recommends', 'streak', 'progress_snapshot',
     'memory_aware_tutoring', 'course_connections', 'strength_spotlight',
-    'adaptive_path', 'quiz_followup',
+    'adaptive_path', 'quiz_followup', 'sudar_notes', 'claim_review',
   ].indexOf(type)
   return PATTERNS[i % PATTERNS.length]
 }
@@ -103,6 +103,64 @@ export function buildInsights(
       tag: 'Profile',
       updatedAt: lastUpdated,
       pattern: patternForType('digital_twin'),
+    })
+  }
+
+  // SudarNotes / Teaching OS signals
+  const teachingOs = memory.teaching_os as Record<string, unknown> | undefined
+  const sudarNotesEvents = events.filter(
+    (e) =>
+      e.event_type === 'ai_tutor_query' &&
+      e.payload &&
+      typeof e.payload === 'object' &&
+      (e.payload as Record<string, unknown>).surface === 'sudar_notes',
+  )
+  const claimEvents = events.filter(
+    (e) => e.event_type === 'claim_check' || e.event_type === 'claim_mastery_update' || e.event_type === 'review_due_served',
+  )
+  const activeGoals = Array.isArray(memory.active_goals)
+    ? (memory.active_goals as string[]).filter((g) => typeof g === 'string' && g.trim())
+    : []
+  const goalHint =
+    activeGoals[0] ||
+    (typeof memory.learning_goals === 'string' ? memory.learning_goals.trim() : '') ||
+    null
+
+  if (sudarNotesEvents.length > 0 || teachingOs) {
+    const goalBit = goalHint
+      ? ` SudarNotes is teaching you toward “${goalHint.slice(0, 80)}${goalHint.length > 80 ? '…' : ''}”.`
+      : ' Conversational learning with a living notebook is part of your Sudar experience.'
+    insights.push({
+      id: 'sudar_notes',
+      type: 'sudar_notes',
+      title: 'SudarNotes',
+      description: `${goalBit.trim()} Open SudarNotes to continue or start a new goal.`,
+      tag: 'Teach',
+      ctaLabel: 'Open SudarNotes',
+      ctaHref: '/journey',
+      updatedAt: lastUpdated,
+      pattern: patternForType('sudar_notes'),
+    })
+  }
+
+  if (
+    claimEvents.length > 0 ||
+    (nba && (nba.teaching_os === true || nba.type === 'review_claim' || nba.type === 'remediate_claim'))
+  ) {
+    const reason =
+      typeof nba?.reason === 'string' && nba.reason.trim()
+        ? nba.reason.trim().slice(0, 140)
+        : 'Sudar tracked claim-level checks — review weak or due ideas to lock in mastery.'
+    insights.push({
+      id: 'claim_review',
+      type: 'claim_review',
+      title: 'Claims to revisit',
+      description: reason,
+      tag: 'Mastery',
+      ctaLabel: 'View memory',
+      ctaHref: '/memory',
+      updatedAt: lastUpdated,
+      pattern: patternForType('claim_review'),
     })
   }
 
