@@ -17,6 +17,7 @@ import { QuestCard } from '@/components/features/gamification/QuestCard'
 import { AchievementShelf } from '@/components/features/gamification/AchievementShelf'
 import { ProfileCompletenessBar } from '@/components/features/gamification/ProfileCompletenessBar'
 import { isJourneyEnabled } from '@/lib/journey/isJourneyEnabled'
+import { NextFifteenCard } from '@/components/features/teaching/NextFifteenCard'
 
 function toLocalDateKey(d: Date): string {
   const y = d.getFullYear()
@@ -67,7 +68,7 @@ export default async function DashboardPage() {
     .single()
 
   if (!existingProfile) {
-    await admin.from('learner_profiles').insert({ user_id: user!.id })
+    await admin.from('learner_profiles').insert({ user_id: user!.id, updated_at: new Date().toISOString() })
   }
 
   // Cookie/host for internal SSR fetches (e.g. agents week plan) — not used for NBA/twin spam
@@ -564,6 +565,8 @@ export default async function DashboardPage() {
 
         {/* Daily quests */}
         <QuestCard />
+
+        <NextFifteenCard journeyEnabled={isJourneyEnabled()} />
 
         {/* KPI row + Activity chart */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

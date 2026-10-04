@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { ZodError } from 'zod'
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import {
@@ -19,6 +19,7 @@ import {
   type SimPersonaTurnResult,
   type SimSttResult,
 } from '@/lib/sim/simSession'
+import { refreshNextBestAction } from '@/lib/intelligence/nextBestActionEngine'
 import { verifySimServiceSecret } from '@/lib/sim/simInternalAuth'
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -382,9 +383,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Teaching OS: scenario claim_ids metadata → mastery
     try {
       const meta = (scenario.metadata as Record<string, unknown> | undefined) ?? {}
-      const claimIds = Array.isArray(meta.claim_ids)
+      let claimIds = Array.isArray(meta.claim_ids)
         ? (meta.claim_ids as unknown[]).filter((x): x is string => typeof x === 'string')
         : []
+      if (!claimIds.length && session.module_id) {
+        const { claimsForModule } = await import('@/lib/teaching/claimGraph')
+        claimIds = (await claimsForModule(admin, String(session.module_id))).map((c) => c.id)
+      }
       const overall =
         typeof coach.overall_score === 'number'
           ? coach.overall_score > 1
@@ -411,6 +416,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } catch {
       /* optional until claims linked */
     }
+
+    after(() => refreshNextBestAction(admin, user.id))
 
     return NextResponse.json({ success: true, coach })
   }

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
-import { getOrCreateOrg } from '@/lib/org'
+import { canConfigureOrgOnboarding, getOrCreateOrg } from '@/lib/org'
 
 const bodySchema = z.object({
-  workspaceName: z.string().min(2).max(120),
+  workspaceName: z.string().min(2).max(120).optional(),
   inviteEmails: z.array(z.string().email()).max(10).optional(),
   inviteRole: z.enum(['LEARNER', 'CREATOR', 'MANAGER', 'ADMIN']).optional(),
   firstCourseType: z.enum(['blank', 'ai', 'scorm', 'template']).optional(),
@@ -30,16 +30,25 @@ export async function POST(request: NextRequest) {
 
   const admin = createServiceRoleSupabaseClient()
   const orgId = await getOrCreateOrg(user.id)
+  const canConfigureOrg = await canConfigureOrgOnboarding(user.id, orgId)
 
+  if (!canConfigureOrg || !body.workspaceName) {
+    await admin.from('profiles').update({ onboarding_complete: true }).eq('id', user.id)
+    return NextResponse.json({
+      success: true,
+      data: { orgId, firstCoursePath: firstCoursePathFor(body.firstCourseType) },
+    })
+  }
+
+  const { data: orgRow } = await admin.from('organisations').select('settings, slug').eq('id', orgId).single()
+  const existingSettings = (orgRow?.settings as Record<string, unknown>) ?? {}
+  // Slugs are referenced by ops scripts and integrations, so only mint one when the org has none.
   const slugBase = body.workspaceName
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 40)
-  const slug = `${slugBase || 'workspace'}-${orgId.slice(0, 6)}`
-
-  const { data: orgRow } = await admin.from('organisations').select('settings').eq('id', orgId).single()
-  const existingSettings = (orgRow?.settings as Record<string, unknown>) ?? {}
+  const slug = orgRow?.slug || `${slugBase || 'workspace'}-${orgId.slice(0, 6)}`
   const aiCompliance = (existingSettings.ai_compliance as Record<string, unknown>) ?? {}
 
   const nextSettings = {
@@ -78,16 +87,13 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    data: {
-      orgId,
-      firstCoursePath:
-        body.firstCourseType === 'ai'
-          ? '/courses/new?mode=ai'
-          : body.firstCourseType === 'scorm'
-            ? '/courses/new?mode=scorm'
-            : body.firstCourseType === 'template'
-              ? '/courses/new?mode=template'
-              : '/courses/new',
-    },
+    data: { orgId, firstCoursePath: firstCoursePathFor(body.firstCourseType) },
   })
+}
+
+function firstCoursePathFor(type: z.infer<typeof bodySchema>['firstCourseType']): string {
+  if (type === 'ai') return '/courses/new?mode=ai'
+  if (type === 'scorm') return '/courses/new?mode=scorm'
+  if (type === 'template') return '/courses/new?mode=template'
+  return '/courses/new'
 }

@@ -179,6 +179,8 @@ export interface SelectComponentsOptions {
   moduleIndex?: number
   totalModules?: number
   courseType?: string
+  /** Default true: also reject low-value interactives (trivial matching, single flip cards). Broken ones are always rejected. */
+  strictValidation?: boolean
 }
 
 /** Drop or fix video components: no hallucinated YouTube URLs. */
@@ -240,22 +242,6 @@ export function applyCourseTypeCaps(
   return out
 }
 
-function minimalFallbackQuiz(moduleTitle: string): SelectedComponent {
-  return {
-    type: 'quiz',
-    data: {
-      question: `Which statement best reflects a key idea from "${moduleTitle}"?`,
-      options: [
-        'The concepts apply to real decisions, not abstract memorization.',
-        'This topic is unrelated to workplace practice.',
-        'Skipping practice is the fastest path to mastery.',
-      ],
-      correctAnswer: 0,
-      explanation: 'Effective learning ties ideas to how you will use them.',
-    },
-  }
-}
-
 /** Call AI to select 1-3 interactive components for the module. Returns empty array on failure. */
 export async function selectComponentsForModule(
   moduleTitle: string,
@@ -277,7 +263,7 @@ export async function selectComponentsForModule(
     return true
   })
   if (allowedTypes.length === 0) {
-    return [minimalFallbackQuiz(moduleTitle)]
+    return []
   }
 
   const snippet = buildComponentPromptSnippet(allowedTypes)
@@ -412,7 +398,7 @@ Return JSON with "components" only. Max ${maxComponents} components. Only use al
       .slice(0, maxComponents)
 
     components = applyCourseTypeCaps(components, prior)
-    components = filterAndSanitizeComponents(components, fullText)
+    components = filterAndSanitizeComponents(components, fullText, { strict: options?.strictValidation !== false })
 
     if (assess === 'light') {
       components = components.filter((c, i) => !(c.type === 'quiz' && i > 0))
@@ -425,13 +411,10 @@ Return JSON with "components" only. Max ${maxComponents} components. Only use al
       }
     }
 
-    if (components.length === 0) {
-      components = [minimalFallbackQuiz(moduleTitle)]
-    }
-
+    // No interactive beats a generic one: the module body already carries worked examples and "Check yourself".
     return components
   } catch {
-    return [minimalFallbackQuiz(moduleTitle)]
+    return []
   }
 }
 
@@ -447,7 +430,8 @@ export function getSuggestedQuizMode(bloomLevel: string): QuizMode {
 
 /** Convert SelectedComponent[] to RichInteractiveElement[]. Optionally set quizMode for quiz elements from bloomLevel. */
 export function toInteractiveElements(components: SelectedComponent[], bloomLevel?: string): RichInteractiveElement[] {
-  const sanitized = filterAndSanitizeComponents(components)
+  // Strictness was already applied at selection; here only broken components are dropped.
+  const sanitized = filterAndSanitizeComponents(components, undefined, { strict: false })
   return sanitized.map((c) => {
     const el: RichInteractiveElement = { type: c.type as RichInteractiveElement['type'], data: c.data }
     if (c.type === 'quiz' && bloomLevel) {

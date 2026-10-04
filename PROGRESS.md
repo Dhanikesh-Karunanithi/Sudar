@@ -9,13 +9,20 @@ This file is a short pointer so you and Cursor can quickly see the **Next 3** wi
 
 Update this list after each milestone (and keep it in sync with STRATEGIC_PATH Section 3).
 
-1. **Security / trust** — Complete RLS/RAG/Bearer sub-plan after review ([docs/RLS_RAG_BEARER_SUBPLAN.md](docs/RLS_RAG_BEARER_SUBPLAN.md)); keep [docs/CLOUDFLARE_PAGES_DEPLOY.md](docs/CLOUDFLARE_PAGES_DEPLOY.md) current for Studio/Learn prod.
+1. **Run the beta** — Merge the beta readiness PR, deploy, set `SUDAR_SIM_SERVICE_SECRET` + Sentry DSNs, invite testers into **Sudar Beta** (Studio → Users), run the **E2E smoke** workflow with tester creds, triage feedback weekly. See [docs/TESTER_GUIDE.md](docs/TESTER_GUIDE.md).
 2. **Visibility** — Record Sudar memory / SudarNotes demo video (1–2 min); add 2–4 screenshots to [docs/screenshots/](docs/screenshots/) and link from README.
-3. **Teaching OS loop** — Prove closed loop on the seeded domain (checks → mastery → NBA “Next 15 minutes”); expand Studio Domains curator as needed. See [docs/TEACHING_OS.md](docs/TEACHING_OS.md).
+3. **Teaching OS loop at scale** — Expand beyond the seeded domain; Studio Domains curator depth; claim analytics. See [docs/TEACHING_OS.md](docs/TEACHING_OS.md).
+
+Agent memory (decisions, glossary, feature map, known gaps): [docs/memory/](docs/memory/README.md).
 
 ---
 
-## Latest checkpoint (2026-09-15)
+## Latest checkpoint (2026-09-29) — beta readiness
+
+- **Done**: content quality gate + golden eval in CI; Learn loop (mastery strip, Next 15, NBA recompute, Practice, Sim fallback, SudarNotes persistence/voice/domains); Security Phase 1 (Bearer allowlist, RAG/enroll tenant locks, invite rate limits, CSRF, Sim secret fail-closed); Sentry; Studio Feedback button; Playwright smoke; Sudar Beta org; tester guide. Details: **UPDATES.md** 2026-09-29.
+- **Known gaps**: [docs/memory/KNOWN_GAPS.md](docs/memory/KNOWN_GAPS.md).
+
+## Previous checkpoint (2026-09-15)
 
 - **Security P0**: Public invite codes revoked (`EARLY_TALISMA`, `CURSOR-HIRE-*`); `security:audit` matcher restored for `createServiceRoleSupabaseClient()`.
 - **Docs truth-sync**: AGENTS / ECOSYSTEM / PROGRESS aligned with Cloudflare prod, Learn-owned NBA, SudarSim, MCP, 5 personas.

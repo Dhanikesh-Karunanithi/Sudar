@@ -197,6 +197,46 @@ See [MCP_SERVERS.md](MCP_SERVERS.md) and [MCP_CHATGPT_LAUNCH.md](MCP_CHATGPT_LAU
 
 ---
 
+## SudarSim voice (LiveKit + Deepgram + Cartesia)
+
+Streaming voice needs all of LiveKit, Deepgram, and Cartesia. When any is missing, Learn falls back to push-to-talk (Intelligence STT/TTS) and then typed turns, and shows the learner a notice.
+
+| Variable | App | Description |
+|----------|-----|-------------|
+| `SUDAR_SIM_URL` | Learn | sudar-sim service base URL (local `http://localhost:8090`). Unset = no streaming voice. |
+| `SUDAR_SIM_SERVICE_SECRET` | Learn, sudar-sim | Shared secret Learn sends as `X-Sudar-Sim-Secret`. **Required in production**; sudar-sim refuses unauthenticated calls when `SIM_DEV_MODE=0`. |
+| `SUDAR_LEARN_INTERNAL_SECRET` | sudar-sim, Learn | Secret the voice agent uses to sync transcripts / agent status back to Learn (`/api/sim/session/[id]/agent`). |
+| `SUDAR_LEARN_URL` | sudar-sim | Learn base URL the agent calls back to. |
+| `SUDAR_LEARN_ORIGINS` | sudar-sim | CORS allowlist (comma-separated; never `*`). |
+| `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | sudar-sim | LiveKit server (local: `docker compose -f sudar-sim/docker-compose.livekit.yml up`, `ws://localhost:7880`, `devkey` / `secret`). |
+| `NEXT_PUBLIC_LIVEKIT_URL` / `LIVEKIT_PUBLIC_URL` | Learn, Studio (build time) | Browser-reachable LiveKit origin added to the CSP `connect-src` (e.g. `wss://livekit.example.com`). `*.livekit.cloud` is always allowed. |
+| `CSP_EXTRA_CONNECT_SRC` | Learn, Studio (build time) | Extra space/comma-separated origins for `connect-src`. |
+| `DEEPGRAM_API_KEY`, `DEEPGRAM_MODEL` | sudar-sim, Intelligence | Streaming / batch STT. Intelligence falls back to HF Whisper (`HUGGINGFACE_API_KEY`). |
+| `CARTESIA_API_KEY`, `CARTESIA_VOICE_ID` | sudar-sim, Intelligence | TTS. Intelligence falls back to Edge TTS (free, `pip install edge-tts`). |
+| `SIM_DEV_MODE` | sudar-sim | `1` in local dev (relaxed auth); **must be `0` in production**. |
+
+---
+
+## Feature flag inventory
+
+| Flag | App | Default | Effect |
+|------|-----|---------|--------|
+| `NEXT_PUBLIC_SUDAR_JOURNEY` | Learn (build time) | on in dev, off in prod when unset | SudarNotes at `/journey` + sidebar entry. Beta sets `1`. |
+| `EARLY_ACCESS_ENABLED` | Studio, Learn | off | Invite-code gate on sign-up. |
+| `NEXT_PUBLIC_EARLY_ACCESS_BANNER` | Studio, Learn | off | Early-access banner. |
+| `TUTOR_WEB_ENRICHMENT_ENABLED` | Learn | off | Tutor adds web/YouTube resource cards. |
+| `RAG_RERANK_ENABLED` | Learn | off | Rerank retrieved chunks before the tutor prompt. |
+| `SUDARVID_HTTP_FALLBACK_ENABLED` | Learn | off | Retry premium video with classic mode. |
+| `CONTENT_QUALITY_THRESHOLD` | Studio | `7` | Rubric score (1–10) below which a module is regenerated with critique. |
+| `CONTENT_QUALITY_MAX_RETRIES` | Studio | `2` | Regeneration attempts before a module is saved as `needs_review`. |
+| `CONTENT_MODERATION_MODE` | Studio, Learn | `auto` | `auto` (Llama Guard via Together, then OpenAI moderation, then local screen), `local` (keyword screen only), `off` (dev only). |
+| `CONTENT_MODERATION_MODEL` | Studio, Learn | `meta-llama/Llama-Guard-4-12B` | Together Llama Guard model id used by `moderateContent()`. |
+| `EVAL_JUDGE` / `EVAL_JUDGE_MODEL` | CI / local eval | unset | `EVAL_JUDGE=1` enables LLM judge calibration in `npm run eval:content`; model override optional. See [CONTENT_QUALITY.md](CONTENT_QUALITY.md). |
+| `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN` | Studio, Learn, Intelligence | unset | Error monitoring; no-op when unset. Studio/Learn use the dependency-free reporter in `shared/observability/errorReporter.ts` (browser `error`/`unhandledrejection` via `ErrorReportingHost`, server via `src/instrumentation.ts` `onRequestError`); the DSN host is added to CSP `connect-src` at build time. Intelligence uses `sentry-sdk` with PII and request bodies disabled. Only error name/message/stack, app, runtime, route pathname and digest are sent. |
+| `NEXT_PUBLIC_SENTRY_ENVIRONMENT` / `SENTRY_ENVIRONMENT` | Studio, Learn / Intelligence | `production` / `ENV` | Environment tag on error events (e.g. `staging`, `beta`). |
+
+---
+
 ## Intelligence (Python) — summary
 
 Same Supabase and AI provider keys as above. See `sudar-intelligence/.env.example`. Local files **`sudar-intelligence/.env.local`** and **`sudar-intelligence/.env`** are **auto-loaded** when the API starts (no manual `export` needed for uvicorn).

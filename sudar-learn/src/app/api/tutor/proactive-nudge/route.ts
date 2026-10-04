@@ -8,7 +8,7 @@ import { learnMeteringChatCtx, loadOrgAiChatContext } from '@/lib/org/orgAiChatC
 import type { PrivateOpenAiRuntime } from '@/types/orgAiInference'
 import { idleNudgeFallbackChoices } from '@/lib/tutor/proactiveTemplates'
 import { parseProactiveNudgeJson } from '@/lib/tutor/proactivePromptSchema'
-import { createTranslator } from 'next-intl/server'
+import { createTranslator } from 'next-intl'
 import { loadMessagesSync } from '@/i18n/loadMessages'
 import { findExternalCourseForTopic } from '@/lib/external/externalCourseContext'
 import { buildTutorContentLanguageBlock } from '@/lib/i18n/contentLanguagePrompt'

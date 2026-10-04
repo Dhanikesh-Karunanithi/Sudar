@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
 
   const { data: _lp } = await admin.from('learner_profiles').select('id').eq('user_id', userId).single()
   if (!_lp) {
-    await admin.from('learner_profiles').insert({ user_id: userId })
+    await admin.from('learner_profiles').insert({ user_id: userId, updated_at: new Date().toISOString() })
   }
 
   return NextResponse.json({

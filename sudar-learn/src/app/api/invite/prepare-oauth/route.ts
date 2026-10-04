@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { validateInviteCode } from '@shared-access/inviteCodes'
+import { INVITE_CODE_RATE_LIMIT, RATE_LIMITED_MESSAGE, checkRateLimit, clientIpFromHeaders } from '@shared-access/rateLimit'
 import { VERIFIED_INVITE_COOKIE, VERIFIED_INVITE_MAX_AGE_SECONDS } from '@shared-access/constants'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 
@@ -17,6 +18,9 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createServiceRoleSupabaseClient()
+    if (!(await checkRateLimit(supabase, INVITE_CODE_RATE_LIMIT, clientIpFromHeaders(request.headers)))) {
+      return NextResponse.json({ ok: false, error: RATE_LIMITED_MESSAGE }, { status: 429 })
+    }
     const validation = await validateInviteCode(supabase, parsed.data.code)
     if (!validation.valid) {
       return NextResponse.json(validation, { status: 400 })

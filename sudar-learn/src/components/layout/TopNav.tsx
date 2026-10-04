@@ -51,6 +51,7 @@ const baseMainNavItems: { label: string; href: string }[] = [
   { label: 'Learn', href: '/' },
   { label: 'Courses', href: '/courses' },
   { label: 'Paths', href: '/paths' },
+  { label: 'Practice', href: '/practice' },
   { label: 'Progress', href: '/progress' },
   { label: 'Memory', href: '/memory' },
 ]
@@ -272,6 +273,8 @@ export function TopNav({ user, showOnboardingNudge, coinBalance = 0 }: TopNavPro
           <button
             type="button"
             onClick={() => setMoreOpen((v) => !v)}
+            aria-expanded={moreOpen}
+            aria-haspopup="menu"
             className={cn(
               'relative flex items-center justify-center gap-1 px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]',
               moreOpen

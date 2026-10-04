@@ -21,11 +21,13 @@
  * See docs/SUDAR_SIM_VOICE_SEED.md
  */
 import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { createClient } from '@supabase/supabase-js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+// The repo root has no node_modules; borrow Studio's install.
+const { createClient } = createRequire(resolve(__dirname, '../sudar-studio/package.json'))('@supabase/supabase-js')
 const dryRun = process.argv.includes('--dry-run')
 
 function loadEnvFile(path) {

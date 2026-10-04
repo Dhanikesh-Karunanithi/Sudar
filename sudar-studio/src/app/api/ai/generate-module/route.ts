@@ -4,6 +4,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { fetchStudioOrgAiContext, studioMeteringChatCtx } from '@/lib/ai/studioOrgAiChat'
 import { checkAndIncrementStudioUsage } from '@/lib/usage-limits'
+import { z } from 'zod'
+import { gateModuleMarkdown } from '@/lib/ai/courseGeneration/qualityGate'
+import { buildCritiqueRefinePrompt } from '@/lib/ai/courseGeneration/prompts'
+
+const requestSchema = z.object({
+  topic: z.string().trim().min(1).max(500),
+  course_title: z.string().max(300).optional(),
+  module_title: z.string().max(300).optional(),
+  difficulty: z.string().max(40).default('intermediate'),
+  context: z.string().max(20_000).optional(),
+  prior_modules_context: z
+    .array(z.object({ title: z.string().max(300), summary: z.string().max(2000) }))
+    .max(40)
+    .default([]),
+})
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -38,19 +53,13 @@ export async function POST(request: NextRequest) {
     '/api/ai/generate-module'
   )
 
-  const {
-    topic,
-    course_title,
-    module_title,
-    difficulty = 'intermediate',
-    context,
-    prior_modules_context,
-  } = await request.json()
-  if (!topic) return NextResponse.json({ error: 'topic required' }, { status: 400 })
+  const parsed = requestSchema.safeParse(await request.json().catch(() => null))
+  if (!parsed.success) return NextResponse.json({ success: false, error: 'topic required' }, { status: 400 })
+  const { topic, course_title, module_title, difficulty, context, prior_modules_context } = parsed.data
 
-  const priorContext = Array.isArray(prior_modules_context) && prior_modules_context.length > 0
+  const priorContext = prior_modules_context.length > 0
     ? `\n\nPREVIOUSLY COVERED MODULES (reference and build on; do NOT repeat):\n${
-        prior_modules_context.map((p: { title: string; summary: string }) => `- "${p.title}": ${p.summary}`).join('\n')
+        prior_modules_context.map((p) => `- "${p.title}": ${p.summary}`).join('\n')
       }`
     : ''
 
@@ -68,6 +77,12 @@ Personalization markers (for the adaptive engine):
 - Wrap each learning objective line in [objective]...[/objective]
 - Wrap key concept definitions in [concept:ConceptName]...[/concept]
 - Wrap application exercises in [apply]...[/apply]
+
+Learning-science requirements (the module is automatically reviewed against these):
+- Include a "### Worked example" that walks through a concrete case step by step before practice.
+- Include one [apply] "Your turn" task where the learner must produce or decide something.
+- End with a "### Check yourself" subsection of 2–3 recall questions (no answers inline).
+- Never invent statistics, studies, quotes, or numbered citations.
 
 Rules:
 - Write in plain text with markdown-style headings (## for main sections, ### for subsections).
@@ -93,16 +108,45 @@ Write the full module content now.`
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        max_tokens: 1200,
+        max_tokens: 2000,
         temperature: 0.7,
         top_p: 0.9,
       },
       chatAiCtx
     )
 
-    if (!content) return NextResponse.json({ error: 'No content generated' }, { status: 502 })
+    if (!content) return NextResponse.json({ success: false, error: 'No content generated' }, { status: 502 })
 
-    return NextResponse.json({ content })
+    const moduleTitle = module_title || topic
+    const gate = await gateModuleMarkdown({
+      courseTitle: course_title || 'General Course',
+      moduleTitle,
+      draft: content,
+      chatCtx: chatAiCtx,
+      regenerate: async (previous, critique) => {
+        const { content: refined } = await chatCompletion(
+          {
+            messages: buildCritiqueRefinePrompt(course_title || 'General Course', moduleTitle, undefined, previous, {
+              critique,
+            }) as { role: 'system' | 'user'; content: string }[],
+            max_tokens: 2400,
+            temperature: 0.5,
+          },
+          chatAiCtx
+        )
+        return refined
+      },
+    })
+
+    return NextResponse.json({
+      content: gate.content,
+      quality: {
+        overall: gate.assessment.overall,
+        review_status: gate.review_status,
+        blocked: gate.blocked,
+        issues: gate.issues,
+      },
+    })
   } catch (err) {
     return NextResponse.json({ error: `Generation failed: ${err instanceof Error ? err.message : err}` }, { status: 500 })
   }

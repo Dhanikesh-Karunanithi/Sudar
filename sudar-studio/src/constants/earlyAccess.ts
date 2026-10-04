@@ -12,3 +12,8 @@ export const EARLY_ACCESS_COPY = {
   completeInviteSubtitle: "You're signed in but need an invite code before you can access Sudar Studio.",
   waitlistLink: 'Join the waitlist',
 } as const
+
+export const STUDIO_FEEDBACK_COPY = {
+  button: 'Feedback',
+  buttonAria: 'Share early access feedback',
+} as const

@@ -478,8 +478,11 @@ export function SimWorkspace({
                 sessionId={sessionId}
                 voice={initialVoice ?? null}
                 customerName={scenario.persona?.name ?? 'Customer'}
-        onTranscriptUpdate={mergeVoiceTranscript}
-        onFallback={() => setUseVoiceShell(false)}
+                onTranscriptUpdate={mergeVoiceTranscript}
+                onFallback={(reason) => {
+                  setUseVoiceShell(false)
+                  setVoiceError(`${reason} Switched to push-to-talk — you can also type your replies.`)
+                }}
               />
             </div>
           ) : null}

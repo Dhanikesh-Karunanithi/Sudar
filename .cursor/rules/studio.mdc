@@ -1,0 +1,23 @@
+---
+description: Sudar Studio (admin/creator app) conventions — auth, course generation, SudarSim authoring, Domains, MCP handoff
+globs: sudar-studio/**
+alwaysApply: false
+---
+
+# Sudar Studio
+
+Admin / L&D creator surface, Next.js 15 App Router, port 3000.
+
+## Where things live
+- Course generation pipeline: `src/lib/ai/courseGeneration/` (`pipeline.ts`, `prompts.ts`, `qualityValidator.ts`, `qualityGate.ts`, `componentValidation.ts`). Routes: `src/app/api/ai/generate-*`.
+- Quality review UI: `src/app/(dashboard)/courses/[id]/quality`.
+- SudarSim authoring: `src/components/sudarsim/`, `src/app/api/sudarsim/*`, schemas in `shared/sudarsim/schemas.ts`.
+- Teaching OS Domains curator: `src/app/(dashboard)/domains`, `src/app/api/domains/*`.
+- MCP OAuth handoff: `/login?mcp_oauth=1` -> `src/lib/mcp/completeMcpOAuth.ts`.
+
+## Rules
+- Middleware passes Bearer requests through; **each API route must call its own auth helper** and verify org membership / ownership before reading or writing by id (e.g. `module_id`, `course_id`).
+- Zod-validate every request body (`safeParse`, return string error, 400).
+- Anything that writes authored content must go through the quality gate (`.cursor/rules/content-generation.mdc`).
+- Studio is admin-only; never import Learn code. Shared logic goes in `shared/` with a tsconfig path alias.
+- Tests: `npm test` (vitest). Put pure logic in `src/lib/**` so it's testable.

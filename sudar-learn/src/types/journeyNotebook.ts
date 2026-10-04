@@ -25,6 +25,18 @@ export interface SudarNotesNotebookState {
   workingMemory: SudarNotesWorkingMemory
 }
 
+/** Server copy of a learner's SudarNotes (`sudar_notes_sessions.state`, thread_key `journey`). */
+export interface JourneyNotebookSnapshot {
+  version: 1
+  pages: NotebookPage[]
+  working_memory: SudarNotesWorkingMemory
+  session: import('@/types/sudarNotes').SudarNotesSessionState | null
+}
+
+export const JOURNEY_NOTEBOOK_THREAD_KEY = 'journey'
+export const JOURNEY_NOTEBOOK_MAX_PAGES = 300
+export const JOURNEY_NOTEBOOK_MAX_BYTES = 1_000_000
+
 export const NOTEBOOK_STORAGE_KEY = 'sudar.notes.notebook'
 /** Legacy Journey key — migrated on load. */
 export const LEGACY_NOTEBOOK_STORAGE_KEY = 'sudar.journey.notebook'

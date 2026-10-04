@@ -1,0 +1,569 @@
+{
+  "version": 1,
+  "courses": [
+    {
+      "reference": "seed:demo:difficult-conversations",
+      "title": "Handling Difficult Customer Conversations",
+      "description": "A practice-first course for contact-centre agents: de-escalate, diagnose, and resolve billing disputes and refund chases. Finishes with a live SudarSim call.",
+      "difficulty": "intermediate",
+      "estimated_duration_mins": 45,
+      "tags": ["customer-service", "communication", "de-escalation"],
+      "target_skills": ["de-escalation", "active listening", "resolution planning"],
+      "modules": [
+        {
+          "title": "Why calm beats clever: the de-escalation curve",
+          "learning_objectives": [
+            "Explain why acknowledging emotion before facts lowers escalation",
+            "Recognise the three phrases that most often escalate a call"
+          ],
+          "content": {
+            "type": "rich",
+            "archetype": "cold-open",
+            "entryState": {
+              "type": "scenario-fragment",
+              "content": "\"This is the THIRD time I'm calling about the same charge.\" You have about eight seconds before this customer decides whether you're on their side."
+            },
+            "sections": [
+              {
+                "heading": "The emotion comes first",
+                "type": "text",
+                "content": "An upset customer isn't ready to hear facts yet. Research on emotion labelling shows that naming a feeling (\"that sounds really frustrating\") measurably reduces its intensity, which is why it works better than jumping to the account details. Your first job is to show you heard them, then move to the problem."
+              },
+              {
+                "heading": "Worked example: the same call, two openings",
+                "type": "text",
+                "content": "**Opening A:** \"Can I get your account number?\" The customer hears *process*, repeats the complaint louder.\n\n**Opening B:** \"Three calls for one charge would frustrate anyone. Let's make this the last one. Can I grab your account number so I can see exactly what happened?\" Same data request, but the customer hears *ally*, then *plan*, then *request*.\n\nNotice the structure: acknowledge, commit, then ask."
+              },
+              {
+                "heading": "Three escalation triggers to retire",
+                "type": "list",
+                "content": "These phrases feel neutral to agents but land as dismissive:",
+                "items": [
+                  "\"Calm down\" (tells the customer their feeling is the problem)",
+                  "\"That's our policy\" (ends the conversation instead of explaining it)",
+                  "\"You should have...\" (assigns blame before solving)"
+                ]
+              },
+              {
+                "heading": "Your turn: rewrite before you read on",
+                "type": "text",
+                "content": "Take \"That's our policy, refunds take 10 days\" and rewrite it using acknowledge, commit, ask. Then compare with the scenario challenge below."
+              }
+            ],
+            "interactiveElements": [
+              {
+                "type": "scenario_challenge",
+                "data": {
+                  "type": "scenario_challenge",
+                  "scenario": "A customer says: \"I was promised a refund last week and there's still nothing. I'm done with you people.\"",
+                  "question": "What's the strongest first response?",
+                  "options": [
+                    { "id": "a", "text": "\"Refunds take 7 to 10 business days, so it should arrive soon.\"", "feedback": "Accurate, but it skips the emotion and sounds like a brush-off." },
+                    { "id": "b", "text": "\"I understand. Please calm down and I'll look into it.\"", "feedback": "\"Calm down\" is one of the fastest ways to escalate." },
+                    { "id": "c", "text": "\"Waiting on money you were promised is stressful. Let me find exactly where that refund is right now.\"", "feedback": "Acknowledges the feeling, commits to action, and moves straight to the problem." }
+                  ],
+                  "correctOptionId": "c"
+                }
+              },
+              {
+                "type": "key_takeaways",
+                "data": {
+                  "type": "key_takeaways",
+                  "title": "Carry these into your next call",
+                  "items": [
+                    "Acknowledge the emotion before asking for data.",
+                    "Use acknowledge, commit, ask as your opening pattern.",
+                    "Retire \"calm down\", \"that's our policy\", and \"you should have\"."
+                  ]
+                }
+              }
+            ],
+            "exitState": {
+              "type": "apply-24h",
+              "content": "On your next three calls, count how many seconds pass before you acknowledge the customer's feeling. Aim for under ten."
+            }
+          },
+          "quiz": {
+            "questions": [
+              {
+                "id": "dc-m1-q1",
+                "question": "Why does naming a customer's emotion early help?",
+                "options": [
+                  "It shows the agent is following the script",
+                  "Labelling a feeling tends to reduce its intensity, so the customer can engage with the problem",
+                  "It gives the agent time to look up the account",
+                  "It lets the agent avoid discussing policy"
+                ],
+                "correct": 1,
+                "explanation": "Affect labelling lowers emotional intensity, which makes problem-solving possible.",
+                "topic": "de-escalation"
+              },
+              {
+                "id": "dc-m1-q2",
+                "question": "Which opening follows acknowledge, commit, ask?",
+                "options": [
+                  "\"Account number please.\"",
+                  "\"That's our policy, but I'll check.\"",
+                  "\"That sounds frustrating. Let's fix it today. What's the account number?\"",
+                  "\"You should have called the billing line.\""
+                ],
+                "correct": 2,
+                "explanation": "It names the feeling, commits to an outcome, then asks for what's needed.",
+                "topic": "opening pattern"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Diagnose before you promise: resolving billing disputes",
+          "learning_objectives": [
+            "Use a three-question diagnostic to find the real cause of a billing dispute",
+            "Choose a resolution you can actually deliver and state it with a time frame"
+          ],
+          "content": {
+            "type": "rich",
+            "archetype": "case-file",
+            "entryState": {
+              "type": "data-drop",
+              "content": "Most repeat contacts come from promises made before the problem was understood. Fix the diagnosis and the callbacks disappear."
+            },
+            "sections": [
+              {
+                "heading": "The three diagnostic questions",
+                "type": "list",
+                "content": "Before offering anything, answer these three:",
+                "items": [
+                  "What does the customer believe happened? (their story, in their words)",
+                  "What does the account show happened? (the record)",
+                  "Where do the two differ? (that gap is the real problem)"
+                ]
+              },
+              {
+                "heading": "Case file: the double charge that wasn't",
+                "type": "text",
+                "content": "A customer reports being charged twice. The record shows one charge and one pre-authorisation hold that will drop off in three days. The gap isn't a billing error; it's that nobody explained holds. The right resolution is an explanation plus a date, not a refund ticket that will be rejected and trigger another call."
+              },
+              {
+                "heading": "Promise what you control",
+                "type": "text",
+                "content": "Good resolution statements are specific, owned, and time-bound: \"I've raised the credit now; you'll see it on your statement by Friday, and I'll email you the reference.\" Avoid \"should\" and \"hopefully\". If you can't control the outcome, promise the next step you *can* control."
+              }
+            ],
+            "interactiveElements": [
+              {
+                "type": "flipcard",
+                "data": {
+                  "cards": [
+                    { "front": "Customer story vs. account record", "back": "The gap between them is the real problem to solve." },
+                    { "front": "A weak promise", "back": "\"It should be sorted soon, hopefully.\"" },
+                    { "front": "A strong promise", "back": "\"The credit is raised; you'll see it by Friday; reference coming by email.\"" }
+                  ]
+                }
+              },
+              {
+                "type": "quiz",
+                "quizMode": "predict-then-learn",
+                "data": {
+                  "question": "The account shows one charge and one pending hold. The customer says they were charged twice. What's the best resolution?",
+                  "options": [
+                    "Raise a refund for the second charge",
+                    "Explain the pending hold and when it will drop off",
+                    "Escalate to the billing team",
+                    "Offer a goodwill credit to end the call"
+                  ],
+                  "correctAnswer": "Explain the pending hold and when it will drop off",
+                  "explanation": "The gap is understanding, not an error. A refund request would be rejected and cause another contact."
+                }
+              }
+            ],
+            "exitState": {
+              "type": "reflection",
+              "content": "Think of the last promise you made to a customer. Was it something you controlled, with a date attached?"
+            }
+          },
+          "quiz": {
+            "questions": [
+              {
+                "id": "dc-m2-q1",
+                "question": "In the three-question diagnostic, where is the real problem usually found?",
+                "options": [
+                  "In the customer's tone",
+                  "In the gap between the customer's story and the account record",
+                  "In the company policy",
+                  "In the previous agent's notes only"
+                ],
+                "correct": 1,
+                "explanation": "Comparing belief with record reveals what actually needs fixing.",
+                "topic": "diagnosis"
+              },
+              {
+                "id": "dc-m2-q2",
+                "question": "Which resolution statement is strongest?",
+                "options": [
+                  "\"Hopefully it'll be sorted soon.\"",
+                  "\"It should come through at some point.\"",
+                  "\"I've raised the credit; you'll see it by Friday and I'll email the reference.\"",
+                  "\"Someone will get back to you.\""
+                ],
+                "correct": 2,
+                "explanation": "Specific, owned, and time-bound.",
+                "topic": "resolution"
+              }
+            ]
+          }
+        },
+        {
+          "title": "Live practice: a billing dispute call with Sudar",
+          "learning_objectives": [
+            "Apply acknowledge, commit, ask and the three-question diagnostic in a live call",
+            "Close a call with a specific, owned, time-bound resolution"
+          ],
+          "sim_slug": "billing-dispute-resolution",
+          "content": {
+            "type": "rich",
+            "archetype": "case-file",
+            "entryState": {
+              "type": "provocation",
+              "content": "Reading about de-escalation is easy. Doing it while someone is angry at you is the skill. Time to practise."
+            },
+            "sections": [
+              {
+                "heading": "What you'll do",
+                "type": "text",
+                "content": "Open the simulation below and take a billing dispute call. The customer's mood responds to what you say, so the techniques from the last two modules really matter. You can speak (if your browser allows the microphone) or type."
+              },
+              {
+                "heading": "What you'll be scored on",
+                "type": "list",
+                "content": "Your coach report scores:",
+                "items": [
+                  "Acknowledging emotion before facts",
+                  "Diagnosing before promising",
+                  "A specific, owned, time-bound resolution",
+                  "Avoiding escalation triggers"
+                ]
+              }
+            ],
+            "interactiveElements": [
+              {
+                "type": "key_takeaways",
+                "data": {
+                  "type": "key_takeaways",
+                  "title": "Before you start the call",
+                  "items": [
+                    "Acknowledge, commit, ask in your first ten seconds.",
+                    "Find the gap between story and record.",
+                    "Close with what you control and when."
+                  ]
+                }
+              }
+            ],
+            "exitState": {
+              "type": "what-changed",
+              "content": "After the call, read your coach report and pick one behaviour to repeat and one to change."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "reference": "seed:demo:how-learning-works",
+      "title": "How Learning Actually Works: Evidence-Based Study Skills",
+      "description": "The three study techniques with the strongest research support (retrieval practice, spacing, and interleaving) and how to use them at work.",
+      "difficulty": "beginner",
+      "estimated_duration_mins": 35,
+      "tags": ["learning-science", "productivity", "study-skills"],
+      "target_skills": ["retrieval practice", "spaced repetition", "interleaving"],
+      "modules": [
+        {
+          "title": "Retrieval practice: why testing beats rereading",
+          "learning_objectives": [
+            "Explain the testing effect and why retrieval strengthens memory more than rereading",
+            "Turn a piece of work material into three retrieval questions"
+          ],
+          "content": {
+            "type": "rich",
+            "archetype": "misconception-trap",
+            "entryState": {
+              "type": "contrarian-claim",
+              "content": "Rereading your notes feels productive. It is one of the least effective ways to remember them."
+            },
+            "sections": [
+              {
+                "heading": "The illusion of fluency",
+                "type": "text",
+                "content": "When you reread, the material feels familiar, and familiarity feels like knowing. But recognising something is not the same as being able to recall it when you need it. That gap is why people who reread feel confident and then blank in the meeting."
+              },
+              {
+                "heading": "What the research found",
+                "type": "text",
+                "content": "In a well-known experiment, students who read a passage once and then practised recalling it remembered substantially more a week later than students who spent the same time rereading, even though the rereaders predicted they'd do better [1]. A large review of study techniques rated practice testing as one of only two techniques with high utility across ages and materials [2]."
+              },
+              {
+                "heading": "Worked example: from notes to questions",
+                "type": "text",
+                "content": "Suppose your note says: *\"Refunds over $200 need team-lead approval.\"*\n\nTurn it into retrieval prompts:\n1. What's the approval threshold for refunds?\n2. Who approves refunds above it?\n3. A customer wants $250 back. What happens next?\n\nThe third question is the strongest: it asks you to *apply*, not just recall."
+              },
+              {
+                "heading": "Now you try",
+                "type": "text",
+                "content": "Pick one rule from your own job. Write one recall question and one apply question for it before moving on."
+              }
+            ],
+            "interactiveElements": [
+              {
+                "type": "quiz",
+                "quizMode": "confidence-tagged",
+                "data": {
+                  "question": "A week after studying, which group typically remembers more?",
+                  "options": [
+                    "People who reread the material several times",
+                    "People who read once, then practised recalling it",
+                    "Both groups remember about the same",
+                    "People who highlighted the key sentences"
+                  ],
+                  "correctAnswer": "People who read once, then practised recalling it",
+                  "explanation": "Retrieval strengthens memory more than re-exposure, even though rereading feels more effective at the time."
+                }
+              },
+              {
+                "type": "key_takeaways",
+                "data": {
+                  "type": "key_takeaways",
+                  "items": [
+                    "Familiarity is not recall; rereading creates an illusion of knowing.",
+                    "Practise pulling information out of memory, not putting it back in.",
+                    "Apply-style questions are stronger than definition questions."
+                  ]
+                }
+              }
+            ],
+            "exitState": {
+              "type": "apply-24h",
+              "content": "Tomorrow, before opening your notes, write down everything you remember about today's topic. Then check."
+            }
+          },
+          "quiz": {
+            "questions": [
+              {
+                "id": "lw-m1-q1",
+                "question": "Why does rereading feel more effective than it is?",
+                "options": [
+                  "It takes less time",
+                  "Familiarity with the text is mistaken for being able to recall it",
+                  "It is more enjoyable",
+                  "It uses more of the brain"
+                ],
+                "correct": 1,
+                "explanation": "This is the illusion of fluency.",
+                "topic": "testing effect"
+              },
+              {
+                "id": "lw-m1-q2",
+                "question": "Which retrieval question is strongest for the rule \"Refunds over $200 need team-lead approval\"?",
+                "options": [
+                  "What is a refund?",
+                  "Is there a refund rule?",
+                  "A customer wants $250 back. What happens next?",
+                  "Who wrote the refund policy?"
+                ],
+                "correct": 2,
+                "explanation": "It requires applying the rule to a case.",
+                "topic": "question design"
+              }
+            ]
+          },
+          "sources": [
+            { "id": 1, "title": "Roediger, H. L., & Karpicke, J. D. (2006). Test-enhanced learning: Taking memory tests improves long-term retention. Psychological Science, 17(3), 249-255.", "url": "https://doi.org/10.1111/j.1467-9280.2006.01693.x" },
+            { "id": 2, "title": "Dunlosky, J., et al. (2013). Improving students' learning with effective learning techniques. Psychological Science in the Public Interest, 14(1), 4-58.", "url": "https://doi.org/10.1177/1529100612453266" }
+          ]
+        },
+        {
+          "title": "Spacing: the forgetting curve is your friend",
+          "learning_objectives": [
+            "Explain why spaced review beats massed review for long-term retention",
+            "Plan a simple expanding review schedule for one topic"
+          ],
+          "content": {
+            "type": "rich",
+            "archetype": "socratic",
+            "entryState": {
+              "type": "provocation",
+              "content": "If you'll need something in a month, when should you review it: tonight three times, or three times spread over two weeks?"
+            },
+            "sections": [
+              {
+                "heading": "Forgetting makes the next review count",
+                "type": "text",
+                "content": "Reviewing right after learning is easy, which is exactly the problem: easy retrieval does little. Waiting until you've started to forget makes retrieval effortful, and effortful retrieval builds stronger memory. A large meta-analysis of distributed practice found spaced study reliably outperforms massed study, and that the best gap grows with how long you need to remember [1]."
+              },
+              {
+                "heading": "An expanding schedule you can actually use",
+                "type": "list",
+                "content": "A practical default for something you need in about a month:",
+                "items": [
+                  "Day 1: learn it",
+                  "Day 2: first recall",
+                  "Day 5: second recall",
+                  "Day 12: third recall",
+                  "Day 26: final check"
+                ]
+              },
+              {
+                "heading": "Sudar does this for you",
+                "type": "text",
+                "content": "Sudar tracks each idea you've practised and brings it back when you're about to forget it. That's what the \"Next 15 minutes\" suggestions on your dashboard are for."
+              }
+            ],
+            "interactiveElements": [
+              {
+                "type": "scenario_challenge",
+                "data": {
+                  "type": "scenario_challenge",
+                  "scenario": "You have a product certification exam in four weeks and six hours available to study.",
+                  "question": "Which plan will likely give the best result on exam day?",
+                  "options": [
+                    { "id": "a", "text": "Six hours the weekend before the exam", "feedback": "Massed study feels productive but fades fast." },
+                    { "id": "b", "text": "One-hour sessions spread across the four weeks, each starting with recall", "feedback": "Spacing plus retrieval: the strongest combination." },
+                    { "id": "c", "text": "Three hours now and three hours the night before", "feedback": "Better than cramming, but the gaps are uneven and the last session is massed." }
+                  ],
+                  "correctOptionId": "b"
+                }
+              }
+            ],
+            "exitState": {
+              "type": "next-conflict-teaser",
+              "content": "Spacing tells you when to review. Next: what order to practise in, and why mixing topics feels worse but works better."
+            }
+          },
+          "quiz": {
+            "questions": [
+              {
+                "id": "lw-m2-q1",
+                "question": "Why is reviewing immediately after learning less effective than waiting a bit?",
+                "options": [
+                  "You're tired right after learning",
+                  "Easy retrieval does little to strengthen memory; effortful retrieval does more",
+                  "The material hasn't been saved yet",
+                  "It isn't; immediate review is best"
+                ],
+                "correct": 1,
+                "explanation": "Some forgetting makes the next retrieval effortful, which strengthens memory.",
+                "topic": "spacing"
+              },
+              {
+                "id": "lw-m2-q2",
+                "question": "How should the gap between reviews change as you go?",
+                "options": [
+                  "Stay the same",
+                  "Get shorter",
+                  "Get longer",
+                  "It doesn't matter"
+                ],
+                "correct": 2,
+                "explanation": "An expanding schedule matches how memory stabilises.",
+                "topic": "scheduling"
+              }
+            ]
+          },
+          "sources": [
+            { "id": 1, "title": "Cepeda, N. J., et al. (2006). Distributed practice in verbal recall tasks: A review and quantitative synthesis. Psychological Bulletin, 132(3), 354-380.", "url": "https://doi.org/10.1037/0033-2909.132.3.354" }
+          ]
+        },
+        {
+          "title": "Interleaving: mix it up to learn to choose",
+          "learning_objectives": [
+            "Distinguish blocked practice from interleaved practice",
+            "Explain why interleaving improves the ability to choose the right strategy"
+          ],
+          "content": {
+            "type": "rich",
+            "archetype": "comparison-engine",
+            "entryState": {
+              "type": "contrarian-claim",
+              "content": "Practising one type of problem at a time makes you feel fluent. Mixing types makes you feel clumsy, and it's the clumsy group that does better on the test."
+            },
+            "sections": [
+              {
+                "heading": "Blocked vs. interleaved",
+                "type": "text",
+                "content": "**Blocked:** AAAA BBBB CCCC. You always know which method to use because the whole set is the same type.\n\n**Interleaved:** ABCB CACB. Each item forces you to first decide *which kind of problem this is*. That decision is exactly the skill real work demands, and blocked practice never trains it."
+              },
+              {
+                "heading": "The evidence",
+                "type": "text",
+                "content": "In classroom studies, students who practised mixed maths problems scored markedly higher on a delayed test than students who practised the same problems grouped by type [1]. The benefit is largest when the problem types look similar and are easy to confuse."
+              },
+              {
+                "heading": "Putting all three together",
+                "type": "text",
+                "content": "Retrieve (don't reread), space the reviews out, and mix related topics within each session. Sudar's practice checks follow the same pattern, so the course you just finished will keep coming back in short mixed sessions."
+              }
+            ],
+            "interactiveElements": [
+              {
+                "type": "quiz",
+                "quizMode": "standard",
+                "data": {
+                  "question": "What skill does interleaving train that blocked practice doesn't?",
+                  "options": [
+                    "Speed on a single problem type",
+                    "Choosing which strategy a problem needs",
+                    "Memorising definitions",
+                    "Taking neater notes"
+                  ],
+                  "correctAnswer": "Choosing which strategy a problem needs",
+                  "explanation": "Mixed sets force you to identify the problem type first, which is what real tasks require."
+                }
+              },
+              {
+                "type": "key_takeaways",
+                "data": {
+                  "type": "key_takeaways",
+                  "title": "The evidence-based trio",
+                  "items": [
+                    "Retrieval: pull it out of memory.",
+                    "Spacing: review with growing gaps.",
+                    "Interleaving: mix related topics so you learn to choose."
+                  ]
+                }
+              }
+            ],
+            "exitState": {
+              "type": "reflection",
+              "content": "Where in your job do you have to decide which approach a situation needs? That's where interleaved practice will pay off most."
+            }
+          },
+          "quiz": {
+            "questions": [
+              {
+                "id": "lw-m3-q1",
+                "question": "Which sequence is interleaved practice?",
+                "options": ["AAAA BBBB CCCC", "ABCB CACB", "AAAA AAAA", "CCCC BBBB AAAA"],
+                "correct": 1,
+                "explanation": "Interleaving mixes problem types within a session.",
+                "topic": "interleaving"
+              },
+              {
+                "id": "lw-m3-q2",
+                "question": "When is interleaving most helpful?",
+                "options": [
+                  "When problem types look very different",
+                  "When problem types look similar and are easy to confuse",
+                  "Only for maths",
+                  "Only for beginners"
+                ],
+                "correct": 1,
+                "explanation": "Discriminating similar types is where interleaving shines.",
+                "topic": "interleaving"
+              }
+            ]
+          },
+          "sources": [
+            { "id": 1, "title": "Rohrer, D., Dedrick, R. F., & Stershic, S. (2015). Interleaved practice improves mathematics learning. Journal of Educational Psychology, 107(3), 900-908.", "url": "https://doi.org/10.1037/edu0000001" }
+          ]
+        }
+      ]
+    }
+  ]
+}

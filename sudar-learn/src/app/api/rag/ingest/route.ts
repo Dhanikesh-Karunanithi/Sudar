@@ -1,15 +1,23 @@
 /**
  * RAG ingest: chunk and embed course + module content, upsert into content_chunks.
- * Call POST with { course_id?: string } — if course_id, index that course only; else all published.
+ * Call POST with { course_id?: string } — if course_id, index that course only; else all published
+ * courses in the caller's org. Caller must be an org admin/manager/creator (or super admin).
  * Requires embedding provider (Together, OpenAI, or Hugging Face) and pgvector migration.
  */
 
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { z } from 'zod'
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { resolveContentEditorScope } from '@/lib/security/contentEditorAccess'
 import { NextRequest, NextResponse } from 'next/server'
 import { embedTexts, EMBED_DIMENSIONS } from '@/lib/embed'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 import { chunkText, extractModuleBody } from '@/lib/rag/chunk'
 import { isAppLocale } from '../../../../../../shared/i18nLocales'
+
+const ingestBodySchema = z.object({
+  course_id: z.string().uuid().optional(),
+})
 
 interface IngestChunk {
   course_id: string
@@ -38,18 +46,20 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const admin = createServiceRoleSupabaseClient()
-    let body: { course_id?: string } = {}
-    try {
-      body = await request.json()
-    } catch {
-      body = {}
+    const scope = await resolveContentEditorScope(admin as unknown as SupabaseClient, user.id)
+    if (!scope) {
+      return NextResponse.json({ error: 'Only org admins and creators can re-index content' }, { status: 403 })
     }
-    const { course_id: singleCourseId } = body
+
+    const parsed = ingestBodySchema.safeParse(await request.json().catch(() => ({})))
+    if (!parsed.success) return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
+    const singleCourseId = parsed.data.course_id
 
     let query = admin
       .from('courses')
       .select('id, org_id, title, description, difficulty, tags')
       .eq('status', 'published')
+      .eq('org_id', scope.orgId)
     if (singleCourseId) query = query.eq('id', singleCourseId) as typeof query
     const { data: courses, error: coursesError } = await query
     if (coursesError || !courses?.length) {
