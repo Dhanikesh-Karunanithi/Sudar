@@ -16,6 +16,15 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-10-04 — Persona testing fixes (pre-beta)
+
+- **Theme**: Browser agents used Sudar as six personas (report: `docs/beta/PERSONA_TEST_REPORT_2026-09-30.md`). Four P0s and two P1s fixed before the beta merge.
+- **AI**: Orgs with Sudar AI enabled fall through to the cloud chain when the deployment lacks `ALLOW_ORG_PLATFORM_AI` (generation and tutor were blocked). Tutor and memory defaults moved to the serverless `meta-llama/Llama-3.3-70B-Instruct-Turbo`, because Together retired `gpt-oss-20b` / `gemma-3n` from serverless. The cloud chain retries a provider with its default model when a pinned model is unavailable.
+- **Security**: Studio onboarding org steps (rename, invites, governance) are now Admin-only, and the org slug no longer changes on rename.
+- **Learner twin**: `learner_profiles` inserts now set `updated_at` (the column has no DB default), the tutor memory route inserts when the row is missing, and 29 missing rows were backfilled. **Operators:** apply `supabase/migrations/20261004120000_learner_profiles_updated_at_default.sql` via Supabase MCP.
+- **Learn**: Enrolment no longer 500s when email notifications can't be signed (`NOTIFICATION_UNSUBSCRIBE_SECRET` unset); proactive tutor prompts no longer crash.
+- **Ops**: `scripts/ops/provision-persona-testers.mjs` creates QA persona accounts in Sudar Beta (credentials in gitignored `.local-backups/`).
+
 ### 2026-09-29 — Beta readiness (content quality, one learning loop, hardening)
 
 - **Theme**: Get Sudar ready for invited testers: consistent AI content with enforced validation, SudarSim / SudarNotes / Teaching OS / tutor working as one loop, agent memory, and security + monitoring fit for outside users.

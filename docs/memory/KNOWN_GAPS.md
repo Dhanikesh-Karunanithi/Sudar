@@ -19,6 +19,11 @@ Last reviewed: 2026-09-29.
 | Streaming voice needs 3 paid keys (LiveKit, Deepgram, Cartesia) plus Docker locally | Voice falls back to push-to-talk or typed when missing | Fallback is visible; document in tester guide |
 | SudarNotes notebook sync is last-write-wins per thread | Two open tabs can overwrite each other | Add `updated_at` conflict check |
 | SudarFeed / SudarPlay modalities are placeholders | Not in beta scope | Hidden from navigation |
+| Check-in popups fire 3+ times per 15 min (persona test 2026-10) | Interrupts impatient learners | Throttle to one per session |
+| "Ask Sudar" toolbar button can sit under the sticky course header | Click misses on some scroll positions | Raise toolbar z-index or offset below header |
+| Deep links into a course land on learner onboarding first | Invited learners hit a 3-minute intro before content | Let first deep link through; prompt onboarding after |
+| Studio module-count picker has a weak selected state; lesson-design copy uses ID jargon | Non-technical authors hesitate | Filled selected state + tooltips |
+| SudarVid planner (`sudar_vid` submodule) still defaults to `openai/gpt-oss-20b`, now non-serverless on Together | Watch modality video plans fail | Set `TOGETHER_TEXT_MODEL=meta-llama/Llama-3.3-70B-Instruct-Turbo` on the SudarVid host; change default in the submodule |
 
 ## Security and ops
 | Gap | Impact | Plan |
