@@ -14,7 +14,25 @@ on:
   workflow_dispatch:
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    name: Verify (lint + tests) — sudar-studio
+    defaults:
+      run:
+        working-directory: sudar-studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: sudar-studio/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
   deploy:
+    needs: verify
     runs-on: ubuntu-latest
     name: Cloudflare Workers — sudar-studio
     steps:
@@ -40,6 +58,9 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_LEARN_APP_URL: https://learn.thesudar.com
+          NEXT_PUBLIC_MCP_URL: https://mcp.thesudar.com
           NEXTAUTH_URL: https://studio.thesudar.com
+          NEXT_PUBLIC_LIVEKIT_URL: ${{ vars.NEXT_PUBLIC_LIVEKIT_URL }}
+          NEXT_PUBLIC_SENTRY_DSN: ${{ vars.NEXT_PUBLIC_SENTRY_DSN }}
           EARLY_ACCESS_ENABLED: "true"
           ADMIN_EMAILS: dhanikesh.karunanithi@foundever.com,connect@dhanikeshkarunanithi.com

@@ -135,6 +135,10 @@ export default async function GovernancePage() {
           under &quot;Where Sudar runs your AI&quot;, when your operator has enabled that option.
         </p>
         <p className="text-slate-500 text-sm">
+          Learner AI surfaces include the in-course tutor, <strong className="font-medium text-slate-400">SudarNotes</strong>{' '}
+          (conversational teaching with a living notebook when enabled), and related Teaching OS claim checks — same Twin and governance controls as other tutor traffic.
+        </p>
+        <p className="text-slate-500 text-sm">
           Plain-language guide:{' '}
           <Link href="/help/ai-at-sudar" className="text-indigo-400 hover:text-indigo-300">
             Understanding AI in Sudar

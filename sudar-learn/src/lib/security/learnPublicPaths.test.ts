@@ -1,18 +1,22 @@
 import { describe, expect, it } from 'vitest'
 
-import { isLearnPublicPath } from '@/lib/security/learnPublicPaths'
+import { isLearnApiDelegatedAuthPath } from './learnPublicPaths'
 
-describe('isLearnPublicPath', () => {
-  it('allows auth and recovery routes without a session', () => {
-    expect(isLearnPublicPath('/login')).toBe(true)
-    expect(isLearnPublicPath('/signup')).toBe(true)
-    expect(isLearnPublicPath('/forgot-password')).toBe(true)
-    expect(isLearnPublicPath('/auth/callback')).toBe(true)
+describe('isLearnApiDelegatedAuthPath', () => {
+  const withSecret = new Headers({ 'x-sudar-sim-secret': 'anything' })
+
+  it('delegates the sim agent context route', () => {
+    expect(isLearnApiDelegatedAuthPath('/api/sim/session/abc/agent')).toBe(true)
   })
 
-  it('blocks protected learner routes', () => {
-    expect(isLearnPublicPath('/')).toBe(false)
-    expect(isLearnPublicPath('/courses/abc')).toBe(false)
-    expect(isLearnPublicPath('/reset-password')).toBe(false)
+  it('delegates sim session sync only when the agent secret header is present', () => {
+    expect(isLearnApiDelegatedAuthPath('/api/sim/session/abc', withSecret)).toBe(true)
+    expect(isLearnApiDelegatedAuthPath('/api/sim/session/abc')).toBe(false)
+  })
+
+  it('keeps other sim and API routes behind the session gate', () => {
+    expect(isLearnApiDelegatedAuthPath('/api/sim/session', withSecret)).toBe(false)
+    expect(isLearnApiDelegatedAuthPath('/api/sim/session/abc/voice', withSecret)).toBe(false)
+    expect(isLearnApiDelegatedAuthPath('/api/tutor/query', withSecret)).toBe(false)
   })
 })

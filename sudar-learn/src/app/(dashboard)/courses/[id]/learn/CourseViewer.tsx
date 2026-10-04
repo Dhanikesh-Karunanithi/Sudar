@@ -20,6 +20,7 @@ import { AudioCard } from './AudioCard'
 import { SudarVidCard } from './SudarVidCard'
 import { RichModuleContent } from '@/components/learn/RichModuleContent'
 import { ReadAlongControls } from '@/components/learn/ReadAlongControls'
+import { ModuleClaimsStrip } from '@/components/learn/ModuleClaimsStrip'
 import { CourseThemeProvider } from '@/components/learn/CourseThemeProvider'
 import { ThemeRenderer } from '@/components/learn/ThemeRenderer'
 import type { ThemeSlug } from '@/types/contentThemes'
@@ -512,6 +513,8 @@ export function CourseViewer({
     }
   }, [course.id, currentModuleId, activeModality, completed])
 
+  const [claimsRefreshKey, setClaimsRefreshKey] = useState(0)
+
   // Tutor state
   const [tutorOpen, setTutorOpen] = useState(false)
   const [feedbackMode, setFeedbackMode] = useState(false)
@@ -671,7 +674,7 @@ export function CourseViewer({
         body: JSON.stringify({
           course_id: course.id,
           module_id: currentModuleId,
-          reason: 'idle_90s',
+          reason: 'idle_180s',
         }),
       })
         .then(async (r) => {
@@ -685,12 +688,12 @@ export function CourseViewer({
             setProactiveBanner({
               message: data.message,
               choices: data.choices?.length ? data.choices : idleNudgeFallbackChoices(),
-              trigger: 'idle_90s',
+              trigger: 'idle_180s',
             })
           }
         })
         .catch(() => {})
-    }, 90000)
+    }, 180000)
   }, [tutorOpen, course.id, currentModuleId, learnerPrefs])
 
   const runModulePersonalize = useCallback(
@@ -742,9 +745,10 @@ export function CourseViewer({
     return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [])
 
-  // Heartbeat every 30s for section time (so admin sees time even if learner leaves without completing)
+  // Heartbeat every 30s for section time — only while tab is visible (pause when hidden)
   useEffect(() => {
-    heartbeatIntervalRef.current = setInterval(() => {
+    function sendHeartbeat() {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
       const totalMs = Date.now() - startTimeRef.current
       const activeSecs = getLiveActiveSecs()
       const totalSecs = Math.round(totalMs / 1000)
@@ -767,8 +771,28 @@ export function CourseViewer({
           },
         }),
       }).catch(() => {})
-    }, 30000)
+    }
+
+    function startHeartbeatInterval() {
+      if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current)
+      heartbeatIntervalRef.current = null
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+      heartbeatIntervalRef.current = setInterval(sendHeartbeat, 30000)
+    }
+
+    function handleVisibilityForHeartbeat() {
+      if (document.visibilityState === 'visible') {
+        startHeartbeatInterval()
+      } else if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current)
+        heartbeatIntervalRef.current = null
+      }
+    }
+
+    startHeartbeatInterval()
+    document.addEventListener('visibilitychange', handleVisibilityForHeartbeat)
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityForHeartbeat)
       if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current)
       heartbeatIntervalRef.current = null
     }
@@ -1207,7 +1231,8 @@ export function CourseViewer({
         module_id: currentModuleId,
         payload: { score, wrong_topics: wrongTopics, module_title: currentModule?.title },
       }),
-    })
+    }).catch(() => null)
+    setClaimsRefreshKey((k) => k + 1)
   }
 
   function handleQuizAskByte(prompt: string) {
@@ -1850,6 +1875,10 @@ export function CourseViewer({
 
                 <div className={cn('space-y-10', isLoadingModuleContent && currentModule?.content == null && 'hidden')}>
 
+                {currentModuleId && activeModality === 'text' && (
+                  <ModuleClaimsStrip moduleId={currentModuleId} refreshKey={claimsRefreshKey} />
+                )}
+
                 {personalizeOffered && personalizationAccess.courseWelcome.allowed && (
                   <div className="mb-8 rounded-2xl border border-primary/25 bg-primary/5 p-5 space-y-3">
                     <p className="text-sm font-medium text-card-foreground">Personalize this course</p>
@@ -2154,6 +2183,19 @@ export function CourseViewer({
                   <FlashcardsCard
                     cards={flashcardsByModule[currentModuleId] ?? []}
                     loading={flashcardsLoading}
+                    onReview={(cardIndex, correct) => {
+                      void fetch('/api/events', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          event_type: 'flashcard_review',
+                          course_id: course.id,
+                          module_id: currentModuleId,
+                          modality: 'flashcards',
+                          payload: { correct, card_index: cardIndex },
+                        }),
+                      })
+                    }}
                     onRetry={() => {
                       setFlashcardsByModule((prev) => {
                         const next = { ...prev }

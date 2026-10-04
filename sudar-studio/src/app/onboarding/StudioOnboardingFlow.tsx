@@ -25,12 +25,17 @@ type CourseType = (typeof COURSE_TYPES)[number]['value']
 
 interface Props {
   defaultWorkspaceName: string
+  /** Only org admins may rename the workspace, invite people, or change governance defaults. */
+  canConfigureOrg: boolean
 }
 
-export function StudioOnboardingFlow({ defaultWorkspaceName }: Props) {
+export function StudioOnboardingFlow({ defaultWorkspaceName, canConfigureOrg }: Props) {
   const router = useRouter()
+  const visibleSteps = canConfigureOrg ? STEPS : STEPS.filter((s) => s.id === 'course')
   const [step, setStep] = useState(0)
+  const current = visibleSteps[step]?.id ?? 'course'
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [workspaceName, setWorkspaceName] = useState(defaultWorkspaceName)
   const [inviteInput, setInviteInput] = useState('')
   const [inviteRole, setInviteRole] = useState<'CREATOR' | 'MANAGER' | 'ADMIN' | 'LEARNER'>('CREATOR')
@@ -45,25 +50,39 @@ export function StudioOnboardingFlow({ defaultWorkspaceName }: Props) {
 
   async function finish() {
     setSaving(true)
-    const res = await fetch('/api/onboarding/complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        workspaceName,
-        inviteEmails,
-        inviteRole,
-        firstCourseType,
-        requireContentApproval,
-        requireLearnerConsent,
-      }),
-    })
-    const json = (await res.json()) as { success?: boolean; data?: { firstCoursePath?: string } }
-    if (json.success && json.data?.firstCoursePath) {
-      router.push(json.data.firstCoursePath)
+    setSaveError(null)
+    try {
+      const res = await fetch('/api/onboarding/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          canConfigureOrg
+            ? {
+                workspaceName,
+                inviteEmails,
+                inviteRole,
+                firstCourseType,
+                requireContentApproval,
+                requireLearnerConsent,
+              }
+            : { firstCourseType }
+        ),
+      })
+      const json = (await res.json().catch(() => null)) as {
+        success?: boolean
+        error?: string
+        data?: { firstCoursePath?: string }
+      } | null
+      if (!res.ok || !json?.success) {
+        setSaveError(json?.error ?? 'We could not save your setup. Please try again.')
+        setSaving(false)
+        return
+      }
+      router.push(json.data?.firstCoursePath ?? '/')
       router.refresh()
-    } else {
-      router.push('/')
-      router.refresh()
+    } catch {
+      setSaveError('Network problem while saving. Check your connection and try again.')
+      setSaving(false)
     }
   }
 
@@ -79,7 +98,7 @@ export function StudioOnboardingFlow({ defaultWorkspaceName }: Props) {
         </div>
 
         <div className="flex gap-2 mb-8">
-          {STEPS.map((s, i) => (
+          {visibleSteps.map((s, i) => (
             <div
               key={s.id}
               className={cn(
@@ -92,7 +111,7 @@ export function StudioOnboardingFlow({ defaultWorkspaceName }: Props) {
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm space-y-6">
-          {step === 0 && (
+          {current === 'workspace' && (
             <>
               <div>
                 <h1 className="text-xl font-semibold text-foreground">Name your workspace</h1>
@@ -113,7 +132,7 @@ export function StudioOnboardingFlow({ defaultWorkspaceName }: Props) {
             </>
           )}
 
-          {step === 1 && (
+          {current === 'team' && (
             <>
               <div>
                 <h1 className="text-xl font-semibold text-foreground">Invite your team</h1>
@@ -147,7 +166,7 @@ export function StudioOnboardingFlow({ defaultWorkspaceName }: Props) {
             </>
           )}
 
-          {step === 2 && (
+          {current === 'course' && (
             <>
               <div>
                 <h1 className="text-xl font-semibold text-foreground">Choose your first course</h1>
@@ -176,7 +195,7 @@ export function StudioOnboardingFlow({ defaultWorkspaceName }: Props) {
             </>
           )}
 
-          {step === 3 && (
+          {current === 'governance' && (
             <>
               <div>
                 <h1 className="text-xl font-semibold text-foreground">Org security defaults</h1>
@@ -221,6 +240,12 @@ export function StudioOnboardingFlow({ defaultWorkspaceName }: Props) {
             </>
           )}
 
+          {saveError && (
+            <p role="alert" className="text-sm text-red-500 dark:text-red-400">
+              {saveError}
+            </p>
+          )}
+
           <div className="flex items-center justify-between pt-2">
             {step > 0 ? (
               <button
@@ -233,10 +258,10 @@ export function StudioOnboardingFlow({ defaultWorkspaceName }: Props) {
             ) : (
               <span />
             )}
-            {step < STEPS.length - 1 ? (
+            {step < visibleSteps.length - 1 ? (
               <button
                 type="button"
-                disabled={step === 0 && workspaceName.trim().length < 2}
+                disabled={current === 'workspace' && workspaceName.trim().length < 2}
                 onClick={() => setStep((s) => s + 1)}
                 className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
               >

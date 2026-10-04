@@ -1,0 +1,22 @@
+---
+description: Quality gate contract for any AI-generated learning content (courses, modules, quizzes, flashcards, mindmaps, sims)
+globs: sudar-studio/src/lib/ai/courseGeneration/**, sudar-studio/src/app/api/ai/**, sudar-learn/src/app/api/ai/**, shared/content-generation/**, packages/sudar-mcp/src/tools/**
+alwaysApply: false
+---
+
+# Content generation quality contract
+
+Sudar's differentiator is premium, evidence-based content. Every generator that produces learner-facing content must:
+
+1. **Validate structure** with a Zod schema from `shared/content-generation/schemas.ts` (never `as SomeType` on model output). Repair JSON once, then fail loudly.
+2. **Moderate** output via `moderateContent()` (`shared/content-generation/moderation.ts`) before it is persisted or shown. Flagged content is saved as `needs_review` with a critical issue, which blocks publish.
+3. **Score** with the rubric in `shared/content-generation/quality.ts` (`buildJudgeMessages` / `parseJudgeOutput`; Studio wrapper `qualityValidator.ts`). Judge failure returns `ok:false` — never invent a neutral score.
+4. **Gate**: use `gateModuleMarkdown()` (`sudar-studio/src/lib/ai/courseGeneration/qualityGate.ts`, built on shared `runQualityGate`). Below threshold -> regenerate with the critique. Persist `modules.quality` (StoredModuleQuality) and `modules.review_status`.
+5. **Ground**: when sources exist, every `[N]` citation must resolve to a provided source (`verifyCitations`). Document mode uses `selectRelevantDocumentChunk` (`grounding.ts`).
+6. **Assessments**: answer key in range, no duplicate options, one question per objective where objectives exist (`validateQuizQuality` in `quality.ts`). Drop broken questions rather than ship them.
+7. **Review**: modules carry `review_status` (`draft` | `needs_review` | `approved`). Publish is blocked while any non-approved module has unresolved critical issues (`unresolvedCritical`).
+8. **No generic fallbacks**: if a generator can't produce content that fits the module, return nothing rather than filler.
+
+Pedagogy the prompts must enforce structurally (not just name-drop): Merrill (problem-centred, activate, demonstrate, apply, integrate), retrieval practice every module, worked example then faded practice, chunking under cognitive-load limits, interleaving across modules, Bloom progression.
+
+When changing prompts or models, run `npm run eval:content` (golden set in `scripts/evals/`) and note the score delta in the PR.

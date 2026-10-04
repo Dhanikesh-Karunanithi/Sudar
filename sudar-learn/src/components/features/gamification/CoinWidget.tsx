@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { useGamificationSyncStore } from '@/lib/gamification/gamificationSyncStore'
 
 interface CoinWidgetProps {
   initialBalance?: number
@@ -11,14 +12,15 @@ interface CoinWidgetProps {
 }
 
 export function CoinWidget({ initialBalance = 0, className }: CoinWidgetProps) {
-  const [balance, setBalance] = useState(initialBalance)
+  const balance = useGamificationSyncStore((s) => s.balance)
+  const setBalanceSeed = useGamificationSyncStore((s) => s.setBalanceSeed)
   const [animating, setAnimating] = useState(false)
   const [prevBalance, setPrevBalance] = useState(initialBalance)
 
-  useEffect(() => {
-    setBalance(initialBalance)
+  useLayoutEffect(() => {
+    setBalanceSeed(initialBalance)
     setPrevBalance(initialBalance)
-  }, [initialBalance])
+  }, [initialBalance, setBalanceSeed])
 
   useEffect(() => {
     if (balance !== prevBalance) {
@@ -28,24 +30,6 @@ export function CoinWidget({ initialBalance = 0, className }: CoinWidgetProps) {
       return () => clearTimeout(t)
     }
   }, [balance, prevBalance])
-
-  // Poll balance every 30 seconds and bypass cache to self-heal stale SSR values.
-  useEffect(() => {
-    async function fetchBalance() {
-      try {
-        const res = await fetch('/api/coins/balance', { cache: 'no-store' })
-        if (!res.ok) return
-        const json = await res.json() as { data?: { balance?: number } }
-        const newBalance = json.data?.balance
-        if (typeof newBalance !== 'number') return
-        setBalance((current) => (current === newBalance ? current : newBalance))
-      } catch {}
-    }
-
-    const interval = setInterval(fetchBalance, 30000)
-    fetchBalance()
-    return () => clearInterval(interval)
-  }, [])
 
   return (
     <Link

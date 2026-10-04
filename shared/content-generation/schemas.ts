@@ -103,6 +103,68 @@ export const createMediaRequestSchema = z.object({
   language: z.string().max(16).optional(),
 })
 
+export const entryStateSchema = z.object({
+  type: z.enum(['provocation', 'data-drop', 'scenario-fragment', 'contrarian-claim']),
+  content: z.string().min(1).max(600),
+})
+
+export const exitStateSchema = z.object({
+  type: z.enum(['reflection', 'apply-24h', 'next-conflict-teaser', 'what-changed']),
+  content: z.string().min(1).max(800),
+})
+
+export const sideCardSchema = z.object({
+  title: z.string().min(1).max(120),
+  content: z.string().min(1).max(1200),
+  noteType: z.enum(['wait-but-why', 'real-world', 'brain-moment', 'expert-voice', 'rabbit-hole']),
+  visibility: z.enum(['hidden', 'floating', 'visible']).catch('hidden'),
+})
+
+/** LLM envelope around a module body. Invalid parts degrade to null instead of failing the module. */
+export const moduleEnvelopeSchema = z.object({
+  entryState: entryStateSchema.nullable().catch(null).optional(),
+  exitState: exitStateSchema.nullable().catch(null).optional(),
+  sideCard: sideCardSchema.nullable().catch(null).optional(),
+})
+
+export const richSectionSchema = z.object({
+  heading: z.string().default(''),
+  content: z.string().default(''),
+  type: z.string().optional(),
+  items: z.array(z.unknown()).optional(),
+  image: z.unknown().optional(),
+})
+
+export const richInteractiveSchema = z.object({
+  type: z.string(),
+  data: z.record(z.string(), z.unknown()).default({}),
+  quizMode: z.string().optional(),
+})
+
+export const moduleSourceSchema = z.object({
+  id: z.number().int().positive(),
+  title: z.string(),
+  url: z.string().optional(),
+  citation: z.string().optional(),
+})
+
+/** Canonical shape stored in `modules.content` when `type === 'rich'`. */
+export const richModuleContentSchema = z.object({
+  type: z.literal('rich'),
+  archetype: z.string().optional(),
+  entryState: entryStateSchema.nullable().optional(),
+  exitState: exitStateSchema.nullable().optional(),
+  sideCard: sideCardSchema.nullable().optional(),
+  sections: z.array(richSectionSchema).min(1),
+  interactiveElements: z.array(richInteractiveSchema).default([]),
+  learning_objectives: z.array(z.string()).optional(),
+  sources: z.array(moduleSourceSchema).optional(),
+})
+
+export type ModuleEnvelope = z.infer<typeof moduleEnvelopeSchema>
+export type RichModuleContent = z.infer<typeof richModuleContentSchema>
+export type ModuleSource = z.infer<typeof moduleSourceSchema>
+
 export type QuizQuestion = z.infer<typeof quizQuestionSchema>
 export type QuizResult = z.infer<typeof quizResultSchema>
 export type FlashcardPair = z.infer<typeof flashcardPairSchema>

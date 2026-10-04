@@ -11,10 +11,12 @@ import {
   Route,
   Settings,
   HelpCircle,
+  Sparkles,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { SudarLogoMark } from '@/components/branding/SudarLogo'
+import { isJourneyEnabled } from '@/lib/journey/isJourneyEnabled'
 
 interface SidebarProps {
   user: {
@@ -24,7 +26,7 @@ interface SidebarProps {
   }
 }
 
-const navItems = [
+const baseNavItems = [
   { label: 'My Learning', href: '/', icon: LayoutDashboard },
   { label: 'Courses', href: '/courses', icon: BookOpen },
   { label: 'Paths', href: '/paths', icon: Route },
@@ -32,12 +34,22 @@ const navItems = [
   { label: "Sudar's Memory", href: '/memory', icon: Brain },
   { label: 'Help', href: '/help', icon: HelpCircle },
   { label: 'Settings', href: '/settings', icon: Settings },
-]
+] as const
+
+function getNavItems() {
+  if (!isJourneyEnabled()) return [...baseNavItems]
+  return [
+    baseNavItems[0],
+    { label: 'SudarNotes', href: '/journey', icon: Sparkles },
+    ...baseNavItems.slice(1),
+  ]
+}
 
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const navItems = getNavItems()
 
   async function handleSignOut() {
     await supabase.auth.signOut()

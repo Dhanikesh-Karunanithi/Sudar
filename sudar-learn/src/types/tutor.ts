@@ -24,8 +24,56 @@ export const TUTOR_BLOCK_TYPES = [
   'timeline',
   'media_card',
   'interactive_demo',
+  /** Sanitized teaching HTML pinned to Tutor Journey canvas (and shown compactly in chat). */
+  'lesson_html',
+  /** Allowlisted YouTube embed for Journey study materials. */
+  'video_embed',
+  /** External https resource link card (no iframe). */
+  'resource_card',
 ] as const
 export type TutorBlockType = (typeof TUTOR_BLOCK_TYPES)[number]
+
+/** Block types worth pinning on the Journey learning canvas (not chat-only chrome). */
+export const JOURNEY_CANVAS_BLOCK_TYPES: readonly TutorBlockType[] = [
+  'lesson_html',
+  'concept_card',
+  'diagram',
+  'timeline',
+  'quiz',
+  'choice_group',
+  'media_card',
+  'interactive_demo',
+  'video_embed',
+  'resource_card',
+] as const
+
+export interface LessonHtmlBlockPayload {
+  title?: string
+  /** Short learning goal for micro-lesson chrome. */
+  objective?: string
+  /** Approximate minutes to complete (1–30). */
+  duration_mins?: number
+  /** Optional try-this prompt shown as a callout. */
+  try_this?: string
+  /** Allowlisted HTML — always sanitize before render. */
+  html: string
+}
+
+export interface VideoEmbedBlockPayload {
+  title?: string
+  /** YouTube video id, or a youtube.com / youtu.be URL (sanitized to embed). */
+  url?: string
+  video_id?: string
+  /** Why this video helps the learner. */
+  why?: string
+}
+
+export interface ResourceCardBlockPayload {
+  title: string
+  url: string
+  source_label?: string
+  why?: string
+}
 
 /** Curated interactive templates — model supplies JSON params only, no arbitrary code. */
 export const TUTOR_INTERACTIVE_COMPONENT_IDS = [
@@ -154,10 +202,17 @@ export interface InteractiveDemoBlockPayload {
 
 export interface TutorQueryResponse {
   response?: string
+  /** Present when the HTTP/parse path failed but we still return a structured object. */
+  error?: string
   actions?: TutorAction[]
   blocks?: TutorBlock[]
   guardrail_refused?: boolean
   guardrail_code?: string
+  /** SudarNotes pedagogical turn + updated session (Journey /notes). */
+  sudar_notes?: {
+    turn: import('./sudarNotes').SudarNotesTurnPayload | null
+    session: import('./sudarNotes').SudarNotesSessionState
+  }
   routing?: {
     decision: 'local' | 'cloud'
     provider_id: string

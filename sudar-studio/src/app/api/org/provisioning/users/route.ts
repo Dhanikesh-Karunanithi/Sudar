@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     )
     await admin.from('org_members').insert({ org_id: orgId, user_id: userId, role: orgRole })
     const { data: _lp } = await admin.from('learner_profiles').select('id').eq('user_id', userId).single()
-    if (!_lp) await admin.from('learner_profiles').insert({ user_id: userId })
+    if (!_lp) await admin.from('learner_profiles').insert({ user_id: userId, updated_at: new Date().toISOString() })
 
     results.push({ email, ok: true, id: userId })
   }

@@ -53,21 +53,27 @@ Every new feature or fix should map to at least one of these pillars. If it does
 
 **Sudar Agents (v1 scaffold — shipped / in motion)** — Gateway on Sudar Intelligence, Learn/Studio BFFs, `agent_runs` persistence, Studio **Sudar Agents** observability runs table, cohort pulse wiring, spacing-nudge cron gates, organisation settings (`sudar_agents`). Roadmap / architecture: **[docs/AGENTS_PLATFORM.md](AGENTS_PLATFORM.md)**.
 
+**SudarNotes (live experiment)** — Conversational learning at Learn **`/journey`** (nav **SudarNotes**; flag `NEXT_PUBLIC_SUDAR_JOURNEY`). Living notebook + pedagogical modes; coexists with course Learn. Vision: **[docs/SUDAR_2_0_VISION.md](SUDAR_2_0_VISION.md)**. Catalog: **[docs/SHIPPED_FEATURES.md](SHIPPED_FEATURES.md)**.
+
+**Teaching OS (spine shipped)** — Shared claim/mastery spine, pedagogy engine, unified NBA v2, Studio domain curator. Canonical contract: **[docs/TEACHING_OS.md](TEACHING_OS.md)**. SudarNotes is one delivery surface of this spine, not the architecture.
+
 **Remaining gaps vs. ultimate goal**  
 - **Modality**: Text, Flashcards, and Listen (Audio TTS) live; Video/Podcast/MindMap use pre-generated or on-demand content; SudarFeed/SudarPlay still placeholders.  
 - **Polish**: Server-generated certificate PDF is implemented (`GET /api/certificates/[code]/pdf`); further polish (branding, locale) as needed.  
 - **Scale**: No white-label, SSO, or HRIS hooks yet (explicitly later phase).
 - **Analytics engine depth**: v1 hybrid analytics engine scaffolded (rollups + admin/learner insight APIs + risk signals + recommendation feedback), now needs production rollout tuning and scheduled refresh orchestration.
+- **Teaching OS rollout**: Expand surface wiring and claim analytics beyond the seeded domain (see TEACHING_OS.md phases).
 
 ---
 
 ## 3. Prioritized Next Developments (In Order)
 
-**Next 3 (concrete outcomes)** — update after each milestone:
-1. **Visibility**: Record Sudar memory demo video (1–2 min); add 2–4 screenshots to docs/screenshots and link from README.
-2. ~~**Ship recent work**: Commit and document Flashcards, document-to-course, SCORM 1.2 import; update current state in Section 2.~~ **Done** — see docs/SHIPPED_FEATURES.md and §2 above.
-3. ~~**One more win**: Ship Audio TTS (Listen tab) and document compliance email reminders.~~ **Done** — Listen modality + compliance-reminders cron documented.
-4. **Production deployment documented**: Studio and Learn deploy to Vercel; Intelligence deploys to Railway, Render, or Fly.io. See docs/VERCEL_DEPLOYMENT.md and docs/INTELLIGENCE_DEPLOYMENT.md.
+**Next 3 (concrete outcomes)** — kept in sync with [PROGRESS.md](../PROGRESS.md); update after each milestone:
+1. **Beta readiness (testers)**: Content quality gate enforced (schema, moderation, rubric, regeneration, review status), learner loop connected (course -> tutor -> sim -> Teaching OS mastery -> NBA), security Phase 1 closed, tester guide + demo seed. See [TESTER_GUIDE.md](TESTER_GUIDE.md), [CONTENT_QUALITY.md](CONTENT_QUALITY.md).
+2. **Visibility**: Record Sudar memory / SudarNotes demo video (1–2 min); add 2–4 screenshots to docs/screenshots and link from README.
+3. **Teaching OS loop at scale**: Expand beyond the seeded domain; Studio Domains curator depth; claim analytics. See [TEACHING_OS.md](TEACHING_OS.md).
+
+**Production deployment**: Studio and Learn run on Cloudflare Workers (OpenNext) — [CLOUDFLARE_PAGES_DEPLOY.md](CLOUDFLARE_PAGES_DEPLOY.md); deploys wait for lint + tests. Intelligence / SudarVid / SudarSim / MCP worker deploy manually ([INTELLIGENCE_DEPLOYMENT.md](INTELLIGENCE_DEPLOYMENT.md), [SUDAR_SIM_DEPLOY.md](SUDAR_SIM_DEPLOY.md)). Vercel is staging/legacy only.
 
 **Pending phases (from ECOSYSTEM §8)**  
 - **Phase 3 remaining**: Video modality (wire to SudarVid / Remotion).  

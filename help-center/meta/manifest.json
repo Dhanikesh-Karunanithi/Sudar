@@ -1,6 +1,24 @@
 {
-  "generatedAt": "2026-06-15T23:13:08.248Z",
+  "generatedAt": "2026-09-10T13:51:15.883Z",
   "articles": [
+    {
+      "slug": "admins/data-governance",
+      "title": "Data governance (Settings)",
+      "description": "GDPR, FERPA, retention, and export summary for operators.",
+      "audience": "admin",
+      "category": "admins",
+      "order": 7,
+      "marketing": false
+    },
+    {
+      "slug": "admins/export-formats",
+      "title": "Course export formats",
+      "description": "SCORM 1.2 today; SCORM 2004 and IMS CC on the roadmap.",
+      "audience": "admin",
+      "category": "admins",
+      "order": 5,
+      "marketing": true
+    },
     {
       "slug": "admins/integrations-overview",
       "title": "Integrations and ALP (overview)",
@@ -20,15 +38,6 @@
       "marketing": false
     },
     {
-      "slug": "admins/studio-overview",
-      "title": "Sudar Studio overview",
-      "description": "What Studio is for, how it pairs with Learn, and where to find major areas in the sidebar.",
-      "audience": "admin",
-      "category": "admins",
-      "order": 1,
-      "marketing": true
-    },
-    {
       "slug": "admins/studio-onboarding",
       "title": "Studio onboarding",
       "description": "First-run workspace setup for new Sudar Studio admins.",
@@ -38,12 +47,12 @@
       "marketing": true
     },
     {
-      "slug": "admins/export-formats",
-      "title": "Course export formats",
-      "description": "SCORM 1.2 today; SCORM 2004 and IMS CC on the roadmap.",
+      "slug": "admins/studio-overview",
+      "title": "Sudar Studio overview",
+      "description": "What Studio is for, how it pairs with Learn, and where to find major areas in the sidebar.",
       "audience": "admin",
       "category": "admins",
-      "order": 5,
+      "order": 1,
       "marketing": true
     },
     {
@@ -53,15 +62,6 @@
       "audience": "admin",
       "category": "admins",
       "order": 6,
-      "marketing": false
-    },
-    {
-      "slug": "admins/data-governance",
-      "title": "Data governance (Settings)",
-      "description": "GDPR, FERPA, retention, and export summary for operators.",
-      "audience": "admin",
-      "category": "admins",
-      "order": 7,
       "marketing": false
     },
     {
@@ -146,15 +146,6 @@
       "marketing": true
     },
     {
-      "slug": "learners/modalities",
-      "title": "Learning modalities (Read, Listen, Map, Cards, Watch, Podcast)",
-      "description": "What each modality does in the course viewer and when it is available.",
-      "audience": "learner",
-      "category": "learners",
-      "order": 2,
-      "marketing": true
-    },
-    {
       "slug": "learners/gamification",
       "title": "Gamification in Learn",
       "description": "Quests, coins, achievements, and how they connect to learning events.",
@@ -173,6 +164,15 @@
       "marketing": true
     },
     {
+      "slug": "learners/modalities",
+      "title": "Learning modalities (Read, Listen, Map, Cards, Watch, Podcast)",
+      "description": "What each modality does in the course viewer and when it is available.",
+      "audience": "learner",
+      "category": "learners",
+      "order": 2,
+      "marketing": true
+    },
+    {
       "slug": "learners/paths-and-certificates",
       "title": "Paths and certificates",
       "description": "Mandatory vs optional sequences, completions, and where certificates surface.",
@@ -188,6 +188,15 @@
       "audience": "learner",
       "category": "learners",
       "order": 5,
+      "marketing": true
+    },
+    {
+      "slug": "learners/sudar-notes",
+      "title": "SudarNotes",
+      "description": "Conversational learning with a living notebook — how to open it, accept notes, and how it relates to courses.",
+      "audience": "learner",
+      "category": "learners",
+      "order": 4,
       "marketing": true
     },
     {

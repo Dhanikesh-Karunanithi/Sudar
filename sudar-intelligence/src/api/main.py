@@ -8,12 +8,31 @@ from dotenv import load_dotenv
 
 # Load sudar-intelligence/.env.local then .env before any os.getenv (matches Next.js local dev workflow).
 _intel_root = Path(__file__).resolve().parents[2]
-for _env_fname in (".env.local", ".env"):
-    _env_path = _intel_root / _env_fname
-    if _env_path.is_file():
-        load_dotenv(_env_path)
+_env_local = _intel_root / ".env.local"
+_env_file = _intel_root / ".env"
+if _env_local.is_file():
+    load_dotenv(_env_local, override=True)
+if _env_file.is_file():
+    load_dotenv(_env_file, override=False)
 
 import os
+
+_sentry_dsn = os.getenv("SENTRY_DSN", "").strip()
+if _sentry_dsn:
+    try:
+        import sentry_sdk
+
+        # Errors only, no request bodies/headers/user data: learner prompts must not leave the service.
+        sentry_sdk.init(
+            dsn=_sentry_dsn,
+            environment=os.getenv("SENTRY_ENVIRONMENT", os.getenv("ENV", "development")),
+            send_default_pii=False,
+            traces_sample_rate=0.0,
+            max_request_body_size="never",
+        )
+    except ImportError:
+        print("WARNING: SENTRY_DSN is set but sentry-sdk is not installed; error reporting disabled.")
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -54,6 +73,13 @@ _redoc_url = None if _is_production else "/redoc"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Sudar Intelligence starting up...")
+    _dg = bool(os.getenv("DEEPGRAM_API_KEY", "").strip())
+    _hf = bool(os.getenv("HUGGINGFACE_API_KEY", "").strip())
+    _svc = bool(os.getenv("INTELLIGENCE_SERVICE_SECRET", "").strip())
+    print(
+        f"Voice config: service_auth={'yes' if _svc else 'NO'}, "
+        f"stt={'deepgram' if _dg else 'hf' if _hf else 'NONE'}"
+    )
     if not os.getenv("SUPABASE_JWT_SECRET", "").strip():
         print(
             "WARNING: SUPABASE_JWT_SECRET is unset. Bearer JWT routes (Sudar Agents, tutor, ...) "

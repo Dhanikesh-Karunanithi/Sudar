@@ -11,4 +11,4 @@ After you sign in you land on **My Learning**: streak, engagement summary, and *
 
 **Courses** lists everything you are enrolled in. **Paths** sequences multiple courses, complete required steps in order when your administrator assigns them that way.
 
-The narrow **dock** on the edge of the screen is your fastest map: Courses, Paths, Progress, Sudar Memory, Settings, plus **Sudar Help Center** for guides on modalities and the tutor.
+The narrow **dock** on the edge of the screen is your fastest map: Courses, Paths, Progress, Sudar Memory, Settings, plus **Sudar Help Center** for guides on modalities and the tutor. When enabled, **SudarNotes** appears in the dock for conversational learning with a living notebook — see [SudarNotes](/help/learners/sudar-notes).

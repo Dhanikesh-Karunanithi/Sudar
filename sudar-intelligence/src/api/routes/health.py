@@ -1,7 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+import os
+
 from src.core.ai_client import PROVIDER_HUGGINGFACE, _get_provider, get_chat_config_error
+from src.core.deepgram_client import deepgram_api_key
 from src.core.hf_client import hf_api_key
 
 router = APIRouter()
@@ -26,6 +29,17 @@ async def health_check():
         service="Sudar Intelligence",
         version="1.0.0",
     )
+
+
+@router.get("/health/sim-voice")
+async def sim_voice_health():
+    """Dev helper: confirm SudarSim STT/TTS env is loaded (no secrets returned)."""
+    stt = "deepgram" if deepgram_api_key() else "huggingface" if hf_api_key() else "none"
+    return {
+        "service_auth_configured": bool(os.getenv("INTELLIGENCE_SERVICE_SECRET", "").strip()),
+        "stt_provider": stt,
+        "tts_provider": "cartesia" if os.getenv("CARTESIA_API_KEY", "").strip() else "edge",
+    }
 
 
 @router.get("/health/hf-chat", response_model=HfChatSmokeResponse)

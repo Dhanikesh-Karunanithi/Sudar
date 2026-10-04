@@ -14,10 +14,13 @@ export function FlashcardsCard({
   cards,
   loading,
   onRetry,
+  onReview,
 }: {
   cards: FlashcardPair[]
   loading?: boolean
   onRetry?: () => void
+  /** Teaching OS: report know / don't know for spaced mastery. */
+  onReview?: (cardIndex: number, correct: boolean) => void
 }) {
   const [index, setIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
@@ -80,6 +83,25 @@ export function FlashcardsCard({
           </div>
         )}
       </button>
+
+      {onReview && flipped && (
+        <div className="flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => onReview(index, false)}
+            className="px-4 py-2 text-sm rounded-xl border border-border text-muted-foreground hover:bg-muted"
+          >
+            Still learning
+          </button>
+          <button
+            type="button"
+            onClick={() => onReview(index, true)}
+            className="px-4 py-2 text-sm rounded-xl bg-primary text-primary-foreground hover:opacity-90"
+          >
+            Got it
+          </button>
+        </div>
+      )}
 
       <div className="flex items-center justify-between gap-4">
         <button

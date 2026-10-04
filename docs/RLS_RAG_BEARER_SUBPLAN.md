@@ -1,8 +1,8 @@
 # Sub-plan: RLS / RAG / Bearer hardening (review before schema changes)
 
-**Status:** Partially superseded for data — see **Clean slate** below.  
-**Date:** 2026-09-15 (updated same day for clean-slate decision)  
-**Live project:** `qnsrrboprydmjyormlky` (Sudar; Talisma + Foundever orgs on same DB — pending wipe)
+**Status:** Clean slate done; **Phase 2 policy tighten applied** on prod (`20260915190000_post_wipe_rls_tighten`). **Phase 1 RAG/Bearer app-layer done (2026-09-29)** — see §7.  
+**Date:** 2026-09-15 (updated after Cavi provision + RLS apply)  
+**Live project:** `qnsrrboprydmjyormlky` (Sudar; sole org **Cavi**)
 
 **Clean slate (2026-09-15):** Pilot orgs and all course/org data will be wiped after backup + confirmation ([CLEAN_SLATE_WIPE_PLAN.md](CLEAN_SLATE_WIPE_PLAN.md)). The earlier **Phase 2 “tighten courses SELECT for existing published cross-tenant data”** work is **moot / shelved for old data**. After wipe + **Cavi** provision, apply the **rebuilt-schema** policy pass: profiles SELECT, org_members INSERT, sim_* policies, invite_codes policies (and courses/modules policies on empty catalog). RAG ingest + Bearer allowlist (Phase 1 app-layer) still apply either before or after wipe.
 
@@ -103,19 +103,39 @@ Only after Phase 2 is stable for ≥1 week. `FORCE RLS` can break **table owners
 
 ---
 
-## 5. What I will **not** do until you confirm
+## 5. Applied (2026-09-15 post-wipe)
 
-- No `ALTER POLICY` / `DROP POLICY` / new RLS migrations on prod.
-- No FORCE RLS.
-- I **will** proceed with docs truth-sync and archive (separate, no schema risk) per your order.
+Migration: `supabase/migrations/20260915190000_post_wipe_rls_tighten.sql` (applied on live project).
+
+| Change | Result |
+|--------|--------|
+| `profiles` SELECT | Own row **or** same-org (`org_members` / `profiles.org_id`); dropped global `true` |
+| `courses` / `modules` SELECT | Org member **or** creator **or** enrollee; dropped cross-tenant `published` |
+| `org_members` INSERT | Dropped open self-join (`Users can join orgs`) — invite/provisioning stay service-role |
+| `organisations` INSERT | Dropped open authenticated create — `getOrCreateOrg` already uses service-role |
+| `invite_codes` / `integration_api_keys` | Still 0 authenticated policies; table COMMENTs document service-role-only |
+| `sim_*` | Org-scoped / learner-own policies added (APIs remain service-role) |
+
+**Still open:** Phase 3 FORCE RLS (not recommended yet); sign `docs/trust/RLS_STORAGE_AUDIT_CHECKLIST.md`.
 
 ---
 
-## 6. Proposed execution after your “go”
+## 6. Next
 
-1. Phase 1 PR: RAG + Bearer (app only).  
-2. Staging policy PR for profiles → courses/modules.  
-3. Prod apply with you watching.  
-4. Sign `docs/trust/RLS_STORAGE_AUDIT_CHECKLIST.md`.
+1. Optional: prune stale `profiles` / `auth.users` from pilot leftovers (human keep-list).  
+2. Sign trust checklist after a quiet week with Cavi.
 
-Reply with: **approve Phase 1 only** | **approve Phase 1+2** | **changes** (e.g. keep published cross-tenant catalog intentionally).
+---
+
+## 7. Phase 1 applied (2026-09-29, app layer)
+
+| Area | Change | Files |
+|------|--------|-------|
+| RAG ingest | Caller must be org ADMIN/MANAGER/CREATOR (or super admin); courses pinned to caller's active org; Zod body | `sudar-learn/src/app/api/rag/ingest/route.ts`, `sudar-learn/src/lib/security/contentEditorAccess.ts` |
+| RAG ingest-external | Same editor check for session callers + cross-org `course_id` → 404; internal secret compared in constant time | `sudar-learn/src/app/api/rag/ingest-external/route.ts` |
+| Studio Bearer | Bearer only honoured on an explicit allowlist of `getRequestSession` routes; JWT validated in middleware; invite gate applies to Bearer users; cron / provisioning / render-grant routes self-authenticate | `sudar-studio/src/middleware.ts`, `sudar-studio/src/lib/security/bearerRoutes.ts` |
+| CSRF | Origin check on `POST /api/tutor/query` and SudarNotes notebook/voice writes | `sudar-learn/src/lib/security/sameOrigin.ts` callers |
+| Invite brute force | 10 attempts / 10 min per hashed IP on validate, prepare-oauth, redeem (both apps); Postgres-backed so it holds across Workers isolates | `shared/access/rateLimit.ts`, `supabase/migrations/20260929140000_api_rate_limits.sql` |
+| Sim internal auth | `verifySimServiceSecret` fails closed in every environment | `sudar-learn/src/lib/sim/simInternalAuth.ts` |
+
+Smoke after deploy: Studio login, Learn course open, MCP Bearer course build (`generate-course`, `courses`, export), ALP provisioning key path, cron with `CRON_SECRET`.

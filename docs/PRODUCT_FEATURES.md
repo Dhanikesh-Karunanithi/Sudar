@@ -26,11 +26,12 @@
 | Section content generation | Fills each module with explanations, examples, key points | 1 |
 | Quiz generation | Auto-creates quiz questions with correct answers and distractors | 1 |
 | Multi-provider support | Automatic fallback: Together AI → OpenAI → Anthropic | 1 |
-| Content fact-checking | Web search validates key claims in generated content | 1 |
-| Content moderation | Llama Guard screens all generated content for safety | 1 |
-| JSON validation & auto-repair | Detects incomplete generation and attempts repair | 1 |
-| Retry logic | Exponential backoff with up to 3 retries on failure | 1 |
-| Completeness scoring | 0–100 score indicating course quality before publishing | 2 |
+| Grounding & citations | Document-sourced courses use relevance-selected source excerpts; research-mode modules cite numbered web results and every `[N]` is verified against the real source list (no general web fact-checking of arbitrary claims) | 1 |
+| Content quality gate | Every AI module is judged against a learning-science rubric (objective alignment, Bloom fit, retrieval practice, worked examples, cognitive load, accuracy risk, interactivity, clarity, engagement), regenerated with the critique below threshold (default 7/10, 2 retries), and marked `needs_review` if it still fails — see [CONTENT_QUALITY.md](CONTENT_QUALITY.md) | 1 |
+| Content moderation | Studio-generated modules are screened by Llama Guard (Together) → OpenAI moderation → local screen before save; flagged modules are blocked from publishing. Learn tutor uses separate input guardrails | 1 |
+| JSON validation | Zod schemas for quiz, envelope, rich module content, and judge output; invalid parts degrade safely instead of failing a module | 1 |
+| Retry logic | Provider fallback chain; quality-gate regeneration up to `CONTENT_QUALITY_MAX_RETRIES` | 1 |
+| Human review & publish gate | Per-module review status (`draft` / `needs_review` / `approved`); unresolved critical issues block publish; reviewers resolve issues or approve on the Quality page | 1 |
 | Difficulty calibration | Admin sets target difficulty; AI adjusts vocabulary and depth | 2 |
 | Learning objective tagging | Each module tagged to specific learning objectives | 2 |
 
@@ -276,6 +277,8 @@
 | Cite sources | Sudar references which section of the course it's drawing from | 3 |
 | Conversation history | View previous Sudar conversations within a session | 3 |
 | Memory insights | Insight cards built from learner profile/events; InsightsCarousel on My Memory page | 3 |
+| **SudarNotes** | Conversational learning at `/journey` (living notebook + pedagogical modes); flag `NEXT_PUBLIC_SUDAR_JOURNEY`; coexists with courses | 5 |
+| Teaching OS claims | Shared claim graph + mastery + NBA v2; SudarNotes/courses/Sim write the same mastery; Studio Domains curator | 5 |
 
 ---
 
@@ -333,7 +336,7 @@
 | Supabase RLS | Row Level Security on all database tables | 1 |
 | Org data isolation | Organizations cannot access each other's data | 1 |
 | Server-side AI keys | API keys never exposed to browser | 1 |
-| Content moderation | All AI output screened before storage | 1 |
+| Content moderation | Studio AI-generated module content screened before save (Llama Guard → OpenAI → local); learner tutor input guarded separately. Not every AI surface is moderated yet (see docs/memory/KNOWN_GAPS.md) | 1 |
 | GDPR-ready data model | Learner data deletion on request | 3 |
 
 ### Analytics Engine (Hybrid)

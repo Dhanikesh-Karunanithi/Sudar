@@ -1,0 +1,25 @@
+---
+description: Sudar Learn (learner app) conventions — telemetry, tutor, Teaching OS, SudarNotes, SudarSim BFF
+globs: sudar-learn/**
+alwaysApply: false
+---
+
+# Sudar Learn
+
+Learner surface, Next.js 15 App Router, port 3001. Mobile-first, dark mode on every new component.
+
+## Where things live
+- Course viewer modalities: `src/app/(dashboard)/courses/[id]/learn/` (`CourseViewer.tsx` is the hub).
+- Tutor "Sudar": `src/components/tutor/` (UI) + `src/app/api/tutor/query/route.ts` (memory, RAG, response contract in `src/lib/tutor/responseContract.ts`). One chat surface: `SudarChatPanel` is the shared body; `FloatingSudarChat` is the course dock wrapper.
+- Next Best Action: canonical engine `src/lib/intelligence/nextBestActionEngine.ts`. HTTP routes (`api/intelligence/next-action`, `api/alp/teaching/next-action`) must call the engine, not reimplement it.
+- Teaching OS: `src/lib/teaching/` (claims, mastery, scheduler, pedagogy engine) + `src/app/api/teaching/*`. Record learner evidence through `api/teaching/evidence` so mastery and NBA stay consistent.
+- SudarNotes (`/journey`, flag `NEXT_PUBLIC_SUDAR_JOURNEY`): `src/lib/sudarNotes/` is a client of Teaching OS, not a parallel architecture.
+- SudarSim BFF: `src/app/api/sim/*`, UI `src/components/sudarsim/`. Voice needs LiveKit + sudar-sim; always keep the typed fallback working.
+
+## Rules
+- Every learner interaction writes `learning_events` immediately (include `modality`). Use the existing `/api/events` helper patterns.
+- Server data access: `createClient()` (cookie session, RLS) by default; `createServiceRoleSupabaseClient()` only when necessary and always org/user-scoped.
+- AI routes: authenticate first, Zod-validate body, then `checkAndIncrementUsage` + `usageLimitErrorResponse`.
+- Return `{ success, data?, error? }` with `error` as a **string** (Zod `flatten()` objects crashed the UI before).
+- Every async UI state needs loading, error, and empty states; external services (Intelligence, SudarVid, LiveKit) must degrade with a visible message, never a silent spinner.
+- User-facing copy goes in constants/i18n, not inline literals in logic.

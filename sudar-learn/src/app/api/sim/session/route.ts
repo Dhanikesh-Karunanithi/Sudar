@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { createSimSessionRequestSchema } from '@shared-sudarsim/schemas'
-import { createVoiceRoom, DEFAULT_PERSONA_STATE } from '@/lib/sim/simSession'
+import { createVoiceRoom, initialPersonaStateFromScenario } from '@/lib/sim/simSession'
 
 const CREATOR_ROLES = new Set(['ADMIN', 'MANAGER', 'CREATOR'])
 
@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
 
   const parsed = createSimSessionRequestSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ success: false, error: parsed.error.flatten() }, { status: 400 })
+    const message = parsed.error.issues.map((i) => i.message).join('; ') || 'Invalid request'
+    return NextResponse.json({ success: false, error: message }, { status: 400 })
   }
 
   const isPreview = parsed.data.preview === true
@@ -77,12 +78,10 @@ export async function POST(request: NextRequest) {
     .eq('scenario_id', scenario.id)
     .maybeSingle()
 
-  const persona = scenario.persona as { initial_mood?: number } | null
-  const initialMood = persona?.initial_mood ?? 0.5
-  const personaState = {
-    ...DEFAULT_PERSONA_STATE,
-    mood: initialMood,
-  }
+  const personaState = initialPersonaStateFromScenario({
+    persona: scenario.persona,
+    persona_state_rules: scenario.persona_state_rules,
+  })
 
   const { data: session, error: sessErr } = await admin
     .from('sim_sessions')

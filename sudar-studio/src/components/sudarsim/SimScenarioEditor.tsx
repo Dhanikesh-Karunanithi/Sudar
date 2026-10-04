@@ -4,7 +4,46 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { CrmOverlayEditor } from './CrmOverlayEditor'
+import { StudioSimPreview } from './StudioSimPreview'
+import { mergeScenarioDraft } from '@/lib/sudarsim/buildScenarioRow'
 import { defaultScenarioDraft, SIM_LOCALES, type SimCrmSkin, type SimScenario } from '@/types/sudarsim'
+
+function formatApiError(error: unknown, fallback: string): string {
+  if (typeof error === 'string' && error.trim()) return error
+  if (error && typeof error === 'object') {
+    const flattened = error as { formErrors?: string[]; fieldErrors?: Record<string, string[] | undefined> }
+    const parts: string[] = []
+    if (Array.isArray(flattened.formErrors)) parts.push(...flattened.formErrors.filter(Boolean))
+    if (flattened.fieldErrors && typeof flattened.fieldErrors === 'object') {
+      for (const [field, msgs] of Object.entries(flattened.fieldErrors)) {
+        if (Array.isArray(msgs) && msgs.length) parts.push(`${field}: ${msgs.join(', ')}`)
+      }
+    }
+    if (parts.length) return parts.join('; ')
+  }
+  return fallback
+}
+
+function hydrateEditorScenario(initial?: Partial<SimScenario> | null): Partial<SimScenario> {
+  if (!initial) return defaultScenarioDraft()
+  const {
+    id: _id,
+    org_id: _orgId,
+    created_by: _createdBy,
+    ...rest
+  } = initial as Partial<SimScenario> & {
+    id?: string
+    org_id?: string
+    created_by?: string
+    created_at?: string
+    updated_at?: string
+  }
+  const { created_at: _c, updated_at: _u, ...authoring } = rest as Partial<SimScenario> & {
+    created_at?: string
+    updated_at?: string
+  }
+  return mergeScenarioDraft(authoring) as Partial<SimScenario>
+}
 
 export function SimScenarioEditor({
   scenarioId,
@@ -19,14 +58,14 @@ export function SimScenarioEditor({
   backHref?: string
   onSaved?: () => void
 }) {
-  const [scenario, setScenario] = useState<Partial<SimScenario>>(
-    initialScenario ?? defaultScenarioDraft(),
-  )
+  const [scenario, setScenario] = useState<Partial<SimScenario>>(() => hydrateEditorScenario(initialScenario))
   const [crmSkin, setCrmSkin] = useState<SimCrmSkin | null>(initialCrmSkin ?? null)
   const [transcript, setTranscript] = useState('')
   const [sopText, setSopText] = useState('')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [messageTone, setMessageTone] = useState<'ok' | 'error'>('ok')
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   const save = async (publish = false) => {
     setSaving(true)
@@ -43,39 +82,19 @@ export function SimScenarioEditor({
     const data = await res.json()
     setSaving(false)
     if (!data.success) {
-      setMessage(data.error ?? 'Save failed')
+      setMessageTone('error')
+      setMessage(formatApiError(data.error, 'Save failed'))
       return
     }
+    setMessageTone('ok')
     setMessage(publish ? 'Published' : 'Saved draft')
     onSaved?.()
   }
 
-  const previewSimulation = async () => {
-    setSaving(true)
-    setMessage(null)
-    const res = await fetch(`/api/sudarsim/scenarios/${scenarioId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        scenario: { ...scenario, status: 'draft' },
-        crm_skin: crmSkin,
-        publish: false,
-      }),
-    })
-    const data = await res.json()
-    setSaving(false)
-    if (!data.success) {
-      setMessage(data.error ?? 'Save failed — fix errors before preview')
-      return
-    }
-    const learnBase =
-      (process.env.NEXT_PUBLIC_LEARN_APP_URL ?? process.env.NEXT_PUBLIC_LEARN_URL ?? 'http://localhost:3001').replace(
-        /\/$/,
-        '',
-      )
-    const url = `${learnBase}/sim/session/new?scenario_id=${scenarioId}&preview=1`
-    window.open(url, '_blank', 'noopener,noreferrer')
-    setMessage('Preview opened in Learn (new tab)')
+  const openPreview = () => {
+    setPreviewOpen(true)
+    setMessageTone('ok')
+    setMessage('Preview open — conversation runs in Studio (no Learn tab, no Supabase session).')
   }
 
   const importFromTranscript = async () => {
@@ -129,7 +148,7 @@ export function SimScenarioEditor({
           <button
             type="button"
             disabled={saving}
-            onClick={() => void previewSimulation()}
+            onClick={() => void openPreview()}
             className="rounded-lg border border-violet-500/50 bg-violet-950/40 px-4 py-2 text-sm text-violet-100"
           >
             Preview simulation
@@ -144,7 +163,9 @@ export function SimScenarioEditor({
           </button>
         </div>
       </div>
-      {message ? <p className="text-sm text-emerald-400">{message}</p> : null}
+      {message ? (
+        <p className={`text-sm ${messageTone === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>{message}</p>
+      ) : null}
 
       <section className="space-y-3 rounded-xl border border-slate-700 bg-slate-900/40 p-4">
         <h2 className="font-medium text-white">Basics</h2>
@@ -189,19 +210,52 @@ export function SimScenarioEditor({
         <input
           className="w-full rounded border border-slate-600 bg-slate-800 px-3 py-2 text-white"
           value={scenario.persona?.name ?? ''}
-          onChange={(e) => setScenario((s) => ({ ...s, persona: { ...s.persona!, name: e.target.value } }))}
+          onChange={(e) =>
+            setScenario((s) => ({
+              ...s,
+              persona: {
+                name: 'Customer',
+                backstory: '',
+                objectives: [],
+                ...s.persona,
+                name: e.target.value,
+              },
+            }))
+          }
           placeholder="Customer name"
         />
         <textarea
           className="min-h-[80px] w-full rounded border border-slate-600 bg-slate-800 px-3 py-2 text-white"
           value={scenario.persona?.backstory ?? ''}
-          onChange={(e) => setScenario((s) => ({ ...s, persona: { ...s.persona!, backstory: e.target.value } }))}
+          onChange={(e) =>
+            setScenario((s) => ({
+              ...s,
+              persona: {
+                name: 'Customer',
+                backstory: '',
+                objectives: [],
+                ...s.persona,
+                backstory: e.target.value,
+              },
+            }))
+          }
           placeholder="Backstory"
         />
         <textarea
           className="min-h-[60px] w-full rounded border border-slate-600 bg-slate-800 px-3 py-2 text-white"
           value={scenario.persona?.opening_line ?? ''}
-          onChange={(e) => setScenario((s) => ({ ...s, persona: { ...s.persona!, opening_line: e.target.value } }))}
+          onChange={(e) =>
+            setScenario((s) => ({
+              ...s,
+              persona: {
+                name: 'Customer',
+                backstory: '',
+                objectives: [],
+                ...s.persona,
+                opening_line: e.target.value,
+              },
+            }))
+          }
           placeholder="Opening line (phone/chat)"
         />
       </section>
@@ -246,7 +300,13 @@ export function SimScenarioEditor({
             onChange={(e) =>
               setScenario((s) => ({
                 ...s,
-                completion_rule: { ...s.completion_rule!, enabled: e.target.checked },
+                completion_rule: {
+                  enabled: false,
+                  min_overall_score: 70,
+                  require_must_pass: true,
+                  ...s.completion_rule,
+                  enabled: e.target.checked,
+                },
               }))
             }
           />
@@ -259,13 +319,27 @@ export function SimScenarioEditor({
             onChange={(e) =>
               setScenario((s) => ({
                 ...s,
-                compliance: { ...s.compliance!, record_audio: e.target.checked },
+                compliance: {
+                  record_audio: false,
+                  record_transcript: true,
+                  retention_days: 90,
+                  ...s.compliance,
+                  record_audio: e.target.checked,
+                },
               }))
             }
           />
           Record audio (org policy)
         </label>
       </section>
+
+      {previewOpen ? (
+        <StudioSimPreview
+          scenario={scenario as Record<string, unknown>}
+          crmSkin={crmSkin}
+          onClose={() => setPreviewOpen(false)}
+        />
+      ) : null}
     </div>
   )
 }

@@ -14,7 +14,25 @@ on:
   workflow_dispatch:
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    name: Verify (lint + tests) — sudar-learn
+    defaults:
+      run:
+        working-directory: sudar-learn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: sudar-learn/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
   deploy:
+    needs: verify
     runs-on: ubuntu-latest
     name: Cloudflare Workers — sudar-learn
     steps:
@@ -44,3 +62,6 @@ jobs:
           NEXT_PUBLIC_APP_URL: https://learn.thesudar.com
           NEXTAUTH_URL: https://learn.thesudar.com
           EARLY_ACCESS_ENABLED: "true"
+          NEXT_PUBLIC_SUDAR_JOURNEY: "1"
+          NEXT_PUBLIC_LIVEKIT_URL: ${{ vars.NEXT_PUBLIC_LIVEKIT_URL }}
+          NEXT_PUBLIC_SENTRY_DSN: ${{ vars.NEXT_PUBLIC_SENTRY_DSN }}

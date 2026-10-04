@@ -9,6 +9,7 @@ export * from './oauthCallbackSession'
 export * from './postOAuthRedirect'
 export * from './establishAuthSession'
 export * from './inviteEmailPersonalization'
+export * from './rateLimit'
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 

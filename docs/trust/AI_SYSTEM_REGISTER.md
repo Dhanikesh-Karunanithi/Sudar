@@ -10,6 +10,15 @@ High-level transparency for major features. Refine per your legal review.
 - **Human oversight:** Learner chooses to send messages; admins configure org safety toggles.
 - **Limitations:** Heuristic PII blocking is not exhaustive; models may hallucinate.
 
+## Sudar Learn — SudarNotes (conversational learning)
+
+- **Purpose:** Teach via dialogue and a living notebook (accept/edit suggested notes); soft conversational checks; optional claim mastery when Teaching OS claims are linked.
+- **Inputs:** Learner messages, SudarNotes session state, Twin summary, optional domain/claim context.
+- **Outputs:** Chat Markdown, `SUDAR_NOTES` note ops / checks, optional structured blocks; events `ai_tutor_query` / `claim_check` as configured.
+- **Human oversight:** Learner accepts or dismisses notebook cards; org AI compliance and tutor memory cadence apply.
+- **Limitations:** Same model hallucination risks as the course tutor; open-world teaching should stay grounded when org policy requires claims.
+- **Docs:** [SUDAR_2_0_VISION.md](../SUDAR_2_0_VISION.md), [TEACHING_OS.md](../TEACHING_OS.md).
+
 ## Sudar Studio — admin agent
 
 - **Purpose:** Navigate and operate Studio via natural language and whitelisted actions.

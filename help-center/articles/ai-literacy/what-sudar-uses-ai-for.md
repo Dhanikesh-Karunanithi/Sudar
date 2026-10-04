@@ -13,4 +13,6 @@ In **Sudar Studio**, AI can suggest outlines, write or expand module text, build
 
 In **Sudar Learn**, the Sudar tutor answers questions about the course, explains tricky ideas, and can run small workflows on text you paste (like a short summary).
 
+**SudarNotes** (when enabled for your organisation) is a separate conversational learning surface: Sudar teaches through dialogue and a living notebook at `/journey`, coexisting with authored courses. Soft checks and notes can feed the learner Twin and, when configured, Teaching OS claim mastery.
+
 None of this replaces your judgement: you still choose what to publish, and learners still choose how they study.

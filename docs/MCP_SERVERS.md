@@ -44,7 +44,7 @@ flowchart LR
 |----------|-----------|----------|
 | [`packages/sudar-mcp`](../packages/sudar-mcp) (`@sudar/mcp-server`) | stdio | Local dev, Cursor, CI |
 | [`workers/sudar-mcp-remote`](../workers/sudar-mcp-remote) | HTTP + SSE | Local/dev remote MCP (API-key token) |
-| [`workers/sudar-mcp-cloudflare`](../workers/sudar-mcp-cloudflare) | Streamable HTTP + OAuth | **Production** — `mcp.thesudar.app` for ChatGPT |
+| [`workers/sudar-mcp-cloudflare`](../workers/sudar-mcp-cloudflare) | Streamable HTTP + OAuth 2.1 PKCE | **Production** — `mcp.thesudar.com` for ChatGPT, Cursor, Claude |
 | [`packages/sudar-mcp/examples/mcp.json`](../packages/sudar-mcp/examples/mcp.json) | — | Copy-paste Cursor config |
 
 ---
@@ -94,9 +94,11 @@ Requires `SUDAR_STUDIO_URL` + `SUDAR_ACCESS_TOKEN` (org member with Studio AI co
 
 | Tool | Description | HTTP |
 |------|-------------|------|
-| `sudar_generate_outline` | Module title outline | `POST /api/ai/generate-outline` |
+| `sudar_build_course` | **Primary ChatGPT/Cursor tool.** Creates a Studio draft (HTML lessons) and returns `studio_url` plus HTML and/or SCORM 1.2 ZIP (`zip_base64`) | `POST /api/ai/generate-course` with `export_format`, then `GET /api/courses/:id/export` |
+| `sudar_export_course` | HTML and/or SCORM 1.2 for an existing `course_id` | `GET /api/courses/:id/export?format=html` / `format=scorm-1.2&delivery=json` |
+| `sudar_generate_outline` | Module title outline only | `POST /api/ai/generate-outline` |
 | `sudar_generate_course_metadata` | Title/brief → metadata | `POST /api/ai/generate-course-metadata` |
-| `sudar_generate_course` | Full draft course | `POST /api/ai/generate-course` |
+| `sudar_generate_course` | Full draft course (prefer `sudar_build_course` when HTML/SCORM is needed) | `POST /api/ai/generate-course` |
 | `sudar_generate_quiz` | Quiz for a module | `POST /api/ai/generate-quiz` |
 | `sudar_generate_from_document` | Course from text or URL | `POST /api/ai/generate-from-document` |
 | `sudar_create_course` | Draft course shell | `POST /api/courses` |
@@ -154,6 +156,16 @@ Remote worker additionally:
 
 ## Cursor setup
 
+**Remote (authoring + OAuth, recommended):**
+
+```json
+{ "mcpServers": { "sudar-remote": { "url": "https://mcp.thesudar.com/mcp" } } }
+```
+
+Connect in Cursor Settings → MCP, then sign in on Studio. See [MCP_CHATGPT_LAUNCH.md](MCP_CHATGPT_LAUNCH.md).
+
+**Local stdio (integrator tools):**
+
 1. Studio → **Integrations** → create ALP API key; copy Learn base URL.
 2. Copy [packages/sudar-mcp/examples/mcp.json](../packages/sudar-mcp/examples/mcp.json) into your Cursor MCP config; set `env.SUDAR_LEARN_URL` and `SUDAR_ALP_API_KEY`.
 3. For admin tools, set `SUDAR_TOOLSET=all`, `SUDAR_STUDIO_URL`, and a fresh `SUDAR_ACCESS_TOKEN`.
@@ -162,16 +174,17 @@ Build the server once: `cd packages/sudar-mcp && npm install && npm run build`.
 
 ---
 
-## Remote MCP (production — ChatGPT)
+## Remote MCP (production — ChatGPT, Cursor, Claude)
 
-Deploy [`workers/sudar-mcp-cloudflare`](../workers/sudar-mcp-cloudflare) to **https://mcp.thesudar.app**:
+Deploy [`workers/sudar-mcp-cloudflare`](../workers/sudar-mcp-cloudflare) to **https://mcp.thesudar.com**:
 
 ```bash
 npm run mcp:cloudflare:deploy
 ```
 
-- **MCP URL:** `https://mcp.thesudar.app/mcp`
-- **OAuth:** `/.well-known/oauth-authorization-server`
+- **MCP URL:** `https://mcp.thesudar.com/mcp`
+- **OAuth AS:** `/.well-known/oauth-authorization-server` (PKCE `S256`)
+- **Resource:** `/.well-known/oauth-protected-resource`
 - **Guide:** [MCP_CHATGPT_LAUNCH.md](MCP_CHATGPT_LAUNCH.md)
 
 Dev-only Express remote (`workers/sudar-mcp-remote`): API-key `POST /token` + SSE `/sse`.

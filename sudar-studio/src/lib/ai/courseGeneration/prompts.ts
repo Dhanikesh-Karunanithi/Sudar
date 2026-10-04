@@ -128,10 +128,11 @@ ${grounding}
     options?.courseType ??
     inferCourseTypeFromSettings(options?.gen?.course_type, options?.gen?.industry, courseTitle)
   const smeContext = buildSMEContextPrompt(getSMEConfig(courseType))
-  const introApproach =
-    options?.gen?.vary_introductions !== false
-      ? getIntroductionStrategy(courseType, moduleIndex)
-      : getIntroductionStrategy(courseType, moduleIndex)
+  // With variation off, every module uses the course's first opening strategy for a consistent voice.
+  const introApproach = getIntroductionStrategy(
+    courseType,
+    options?.gen?.vary_introductions === false ? 0 : moduleIndex
+  )
   const introBlock = getIntroductionStrategyPromptBlock(introApproach, entry.title, courseType)
   const density = options?.gen?.content_density ?? 'balanced'
   const wordTarget =
@@ -167,6 +168,14 @@ ADULT LEARNING PRINCIPLES (Knowles' Andragogy):
 - Experience: Address the reader as "you." Use practical scenarios. Assume they have some professional experience.
 - Readiness: Show why this module matters NOW in their learning journey.
 - Motivation: Start each module with a compelling "why" tied to job outcomes.
+
+LEARNING-SCIENCE REQUIREMENTS (mandatory; the module is automatically reviewed against these):
+1. Activation (Merrill): in the first section, connect to what the learner already knows or did in a prior module.
+2. Demonstration / worked example: include one "### Worked example" subsection that walks through a concrete case step by step BEFORE asking the learner to practise.
+3. Application: include one [apply]...[/apply] "Your turn" task where the learner must produce or decide something (not just read).
+4. Retrieval practice: end the final section with a "### Check yourself" subsection of 2–3 short questions answered from memory (no answers inline).${moduleIndex > 0 ? '\n5. Interleaving: at least one "Check yourself" question must mix in a concept from an earlier module.' : ''}
+- Cognitive load: paragraphs under 120 words; one idea per paragraph; define jargon on first use.
+- Accuracy: do NOT invent statistics, study names, dates, quotes, or numbered citations like [1]. If you are not certain a figure is real, describe the idea without the number.
 
 BLOOM'S LEVEL GUIDANCE:
 - Write at the "${entry.bloomLevel}" cognitive level. If Remember: define and identify. If Understand: explain and compare. If Apply: demonstrate with worked examples. If Analyze: break down scenarios and compare approaches. If Evaluate: judge trade-offs and recommend. If Create: synthesize and design solutions.
@@ -253,24 +262,28 @@ Return JSON. Prefer null entryState and null sideCard unless clearly justified.`
   ]
 }
 
-/** Optional second pass for capstone modules: tighten alignment to outcomes and remove generic phrasing. */
+/** Regeneration pass driven by the quality gate's critique (issues from the judge + deterministic checks). */
 export function buildCritiqueRefinePrompt(
   courseTitle: string,
   moduleTitle: string,
   learningOutcomes: string[] | undefined,
-  draftMarkdown: string
+  draftMarkdown: string,
+  options?: { critique?: string; documentGrounding?: string }
 ): { role: string; content: string }[] {
   const outcomesBlock =
     Array.isArray(learningOutcomes) && learningOutcomes.length > 0
       ? `Course learning outcomes:\n${learningOutcomes.map((o, i) => `${i + 1}. ${o}`).join('\n')}`
       : 'No explicit outcomes list — strengthen clarity and actionable takeaways anyway.'
 
-  const system = `You are a strict instructional editor. Revise the module markdown so it clearly supports the course outcomes, removes filler and generic phrases ("In this module", "It is important to"), and keeps all ## / ### headings and personalization markers ([objective], [concept:Name], [apply]) intact or improved. Preserve markdown structure. Return ONLY the revised full module text — no preamble.`
+  const system = `You are a strict instructional editor. Revise the module markdown so it fixes every reviewer issue listed, clearly supports the course outcomes, removes filler and generic phrases ("In this module", "It is important to"), and keeps all ## headings and personalization markers ([objective], [concept:Name], [apply]) intact or improved.
+The revised module must contain: a "### Worked example" subsection, an [apply] "Your turn" task, and a final "### Check yourself" subsection with 2–3 recall questions.
+Never invent statistics, studies, quotes, or numbered citations; remove any you cannot support${options?.documentGrounding ? ' from the source excerpt' : ''}.
+Preserve markdown structure. Return ONLY the revised full module text — no preamble.`
 
   const user = `Course: "${courseTitle}"
 Module: "${moduleTitle}"
 ${outcomesBlock}
-
+${options?.critique ? `\nREVIEWER ISSUES TO FIX:\n${options.critique}\n` : ''}${options?.documentGrounding ? `\n--- SOURCE EXCERPT (only factual source) ---\n${options.documentGrounding.slice(0, 8000)}\n--- END SOURCE ---\n` : ''}
 --- DRAFT ---
 ${draftMarkdown.slice(0, 12000)}`
 

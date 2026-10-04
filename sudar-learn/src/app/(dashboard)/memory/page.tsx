@@ -11,6 +11,14 @@ export default async function MemoryPage() {
   const { data: { user } } = await supabase.auth.getUser()
   const admin = createServiceRoleSupabaseClient()
 
+  const masteryResult = await admin
+    .from('learner_claim_mastery')
+    .select('claim_id, p_know, next_review_at, confidence')
+    .eq('user_id', user!.id)
+    .order('next_review_at', { ascending: true })
+    .limit(12)
+  const masteryRows = masteryResult.error ? null : masteryResult.data
+
   const [
     { data: profile },
     { data: events },
@@ -102,6 +110,13 @@ export default async function MemoryPage() {
   const observedEmpty = knownConcepts.length === 0 && strugglesWith.length === 0 && !learningStyleNotes.trim()
   const lastUpdated = memory.last_updated as string | undefined
 
+  const masteryList = masteryRows ?? []
+  const masteryClaimIds = masteryList.map((m) => String(m.claim_id))
+  const { data: claimStems } = masteryClaimIds.length
+    ? await admin.from('learning_claims').select('id, stem').in('id', masteryClaimIds)
+    : { data: [] as Array<{ id: string; stem: string }> }
+  const stemById = new Map((claimStems ?? []).map((c) => [String(c.id), String(c.stem)]))
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Hero block — Sudar's Memory: primary gradient to match platform UI */}
@@ -136,6 +151,35 @@ export default async function MemoryPage() {
           </p>
         </div>
       </BentoCard>
+
+      {masteryList.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold text-card-foreground">Claim mastery</h2>
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-pill">Teaching OS</span>
+          </div>
+          <BentoCard padding="none" className="divide-y divide-border overflow-hidden rounded-5xl">
+            {masteryList.map((m) => {
+              const due =
+                m.next_review_at && new Date(String(m.next_review_at)).getTime() <= Date.now()
+              return (
+                <div key={String(m.claim_id)} className="px-5 py-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm text-card-foreground line-clamp-2">
+                      {stemById.get(String(m.claim_id)) ?? String(m.claim_id).slice(0, 8)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Strength {Math.round(Number(m.p_know) * 100)}%
+                      {due ? ' · due for review' : m.next_review_at ? ` · next ${new Date(String(m.next_review_at)).toLocaleDateString()}` : ''}
+                    </p>
+                  </div>
+                </div>
+              )
+            })}
+          </BentoCard>
+        </div>
+      )}
 
       {/* Insights from your learning — full-width so 3D carousel has room */}
       {insights.length > 0 && (

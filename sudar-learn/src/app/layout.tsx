@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Manrope, Noto_Sans, Noto_Sans_JP, Noto_Sans_KR, Noto_Sans_SC } from 'next/font/google'
+import { Inter, Manrope, Noto_Sans, Noto_Sans_JP, Noto_Sans_KR, Noto_Sans_SC, Space_Mono } from 'next/font/google'
 import './globals.css'
 import './course-personas.css'
 import { ThemeProvider } from '@/contexts/ThemeContext'
@@ -8,6 +8,7 @@ import { getLocale, getMessages, setRequestLocale } from 'next-intl/server'
 import { isRtlLocale } from '../../../shared/i18nLocales'
 import { bodyFontClassForLocale } from '@/lib/i18n/localeFonts'
 import { EarlyAccessBanner } from '@/components/branding/EarlyAccessBanner'
+import { ErrorReportingHost } from '@/components/layout/ErrorReportingHost'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -17,6 +18,13 @@ const inter = Inter({
 const manrope = Manrope({
   subsets: ['latin'],
   variable: '--font-heading',
+  display: 'swap',
+})
+/** Used on SudarNotes (Journey) for system labels / microcopy — not app-wide body. */
+const spaceMono = Space_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-space-mono',
   display: 'swap',
 })
 
@@ -71,13 +79,14 @@ export default async function RootLayout({
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${manrope.variable} ${notoSansIntl.variable} ${notoSansSC.variable} ${notoSansJP.variable} ${notoSansKR.variable} ${bodyFont} antialiased`}
+        className={`${inter.variable} ${manrope.variable} ${spaceMono.variable} ${notoSansIntl.variable} ${notoSansSC.variable} ${notoSansJP.variable} ${notoSansKR.variable} ${bodyFont} antialiased`}
         suppressHydrationWarning
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <div className="flex min-h-screen flex-col">
             <ThemeProvider>
               <EarlyAccessBanner />
+              <ErrorReportingHost />
               <div className="flex min-h-0 flex-1 flex-col">{children}</div>
             </ThemeProvider>
           </div>

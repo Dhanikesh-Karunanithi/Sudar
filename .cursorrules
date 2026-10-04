@@ -5,6 +5,7 @@
 Before making any changes, read ECOSYSTEM.md and AGENTS.md in the Sudar root directory.
 These files contain the authoritative architecture, naming conventions, and build decisions.
 Before adding features, check **docs/STRATEGIC_PATH.md** for current state and prioritized next steps. For the current "Next 3" outcomes, read **PROGRESS.md**.
+For decisions, glossary, feature map, and known gaps, read **docs/memory/** (start at `docs/memory/README.md`). Known traps: `.cursor/rules/sharp-edges.mdc`.
 
 Before marking **user-visible** or **operator-facing** work complete, apply **docs/SHIP_MEMORY_PLAYBOOK.md** and update **UPDATES.md** / **docs/SHIPPED_FEATURES.md** (see **.cursor/rules/sudar-ship-memory.mdc** and **AGENTS.md**).
 
@@ -22,11 +23,11 @@ Before marking **user-visible** or **operator-facing** work complete, apply **do
 
 ## Tech Stack (Do Not Deviate)
 - Frontend: Next.js 15 (App Router), TypeScript 5, Tailwind CSS 3
-- Database: Supabase (PostgreSQL via Prisma ORM)
+- Database: Supabase PostgreSQL via `@supabase/ssr` + service-role clients (Prisma folders are leftovers, not used at runtime); canonical DDL in `supabase/migrations/`
 - Auth: Supabase Auth (shared across Studio + Learn)
 - State: Zustand for complex client state
 - Animation: Framer Motion
-- AI providers: Together AI (primary), OpenAI (secondary), Anthropic (tertiary)
+- AI providers (see `shared/ai/platformChat.ts`): org BYOM / Sudar AI runtime first, then OpenRouter -> Together AI -> OpenAI -> Anthropic
 - Backend AI: Python 3.11+ FastAPI
 - Video: Python + FFmpeg + Edge-TTS + Remotion
 
@@ -42,7 +43,7 @@ Before marking **user-visible** or **operator-facing** work complete, apply **do
 ---
 
 ## Styling Rules
-- Tailwind CSS only — no inline styles, no external CSS libraries
+- Tailwind CSS only — no inline styles, no external CSS libraries (CSS modules allowed only for complex animations, e.g. `SudarVoiceOrb.module.css`)
 - Follow mobile-first responsive design on all learner-facing components
 - Dark mode support must be included for all new components
 - Use CSS variables for brand colors (defined in tailwind.config.ts)
@@ -70,11 +71,11 @@ Before marking **user-visible** or **operator-facing** work complete, apply **do
 ---
 
 ## AI Integration Rules
-- Always wrap AI calls in try/catch with provider fallback chain: Together AI → OpenAI → Anthropic
-- Log all AI interactions to the `ai_interactions` Supabase table
+- Always go through the shared chat helpers (`chatCompletion` -> `shared/ai/platformChat.ts`), which apply the provider fallback chain
+- Log tutor exchanges to the `ai_interactions` Supabase table
 - Never expose AI API keys to the client
 - Implement exponential backoff on retry (max 3 attempts)
-- Content moderation via Llama Guard before storing any AI-generated content
+- Authored content must pass the quality gate before it is stored: Zod schema, `moderateContent()` (Llama Guard via Together, OpenAI moderation fallback), rubric score + regeneration. See `.cursor/rules/content-generation.mdc` and `docs/CONTENT_QUALITY.md`
 
 ---
 

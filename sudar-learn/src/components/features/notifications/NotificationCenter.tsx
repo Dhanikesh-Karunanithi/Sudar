@@ -101,21 +101,46 @@ export function NotificationCenter({ variant = 'default' }: NotificationCenterPr
   }, [refresh])
 
   useEffect(() => {
-    const id = window.setInterval(() => {
-      void refresh(true)
-    }, 120000)
-    return () => window.clearInterval(id)
-  }, [refresh])
-
-  useEffect(() => {
+    let fallbackInterval: number | null = null
     const supabase = createClient()
+    let realtimeOk = false
+
     const channel = supabase
       .channel('notification-center')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'user_notifications' }, () => {
         void refresh(true)
       })
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          realtimeOk = true
+          if (fallbackInterval != null) {
+            window.clearInterval(fallbackInterval)
+            fallbackInterval = null
+          }
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          realtimeOk = false
+          if (fallbackInterval == null) {
+            fallbackInterval = window.setInterval(() => {
+              if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+              void refresh(true)
+            }, 300000)
+          }
+        }
+      })
+
+    // Slow fallback only until Realtime is confirmed (or if it never connects)
+    const bootFallback = window.setTimeout(() => {
+      if (!realtimeOk && fallbackInterval == null) {
+        fallbackInterval = window.setInterval(() => {
+          if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+          void refresh(true)
+        }, 300000)
+      }
+    }, 5000)
+
     return () => {
+      window.clearTimeout(bootFallback)
+      if (fallbackInterval != null) window.clearInterval(fallbackInterval)
       void supabase.removeChannel(channel)
     }
   }, [refresh])

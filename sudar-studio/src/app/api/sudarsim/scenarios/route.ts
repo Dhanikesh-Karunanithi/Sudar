@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
   const parsed = simScenarioSchema.partial().safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+    const message = parsed.error.issues.map((i) => i.message).join('; ') || 'Invalid request'
+    return NextResponse.json({ success: false, error: message }, { status: 400 })
   }
 
   const row = buildScenarioRow(parsed.data, orgId, user.id, false)

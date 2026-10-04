@@ -3,6 +3,10 @@
   "private": true,
   "description": "Helper scripts for the Sudar repo (no install required for supabase — uses npx).",
   "scripts": {
+    "dev:all": "node scripts/dev-all.mjs",
+    "dev:check": "node scripts/dev-all.mjs --check",
+    "seed:demo": "node scripts/seed-demo.mjs",
+    "eval:content": "node scripts/evals/run-content-eval.mjs",
     "help-center:sync-ai": "node scripts/sync-help-center-ai.mjs",
     "supabase": "npx --yes supabase@latest",
     "security:audit": "node scripts/security-audit.mjs",

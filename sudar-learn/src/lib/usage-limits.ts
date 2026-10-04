@@ -1,7 +1,8 @@
 /**
  * Per-user daily usage limits for AI calls.
  * Uses atomic RPC increment_usage_request_count; returns 429 when over limit.
- * Fails closed when the RPC is unavailable (prevents unbounded spend).
+ * Fails closed in production when the RPC is unavailable (prevents unbounded spend);
+ * fails open in development so a local DB without the RPC still works.
  * Requires admin client (service role).
  */
 
@@ -40,6 +41,10 @@ export async function checkAndIncrementUsage(
   })
 
   if (error || newCount == null) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[usage-limits] metering unavailable; allowing in development', error?.message)
+      return { allowed: true }
+    }
     return { allowed: false, limit, reason: 'metering_unavailable' }
   }
   if (newCount > limit) return { allowed: false, limit, reason: 'over_limit' }

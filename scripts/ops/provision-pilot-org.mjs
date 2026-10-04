@@ -18,8 +18,17 @@
  *   ORG_SLUG — default cavi
  *   ORG_PLAN — default enterprise
  *
+ *   ORG_SANDBOX — "0" to mark the org as non-sandbox (e.g. the tester beta org)
+ *   KEEP_ACTIVE_ORG — "1" to leave the admins' home/active org unchanged
+ *   SKIP_INVITE_CODE — "1" to skip minting a generic invite code (beta testers join via
+ *     Studio → Users email invites, which also add them to this org)
+ *
+ * Beta org example (PowerShell: set the env vars with $env:NAME='value' first):
+ *   ORG_NAME="Sudar Beta" ORG_SLUG=sudar-beta ORG_SANDBOX=0 KEEP_ACTIVE_ORG=1 SKIP_INVITE_CODE=1 \
+ *     node --env-file=sudar-studio/.env.local scripts/ops/provision-pilot-org.mjs
+ *
  * Writes local credentials (invite + integration key) to
- *   .local-backups/cavi-credentials.local.json  (gitignored via .local-backups/)
+ *   .local-backups/<slug>-credentials.local.json  (gitignored via .local-backups/)
  * Never commit invite codes.
  */
 import { createHash, randomBytes } from 'node:crypto'
@@ -56,7 +65,7 @@ const ORG_DEFS = [
     slug: process.env.ORG_SLUG ?? 'cavi',
     plan: process.env.ORG_PLAN ?? 'enterprise',
     settings: {
-      sandbox: true,
+      sandbox: process.env.ORG_SANDBOX !== '0',
       ai_platform: { enabled: true, label: 'Sudar AI', model: 'auto' },
       ai_entitlements: {
         monthly_token_allowance: 50_000_000,
@@ -180,8 +189,17 @@ async function ensureIntegrationKey(orgId, orgName) {
   return rawKey
 }
 
+const keepActiveOrg = process.env.KEEP_ACTIVE_ORG === '1'
+const skipInviteCode = process.env.SKIP_INVITE_CODE === '1'
+const primarySlug = ORG_DEFS[0].slug
+const invitePrefix = primarySlug.split('-')[0].toUpperCase().slice(0, 8) || 'SUDAR'
+
 async function ensureInviteCode() {
-  const code = randomInviteCode('CAVI')
+  if (skipInviteCode) {
+    console.log('Skipping generic invite code (SKIP_INVITE_CODE=1)')
+    return null
+  }
+  const code = randomInviteCode(invitePrefix)
   if (dryRun) {
     console.log('[dry-run] would create invite:', code)
     return code
@@ -280,7 +298,7 @@ async function main() {
 
   credentials.inviteCode = await ensureInviteCode()
 
-  if (userIds.length > 0 && orgIds.length > 0) {
+  if (userIds.length > 0 && orgIds.length > 0 && !keepActiveOrg) {
     const firstOrg = orgIds[0].orgId
     for (const { email, userId } of userIds) {
       await setActiveOrg(userId, firstOrg)
@@ -288,17 +306,26 @@ async function main() {
     }
   }
 
+  const credentialsFile = `${primarySlug}-credentials.local.json`
   if (!dryRun) {
     const outDir = join(process.cwd(), '.local-backups')
     mkdirSync(outDir, { recursive: true })
-    const outPath = join(outDir, 'cavi-credentials.local.json')
+    const outPath = join(outDir, credentialsFile)
     writeFileSync(outPath, JSON.stringify(credentials, null, 2), 'utf8')
     console.log('\nWrote credentials to', outPath)
   }
 
   console.log('\nDone. Next steps:')
-  console.log('1. Log into Studio/Learn; active org should be Cavi for provisioned admins.')
-  console.log('2. Share invite from .local-backups/cavi-credentials.local.json out-of-band only.')
+  console.log(
+    keepActiveOrg
+      ? `1. Switch to ${ORG_DEFS[0].name} with the Studio org switcher when you want to author there.`
+      : `1. Log into Studio/Learn; active org should be ${ORG_DEFS[0].name} for provisioned admins.`
+  )
+  console.log(
+    skipInviteCode
+      ? `2. Invite testers by email from Studio → Users while ${ORG_DEFS[0].name} is active.`
+      : `2. Share invite from .local-backups/${credentialsFile} out-of-band only.`
+  )
   console.log('3. Staging remains Vercel behind CF proxy (Option B) — unchanged.')
 }
 

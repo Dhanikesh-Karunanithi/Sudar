@@ -118,17 +118,52 @@ export const simSessionSchema = z.object({
   active_channel: z.enum(['phone', 'chat', 'email']).default('phone'),
 })
 
+const optionalUuid = z.preprocess(
+  (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+  z.string().uuid().optional(),
+)
+
 export const createSimSessionRequestSchema = z.object({
   scenario_id: z.string().uuid(),
-  module_id: z.string().uuid().optional(),
-  course_id: z.string().uuid().optional(),
-  enrollment_id: z.string().uuid().optional(),
+  module_id: optionalUuid,
+  course_id: optionalUuid,
+  enrollment_id: optionalUuid,
   preview: z.boolean().optional(),
 })
 
-export const simTurnRequestSchema = z.object({
-  channel: z.enum(['phone', 'chat', 'email']),
-  text: z.string().min(1),
+export const simTurnRequestSchema = z
+  .object({
+    channel: z.enum(['phone', 'chat', 'email']),
+    /** Typed message; optional when audio_base64 is provided (phone PTT). */
+    text: z.string().optional(),
+    /** Base64-encoded audio (no data: URL prefix). BFF runs STT then persona turn. */
+    audio_base64: z.string().min(1).optional(),
+    audio_mime: z.string().min(1).optional(),
+  })
+  .refine((v) => Boolean(v.text?.trim()) || Boolean(v.audio_base64?.trim()), {
+    message: 'Either text or audio_base64 is required',
+  })
+
+/** Agent-authored turn sync (streaming voice pipeline). */
+export const simSyncTurnRequestSchema = z
+  .object({
+    channel: z.enum(['phone', 'chat', 'email']).default('phone'),
+    learner_text: z.string().min(1).optional(),
+    customer_text: z.string().min(1).optional(),
+    persona_state: simPersonaStateSchema.optional(),
+    latency_ms: z.number().int().nonnegative().optional(),
+  })
+  .refine((v) => Boolean(v.learner_text?.trim()) || Boolean(v.customer_text?.trim()), {
+    message: 'learner_text or customer_text is required',
+  })
+
+export const simVoiceEventRequestSchema = z.object({
+  event_type: z.string().min(1),
+  payload: z.record(z.unknown()).default({}),
+})
+
+export const simCoachReflectionRequestSchema = z.object({
+  reflection: z.string().min(1).max(2000),
 })
 
 export const simCrmActionRequestSchema = z.object({
@@ -185,16 +220,40 @@ export const personaTurnRequestSchema = z.object({
       persona: simPersonaSchema.optional(),
       objectives: z.array(z.string()).optional(),
     })
+    .passthrough()
+    .optional(),
+  /** Prior turns for multi-turn continuity. Intelligence uses `{ role, text }`; extras ignored. */
+  history: z
+    .array(
+      z
+        .object({
+          role: z.string().min(1),
+          text: z.string().min(1),
+        })
+        .passthrough(),
+    )
     .optional(),
 })
 
 export const personaTurnResponseSchema = z.object({
   reply: z.string(),
   persona_state: simPersonaStateSchema,
-  audio_hint: z.string().optional(),
+  audio_hint: z.string().nullable().optional(),
+  /** Optional TTS from Intelligence persona turn (Voice MVP). Null when Edge-TTS fails. */
+  audio_base64: z.string().nullable().optional(),
+  audio_mime: z.string().nullable().optional(),
+})
+
+/** Intelligence POST /api/sim/stt success envelope. */
+export const simSttResponseSchema = z.object({
+  success: z.literal(true),
+  text: z.string(),
 })
 
 export type SimScenario = z.infer<typeof simScenarioSchema>
 export type SimCrmSkin = z.infer<typeof simCrmSkinSchema>
 export type SimCoachResult = z.infer<typeof simCoachResultSchema>
 export type SimPersonaState = z.infer<typeof simPersonaStateSchema>
+export type SimTranscriptTurn = z.infer<typeof simTranscriptTurnSchema>
+export type SimTurnRequest = z.infer<typeof simTurnRequestSchema>
+export type SimSyncTurnRequest = z.infer<typeof simSyncTurnRequestSchema>

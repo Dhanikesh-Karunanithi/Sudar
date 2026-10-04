@@ -85,13 +85,11 @@ export function buildPlatformAiRuntime(settings: unknown): PlatformAiRuntime | n
   }
 }
 
-export function getOrgPlatformAiConfigError(settings: unknown): string | null {
-  const platform = parseOrgAiPlatform(settings)
-  if (!platform.enabled) return null
-  if (!isOrgPlatformAiFeatureEnabled()) {
-    return 'Sudar AI (included pilot tier) is not enabled on this deployment.'
-  }
-  // Platform tier enabled but FreeLLMAPI not wired — fall through to cloud (Together, etc.)
-  if (!getFreellmapiEnv()?.apiKey) return null
+/**
+ * The platform tier is best-effort: when the deployment flag or FreeLLMAPI env is missing, an org
+ * that has `ai_platform.enabled` must still fall through to the cloud chain rather than blocking
+ * generation and the tutor.
+ */
+export function getOrgPlatformAiConfigError(_settings: unknown): string | null {
   return null
 }
