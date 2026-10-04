@@ -1,0 +1,13 @@
+{
+  "name": "sudar-e2e",
+  "private": true,
+  "description": "Playwright smoke tests for the Sudar beta loop (Studio author -> publish -> Learn enroll -> learn -> tutor -> sim -> mastery).",
+  "scripts": {
+    "test": "playwright test",
+    "test:public": "playwright test tests/public.spec.ts tests/security.spec.ts",
+    "install:browsers": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}

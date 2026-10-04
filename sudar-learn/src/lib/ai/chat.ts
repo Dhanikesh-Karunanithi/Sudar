@@ -39,8 +39,9 @@ export type ChatCompletionResult = {
   usage?: ChatUsage
 }
 
-const DEFAULT_TUTOR_MODEL = 'openai/gpt-oss-20b'
-const DEFAULT_MEMORY_MODEL = 'google/gemma-3n-E4B-it'
+// Together serverless models only; gpt-oss-20b and gemma-3n were moved to dedicated endpoints (Oct 2026).
+const DEFAULT_TUTOR_MODEL = 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
+const DEFAULT_MEMORY_MODEL = 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
 
 async function chatPrivateOpenAi(
   runtime: PrivateOpenAiRuntime,

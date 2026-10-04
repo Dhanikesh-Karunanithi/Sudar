@@ -16,6 +16,23 @@ if _env_file.is_file():
     load_dotenv(_env_file, override=False)
 
 import os
+
+_sentry_dsn = os.getenv("SENTRY_DSN", "").strip()
+if _sentry_dsn:
+    try:
+        import sentry_sdk
+
+        # Errors only, no request bodies/headers/user data: learner prompts must not leave the service.
+        sentry_sdk.init(
+            dsn=_sentry_dsn,
+            environment=os.getenv("SENTRY_ENVIRONMENT", os.getenv("ENV", "development")),
+            send_default_pii=False,
+            traces_sample_rate=0.0,
+            max_request_body_size="never",
+        )
+    except ImportError:
+        print("WARNING: SENTRY_DSN is set but sentry-sdk is not installed; error reporting disabled.")
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager

@@ -1,13 +1,50 @@
-import type { NotebookPage, SudarNotesNotebookState } from '@/types/journeyNotebook'
+import type {
+  JourneyNotebookSnapshot,
+  NotebookPage,
+  SudarNotesNotebookState,
+} from '@/types/journeyNotebook'
 import {
+  JOURNEY_NOTEBOOK_MAX_PAGES,
   LEGACY_NOTEBOOK_STORAGE_KEY,
   NOTEBOOK_STORAGE_KEY,
   WORKING_MEMORY_STORAGE_KEY,
   defaultNotebookState,
 } from '@/types/journeyNotebook'
 import type { TutorBlock } from '@/types/tutor'
-import type { SudarNotesWorkingMemory } from '@/types/sudarNotes'
+import type { SudarNotesSessionState, SudarNotesWorkingMemory } from '@/types/sudarNotes'
 import { emptyWorkingMemory } from '@/types/sudarNotes'
+
+/** Drop malformed pages / memory from an untrusted snapshot (server PUT body or GET result). */
+export function sanitizeNotebookSnapshot(input: {
+  pages?: unknown
+  working_memory?: unknown
+  session?: unknown
+}): JourneyNotebookSnapshot {
+  const pages = Array.isArray(input.pages)
+    ? input.pages.filter(isNotebookPage).slice(-JOURNEY_NOTEBOOK_MAX_PAGES)
+    : []
+  const session = isSudarNotesSession(input.session) ? input.session : null
+  return {
+    version: 1,
+    pages,
+    working_memory: isWorkingMemory(input.working_memory)
+      ? input.working_memory
+      : session?.working_memory ?? emptyWorkingMemory(),
+    session,
+  }
+}
+
+function isSudarNotesSession(value: unknown): value is SudarNotesSessionState {
+  if (!value || typeof value !== 'object') return false
+  const o = value as Record<string, unknown>
+  return (
+    typeof o.mode === 'string' &&
+    typeof o.turns_since_check === 'number' &&
+    typeof o.substantive_turn_count === 'number' &&
+    typeof o.intake_complete === 'boolean' &&
+    isWorkingMemory(o.working_memory)
+  )
+}
 
 function isTutorBlock(value: unknown): value is TutorBlock {
   if (!value || typeof value !== 'object') return false

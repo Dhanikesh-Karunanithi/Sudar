@@ -19,7 +19,8 @@
     "deploy:cf": "node ./scripts/deploy-cf.mjs",
     "start": "node ./scripts/run-next.mjs start",
     "lint": "node ./scripts/run-next.mjs lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval:content": "node ../scripts/evals/run-content-eval.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

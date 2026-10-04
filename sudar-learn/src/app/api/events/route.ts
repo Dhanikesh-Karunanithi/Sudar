@@ -1,6 +1,7 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { z } from 'zod'
+import { refreshNextBestAction } from '@/lib/intelligence/nextBestActionEngine'
 import type { Json } from '@/types/database'
 import { recordStruggleTopics } from '@/lib/learner/syncTopicSkills'
 import { evaluateGamification } from '@/lib/gamification/engine'
@@ -311,25 +312,33 @@ export async function POST(request: NextRequest) {
   if (rollupTriggers.has(event_type)) {
     const baseUrl = request.nextUrl.origin
     const cookie = request.headers.get('cookie') ?? ''
-    fetch(`${baseUrl}/api/learner/twin-rollup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: cookie },
-      body: JSON.stringify({ force: false }),
-    }).catch(() => {})
+    after(() =>
+      fetch(`${baseUrl}/api/learner/twin-rollup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({ force: false }),
+      }).then(() => undefined, () => undefined),
+    )
   }
 
-  if (event_type === 'module_complete' || event_type === 'quiz_attempt') {
+  if (event_type === 'module_complete' || event_type === 'sim_complete') {
+    const userId = user.id
+    after(() => refreshNextBestAction(admin, userId))
+  } else if (event_type === 'quiz_attempt') {
     const baseUrl = request.nextUrl.origin
-    fetch(`${baseUrl}/api/intelligence/next-action`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: request.headers.get('cookie') ?? '' },
-      body: JSON.stringify({ force: false }),
-    }).catch(() => {})
+    const cookie = request.headers.get('cookie') ?? ''
+    after(() =>
+      fetch(`${baseUrl}/api/intelligence/next-action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({ force: false }),
+      }).then(() => undefined, () => undefined),
+    )
   }
 
   // Gamification: skip section_heartbeat (no coin rules; avoids 30s engine scans)
   if (event_type !== 'section_heartbeat') {
-    evaluateGamification({
+    const gamificationInput = {
       userId: user.id,
       eventType: event_type,
       courseId: course_id ?? null,
@@ -337,7 +346,8 @@ export async function POST(request: NextRequest) {
       payload: (payload as Record<string, unknown>) ?? {},
       origin: request.nextUrl.origin,
       cookieHeader: request.headers.get('cookie') ?? '',
-    }).catch(() => {})
+    }
+    after(() => evaluateGamification(gamificationInput).then(() => undefined, () => undefined))
   }
   // On course_complete — check if all mandatory courses in any enrolled path are done → issue cert
   if (event_type === 'module_complete' && course_id) {

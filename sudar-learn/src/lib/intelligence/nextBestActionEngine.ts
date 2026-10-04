@@ -126,25 +126,33 @@ export async function computeNextBestActionForUser(
 
   const enrolledIds = new Set((enrollments ?? []).map((e) => e.course_id))
 
-  const { data: allCourses } = await admin
+  const { data: profileOrg } = await admin
+    .from('profiles')
+    .select('active_org_id, org_id')
+    .eq('id', userId)
+    .maybeSingle()
+  const learnerOrgId = profileOrg?.active_org_id ?? profileOrg?.org_id ?? null
+
+  let coursesQuery = admin
     .from('courses')
     .select('id, title, description, difficulty, tags, is_external, external_provider, external_url, modules(title)')
     .eq('status', 'published')
+  if (learnerOrgId) coursesQuery = coursesQuery.eq('org_id', learnerOrgId)
+  const { data: allCourses } = await coursesQuery
 
   const candidates: CourseCandidate[] = (allCourses ?? []).filter((c) => !enrolledIds.has(c.id))
   if (candidates.length === 0) {
-    await admin.from('learner_profiles').update({
-      next_best_action: {
-        type: 'all_enrolled',
-        action_type: 'all_enrolled',
-        target: {},
-        recommended_duration_mins: 10,
-        confidence: 0.82,
-        reason: "You've enrolled in everything — great work!",
-        computed_at: new Date().toISOString(),
-      },
-    }).eq('user_id', userId)
-    return { ok: true }
+    const action = {
+      type: 'all_enrolled',
+      action_type: 'all_enrolled',
+      target: {},
+      recommended_duration_mins: 10,
+      confidence: 0.82,
+      reason: "You've enrolled in everything — great work!",
+      computed_at: new Date().toISOString(),
+    }
+    await admin.from('learner_profiles').update({ next_best_action: action }).eq('user_id', userId)
+    return { ok: true, action }
   }
 
   const { data: peerData } = await admin
@@ -234,24 +242,23 @@ export async function computeNextBestActionForUser(
       (a, b) => ((peerCounts[a.id] ?? 0) > (peerCounts[b.id] ?? 0) ? a : b),
       candidates[0],
     )
-    await admin.from('learner_profiles').update({
-      next_best_action: {
-        type: 'course',
-        action_type: classifyActionType(features),
-        target: { course_id: fallback.id },
-        recommended_duration_mins: recommendedDurationMins(features),
-        course_id: fallback.id,
-        course_title: fallback.title,
-        is_external: Boolean(fallback.is_external),
-        external_provider: fallback.external_provider ?? null,
-        external_url: fallback.external_url ?? null,
-        reason: 'A highly-rated course in your organisation — a great next step.',
-        reasons: [],
-        confidence: 0.62,
-        computed_at: new Date().toISOString(),
-      },
-    }).eq('user_id', userId)
-    return { ok: true }
+    const action = {
+      type: 'course',
+      action_type: classifyActionType(features),
+      target: { course_id: fallback.id },
+      recommended_duration_mins: recommendedDurationMins(features),
+      course_id: fallback.id,
+      course_title: fallback.title,
+      is_external: Boolean(fallback.is_external),
+      external_provider: fallback.external_provider ?? null,
+      external_url: fallback.external_url ?? null,
+      reason: 'A highly-rated course in your organisation — a great next step.',
+      reasons: [],
+      confidence: 0.62,
+      computed_at: new Date().toISOString(),
+    }
+    await admin.from('learner_profiles').update({ next_best_action: action }).eq('user_id', userId)
+    return { ok: true, action }
   }
 
   let reason =
@@ -293,6 +300,18 @@ export async function computeNextBestActionForUser(
 
   await admin.from('learner_profiles').update({ next_best_action: action }).eq('user_id', userId)
   return { ok: true, action }
+}
+
+/**
+ * Recompute after a learning milestone (module complete, sim complete). Schedule with `after()`
+ * rather than a bare fetch: un-awaited work is cancelled once a Workers response is sent. Never throws.
+ */
+export async function refreshNextBestAction(admin: SupabaseClient, userId: string): Promise<void> {
+  try {
+    await computeNextBestActionForUser(admin, userId, { force: true })
+  } catch {
+    /* recommendation refresh must not fail the learner action */
+  }
 }
 
 function recommendedDurationMins(features: ActivityFeatures): number {

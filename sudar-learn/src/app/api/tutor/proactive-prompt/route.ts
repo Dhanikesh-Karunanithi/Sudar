@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { fetchResolvedLearnerPreferences } from '@/lib/learner/learnerPreferences'
 import { proactivePromptBodySchema } from '@/lib/tutor/proactivePromptSchema'
 import { templateForRoute, templateSessionStart } from '@/lib/tutor/proactiveTemplates'
-import { createTranslator } from 'next-intl/server'
+import { createTranslator } from 'next-intl'
 import { loadMessagesSync } from '@/i18n/loadMessages'
 
 export async function POST(request: NextRequest) {

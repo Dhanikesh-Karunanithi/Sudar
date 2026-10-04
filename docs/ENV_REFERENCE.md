@@ -230,7 +230,10 @@ Streaming voice needs all of LiveKit, Deepgram, and Cartesia. When any is missin
 | `CONTENT_QUALITY_THRESHOLD` | Studio | `7` | Rubric score (1–10) below which a module is regenerated with critique. |
 | `CONTENT_QUALITY_MAX_RETRIES` | Studio | `2` | Regeneration attempts before a module is saved as `needs_review`. |
 | `CONTENT_MODERATION_MODE` | Studio, Learn | `auto` | `auto` (Llama Guard via Together, then OpenAI moderation, then local screen), `local` (keyword screen only), `off` (dev only). |
-| `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN` | Studio, Learn, Intelligence | unset | Error monitoring; no-op when unset. |
+| `CONTENT_MODERATION_MODEL` | Studio, Learn | `meta-llama/Llama-Guard-4-12B` | Together Llama Guard model id used by `moderateContent()`. |
+| `EVAL_JUDGE` / `EVAL_JUDGE_MODEL` | CI / local eval | unset | `EVAL_JUDGE=1` enables LLM judge calibration in `npm run eval:content`; model override optional. See [CONTENT_QUALITY.md](CONTENT_QUALITY.md). |
+| `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_DSN` | Studio, Learn, Intelligence | unset | Error monitoring; no-op when unset. Studio/Learn use the dependency-free reporter in `shared/observability/errorReporter.ts` (browser `error`/`unhandledrejection` via `ErrorReportingHost`, server via `src/instrumentation.ts` `onRequestError`); the DSN host is added to CSP `connect-src` at build time. Intelligence uses `sentry-sdk` with PII and request bodies disabled. Only error name/message/stack, app, runtime, route pathname and digest are sent. |
+| `NEXT_PUBLIC_SENTRY_ENVIRONMENT` / `SENTRY_ENVIRONMENT` | Studio, Learn / Intelligence | `production` / `ENV` | Environment tag on error events (e.g. `staging`, `beta`). |
 
 ---
 

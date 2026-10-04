@@ -73,12 +73,15 @@ export function getDomainComponentHints(courseType: string): string {
 export function shouldIncludeComponent(
   type: ComponentType,
   data: Record<string, unknown>,
-  moduleText?: string
+  moduleText?: string,
+  opts: { strict?: boolean } = {}
 ): boolean {
+  const strict = opts.strict !== false
   switch (type) {
     case 'matching': {
       const pairs = normalizeMatchingPairs(data)
       if (!pairs) return false
+      if (!strict) return true
       const trivial = pairs.every(
         (p) => p.term.length < 4 || p.definition.length < 8
       )
@@ -86,16 +89,23 @@ export function shouldIncludeComponent(
     }
     case 'flipcard': {
       const cards = normalizeFlipcards(data)
-      return cards != null && cards.length >= 2
+      return cards != null && cards.length >= (strict ? 2 : 1)
     }
     case 'quiz': {
       const q = data.question
       const opts = data.options
-      return (
-        isNonEmptyString(q, 12) &&
-        Array.isArray(opts) &&
-        opts.filter((o) => isNonEmptyString(o, 2)).length >= 3
-      )
+      if (!isNonEmptyString(q, 12) || !Array.isArray(opts)) return false
+      const valid = opts.filter((o): o is string => isNonEmptyString(o, 2)).map((o) => o.trim().toLowerCase())
+      if (valid.length < 3 || valid.length !== opts.length) return false
+      if (new Set(valid).size !== valid.length) return false
+      const answer = data.correctAnswer
+      if (typeof answer === 'number') return Number.isInteger(answer) && answer >= 0 && answer < valid.length
+      if (typeof answer === 'string') {
+        const trimmed = answer.trim()
+        if (/^\d+$/.test(trimmed)) return Number(trimmed) < valid.length
+        return valid.includes(trimmed.toLowerCase())
+      }
+      return false
     }
     case 'timeline': {
       const steps = data.steps
@@ -145,14 +155,15 @@ export function shouldIncludeComponent(
 /** Sanitize and normalize component data; returns null if unusable. */
 export function sanitizeComponent(
   component: SelectedComponent,
-  moduleText?: string
+  moduleText?: string,
+  opts: { strict?: boolean } = {}
 ): SelectedComponent | null {
   const data =
     component.data && typeof component.data === 'object'
       ? { ...component.data }
       : {}
 
-  if (!shouldIncludeComponent(component.type, data, moduleText)) {
+  if (!shouldIncludeComponent(component.type, data, moduleText, opts)) {
     return null
   }
 
@@ -173,11 +184,12 @@ export function sanitizeComponent(
 
 export function filterAndSanitizeComponents(
   components: SelectedComponent[],
-  moduleText?: string
+  moduleText?: string,
+  opts: { strict?: boolean } = {}
 ): SelectedComponent[] {
   const out: SelectedComponent[] = []
   for (const c of components) {
-    const sanitized = sanitizeComponent(c, moduleText)
+    const sanitized = sanitizeComponent(c, moduleText, opts)
     if (sanitized) out.push(sanitized)
   }
   return out

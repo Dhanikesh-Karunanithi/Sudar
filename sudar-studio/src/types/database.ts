@@ -545,6 +545,12 @@ export type Database = {
           order_index: number
           quiz: Json | null
           created_at: string
+          review_status: 'draft' | 'needs_review' | 'approved'
+          quality: Json | null
+          reviewed_by: string | null
+          reviewed_at: string | null
+          sim_scenario_id: string | null
+          sim_config: Json | null
         }
         Insert: {
           id?: string
@@ -555,6 +561,12 @@ export type Database = {
           order_index: number
           quiz?: Json | null
           created_at?: string
+          review_status?: 'draft' | 'needs_review' | 'approved'
+          quality?: Json | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          sim_scenario_id?: string | null
+          sim_config?: Json | null
         }
         Update: {
           title?: string
@@ -562,6 +574,12 @@ export type Database = {
           modality_variants?: Json | null
           order_index?: number
           quiz?: Json | null
+          review_status?: 'draft' | 'needs_review' | 'approved'
+          quality?: Json | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          sim_scenario_id?: string | null
+          sim_config?: Json | null
         }
         Relationships: [
           {

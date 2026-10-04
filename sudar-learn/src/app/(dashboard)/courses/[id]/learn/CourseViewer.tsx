@@ -20,6 +20,7 @@ import { AudioCard } from './AudioCard'
 import { SudarVidCard } from './SudarVidCard'
 import { RichModuleContent } from '@/components/learn/RichModuleContent'
 import { ReadAlongControls } from '@/components/learn/ReadAlongControls'
+import { ModuleClaimsStrip } from '@/components/learn/ModuleClaimsStrip'
 import { CourseThemeProvider } from '@/components/learn/CourseThemeProvider'
 import { ThemeRenderer } from '@/components/learn/ThemeRenderer'
 import type { ThemeSlug } from '@/types/contentThemes'
@@ -511,6 +512,8 @@ export function CourseViewer({
       moduleComplete: completed.has(currentModuleId),
     }
   }, [course.id, currentModuleId, activeModality, completed])
+
+  const [claimsRefreshKey, setClaimsRefreshKey] = useState(0)
 
   // Tutor state
   const [tutorOpen, setTutorOpen] = useState(false)
@@ -1228,7 +1231,8 @@ export function CourseViewer({
         module_id: currentModuleId,
         payload: { score, wrong_topics: wrongTopics, module_title: currentModule?.title },
       }),
-    })
+    }).catch(() => null)
+    setClaimsRefreshKey((k) => k + 1)
   }
 
   function handleQuizAskByte(prompt: string) {
@@ -1870,6 +1874,10 @@ export function CourseViewer({
                 )}
 
                 <div className={cn('space-y-10', isLoadingModuleContent && currentModule?.content == null && 'hidden')}>
+
+                {currentModuleId && activeModality === 'text' && (
+                  <ModuleClaimsStrip moduleId={currentModuleId} refreshKey={claimsRefreshKey} />
+                )}
 
                 {personalizeOffered && personalizationAccess.courseWelcome.allowed && (
                   <div className="mb-8 rounded-2xl border border-primary/25 bg-primary/5 p-5 space-y-3">
