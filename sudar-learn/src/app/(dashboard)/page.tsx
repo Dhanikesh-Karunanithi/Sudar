@@ -68,7 +68,7 @@ export default async function DashboardPage() {
     .single()
 
   if (!existingProfile) {
-    await admin.from('learner_profiles').insert({ user_id: user!.id })
+    await admin.from('learner_profiles').insert({ user_id: user!.id, updated_at: new Date().toISOString() })
   }
 
   // Cookie/host for internal SSR fetches (e.g. agents week plan) — not used for NBA/twin spam

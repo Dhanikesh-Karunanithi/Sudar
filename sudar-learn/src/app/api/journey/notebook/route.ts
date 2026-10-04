@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { sanitizeNotebookSnapshot } from '@/lib/journey/notebookStorage'
 import { isJourneyEnabled } from '@/lib/journey/isJourneyEnabled'
+import { rejectCrossSiteRequest } from '@/lib/security/sameOrigin'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   JOURNEY_NOTEBOOK_MAX_BYTES,
@@ -63,6 +64,8 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   if (!isJourneyEnabled()) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 })
+  const crossSite = rejectCrossSiteRequest(request)
+  if (crossSite) return crossSite
   const user = await requireUser()
   if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
 
@@ -99,8 +102,10 @@ export async function PUT(request: NextRequest) {
   return NextResponse.json({ success: true, data: { updated_at: now, pages: snapshot.pages.length } })
 }
 
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
   if (!isJourneyEnabled()) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 })
+  const crossSite = rejectCrossSiteRequest(request)
+  if (crossSite) return crossSite
   const user = await requireUser()
   if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
 

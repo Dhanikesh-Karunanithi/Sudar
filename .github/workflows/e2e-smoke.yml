@@ -1,0 +1,49 @@
+# Playwright smoke against a deployed Studio + Learn pair (staging by default).
+# Public/security checks always run; the full author -> learn loop runs when tester creds are set.
+name: E2E smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      studio_url:
+        description: Studio base URL
+        required: false
+      learn_url:
+        description: Learn base URL
+        required: false
+      run_ai:
+        description: Exercise the tutor (spends AI budget)
+        type: boolean
+        default: false
+  schedule:
+    - cron: "30 6 * * *"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: e2e
+    env:
+      E2E_STUDIO_URL: ${{ inputs.studio_url || vars.E2E_STUDIO_URL || 'https://staging.studio.thesudar.com' }}
+      E2E_LEARN_URL: ${{ inputs.learn_url || vars.E2E_LEARN_URL || 'https://staging.learn.thesudar.com' }}
+      E2E_CREATOR_EMAIL: ${{ secrets.E2E_CREATOR_EMAIL }}
+      E2E_CREATOR_PASSWORD: ${{ secrets.E2E_CREATOR_PASSWORD }}
+      E2E_LEARNER_EMAIL: ${{ secrets.E2E_LEARNER_EMAIL }}
+      E2E_LEARNER_PASSWORD: ${{ secrets.E2E_LEARNER_PASSWORD }}
+      E2E_SIM_SCENARIO_ID: ${{ vars.E2E_SIM_SCENARIO_ID }}
+      E2E_RUN_AI: ${{ inputs.run_ai && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+          retention-days: 7
