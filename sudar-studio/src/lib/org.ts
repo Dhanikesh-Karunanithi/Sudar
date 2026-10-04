@@ -174,6 +174,19 @@ export async function getOrgIdAndRole(userId: string): Promise<{ orgId: string; 
   return { orgId, role }
 }
 
+/** Org-wide onboarding (rename, invites, governance defaults) is restricted to org Admins. */
+export async function canConfigureOrgOnboarding(userId: string, orgId: string): Promise<boolean> {
+  if (await isSuperAdmin(userId)) return true
+  const supabase = await createClient()
+  const { data: membership } = await supabase
+    .from('org_members')
+    .select('role')
+    .eq('org_id', orgId)
+    .eq('user_id', userId)
+    .maybeSingle()
+  return membership?.role === 'ADMIN'
+}
+
 export async function requireOrgContentEditor(userId: string): Promise<string> {
   if (await isSuperAdmin(userId)) {
     return getOrCreateOrg(userId)

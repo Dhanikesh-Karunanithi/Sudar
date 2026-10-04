@@ -1,6 +1,6 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getOrCreateOrg } from '@/lib/org'
+import { canConfigureOrgOnboarding, getOrCreateOrg } from '@/lib/org'
 import { StudioOnboardingFlow } from './StudioOnboardingFlow'
 
 export const metadata = { title: 'Welcome to Sudar Studio' }
@@ -15,9 +15,10 @@ export default async function StudioOnboardingPage() {
   const admin = createServiceRoleSupabaseClient()
   const orgId = await getOrCreateOrg(user.id)
 
-  const [{ data: profile }, { data: org }] = await Promise.all([
+  const [{ data: profile }, { data: org }, canConfigureOrg] = await Promise.all([
     admin.from('profiles').select('full_name, onboarding_complete').eq('id', user.id).single(),
     admin.from('organisations').select('name').eq('id', orgId).single(),
+    canConfigureOrgOnboarding(user.id, orgId),
   ])
 
   if (profile?.onboarding_complete) {
@@ -31,5 +32,5 @@ export default async function StudioOnboardingPage() {
         ? `${profile.full_name}'s Team`
         : 'My Team'
 
-  return <StudioOnboardingFlow defaultWorkspaceName={defaultName} />
+  return <StudioOnboardingFlow defaultWorkspaceName={defaultName} canConfigureOrg={canConfigureOrg} />
 }
