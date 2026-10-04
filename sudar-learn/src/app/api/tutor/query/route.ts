@@ -295,6 +295,7 @@ async function buildTutorResourceBlocks(
 
 // Allowed tutor models (serverless); set TOGETHER_TUTOR_MODEL in .env.local to override.
 const TUTOR_MODELS = [
+  { id: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', label: 'Llama 3.3 70B Turbo ($0.88 per 1M)' },
   { id: 'openai/gpt-oss-20b', label: 'GPT-OSS 20B ($0.05/$0.20 per 1M)' },
   { id: 'LiquidAI/LFM2-24B-A2B', label: 'LFM2-24B-A2B ($0.03/$0.12 per 1M)' },
   { id: 'meta-llama/Llama-3.2-3B-Instruct-Turbo', label: 'Llama 3.2 3B ($0.06 per 1M)' },
