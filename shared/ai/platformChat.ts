@@ -211,8 +211,23 @@ export async function chatWithPlatformOrCloudFallback(
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err))
     }
+    // Providers retire or gate models (e.g. Together "non-serverless"); a pinned model must not take the
+    // whole provider down when its default model still works.
+    if (options.model && provider !== 'anthropic' && isModelUnavailableError(lastError.message)) {
+      try {
+        return await chatWithCloudProvider(provider, { ...options, model: undefined })
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err))
+      }
+    }
   }
   throw lastError ?? new Error('All AI providers failed.')
+}
+
+export function isModelUnavailableError(message: string): boolean {
+  return /non-serverless|model_not_available|model_not_found|model not found|unable to access model|invalid model|does not exist/i.test(
+    message
+  )
 }
 
 export function getCloudChatConfigError(): string | null {

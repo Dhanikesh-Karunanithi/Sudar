@@ -114,6 +114,10 @@ export interface SudarChatPanelProps {
   onSudarNotesSessionUpdate?: (
     session: import('@/types/sudarNotes').SudarNotesSessionState,
   ) => void
+  /** Successful tutor reply text (SudarNotes voice mode speaks it). */
+  onAssistantReply?: (text: string) => void
+  /** Teaching OS domain the learner chose to study (SudarNotes topic picker). */
+  domainId?: string | null
 }
 
 export function SudarChatPanel({
@@ -136,6 +140,8 @@ export function SudarChatPanel({
   onRegisterNewSession,
   sudarNotesSession,
   onSudarNotesSessionUpdate,
+  onAssistantReply,
+  domainId,
 }: SudarChatPanelProps) {
   const { playChime } = useNotificationSound()
   const pathname = usePathname()
@@ -187,6 +193,11 @@ export function SudarChatPanel({
   useEffect(() => {
     onSudarNotesSessionUpdateRef.current = onSudarNotesSessionUpdate
   }, [onSudarNotesSessionUpdate])
+
+  const onAssistantReplyRef = useRef(onAssistantReply)
+  useEffect(() => {
+    onAssistantReplyRef.current = onAssistantReply
+  }, [onAssistantReply])
 
   // Register the newChat function with the parent once (for joint session clearing).
   const onRegisterNewSessionRef = useRef(onRegisterNewSession)
@@ -405,6 +416,7 @@ export function SudarChatPanel({
           ...(isJourneyRoute && sudarNotesSessionRef.current
             ? { sudar_notes_session: sudarNotesSessionRef.current }
             : {}),
+          ...(domainId ? { domain_id: domainId } : {}),
         }),
       })
       const text = await res.text()
@@ -435,6 +447,7 @@ export function SudarChatPanel({
       ]
       setMessages(mergedMessages)
       tutorSucceeded = true
+      if (data.response) onAssistantReplyRef.current?.(data.response)
       setLastRouting((data.routing as RoutingMeta | undefined) ?? null)
       if (shouldEmitArtifacts && assistantBlocks?.length) {
         const canvasBlocks = assistantBlocks.filter(

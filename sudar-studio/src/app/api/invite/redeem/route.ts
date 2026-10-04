@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { redeemInviteCode } from '@shared-access/inviteCodes'
+import { INVITE_CODE_RATE_LIMIT, RATE_LIMITED_MESSAGE, checkRateLimit, clientIpFromHeaders } from '@shared-access/rateLimit'
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 
 const bodySchema = z.object({
@@ -24,6 +25,9 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = createServiceRoleSupabaseClient()
+    if (!(await checkRateLimit(admin, INVITE_CODE_RATE_LIMIT, clientIpFromHeaders(request.headers)))) {
+      return NextResponse.json({ ok: false, error: RATE_LIMITED_MESSAGE }, { status: 429 })
+    }
     const result = await redeemInviteCode(admin, user.id, parsed.data.code)
     if (!result.ok) {
       return NextResponse.json(result, { status: 400 })

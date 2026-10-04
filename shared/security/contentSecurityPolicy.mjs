@@ -27,6 +27,18 @@ function extraRealtimeOrigins(env) {
   return [...out]
 }
 
+/** Browser error reports post to the Sentry ingest host embedded in NEXT_PUBLIC_SENTRY_DSN. */
+function sentryOrigins(env) {
+  const dsn = env.NEXT_PUBLIC_SENTRY_DSN?.trim()
+  if (!dsn) return []
+  try {
+    const url = new URL(dsn)
+    return url.protocol === 'https:' ? [`https://${url.host}`] : []
+  } catch {
+    return []
+  }
+}
+
 export function sudarContentSecurityPolicy(env = process.env) {
   const isDev = env.NODE_ENV !== 'production'
   const connect = [
@@ -42,6 +54,7 @@ export function sudarContentSecurityPolicy(env = process.env) {
     'https://api.anthropic.com',
     ...LIVEKIT_CLOUD,
     ...extraRealtimeOrigins(env),
+    ...sentryOrigins(env),
     ...(isDev ? DEV_LOCAL : []),
   ]
   return [

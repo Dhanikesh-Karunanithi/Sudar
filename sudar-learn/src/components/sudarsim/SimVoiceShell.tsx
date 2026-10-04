@@ -8,8 +8,19 @@ import {
   useLocalParticipant,
   useRoomContext,
 } from '@livekit/components-react'
-import { ConnectionState, RoomEvent } from 'livekit-client'
+import { ConnectionState, RoomEvent, type RemoteParticipant } from 'livekit-client'
 import { Loader2, Mic, MicOff, PhoneOff } from 'lucide-react'
+
+/** The agent is dispatched in the background; if it crashes the room stays silent, so we time out. */
+const AGENT_JOIN_TIMEOUT_MS = 15000
+const AGENT_IDENTITY_PREFIX = 'sim-agent'
+
+export const SIM_VOICE_FALLBACK_COPY = {
+  agentMissing: "The voice customer couldn't join the call.",
+  agentLeft: 'The voice customer dropped off the call.',
+  tokenFailed: 'Voice is unavailable right now.',
+  connectFailed: "We couldn't connect to the voice service.",
+} as const
 
 export type VoiceConfig = {
   room_name: string
@@ -42,10 +53,12 @@ function VoiceRoomInner({
   customerName,
   onTranscriptUpdate,
   onEndCall,
+  onAgentUnavailable,
 }: {
   customerName: string
   onTranscriptUpdate: (messages: ChatMessage[]) => void
   onEndCall: () => void
+  onAgentUnavailable: (reason: string) => void
 }) {
   const room = useRoomContext()
   const connectionState = useConnectionState()
@@ -54,6 +67,34 @@ function VoiceRoomInner({
   const [partialTranscript, setPartialTranscript] = useState('')
   const [micEnabled, setMicEnabled] = useState(true)
   const messagesRef = useRef<ChatMessage[]>([])
+  const agentJoinedRef = useRef(false)
+
+  useEffect(() => {
+    if (connectionState !== ConnectionState.Connected) return
+    const isAgent = (p: RemoteParticipant) => p.identity.startsWith(AGENT_IDENTITY_PREFIX)
+    if ([...room.remoteParticipants.values()].some(isAgent)) agentJoinedRef.current = true
+
+    const onJoined = (p: RemoteParticipant) => {
+      if (isAgent(p)) agentJoinedRef.current = true
+    }
+    const onLeft = (p: RemoteParticipant) => {
+      if (!isAgent(p)) return
+      void room.disconnect()
+      onAgentUnavailable(SIM_VOICE_FALLBACK_COPY.agentLeft)
+    }
+    room.on(RoomEvent.ParticipantConnected, onJoined)
+    room.on(RoomEvent.ParticipantDisconnected, onLeft)
+    const timer = window.setTimeout(() => {
+      if (agentJoinedRef.current) return
+      void room.disconnect()
+      onAgentUnavailable(SIM_VOICE_FALLBACK_COPY.agentMissing)
+    }, AGENT_JOIN_TIMEOUT_MS)
+    return () => {
+      window.clearTimeout(timer)
+      room.off(RoomEvent.ParticipantConnected, onJoined)
+      room.off(RoomEvent.ParticipantDisconnected, onLeft)
+    }
+  }, [connectionState, room, onAgentUnavailable])
 
   const pushMessage = useCallback(
     (role: string, text: string) => {
@@ -192,11 +233,15 @@ export function SimVoiceShell({
   voice: VoiceConfig | null
   customerName: string
   onTranscriptUpdate: (messages: ChatMessage[]) => void
-  onFallback: () => void
+  onFallback: (reason: string) => void
   onDisconnected?: () => void
 }) {
   const [config, setConfig] = useState<VoiceConfig | null>(voice)
-  const [error, setError] = useState<string | null>(null)
+  const onFallbackRef = useRef(onFallback)
+  useEffect(() => {
+    onFallbackRef.current = onFallback
+  }, [onFallback])
+  const fallback = useCallback((reason: string) => onFallbackRef.current(reason), [])
 
   useEffect(() => {
     if (voice?.token && voice.livekit_url) {
@@ -210,23 +255,13 @@ export function SimVoiceShell({
         if (data.success && data.voice?.token && data.voice.livekit_url) {
           setConfig(data.voice)
         } else {
-          setError(data.error ?? 'Voice unavailable')
-          onFallback()
+          fallback(SIM_VOICE_FALLBACK_COPY.tokenFailed)
         }
       } catch {
-        setError('Could not connect voice')
-        onFallback()
+        fallback(SIM_VOICE_FALLBACK_COPY.connectFailed)
       }
     })()
-  }, [sessionId, voice, onFallback])
-
-  if (error) {
-    return (
-      <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
-        {error} — using push-to-talk fallback.
-      </p>
-    )
-  }
+  }, [sessionId, voice, fallback])
 
   if (!config?.livekit_url || !config.token) {
     return (
@@ -245,12 +280,14 @@ export function SimVoiceShell({
       audio
       video={false}
       onDisconnected={() => onDisconnected?.()}
+      onError={() => fallback(SIM_VOICE_FALLBACK_COPY.connectFailed)}
       className="w-full"
     >
       <VoiceRoomInner
         customerName={customerName}
         onTranscriptUpdate={onTranscriptUpdate}
         onEndCall={() => onDisconnected?.()}
+        onAgentUnavailable={fallback}
       />
     </LiveKitRoom>
   )
