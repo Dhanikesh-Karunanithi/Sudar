@@ -21,9 +21,8 @@ test.describe('security gates', () => {
   })
 
   test('Sim agent callback requires the service secret', async ({ request }) => {
-    const res = await request.post(`${LEARN_URL}/api/sim/session/${FAKE_ID}/agent`, {
+    const res = await request.get(`${LEARN_URL}/api/sim/session/${FAKE_ID}/agent`, {
       headers: { 'x-sudar-sim-secret': 'wrong' },
-      data: { user_id: FAKE_ID },
     })
     expect(res.status()).toBe(401)
   })

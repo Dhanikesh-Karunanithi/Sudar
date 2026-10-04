@@ -76,6 +76,11 @@ test('learner signs in and enrolls', async () => {
 
 test('learner opens the course viewer', async () => {
   await learner.goto(`${LEARN_URL}/courses/${courseId}/learn`)
+  const skipOnboarding = learner.getByRole('button', { name: /skip for now/i })
+  if (await skipOnboarding.isVisible({ timeout: 10_000 }).catch(() => false)) {
+    await skipOnboarding.click()
+    await learner.goto(`${LEARN_URL}/courses/${courseId}/learn`)
+  }
   await expect(learner.getByText('Active listening basics').first()).toBeVisible({ timeout: 30_000 })
 })
 
