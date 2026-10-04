@@ -35,9 +35,29 @@ describe('runTutorInputGuardrail', () => {
     expect(chatCompletion).not.toHaveBeenCalled()
   })
 
-  it('allows identity questions without calling the scope LLM', async () => {
-    const res = await runTutorInputGuardrail("What's your name?", aiDeps)
+  it('allows lesson-planning continuations without calling the scope LLM', async () => {
+    const res = await runTutorInputGuardrail('You plan it for me', aiDeps)
     expect(res.pass).toBe(true)
     expect(chatCompletion).not.toHaveBeenCalled()
+  })
+
+  it('allows all-basics continuations without calling the scope LLM', async () => {
+    const res = await runTutorInputGuardrail('All basics. I have not used it before', aiDeps)
+    expect(res.pass).toBe(true)
+    expect(chatCompletion).not.toHaveBeenCalled()
+  })
+
+  it('uses session context in the scope prompt when provided', async () => {
+    vi.mocked(chatCompletion).mockResolvedValue({ content: 'YES', provider: 'test' })
+    const res = await runTutorInputGuardrail('Do that', aiDeps, {
+      sessionContext: 'Learner: Teach me GitHub\nTutor: Which part?',
+    })
+    expect(res.pass).toBe(true)
+    expect(chatCompletion).toHaveBeenCalledTimes(1)
+    const call = vi.mocked(chatCompletion).mock.calls[0]?.[0] as {
+      messages: Array<{ content: string }>
+    }
+    expect(call.messages[0]?.content).toContain('Teach me GitHub')
+    expect(call.messages[0]?.content).toContain('Do that')
   })
 })

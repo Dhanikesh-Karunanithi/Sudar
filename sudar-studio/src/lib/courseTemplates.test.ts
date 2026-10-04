@@ -1,15 +1,15 @@
-import test from 'node:test'
-import assert from 'node:assert/strict'
+import { describe, expect, it } from 'vitest'
 import { COURSE_TEMPLATES, getCourseTemplate } from '@/lib/courseTemplates'
 
-test('course templates expose required presets', () => {
-  const ids = new Set(COURSE_TEMPLATES.map((t) => t.id))
-  assert.ok(ids.has('structured_lesson'))
-  assert.ok(ids.has('interactive_lesson'))
-  assert.ok(ids.has('compliance_sop'))
-})
+describe('courseTemplates', () => {
+  it('exposes required presets', () => {
+    const ids = new Set(COURSE_TEMPLATES.map((t) => t.id))
+    expect(ids.has('structured_lesson')).toBe(true)
+    expect(ids.has('interactive_lesson')).toBe(true)
+    expect(ids.has('compliance_sop')).toBe(true)
+  })
 
-test('template resolver falls back to structured lesson', () => {
-  const resolved = getCourseTemplate('does_not_exist')
-  assert.equal(resolved.id, 'structured_lesson')
+  it('falls back to structured lesson for unknown ids', () => {
+    expect(getCourseTemplate('does_not_exist').id).toBe('structured_lesson')
+  })
 })

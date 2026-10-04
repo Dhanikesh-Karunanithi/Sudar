@@ -5,28 +5,39 @@ export function buildQuizPrompt(params: {
   difficulty: string
   numQuestions: number
   language: string
+  /** When provided, at least one question per objective. */
+  objectives?: string[]
+  /** Issues from a previous attempt that must be fixed. */
+  critique?: string
 }): string {
-  const { content, courseTitle, moduleTitle, difficulty, numQuestions, language } = params
+  const { content, courseTitle, moduleTitle, difficulty, language } = params
+  const objectives = (params.objectives ?? []).map((o) => o.trim()).filter(Boolean)
+  const numQuestions = Math.max(params.numQuestions, Math.min(objectives.length, 10))
+  const objectivesBlock = objectives.length
+    ? `\nLearning objectives (write at least one question per objective, in this order):\n${objectives.map((o, i) => `${i + 1}. ${o}`).join('\n')}\n`
+    : ''
   return `You are an expert instructional designer creating a quiz for an e-learning module.
 
 Course: "${courseTitle ?? 'Course'}"
 Module: "${moduleTitle ?? 'Module'}"
 Difficulty: ${difficulty}
 Language/locale for all text: ${language}
-Module content:
+${objectivesBlock}Module content:
 ---
-${content.slice(0, 2500)}
+${content.slice(0, 12000)}
 ---
 
 Create exactly ${numQuestions} multiple-choice questions that test genuine comprehension (not just recall).
 
 Rules:
-- Each question must be answerable from the module content
-- Options must be plausible (no obviously wrong answers)
+- Each question must be answerable from the module content above; never test facts that are not in it
+- Prefer application and scenario questions ("What should you do...", "Which example shows...") over definitions
+- Exactly 4 options, all distinct; distractors must be plausible misconceptions of similar length to the correct answer
+- Never use "All of the above" or "None of the above"
+- "correct" is the 0-based index of the right option; spread correct positions across questions
 - Include a 1-sentence explanation for the correct answer
 - Tag each question with a short topic name (2-4 words)
-- Vary question types: understanding, application, comparison
-
+${params.critique ? `\nA previous attempt had these problems — fix them:\n${params.critique}\n` : ''}
 Return ONLY valid JSON in this exact structure:
 {
   "questions": [

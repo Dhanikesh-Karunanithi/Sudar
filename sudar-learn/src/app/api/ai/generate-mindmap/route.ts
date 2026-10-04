@@ -9,6 +9,21 @@ import { chatCompletion, resolveChatConfigError } from '@/lib/ai/chat'
 import { learnMeteringChatCtx, loadOrgAiChatContext } from '@/lib/org/orgAiChatContext'
 import { rejectSensitiveLearnerAiInput } from '@/lib/security/learnerAiInputGuard'
 import { capabilitySupported, parseOrgAiRuntimePolicy } from '@/types/orgAiInference'
+import { checkAndIncrementUsage, usageLimitErrorResponse } from '@/lib/usage-limits'
+import { z } from 'zod'
+
+const bodySchema = z.object({
+  scope: z.enum(['module', 'course']).catch('module'),
+  course_id: z.string().max(100).nullable().optional(),
+  module_id: z.string().max(100).optional(),
+  course_title: z.string().max(300).optional(),
+  module_title: z.string().max(300).optional(),
+  content: z.string().max(200_000).optional(),
+  modules: z
+    .array(z.object({ title: z.string().max(300), content: z.string().max(200_000) }))
+    .max(80)
+    .optional(),
+})
 
 const MODULE_CONTENT_CAP = 6000
 const COURSE_TOTAL_CAP = 15000
@@ -53,10 +68,18 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const admin = createServiceRoleSupabaseClient()
+  const parsedBody = bodySchema.safeParse(await request.json().catch(() => null))
+  if (!parsedBody.success) return NextResponse.json({ success: false, error: 'Invalid request' }, { status: 400 })
+  const body = parsedBody.data
 
-  const body = await request.json().catch(() => ({} as Record<string, unknown>))
-  const courseId = typeof body.course_id === 'string' ? body.course_id : null
+  const admin = createServiceRoleSupabaseClient()
+  const usage = await checkAndIncrementUsage(admin, user.id, 'generic')
+  if (!usage.allowed) {
+    const err = usageLimitErrorResponse(usage)
+    return NextResponse.json(err.body, { status: err.status })
+  }
+
+  const courseId = body.course_id ?? null
   const { orgId, orgSettings, privateRuntime } = await loadOrgAiChatContext(admin, {
     courseId,
     userId: user.id,
@@ -83,10 +106,9 @@ export async function POST(request: NextRequest) {
 
   if (scope === 'course') {
     const courseTitle = typeof body.course_title === 'string' ? body.course_title.trim() : 'Course'
-    const modulesRaw = Array.isArray(body.modules) ? body.modules : []
-    const modules = modulesRaw
-      .filter((m): m is { title: string; content: string } => m && typeof m === 'object' && typeof (m as { title?: unknown }).title === 'string' && typeof (m as { content?: unknown }).content === 'string')
-      .map((m) => ({ title: String(m.title).trim(), content: String(m.content).trim() }))
+    const modules = (body.modules ?? [])
+      .map((m) => ({ title: m.title.trim(), content: m.content.trim() }))
+      .filter((m) => m.title && m.content)
     if (!courseTitle || modules.length === 0) {
       return NextResponse.json({ error: 'course_title and modules array required for scope=course' }, { status: 400 })
     }

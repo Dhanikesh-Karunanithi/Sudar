@@ -28,6 +28,12 @@ export async function POST(request: NextRequest) {
   const admin = createServiceRoleSupabaseClient()
   const usage = await checkAndIncrementUsage(admin, user.id, 'generic')
   if (!usage.allowed) {
+    if (usage.reason === 'metering_unavailable') {
+      return NextResponse.json(
+        { ok: false, error: 'Usage metering temporarily unavailable. Please try again shortly.' },
+        { status: 503 }
+      )
+    }
     return NextResponse.json(
       { ok: false, error: `Daily AI limit (${usage.limit}) reached. Try again tomorrow.` },
       { status: 429 }

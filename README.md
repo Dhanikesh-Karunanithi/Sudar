@@ -20,13 +20,13 @@ Most corporate systems **deliver content**. Sudar is built to **learn how each p
 
 | | Sudar | Typical LMS + “AI features” |
 |--|--------|-----------------------------|
-| **Learner model** | Durable Digital Learner Twin + telemetry | Shallow or none |
-| **Tutor** | Sudar — reactive & proactive (tap-to-reply nudges, cross-session memory) | Often stateless chat |
-| **Delivery** | Author once: text, listen (TTS), watch, map, flashcards, SCORM; feed/game where wired or roadmap | Often text/video only |
+| **Learner model** | Durable Digital Learner Twin + telemetry; Teaching OS claim mastery | Shallow or none |
+| **Tutor** | Sudar — reactive & proactive (tap-to-reply nudges, cross-session memory); **SudarNotes** conversational learning | Often stateless chat |
+| **Delivery** | Author once: text, listen (TTS), watch, map, flashcards, SCORM; feed/game where wired or roadmap; open-ended teaching via SudarNotes | Often text/video only |
 | **Your existing stack** | **ALP**: APIs and embed paths toward Moodle, Canvas, and similar | Hard to extend |
 | **Source** | Open (Apache 2.0) | Usually closed |
 
-The science and design trade-offs behind Sudar are documented in [RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md). A feature-level checklist lives in [docs/PRODUCT_FEATURES.md](./docs/PRODUCT_FEATURES.md) and [docs/SHIPPED_FEATURES.md](./docs/SHIPPED_FEATURES.md). **Sudar Agents** (bounded orchestration + audit trail) is documented in [docs/AGENTS_PLATFORM.md](./docs/AGENTS_PLATFORM.md).
+The science and design trade-offs behind Sudar are documented in [RESEARCH_FOUNDATION.md](./RESEARCH_FOUNDATION.md). A feature-level checklist lives in [docs/PRODUCT_FEATURES.md](./docs/PRODUCT_FEATURES.md) and [docs/SHIPPED_FEATURES.md](./docs/SHIPPED_FEATURES.md). **Sudar Agents** (bounded orchestration + audit trail) is documented in [docs/AGENTS_PLATFORM.md](./docs/AGENTS_PLATFORM.md). **SudarNotes** (conversational learning) and the **Teaching OS** claim/mastery spine: [docs/SUDAR_2_0_VISION.md](./docs/SUDAR_2_0_VISION.md), [docs/TEACHING_OS.md](./docs/TEACHING_OS.md).
 
 ---
 
@@ -37,7 +37,7 @@ Sudar is three applications plus a shared data plane:
 | Surface | Who it is for | What it does | Default port |
 |---------|----------------|--------------|----------------|
 | **Sudar Studio** | L&D, admins, creators | Courses, learning paths, assignments, analytics, org settings, governance | 3000 |
-| **Sudar Learn** | Learners | Dashboard, course experience, Sudar tutor, paths, progress, certificates | 3001 |
+| **Sudar Learn** | Learners | Dashboard, course experience, Sudar tutor, **SudarNotes**, paths, progress, certificates | 3001 |
 | **Sudar Intelligence** | Your backend | Tutor, TTS, generation, SudarPlay bridge; **next-best-action / twin rollups** are primarily in **Learn** today | **8001** local default when SudarVid uses **8000** |
 
 **Supabase (PostgreSQL)** is the single source of truth: auth, content, `learner_profiles`, `learning_events`, `ai_interactions`, and more — so Studio, Learn, and Intelligence stay aligned. See [ECOSYSTEM.md](./ECOSYSTEM.md) for the canonical schema and roadmap.

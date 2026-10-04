@@ -240,6 +240,7 @@ export async function PATCH(request: NextRequest) {
       .from('learner_profiles')
       .insert({
         user_id: user.id,
+        updated_at: new Date().toISOString(),
         ...(hasLegacy ? { ai_tutor_context: updatedCtx as Json, profile_completeness_pct: profileCompleteness } : {}),
         ...(hasLearning ? { learner_preferences: mergedLearning as Json } : {}),
         ...(hasLearning

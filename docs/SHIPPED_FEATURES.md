@@ -4,20 +4,145 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ---
 
+## Teaching OS in the Learn loop — mastery strip, Next 15, NBA recompute (Learn | Sept 2026)
+
+- **Where**: Sudar Learn — course viewer (Read tab) **What you'll master** strip; dashboard **Next 15 minutes** card; background next-best-action refresh.
+- **What**: Modules linked to Domain claims show each claim with the learner's mastery and next review; the strip refreshes after a quiz. The dashboard card surfaces the scheduler's top review/next step with "Review with Sudar". Next-best-action is recomputed (Workers-safe `after()`) when a module or Sim session completes; course candidates are limited to the learner's org. Sim evidence falls back to the module's claims when the scenario has none.
+- **Key files**:
+  - `sudar-learn/src/app/api/teaching/module-claims/route.ts` (enrollment-checked), `components/learn/ModuleClaimsStrip.tsx`
+  - `sudar-learn/src/components/features/teaching/NextFifteenCard.tsx`, `constants/teachingCopy.ts`
+  - `sudar-learn/src/lib/intelligence/nextBestActionEngine.ts` (`refreshNextBestAction`), `app/api/events/route.ts`, `app/api/sim/session/[id]/route.ts`
+  - `sudar-learn/src/app/api/alp/teaching/next-action/route.ts` (returns `next_best_action` alongside the claim queue)
+- **Flow**: Learner answers quiz → `quiz_attempt` writes claim evidence → strip re-fetches mastery → `module_complete` / `sim_complete` → NBA recomputed after response → dashboard Next 15 reads scheduler queue.
+
+---
+
+## Practice (SudarSim entry point) + voice fallback (Learn | Sept 2026)
+
+- **Where**: Sudar Learn — top nav **Practice** (`/practice`) → `/sim/session/[id]`.
+- **What**: One page lists the org's published SudarSim scenarios with an empty state. Live voice waits up to 15s for the agent; if the agent never joins, leaves, or the token/connection fails, the session switches visibly to push-to-talk (typing always works). Learn middleware now lets the sudar-sim agent reach its secret-authenticated context/sync routes (previously 401'd without a cookie).
+- **Key files**:
+  - `sudar-learn/src/app/(dashboard)/practice/page.tsx`, `components/sudarsim/StartPracticeButton.tsx`, `constants/practiceCopy.ts`, `components/layout/TopNav.tsx`
+  - `sudar-learn/src/components/sudarsim/SimVoiceShell.tsx` (`SIM_VOICE_FALLBACK_COPY`), `SimWorkspace.tsx`
+  - `sudar-learn/src/lib/security/learnPublicPaths.ts` (`isLearnApiDelegatedAuthPath`), `sudar-sim/main.py`
+- **Flow**: Practice → Start → `POST /api/sim/session` (org-checked) → voice room or push-to-talk → complete → coach report + claim evidence.
+
+---
+
+## Beta hardening — Security Phase 1, error monitoring, E2E smoke (Studio | Learn | Intelligence | Sept 2026)
+
+- **Where**: Studio middleware, Learn RAG/enroll/tutor/invite routes, shared access helpers, CI.
+- **What**:
+  - **Studio Bearer allowlist**: Bearer tokens only work on routes that call `getRequestSession` (MCP course build, export, audit, agents, external courses); JWT validated in middleware and the invite gate applies. Cron, provisioning and render-grant routes self-authenticate.
+  - **Tenant locks**: RAG ingest requires an org ADMIN/MANAGER/CREATOR and is pinned to their org; `ingest-external` refuses cross-org courses; enrollment 404s for courses outside the learner's org.
+  - **Abuse limits**: invite validate/prepare-oauth/redeem limited to 10 attempts per 10 minutes per hashed IP (Postgres-backed, works across Workers isolates).
+  - **CSRF**: origin check on tutor query and SudarNotes notebook/voice writes. Sim service secret now fails closed everywhere.
+  - **Error monitoring**: Sentry via a dependency-free envelope reporter (browser + `onRequestError`) in Studio/Learn and `sentry-sdk` in Intelligence; no PII or request bodies.
+  - **E2E**: Playwright smoke (`e2e/`) — public + security gates always; full author → publish → enroll → learn → mastery → Next 15 (+ optional tutor/Sim) with tester creds.
+- **Key files**:
+  - `sudar-studio/src/middleware.ts`, `sudar-studio/src/lib/security/bearerRoutes.ts`
+  - `sudar-learn/src/lib/security/contentEditorAccess.ts`, `app/api/rag/ingest*/route.ts`, `app/api/enrollments/route.ts`
+  - `shared/access/rateLimit.ts`, `app/api/invite/{validate,prepare-oauth,redeem}/route.ts` (both apps)
+  - `shared/observability/errorReporter.ts`, `src/instrumentation.ts` + `components/layout/ErrorReportingHost.tsx` (both apps), `sudar-intelligence/src/api/main.py`
+  - `e2e/`, `.github/workflows/e2e-smoke.yml`
+- **Database**: `supabase/migrations/20260929140000_api_rate_limits.sql` (`api_rate_limits`, `hit_rate_limit` RPC; service-role only) — applied 2026-09-29.
+- **Env**: `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_ENVIRONMENT` / `SENTRY_ENVIRONMENT`; `SUDAR_SIM_SERVICE_SECRET` now required in every environment; E2E: `E2E_STUDIO_URL`, `E2E_LEARN_URL`, `E2E_CREATOR_*`, `E2E_LEARNER_*`, `E2E_SIM_SCENARIO_ID`, `E2E_RUN_AI`.
+- **See also**: [RLS_RAG_BEARER_SUBPLAN.md](RLS_RAG_BEARER_SUBPLAN.md) §7, [TESTER_GUIDE.md](TESTER_GUIDE.md), decisions D-020/D-021 in [memory/DECISIONS.md](memory/DECISIONS.md).
+
+---
+
+## Teaching OS — claim graph, pedagogy, NBA v2 (Learn | Studio | July 2026)
+
+- **Where**: Sudar Learn (tutor, dashboard, Memory, course quiz/flashcards, Sim, ALP); Sudar Studio **Domains** curator; shared Supabase.
+- **What**: Platform spine for learner-bound teaching: org-scoped **claim graphs**, per-learner **mastery + spaced review**, surface-agnostic **pedagogy engine**, and **NBA v2** (reviews → gaps → continue). Delivery surfaces (courses, SudarNotes, Sim, flashcards) write/read the same mastery. Personalization is path/pedagogy — not a private course file per learner.
+- **Key files**:
+  - `docs/TEACHING_OS.md` — contract
+  - `sudar-learn/src/types/teaching.ts`, `sudar-learn/src/lib/teaching/*`
+  - `sudar-learn/src/lib/sudarNotes/teachingAdapter.ts`, `turnEngine.ts` (adapter)
+  - `sudar-learn/src/app/api/teaching/*`, `api/alp/teaching/next-action`
+  - `sudar-learn/src/lib/intelligence/nextBestActionEngine.ts`
+  - `sudar-studio/src/app/(dashboard)/domains/page.tsx`, `api/domains/*`, `api/analytics/claim-struggle`
+- **Database**: `supabase/migrations/20260728120000_teaching_os_spine.sql`
+- **Flow**: Seed domain from course (Studio or Learn seed API) → learner evidence (check/quiz/flashcard/sim) updates mastery → scheduler/NBA surfaces next 15 minutes → pedagogy engine steers tutor modes across surfaces.
+- **See also**: SudarNotes section (one conversational client of this spine).
+
+---
+
+## Runtime cost controls and API hardening (Learn | Studio | Sim | July 2026)
+
+- **Where**: Sudar Learn dashboard shell, course viewer heartbeats, AI modality routes, SudarSim voice service, ALP Create webhooks, cron/render grants.
+- **What**: Idle learners no longer double-poll coins/achievements or run gamification on every heartbeat. AI modality and idle-nudge routes share fail-closed daily usage metering. Client coin minting is disabled. SudarSim requires a shared service secret and locked CORS. ALP env master keys must be org-bound; webhooks reject private/local targets. Production cron rejects `?secret=`; video render grants require a dedicated HMAC secret (no service-role fallback in prod).
+- **Key files**:
+  - `sudar-learn/src/lib/gamification/gamificationSyncStore.ts`, `GamificationSyncHost.tsx`, `CoinWidget.tsx`, `GamificationToasts.tsx`
+  - `sudar-learn/src/app/api/events/route.ts`, `CourseViewer.tsx` (visibility-gated heartbeats; idle nudge 180s)
+  - `sudar-learn/src/lib/usage-limits.ts`, `sudar-studio/src/lib/usage-limits.ts`
+  - `sudar-learn/src/app/api/coins/earn/route.ts` (403)
+  - `sudar-sim/main.py`, `sudar-learn/src/lib/sim/simSession.ts`, `sudar-intelligence/src/api/routes/sim.py`
+  - `sudar-learn/src/lib/alp-auth.ts`, `sudar-learn/src/lib/alp/createJobs.ts`
+  - `sudar-learn/src/lib/security/cronAuth.ts`, `sudarVidRenderGrant.ts` (+ Studio twins)
+- **Env**: `SUDAR_SIM_SERVICE_SECRET`, `SUDAR_LEARN_ORIGINS` / `SUDAR_LEARN_ORIGIN`, `ALP_API_KEY_ORG_ID`, `SUDARVID_RENDER_GRANT_SECRET` — see [ENV_REFERENCE.md](ENV_REFERENCE.md).
+- **Flow**: Dashboard loads → idle-deferred sync polls coins/achievements only while visible → learning events skip gamify on heartbeats → AI routes meter via RPC (503 if metering down) → Sim rooms require Learn BFF secret header.
+
+---
+
+## Post-wipe RLS policy tighten (Supabase | Sept 2026)
+
+- **Where**: Shared Supabase project (`qnsrrboprydmjyormlky`) after clean-slate + **Cavi** org.
+- **What**: Authenticated client policies no longer allow global profile directory reads, cross-tenant published course/module reads, or open `org_members` / `organisations` inserts. SudarSim tables gained org/learner-scoped policies; `invite_codes` / `integration_api_keys` remain service-role-only (RLS on, 0 client policies). Studio/Learn BFFs continue to use the service role for privileged paths.
+- **Key files**:
+  - `supabase/migrations/20260915190000_post_wipe_rls_tighten.sql`
+  - [docs/RLS_RAG_BEARER_SUBPLAN.md](RLS_RAG_BEARER_SUBPLAN.md)
+- **Database**: Applied on live project 2026-09-15.
+- **Flow**: Browser anon/authenticated Supabase client → tightened SELECT/INSERT policies; admin/invite/course APIs unchanged via service-role.
+
+---
+
+## SudarNotes — conversational tutor (Learn | July 2026)
+
+- **Where**: Sudar Learn — **SudarNotes** nav + `/journey` (flag `NEXT_PUBLIC_SUDAR_JOURNEY`).
+- **What**: Personal tutor loop with hybrid adaptive modes (intake → socratic / teach / check / replan / note_craft). Chat stays dialogue; living notebook shows **suggested** cards the learner accepts/edits; working memory strip tracks goal, active concept, open questions. Soft conversational checks (no quiz-first UX) + Twin breadcrumbs. Verified web/YouTube only on explicit ask. Does **not** replace Courses. Visual design lab tokens still scoped to `html[data-sudar-journey]`. Mode recommendation and checks integrate with the **Teaching OS** pedagogy engine and claim mastery when claims are linked.
+- **Key files**:
+  - `sudar-learn/src/lib/sudarNotes/turnContract.ts`, `turnEngine.ts`, `teachingAdapter.ts`, `sessionClient.ts`
+  - `sudar-learn/src/lib/teaching/pedagogyEngine.ts` — surface-agnostic modes (SudarNotes adapts)
+  - `sudar-learn/src/types/sudarNotes.ts`, `types/journeyNotebook.ts`, `types/teaching.ts`
+  - `sudar-learn/src/app/api/tutor/query/route.ts` — SudarNotes prompt + telemetry without `course_id`
+  - `sudar-learn/src/components/journey/JourneyWorkspace.tsx`, `LearningNotebook.tsx`, `NotebookTools.tsx`
+  - `sudar-learn/src/components/tutor/SudarChatPanel.tsx` — session round-trip
+  - `supabase/migrations/20260727120000_sudar_notes_sessions.sql`
+- **Database**: `sudar_notes_sessions` (jsonb state per user/thread); Twin via `learner_profiles.ai_tutor_context`; optional `learner_claim_mastery` via Teaching OS.
+- **Env**: `NEXT_PUBLIC_SUDAR_JOURNEY`; optional CSE keys for Find resources — see [ENV_REFERENCE.md](ENV_REFERENCE.md).
+- **Flow**: Open SudarNotes → intake clarifies goal → teach one idea → suggest note → Accept → soft check every few turns → tools (Summary / Map / Draft) use accepted notes only.
+- **See also**: [TEACHING_OS.md](TEACHING_OS.md); Studio **Domains** curator (`/domains`); Teaching OS section above; Help `learners/sudar-notes`; Memory insights (`sudar_notes` / `claim_review`); dashboard entry when journey enabled.
+- **Sept 2026 additions**:
+  - **Persistence**: notebook + working memory + pedagogy session saved to `sudar_notes_sessions` (`thread_key = 'journey'`) via `GET/PUT/DELETE /api/journey/notebook` (1 MB cap, sanitised, debounced save; server copy wins on load). Files: `app/api/journey/notebook/route.ts`, `lib/journey/notebookSync.ts`, `lib/journey/notebookStorage.ts`.
+  - **Voice**: hold-to-talk STT and spoken replies through Intelligence (`POST /api/journey/voice`, usage-metered). Files: `app/api/journey/voice/route.ts`, `hooks/useJourneyVoice.ts`.
+  - **Domains**: learners can anchor a session to one of their org's Teaching OS domains (`GET /api/journey/domains`, `JourneyDomainPicker.tsx`); the tutor only honours `domain_id` values visible to the learner (`lib/teaching/domainAccess.ts`). The mock curriculum was removed.
+- **Deferred**: Full Studio graph viz; `/notes` URL alias; notebook conflict detection across tabs.
+
+---
+
+## Sudar 2.0 Tutor Journey — Phase 0 experiment (Learn | July 2026) [superseded by SudarNotes]
+
+- **Where**: Historical name **Learn with Sudar** — see **SudarNotes** section above for current behavior.
+- **What**: Earlier Phase 0 notebook + docked chat (roadmap-first prompt + soft web enrichment). Replaced by SudarNotes turn engine.
+- **Note**: Kept for chronology; do not implement against this description.
+
+---
+
 ## Cursor Education Portfolio (SCORM IDE shells | July 2026)
 
-- **Where**: `portfolio/cursor-education/`; live org **Cursor Education Portfolio** (`cursor-education`); Learn path **Cursor Developer Fluency Program**.
+- **Where**: `archive/portfolio-cursor-education/cursor-education/`; live org **Cursor Education Portfolio** (`cursor-education`); Learn path **Cursor Developer Fluency Program**.
 - **What**: Three SCORM 1.2 interactive courses (Cursor-like IDE, DevEx Console, Launch Board) for the Cursor Product Education Engineering portfolio. Pedagogy: teaching notes, scored choices with Continue-after-feedback, miss penalties (pass ≥70%), completion overlay, scrollable coach chat. Learner-facing descriptions (no shell meta-copy). Cursor brand logo in shell + generated course card/banner images. Catalog/paths filtered by active org; demo prepare script hides non-Cursor published courses (restorable).
 - **Key files**:
-  - `portfolio/cursor-education/shared/shell.js`, `shell.css`, `index.html`, `shared/assets/cursor-logo.png`
-  - `portfolio/cursor-education/brand/` (logo + generated cards)
-  - `portfolio/cursor-education/course-*/course.json`
-  - `portfolio/cursor-education/scripts/build-scorm.mjs`, `upload-to-sudar.mjs`, `make-course-cards.mjs`, `prepare-demo-access.mjs`
+  - `archive/portfolio-cursor-education/cursor-education/shared/shell.js`, `shell.css`, `index.html`, `shared/assets/cursor-logo.png`
+  - `archive/portfolio-cursor-education/cursor-education/brand/` (logo + generated cards)
+  - `archive/portfolio-cursor-education/cursor-education/course-*/course.json`
+  - `archive/portfolio-cursor-education/cursor-education/scripts/build-scorm.mjs`, `upload-to-sudar.mjs`, `make-course-cards.mjs`, `prepare-demo-access.mjs`
   - `scripts/ops/provision-cursor-education-org.mjs`
   - `sudar-learn/src/lib/cache.ts`, `sudar-learn/src/lib/security/scormAccess.ts`
-  - `portfolio/cursor-education/DEMO_SCRIPT.md`, `APPLICATION_ANSWERS.md`
+  - `archive/portfolio-cursor-education/cursor-education/DEMO_SCRIPT.md`, `APPLICATION_ANSWERS.md`
 - **Flow**: Build cards → build ZIPs → provision org → upload SCORMs → `prepare-demo-access.mjs` → open Learn as portfolio user → share invite codes with hiring reviewers.
-- **Ops**: `node --env-file=sudar-studio/.env.local scripts/ops/provision-cursor-education-org.mjs`; `node portfolio/cursor-education/scripts/make-course-cards.mjs`; `node portfolio/cursor-education/scripts/build-scorm.mjs`; `node --env-file=sudar-studio/.env.local portfolio/cursor-education/scripts/upload-to-sudar.mjs`; `node --env-file=sudar-studio/.env.local portfolio/cursor-education/scripts/prepare-demo-access.mjs`. Re-upload replaces courses by title and refreshes IDs — re-open catalog links from `APPLICATION_ANSWERS.md`. To restore hidden courses, re-publish IDs from `hidden-courses.restore.local`.
+- **Ops**: `node --env-file=sudar-studio/.env.local scripts/ops/provision-cursor-education-org.mjs`; `node archive/portfolio-cursor-education/cursor-education/scripts/make-course-cards.mjs`; `node archive/portfolio-cursor-education/cursor-education/scripts/build-scorm.mjs`; `node --env-file=sudar-studio/.env.local archive/portfolio-cursor-education/cursor-education/scripts/upload-to-sudar.mjs`; `node --env-file=sudar-studio/.env.local archive/portfolio-cursor-education/cursor-education/scripts/prepare-demo-access.mjs`. Re-upload replaces courses by title and refreshes IDs — re-open catalog links from `APPLICATION_ANSWERS.md`. To restore hidden courses, re-publish IDs from `hidden-courses.restore.local`.
 
 ---
 
@@ -121,7 +246,7 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ## Early-access tester feedback (June 2026)
 
-- **Where**: Sudar Learn + Studio **Sudar chat** (chip **Share early access feedback**); Studio **`/early-access`** → **Tester feedback** section.
+- **Where**: Sudar Learn + Studio **Sudar chat** (chip **Share early access feedback**); Studio always-visible **Feedback** button (bottom-right, testers only — `StudioFeedbackButton.tsx`, gated in `app/(dashboard)/layout.tsx`); Studio **`/early-access`** → **Tester feedback** section.
 - **What**: Invited testers (`early_access`, `tester`, `unlimited` tiers) submit structured feedback with category, message, URLs, and screenshot paste/upload. Operators review submissions in Studio Early access admin.
 - **Key files**:
   - `supabase/migrations/20260622110000_early_access_feedback.sql`
@@ -134,22 +259,23 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ## SudarSim — roleplay simulation (pilot → Practice OS)
 
-- **Where**: Sudar Studio **`/sudarsim`** (org scenario library + editor, practice blocks, **Export JSON**, sidebar **SudarSim**); Sudar Learn dashboard **Today’s Practice**, `/sim/session`, CourseViewer **Sim** tab (desktop + mobile), ALP `/alp/sim/play`; Moodle `local_sudaralp/sim.php`; voice service `sudar-sim/`. Course modules optionally **link** a scenario (delivery only).
-- **What**: Multi-channel customer roleplay (phone text-over-WS in dev, chat, email) with screenshot **CRM overlay** editor, **Practice Loop** coach (strengths / needs-work / **Practice only X** drills, conversation timeline from `practice_blocks`), Twin writeback (`ai_tutor_context.sim` + `learning_events`), NBA `practice_sim` when weaknesses exist, optional module completion gate. Locales: en, fr, es, pt, ta. **Preview simulation** runs **in Studio**. Portable scenario export for open practice packs.
+- **Where**: Sudar Studio **`/sudarsim`** (org scenario library + editor, practice blocks, **Export JSON**, sidebar **SudarSim**); Sudar Learn dashboard **Today’s Practice**, `/sim/session`, CourseViewer **Sim** tab (desktop + mobile), ALP `/alp/sim/play`; Moodle `local_sudaralp/sim.php`; voice service `sudar-sim/` (optional rooms). Course modules optionally **link** a scenario (delivery only).
+- **What**: Multi-channel customer roleplay (phone **LiveKit streaming voice** via Pipecat agent + `SimVoiceShell`, with PTT fallback; chat/email text turns), screenshot **CRM overlay**, coach evaluate on session end (optional learner reflection first), Twin writeback (`ai_tutor_context.sim` + `learning_events`), NBA `practice_sim` when weaknesses exist, optional module completion gate. Locales: en, fr, es, pt, ta. **Preview simulation** runs **in Studio**. Portable scenario export for open practice packs.
 - **Key files**:
-  - `docs/SUDARSIM_PRACTICE_OS.md`, `docs/SUDAR_SIM_PLAN.md`, `docs/SUDAR_SIM_SELFHOST.md`, `docs/SUDAR_SIM_DEPLOY.md`, `docs/SUDAR_SIM_API.md`
-  - `shared/sudarsim/` (schemas, portable export), `sudar-sim/main.py`
-  - `sudar-intelligence/src/api/routes/sim.py`
-  - `sudar-learn/src/components/sudarsim/` (`SimWorkspace`, `SimCoachReport`, `TodayPracticeCard`), `src/app/api/sim/`, `src/lib/sim/todayPractice.ts`
-  - `sudar-studio/src/app/(dashboard)/sudarsim/`, `src/app/api/sudarsim/scenarios/`, `.../export/route.ts`, `StudioSimPreview.tsx`
+  - `docs/SUDARSIM_PRACTICE_OS.md`, `docs/SUDAR_SIM_PLAN.md`, `docs/SUDAR_SIM_SELFHOST.md`, `docs/SUDAR_SIM_DEPLOY.md`, `docs/SUDAR_SIM_API.md`, `docs/SUDAR_SIM_VOICE_SEED.md`
+  - `shared/sudarsim/` (schemas, portable export), `sudar-sim/main.py`, `sudar-sim/agent/` (Pipecat pipeline), `sudar-sim/docker-compose.livekit.yml`
+  - `sudar-intelligence/src/api/routes/sim.py` — persona/coach/STT; Deepgram + Cartesia + Edge fallback
+  - `sudar-learn/src/components/sudarsim/` (`SimVoiceShell`, `SimWorkspace`, `SimCoachReflection`, `SimCoachReport`, `TodayPracticeCard`), `src/app/api/sim/session/[id]/agent`, `.../voice`, `src/lib/sim/simInternalAuth.ts`
+  - `sudar-studio/src/app/api/analytics/sim-sessions/route.ts` — pass rate, dimension averages, improvement trends
+  - `scripts/data/sudarsim-voice-mvp-scenarios.json`, `scripts/seed-sudarsim-voice-scenarios.mjs` — Voice MVP contact-center seed (Stream C)
   - `scripts/dev-with-sudarvid.mjs` — starts SudarVid + Intelligence + **sudar-sim** + Learn/Studio
   - `supabase/migrations/20260616000000_sudarsim.sql`, `20260622100000_sim_sessions_metadata.sql`, `20260712000000_sudarsim_practice_blocks.sql`
-- **Env**: `SUDAR_SIM_URL`, `NEXT_PUBLIC_SUDAR_SIM_WS_URL`, matching `INTELLIGENCE_SERVICE_SECRET`; Studio uses `SUDAR_INTELLIGENCE_URL` / `BYTEOS_INTELLIGENCE_URL` (default `http://localhost:8001`). Self-host: [SUDAR_SIM_SELFHOST.md](SUDAR_SIM_SELFHOST.md).
+- **Env**: `SUDAR_INTELLIGENCE_URL`; Intelligence `DEEPGRAM_API_KEY`, `CARTESIA_API_KEY` (streaming voice); `SUDAR_SIM_URL`, `SUDAR_SIM_SERVICE_SECRET`, `LIVEKIT_*` on `sudar-sim`. Learn: `SUDAR_LEARN_URL` + matching secret for agent sync.
 - **Flow**:
-  1. Admin creates scenario in Studio **SudarSim** (optional practice blocks) — **Preview** / **Export JSON** / **Publish**; link to a course module.
-  2. Learner opens **Today’s Practice** or **Sim** tab (published scenarios only) or `/sim/session/new?scenario_id=…`.
-  3. Practices across channels; CRM actions logged; phone WS replies also saved via BFF.
-  4. Ends session → short coach card → optional **Practice only [weakness]** drill → Twin + NBA update; optional `module_complete` if rubric passes.
+  1. Admin creates scenario in Studio **SudarSim** — **Preview** / **Export JSON** / **Publish**; link to a course module.
+  2. Learner opens `/sim/session/new?scenario_id=…` — session mints LiveKit room + dispatches Pipecat agent.
+  3. **Phone**: `SimVoiceShell` joins room — opening line spoken, duplex voice, live transcript; agent syncs turns to `sim_transcripts`. Chat/email: typed BFF turns.
+  4. Ends session → reflection prompt → coach card (optional spoken summary) → Twin + analytics.
 
 ---
 
@@ -400,15 +526,31 @@ This document summarizes **shipped** features that are committed and ready for u
 ## AI course generation quality v2 (Studio + Learn)
 
 - **Where**: Sudar Studio — AI new-course wizard, generation pipeline, per-course **Content quality** page (`/courses/[id]/quality`). Sudar Learn — rich module reader.
-- **What**: Domain-varied module openings (no default “calculator program” scenarios); SME-aware curriculum and module prompts; **domain content-skill playbooks** (mandatory elements, anti-patterns, gold vs slop exemplars); critique/refine scaled to compliance / assessment density / course length; validated interactives (matching/flipcard/quiz); optional LLM quality scores in `courses.settings.ai_generation.generation_telemetry`; creator **visual identity** controls (domain, theme, brand colors, density); side insights as a **floating hotspot** instead of a permanent sidebar; wider read column; flipcard rendering fix.
+- **What**: Domain-varied module openings (no default “calculator program” scenarios); SME-aware curriculum and module prompts (`smeContexts.ts`); validated interactives (matching/flipcard/quiz); creator **visual identity** controls (domain, theme, brand colors, density); side insights as a **floating hotspot** instead of a permanent sidebar; wider read column; flipcard rendering fix. *Superseded for quality by* **Content quality gate** below (the earlier capstone-only critique and optional first-2,000-character scoring were replaced; "content-skill playbooks" and "critique gating" files described in the original entry never landed).
 - **Key files**:
-  - `sudar-studio/src/lib/ai/courseGeneration/{introductionStrategies,contentSkills,critiqueGating,prompts,pipeline,componentValidation}.ts`
+  - `sudar-studio/src/lib/ai/courseGeneration/{introductionStrategies,smeContexts,prompts,pipeline,componentValidation}.ts`
   - `sudar-studio/src/lib/ai/componentSelector.ts`
   - `shared/content-generation/prompts.ts` — quiz / flashcards / mindmap / interactive WHEN–WHEN NOT + few-shots
   - `sudar-studio/src/components/generator/BrandSettings.tsx`
   - `sudar-studio/src/app/(dashboard)/courses/[id]/quality/page.tsx`
   - `sudar-learn/src/components/learn/RichModuleContent.tsx`, `sudar-learn/src/lib/courseBodyMarkdown.tsx`
-- **Flow**: Studio AI wizard → BrandSettings + blueprint → `generate-course` → `fillEmptyModulesForCourse` (skill playbook + gated critique + quality telemetry) → Learn applies `content_theme` / brand colors → learner reads full-width content; taps insight bulb for side context.
+- **Flow**: Studio AI wizard → BrandSettings + blueprint → `generate-course` → `fillEmptyModulesForCourse` (quality gate per module) → Learn applies `content_theme` / brand colors → learner reads full-width content; taps insight bulb for side context.
+
+---
+
+## Content quality gate (Studio)
+
+- **Where**: Sudar Studio — every AI module generation path (`generate-course`, `generate-from-document`, `generate-all-modules`, `generate-module`, `generate-module-with-research`), quiz generation, **Content quality** page (`/courses/[id]/quality`), publish.
+- **What**: Full-module LLM judge (chunked, Zod-validated, no fake neutral scores) against a 9-dimension learning-science rubric; deterministic checks (worked example, retrieval prompt, wall-of-text, thin content, unsourced statistics, banned openings); citation verification (`[N]` must map to a real source); regenerate-with-critique below `CONTENT_QUALITY_THRESHOLD` up to `CONTENT_QUALITY_MAX_RETRIES`; output moderation (Llama Guard → OpenAI → local, `CONTENT_MODERATION_MODE`); relevance-selected document grounding; objective-aligned quiz generation with answer-key validation; per-module `review_status` + `quality` persisted; publish blocked (409) while any non-approved module has unresolved critical issues; reviewers resolve issues / approve modules (audited to `audit_events`). Prompts structurally require activation, a worked example, an `[apply]` task, and a "Check yourself" retrieval block (interleaving after module 1). The toggles `vary_introductions` and `strict_component_validation` now actually change behaviour. Generic fallback quizzes were removed.
+- **Key files**:
+  - `shared/content-generation/{quality,moderation,schemas,prompts}.ts`
+  - `sudar-studio/src/lib/ai/courseGeneration/{qualityGate,qualityValidator,grounding,pipeline,componentValidation,prompts,parse}.ts`
+  - `sudar-studio/src/lib/courses/courseAccess.ts` (creator or org ADMIN/MANAGER)
+  - `sudar-studio/src/app/api/courses/[id]/{quality,publish}/route.ts`, `sudar-studio/src/app/(dashboard)/courses/[id]/quality/page.tsx`
+  - Tests: `sudar-studio/src/lib/ai/courseGeneration/{quality,contentEval}.test.ts`; golden set `scripts/evals/golden/content-golden.json`; `npm run eval:content`
+  - Migration: `supabase/migrations/20260929130000_module_review_quality.sql`
+- **Env**: `CONTENT_QUALITY_THRESHOLD` (7), `CONTENT_QUALITY_MAX_RETRIES` (2), `CONTENT_MODERATION_MODE` (`auto`/`local`/`off`), `CONTENT_MODERATION_MODEL` (optional Llama Guard model id).
+- **Flow**: draft → judge + checks → (below threshold) regenerate with critique → moderation → save with `review_status` (`draft` passed / `needs_review`) → Quality page review → publish (blocked on unresolved critical issues). Docs: [CONTENT_QUALITY.md](CONTENT_QUALITY.md).
 
 ---
 
@@ -591,18 +733,21 @@ This document summarizes **shipped** features that are committed and ready for u
 
 ## Sudar MCP servers (Integrations + Learn + Studio + ChatGPT)
 
-- **Where**: Sudar Studio → **Integrations** → *Connect via MCP* / *ChatGPT*; `https://mcp.thesudar.app/mcp` (production); repo `packages/sudar-mcp` (`@sudar/mcp-server` v0.2+).
-- **What**: MCP adapter for **Cursor** (stdio), **ChatGPT/Claude** (Cloudflare remote OAuth + Streamable HTTP), and LMS integrators (ALP). Toolsets: **integrator** (ALP), **creator** (Studio course AI), **admin** (cohort pulse), **learner** (tutor, NBA, agents).
+- **Where**: Sudar Studio → **Integrations** → *Connect via MCP* / *ChatGPT*; `https://mcp.thesudar.com/mcp` (production); repo `packages/sudar-mcp` (`@sudar/mcp-server`).
+- **What**: MCP adapter for **Cursor** (stdio or remote URL), **ChatGPT/Claude** (Cloudflare Streamable HTTP + OAuth 2.1 PKCE S256), and LMS integrators (ALP). Toolsets: **integrator** (ALP), **creator** (Studio course AI including `sudar_build_course` → HTML + SCORM 1.2), **admin** (cohort pulse), **learner** (tutor, NBA, agents).
 - **Key files**:
-  - `docs/MCP_SERVERS.md`, `docs/MCP_CHATGPT_LAUNCH.md`, `docs/DEPLOY_THESUDAR_APP.md`, `docs/DNS_THESUDAR_APP.md`
-  - `packages/sudar-mcp/src/tools/creator.ts` — Studio generation tools
-  - `workers/sudar-mcp-cloudflare/` — production remote MCP (OAuth + `/mcp`)
+  - `docs/MCP_SERVERS.md`, `docs/MCP_CHATGPT_LAUNCH.md`, `docs/DEPLOY_THESUDAR_COM.md`
+  - `packages/sudar-mcp/src/tools/creator.ts` — Studio generation tools (`sudar_build_course`, `sudar_export_course`)
+  - `sudar-studio/src/app/api/courses/[id]/export/route.ts` — HTML JSON + SCORM 1.2 ZIP/JSON (Bearer)
+  - `sudar-studio/src/app/api/ai/generate-course/route.ts` — optional `export_format` html/scorm12/both
+  - `workers/sudar-mcp-cloudflare/` — production remote MCP (`oauth.ts` PKCE + RFC 9728; `/mcp` is **stateless JSON** Streamable HTTP so ChatGPT can `tools/list` across Worker isolates)
+  - `sudar-studio/src/app/login/LoginClient.tsx`, `sudar-studio/src/lib/mcp/completeMcpOAuth.ts` — Studio OAuth handoff
   - `workers/sudar-mcp-remote/` — dev Express remote (API-key token)
   - `sudar-studio/src/lib/auth/requestSession.ts` — Bearer on Studio creator routes
   - `sudar-studio/src/app/api/mcp/audit/route.ts`, `sudar-learn/.../mcp/audit/route.ts`
   - `openapi/sudar-creator-v1.json` — Custom GPT Actions fallback
 - **Env**: `NEXT_PUBLIC_MCP_URL`, `SUDAR_*`, Wrangler secrets — [ENV_REFERENCE.md](ENV_REFERENCE.md).
-- **Flow**: Deploy thesudar.app → deploy Cloudflare MCP worker → register ChatGPT connector → user signs in with Sudar → ChatGPT calls `sudar_generate_outline` etc. on Studio.
+- **Flow**: Deploy MCP worker → ChatGPT/Cursor discover PKCE metadata → Studio `/login?mcp_oauth=1` → `/oauth/complete` → `/oauth/token` → ChatGPT lists tools on a **stateless** `/mcp` session → `sudar_build_course` creates a Studio draft and returns HTML/SCORM.
 
 ---
 

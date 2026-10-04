@@ -8,15 +8,16 @@ import { learnMeteringChatCtx, loadOrgAiChatContext } from '@/lib/org/orgAiChatC
 import type { PrivateOpenAiRuntime } from '@/types/orgAiInference'
 import { idleNudgeFallbackChoices } from '@/lib/tutor/proactiveTemplates'
 import { parseProactiveNudgeJson } from '@/lib/tutor/proactivePromptSchema'
-import { createTranslator } from 'next-intl/server'
+import { createTranslator } from 'next-intl'
 import { loadMessagesSync } from '@/i18n/loadMessages'
 import { findExternalCourseForTopic } from '@/lib/external/externalCourseContext'
 import { buildTutorContentLanguageBlock } from '@/lib/i18n/contentLanguagePrompt'
+import { checkAndIncrementUsage, usageLimitErrorResponse } from '@/lib/usage-limits'
 
 const bodySchema = z.object({
   course_id: z.string().uuid(),
   module_id: z.string().uuid(),
-  reason: z.enum(['idle_90s', 'quiz_low_score', 'replay_pattern']).optional(),
+  reason: z.enum(['idle_90s', 'idle_180s', 'quiz_low_score', 'replay_pattern']).optional(),
 })
 
 const IDLE_FALLBACK_MESSAGE =
@@ -63,6 +64,11 @@ export async function POST(request: NextRequest) {
   const { course_id, module_id, reason } = parsed.data
 
   const admin = createServiceRoleSupabaseClient()
+  const usage = await checkAndIncrementUsage(admin, user.id, 'tutor')
+  if (!usage.allowed) {
+    const err = usageLimitErrorResponse(usage)
+    return NextResponse.json(err.body, { status: err.status })
+  }
   const prefs = await fetchResolvedLearnerPreferences(admin, user.id)
   const messages = loadMessagesSync(prefs.ui_language)
   const tr = createTranslator({ locale: prefs.ui_language, messages })
@@ -71,7 +77,7 @@ export async function POST(request: NextRequest) {
   if (!prefs.proactive_nudges_enabled || !prefs.idle_nudges) {
     return NextResponse.json({ ok: true, message: '', choices: [], skipped: 'preferences' })
   }
-  if (!prefs.stuck_detection_nudges && (reason === 'idle_90s' || reason === 'replay_pattern')) {
+  if (!prefs.stuck_detection_nudges && (reason === 'idle_90s' || reason === 'idle_180s' || reason === 'replay_pattern')) {
     return NextResponse.json({ ok: true, message: '', choices: [], skipped: 'preferences' })
   }
 

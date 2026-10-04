@@ -1,6 +1,6 @@
 {
   "name": "@sudar/mcp-server",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Sudar Model Context Protocol server — ALP integrator, admin, and learner tools",
   "type": "module",
   "license": "Apache-2.0",
@@ -26,6 +26,7 @@
     "start": "node dist/index.js",
     "dev": "tsc && node dist/index.js",
     "test:smoke": "node scripts/test-smoke.mjs",
+    "test": "node --test --experimental-strip-types src/tools/creatorFormat.test.ts",
     "prepare": "npm run build"
   },
   "dependencies": {

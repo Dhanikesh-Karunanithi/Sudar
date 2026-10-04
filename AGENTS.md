@@ -53,16 +53,28 @@ Sudar IS:
 ## Project Structure (Always Check ECOSYSTEM.md First)
 
 ```
-Sudar/  (repo: Dhanikesh-Karunanithi/Sudar — legacy dir names byteos-* kept for now)
-├── ECOSYSTEM.md              ← AUTHORITATIVE CONTEXT — read this first
+Sudar/  (repo: Dhanikesh-Karunanithi/Sudar)
+├── ECOSYSTEM.md              ← Architecture + schema (read with UPDATES.md / SHIPPED_FEATURES)
 ├── AGENTS.md                 ← This file
 ├── .cursorrules              ← Coding rules
-├── docs/                     ← All planning documents
-├── sudar-studio/            ← Sudar Studio (Admin/creator app, Next.js 15)
-├── sudar-learn/             ← Sudar Learn (Learner app, Next.js 15)
-├── sudar-intelligence/      ← Sudar Intelligence (AI engine, Python FastAPI)
-└── sudar_vid/               ← SudarVid (Watch modality video; Python FastAPI, separate port)
+├── docs/                     ← Planning, trust, ALP, ship memory
+├── shared/                   ← Shared TS (access, AI, sudarsim schemas, CSP, …)
+├── supabase/migrations/      ← Canonical schema (not Prisma runtime)
+├── help-center/              ← Help articles + AI knowledge sync into Studio/Learn
+├── sudar-studio/             ← Sudar Studio (Admin/creator, Next.js 15)
+├── sudar-learn/              ← Sudar Learn (Learner, Next.js 15)
+├── sudar-intelligence/       ← Sudar Intelligence (Python FastAPI)
+├── sudar_vid/                ← SudarVid (Watch modality video)
+├── sudar-sim/                ← SudarSim voice service (LiveKit / Pipecat)
+├── packages/sudar-mcp/       ← MCP server package
+├── workers/                  ← Cloudflare MCP, cron, staging DNS
+├── integrations/             ← Moodle / Canvas / ALP SDK (ship channel)
+└── teachwithsudar/           ← Marketing / gateway site
 ```
+
+**Status truth order:** [UPDATES.md](UPDATES.md) Latest → [docs/SHIPPED_FEATURES.md](docs/SHIPPED_FEATURES.md) → code → then this file / ECOSYSTEM.md.
+
+**Project memory for agents:** [docs/memory/](docs/memory/README.md): decision log (`DECISIONS.md`), glossary, feature map (routes/tables/flags/tests per feature), known gaps, and lessons mined from past chats (`LEARNED_FROM_CHATS.md`). Scoped rules live in `.cursor/rules/`: `sharp-edges.mdc` (always on), plus `learn.mdc`, `studio.mdc`, `intelligence.mdc`, `migrations.mdc` and `content-generation.mdc`. Docs index: [docs/README.md](docs/README.md).
 
 ---
 
@@ -70,38 +82,52 @@ Sudar/  (repo: Dhanikesh-Karunanithi/Sudar — legacy dir names byteos-* kept fo
 
 ### 1. Sudar Studio (`/sudar-studio`)
 **Who uses it**: Admins, L&D managers, content creators
-**What it does**: Course creation, learning path management, analytics, org settings
-**Stack**: Next.js 15, TypeScript, Tailwind CSS, Prisma, Supabase
+**What it does**: Course creation, learning path management, analytics, org settings, Domains (Teaching OS), SudarSim scenarios, MCP OAuth handoff
+**Stack**: Next.js 15, TypeScript, Tailwind CSS, Supabase (`@supabase/ssr` + service-role). Prisma may remain as a leftover dependency/schema file — **runtime DB access is Supabase**, canonical DDL in `supabase/migrations/`
 **Port**: 3000
 **Key files**:
 - `app/` — Next.js App Router pages
-- `lib/ai/` — AI provider integrations (Together AI, OpenAI, Anthropic)
-- `lib/rag/` — RAG pipeline for document-based generation
-- `lib/templates/` — 14 course visual templates
-- `prisma/schema.prisma` — Database schema (mirrors Supabase)
+- `lib/ai/` — AI provider integrations (OpenRouter / Together / OpenAI / Anthropic + org BYOM / Sudar AI)
+- `lib/themes/learningPersonas.ts` — **5** learning personas (visual themes), not 14 templates
+- `lib/courseTemplates.ts` — module starter blueprints (structural, not visual skins)
+- `lib/rag/` — document-based generation / RAG helpers where present
 
 ### 2. Sudar Learn (`/sudar-learn`)
 **Who uses it**: Learners
-**What it does**: Take courses, interact with AI tutor "Sudar", track progress, switch modalities
-**Stack**: Next.js 15, TypeScript, Tailwind CSS, Prisma, Supabase, Framer Motion, Zustand
+**What it does**: Take courses, interact with AI tutor "Sudar", track progress, switch modalities; optional **SudarNotes** conversational learning; SudarSim sessions
+**Stack**: Next.js 15, TypeScript, Tailwind CSS, Supabase, Framer Motion, Zustand (same Supabase note as Studio — no Prisma runtime)
 **Port**: 3001
 **Key files**:
 - `app/` — Next.js App Router pages
-- `components/modalities/` — Text, Video, Audio, MindMap, Flashcards, SudarFeed, SudarPlay
-- `components/tutor/` — AI Tutor "Sudar" sidebar
-- `lib/intelligence/` — API client for sudar-intelligence
+- `app/(dashboard)/journey/` — **SudarNotes** (`/journey`; flag `NEXT_PUBLIC_SUDAR_JOURNEY`)
+- `app/(dashboard)/courses/[id]/learn/` — course viewer modalities (text, listen, watch, map, cards, optional sim)
+- `components/tutor/` — AI Tutor "Sudar" sidebar / docked chat
+- `components/journey/` — SudarNotes notebook + workspace
+- `components/sudarsim/` — Sim workspace / voice shell
+- `lib/sudarNotes/` — turn contract + adapter to Teaching OS pedagogy
+- `lib/teaching/` — Teaching OS claim graph, mastery, scheduler, pedagogy engine
+- `lib/intelligence/nextBestActionEngine.ts` — **canonical NBA** (not only an HTTP client)
+
+**SudarNotes** — Conversational learning surface: living notebook + pedagogical tutor modes (intake → socratic / teach / check / replan / note_craft). Coexists with course Learn; does **not** replace authored courses. It is a **client of the Teaching OS spine** (shared claims/mastery), not a separate architecture. Docs: [docs/SUDAR_2_0_VISION.md](docs/SUDAR_2_0_VISION.md), [docs/TEACHING_OS.md](docs/TEACHING_OS.md).
 
 ### 3. Sudar Intelligence (`/sudar-intelligence`)
 **Who uses it**: Called by sudar-learn and sudar-studio via HTTP
-**What it does**: All heavy AI computation — adaptive engine, AI tutor, content generation
-**Stack**: Python 3.11+, FastAPI, Together AI, Supabase Python client
+**What it does**: Tutor/TTS/generation helpers, Sudar Agents gateway, SudarSim STT/TTS coach, SudarPlay stubs — **NBA and twin rollups are owned by Learn**
+**Stack**: Python 3.11+, FastAPI, multi-provider AI client, Supabase Python client
 **Port**: typically **8001** in local dev when SudarVid uses **8000** (`scripts/dev-with-sudarvid.mjs`); set `SUDAR_INTELLIGENCE_URL` / `BYTEOS_INTELLIGENCE_URL` accordingly
 **Key files**:
-- `src/api/` — FastAPI route handlers
-- `src/adaptive/` — Adaptive learning engine
-- `src/tutor/` — AI Tutor engine with RAG
-- `src/generation/` — Content generation pipeline
+- `src/api/` — FastAPI route handlers (`tutor`, `audio`, `sim`, `agents`, `content`, …)
+- `src/core/` — `ai_client.py`, TTS/STT helpers
+- `src/agents/` — Sudar Agents orchestration
+- `src/sudarplay/` — SudarPlay launch/events (partial)
+- There is **no** `src/adaptive/`, `src/tutor/`, or `src/generation/` package tree — those AGENTS paths were stale
 
+### Adjacent product services
+- **`sudar_vid/`** — Watch modality video pipeline
+- **`sudar-sim/`** — LiveKit/Pipecat voice roleplay; Learn BFF at `/api/sim/*`
+- **`packages/sudar-mcp` + `workers/sudar-mcp-cloudflare`** — MCP for ChatGPT/Cursor (`mcp.thesudar.com`)
+- **`integrations/moodle`** — ALP Moodle plugins calling Learn `/api/alp/*`
+- **`teachwithsudar/`** — public marketing site (Cloudflare Pages)
 ---
 
 ## Shared Supabase Database
@@ -117,6 +143,8 @@ The schema is defined in `ECOSYSTEM.md` Section 5. The most important tables:
 - `learning_events` — every learner interaction (telemetry)
 - `ai_interactions` — every AI tutor exchange (enables longitudinal memory)
 - `enrollments` — learner ↔ course/path assignments
+- Teaching OS: `learning_domains`, `learning_claims`, `learner_claim_mastery`, `learning_sessions`
+- SudarNotes: `sudar_notes_sessions` (pedagogical session state per user/thread)
 
 ---
 
@@ -230,10 +258,11 @@ Pull requests use **[.github/pull_request_template.md](.github/pull_request_temp
 
 ## Current Build Status
 
-**Phase**: Phases 1–4 complete; Phase 5 (Engagement & Scale) partially in motion (modalities and learner engagement work continues).
-**Priority**: Visibility (demo, screenshots); harden personalization and governance in production; document/SCORM import and further modalities per **docs/STRATEGIC_PATH.md**.
+**Phase**: Phases 1–4 complete; Phase 5 (Engagement & Scale) partially in motion. Teaching OS, SudarNotes, SudarSim, MCP (ChatGPT/Cursor) shipped — see **UPDATES.md** Latest.
+**Priority**: Run the invited-tester beta ([docs/TESTER_GUIDE.md](docs/TESTER_GUIDE.md), Sudar Beta org); visibility (demo/screenshots); Teaching OS loop beyond seeded domains; enterprise packaging later. Security Phase 1 is done ([docs/RLS_RAG_BEARER_SUBPLAN.md](docs/RLS_RAG_BEARER_SUBPLAN.md) §7).
+**Production frontends**: Studio + Learn on **Cloudflare Workers (OpenNext)** — [docs/CLOUDFLARE_PAGES_DEPLOY.md](docs/CLOUDFLARE_PAGES_DEPLOY.md). Staging may still use Vercel. Intelligence/Vid/Sim/MCP workers are manual/ops deploy today.
 
-**Recent ship (April–May 2026)**: Personalization v2 (enrollment overlays, consent, org policy, learner groups), Sudar brand/logo and mascot system in Learn, trust documentation pack and Studio Governance page, Learn search and learner-flow polish, sensitive-input guardrails, **tutor memory LLM cadence** (learner + org governance), **full-stack localization** (next-intl, 30+ locales, RTL/fonts, learner + org language prefs, multilingual TTS/tutor, optional Together image covers). See **UPDATES.md** (Latest) and **docs/SHIPPED_FEATURES.md**.
+**Recent ship**: Beta readiness (2026-09-29) — enforced content quality gate, Learn loop (mastery strip, Next 15, Practice, SudarNotes persistence/voice), Security Phase 1, Sentry, Playwright smoke; earlier MCP OAuth, SudarSim voice, SudarNotes, Teaching OS. New MCP-callable Studio routes must be added to `sudar-studio/src/lib/security/bearerRoutes.ts`. See **UPDATES.md** (Latest) and **docs/SHIPPED_FEATURES.md**. Structural cleanup board: [docs/STRUCTURAL_CLEANUP_AUDIT.md](docs/STRUCTURAL_CLEANUP_AUDIT.md).
 
 For up-to-date state and next priorities, see **docs/STRATEGIC_PATH.md** and **docs/ACTION_PLANS.md**.
 See `ECOSYSTEM.md` Section 8 for the full build roadmap with checkboxes.
@@ -244,4 +273,4 @@ See `ECOSYSTEM.md` Section 8 for the full build roadmap with checkboxes.
 
 *Sudar — Learns with you, for you.*
 *This agent context file is maintained by the project owner.*
-*Last updated: 13 May 2026*
+*Last updated: 15 September 2026*

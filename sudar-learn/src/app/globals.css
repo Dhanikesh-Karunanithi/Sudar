@@ -138,6 +138,282 @@ html[data-course-learn] [data-sudar-app-shell] > main {
   padding: 0;
   overflow: hidden;
 }
+
+/* Learn with Sudar: fixed workspace — panels scroll, page does not grow */
+html[data-sudar-journey] [data-sudar-app-shell] {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  min-height: 0;
+}
+@media (max-width: 767px) {
+  html[data-sudar-journey] [data-sudar-app-shell] {
+    height: 100dvh;
+    max-height: 100dvh;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+}
+html[data-sudar-journey] [data-sudar-app-shell] > main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+html[data-sudar-journey] [data-sudar-app-shell] > main > div {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/*
+ * Learn with Sudar — design lab (anti-slop).
+ * Neutral void / warm ink / single signal. Does not rewrite :root or non-Journey Learn.
+ */
+html[data-sudar-journey] {
+  --void: #0b0b0c;
+  --panel: #141416;
+  --panel-raised: #19191c;
+  --line: #26272a;
+  --ink: #f2f1ec;
+  --mist: #8b8d91;
+  --mist-dim: #5b5d61;
+  --signal: #ff4b2b;
+  --signal-dim: #3a1e17;
+  --journey-radius: 2px;
+
+  --shell-bg: var(--void);
+  --surface: var(--void);
+  --surface-elevated: var(--panel);
+  --background: var(--void);
+  --foreground: var(--ink);
+  --primary: var(--signal);
+  --primary-foreground: var(--ink);
+  --primary-hover: #e03f22;
+  --accent: var(--signal);
+  --accent-foreground: var(--ink);
+  --accent-muted: var(--signal-dim);
+  --muted: var(--panel);
+  --muted-foreground: var(--mist);
+  --card: var(--panel);
+  --card-foreground: var(--ink);
+  --border: var(--line);
+
+  --radius-card: var(--journey-radius);
+  --radius-button: var(--journey-radius);
+  --radius-lg: var(--journey-radius);
+  --radius-xl: var(--journey-radius);
+  --radius-shell: var(--journey-radius);
+  --radius-chat-panel: var(--journey-radius);
+  --radius-4xl: var(--journey-radius);
+  --radius-5xl: var(--journey-radius);
+  --radius-6xl: var(--journey-radius);
+  --radius-pill: var(--journey-radius);
+
+  color: var(--ink);
+  background: var(--void);
+}
+
+html[data-sudar-journey] [data-sudar-app-shell] {
+  background: var(--void);
+  border-color: var(--line);
+  border-radius: var(--journey-radius);
+  box-shadow: none;
+}
+
+html[data-sudar-journey] :focus-visible {
+  outline: 1px solid var(--signal);
+  outline-offset: 2px;
+}
+
+html[data-sudar-journey] ::selection {
+  background: var(--signal-dim);
+  color: var(--ink);
+}
+
+/* Journey typographic turns (docked chat) — no bubble chrome */
+html[data-sudar-journey] .chat-turn {
+  max-width: min(100%, 36rem);
+}
+html[data-sudar-journey] .chat-turn-who {
+  font-family: var(--font-space-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mist-dim);
+  margin-bottom: 0.35rem;
+}
+html[data-sudar-journey] .chat-turn-body {
+  font-size: 14.5px;
+  line-height: 1.65;
+  font-weight: 400;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  max-width: 100%;
+}
+html[data-sudar-journey] .chat-turn--learner {
+  margin-left: auto;
+  text-align: right;
+}
+html[data-sudar-journey] .chat-turn--learner .chat-turn-body {
+  color: var(--mist);
+}
+html[data-sudar-journey] .chat-turn--tutor .chat-turn-body {
+  color: var(--ink);
+}
+
+/* Neutralize leftover .chat-bubble utilities if any slip through on Journey */
+html[data-sudar-journey] .chat-bubble:not(.chat-turn-body) {
+  border-radius: var(--journey-radius);
+  box-shadow: none;
+}
+
+@keyframes journey-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+html[data-sudar-journey] .journey-live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--signal);
+  flex-shrink: 0;
+}
+html[data-sudar-journey] .journey-live-dot[data-live='true'] {
+  animation: journey-breathe 2.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-sudar-journey] .journey-live-dot[data-live='true'] {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Journey mono system labels */
+html[data-sudar-journey] .journey-mono {
+  font-family: var(--font-space-mono), ui-monospace, monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+html[data-sudar-journey] .journey-action-btn {
+  font-family: var(--font-space-mono), ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--mist);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--journey-radius);
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+}
+html[data-sudar-journey] .journey-action-btn:hover:not(:disabled) {
+  border-color: var(--signal);
+  color: var(--ink);
+}
+html[data-sudar-journey] .journey-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Notebook / lesson / resource chrome on Journey */
+html[data-sudar-journey] .journey-lesson {
+  border: 1px solid var(--line);
+  border-radius: var(--journey-radius);
+  background: var(--panel-raised);
+  box-shadow: none;
+  overflow: hidden;
+}
+html[data-sudar-journey] .journey-lesson-objective {
+  border-left: 2px solid var(--line);
+  padding-left: 0.85rem;
+  color: var(--mist);
+}
+html[data-sudar-journey] .journey-resource {
+  border: 1px solid var(--line);
+  border-radius: var(--journey-radius);
+  background: transparent;
+  box-shadow: none;
+}
+html[data-sudar-journey] .journey-resource-open {
+  color: var(--signal);
+}
+
+/* Override cyan/blue link colors inside lesson HTML blocks */
+html[data-sudar-journey] .lesson-html a {
+  color: var(--signal);
+  text-decoration-color: color-mix(in srgb, var(--signal) 40%, transparent);
+}
+html[data-sudar-journey] .lesson-html a:hover {
+  text-decoration-color: var(--signal);
+}
+
+
+/* Symmetric two-row panel headers (notebook + chat) */
+html[data-sudar-journey] .journey-panel-head-primary {
+  display: flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+}
+@media (min-width: 768px) {
+  html[data-sudar-journey] .journey-panel-head-primary {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+html[data-sudar-journey] .journey-panel-head-secondary {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  border-top: 1px solid var(--line);
+  padding: 0.5rem 1rem;
+}
+@media (min-width: 768px) {
+  html[data-sudar-journey] .journey-panel-head-secondary {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+html[data-sudar-journey] .journey-panel-foot {
+  display: grid;
+  gap: 0.35rem 1rem;
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--mist);
+}
+@media (min-width: 640px) {
+  html[data-sudar-journey] .journey-panel-foot {
+    grid-template-columns: auto 1fr;
+    align-items: baseline;
+  }
+  html[data-sudar-journey] .journey-panel-foot-note {
+    text-align: right;
+  }
+}
+
 html[data-scorm-immersive] [data-sudar-app-shell] {
   max-width: none;
   width: 100%;
@@ -272,7 +548,7 @@ html[data-scorm-immersive] [data-sudar-app-shell] > main {
 }
 
 .chat-bubble {
-  @apply p-4 rounded-3xl text-sm font-medium max-w-[80%];
+  @apply w-fit max-w-full break-words whitespace-pre-wrap rounded-3xl p-4 text-sm font-medium;
 }
 
 .modal-overlay {

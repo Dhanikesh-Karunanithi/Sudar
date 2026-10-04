@@ -1,0 +1,293 @@
+/* Scoped voice orb — adapted from AI voice CodePen; sized for Journey chat header. */
+
+@property --a {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0deg;
+}
+
+@property --l {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --x {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --o {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --min-scale {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+
+@property --max-scale {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1.08;
+}
+
+@property --value {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0deg;
+}
+
+@property --width-ratio {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --scale {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.root {
+  --base-scale: 1;
+  --s: 5.5rem;
+  --p: calc(var(--s) / 5);
+  --count: 4;
+  --radius: 0.85rem;
+  --width: 0.12rem;
+  --duration: 8s;
+
+  width: var(--s);
+  aspect-ratio: 1;
+  padding: var(--p);
+  display: grid;
+  place-items: center;
+  position: relative;
+  border-radius: 50%;
+  transform: scale(var(--base-scale));
+  flex-shrink: 0;
+}
+
+.rootBreathing {
+  animation: breathing 2s infinite ease-in-out;
+}
+
+.rootListening {
+  --base-scale: 1.05;
+}
+
+.rootSpeaking {
+  --base-scale: 1.08;
+}
+
+.rootThinking .blob {
+  animation-duration: 3.2s;
+}
+
+@keyframes breathing {
+  0%,
+  100% {
+    transform: scale(calc(var(--base-scale) * var(--min-scale)));
+  }
+  50% {
+    transform: scale(calc(var(--base-scale) * var(--max-scale)));
+  }
+}
+
+@keyframes ai {
+  from {
+    --a: 360deg;
+    --l: 0.35;
+    --o: 1;
+  }
+  30% {
+    --l: 1.2;
+  }
+  70% {
+    --o: 0.45;
+    --l: 0.08;
+  }
+  98% {
+    --o: 0.75;
+  }
+  to {
+    --a: 0deg;
+    --l: 0.35;
+    --o: 1;
+  }
+}
+
+@keyframes ring {
+  from {
+    --value: var(--start);
+    --scale: 1;
+  }
+  50% {
+    --scale: 1.15;
+    --width-ratio: 1.4;
+  }
+  70% {
+    --scale: 1;
+    --value: calc(var(--start) + 180deg);
+    --width-ratio: 1;
+  }
+  80% {
+    --scale: 1.12;
+    --width-ratio: 1.35;
+  }
+  to {
+    --value: calc(var(--start) + 360deg);
+    --scale: 1;
+    --width-ratio: 1;
+  }
+}
+
+.container {
+  overflow: hidden;
+  /* Sudar brand: deep blue-purple core */
+  background: color-mix(in srgb, hsl(var(--primary)) 55%, #1e1b4b);
+  width: 100%;
+  border-radius: 50%;
+  aspect-ratio: 1;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.blob {
+  opacity: 0.9;
+  position: absolute;
+  width: 1.35rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  --offset-per-item: calc(360deg / var(--count));
+  --current-angle-offset: calc(var(--offset-per-item) * var(--i) + var(--a));
+  translate: calc(cos(var(--current-angle-offset)) * var(--radius) + var(--x, 0))
+    calc(sin(var(--current-angle-offset)) * var(--radius) * -1);
+  scale: calc(0.55 + var(--l));
+  animation: ai 5.5s cubic-bezier(0.45, -0.35, 0.16, 1.5) infinite;
+  transition: opacity 0.3s linear;
+  opacity: var(--o, 1);
+}
+
+.blob:nth-child(1) {
+  --i: 0;
+}
+.blob:nth-child(2) {
+  --i: 1;
+}
+.blob:nth-child(3) {
+  --i: 2;
+}
+.blob:nth-child(4) {
+  --i: 3;
+}
+
+.blobCyan {
+  background: radial-gradient(50% 50% at center, #67e8f9, hsl(var(--primary)));
+  --x: 0.15rem;
+  width: 2.1rem;
+  animation-timing-function: cubic-bezier(0.12, 0.32, 0.68, 0.24);
+}
+
+.blobPrimary {
+  background: radial-gradient(50% 50% at center, #a5b4fc, hsl(var(--primary)));
+  width: 1.95rem;
+}
+
+.blobAccent {
+  background: radial-gradient(50% 50% at center, #67e8f9, #6366f1);
+  width: 0.7rem;
+  opacity: 0.65;
+  --x: -0.12rem;
+}
+
+.blobCore {
+  background: hsl(var(--primary));
+  animation-timing-function: cubic-bezier(0.39, -0.03, 0.75, 0.47);
+}
+
+.glass {
+  box-shadow:
+    0 0 6px color-mix(in srgb, hsl(var(--primary)) 45%, transparent),
+    0 0 14px color-mix(in srgb, #22d3ee 35%, transparent);
+  overflow: hidden;
+  position: absolute;
+  --w: 0.08rem;
+  inset: calc(var(--p) - var(--w));
+  border-radius: 50%;
+  backdrop-filter: blur(0.35rem);
+  background: radial-gradient(1.2rem at 70% 30%, rgba(255, 255, 255, 0.55), transparent);
+  pointer-events: none;
+}
+
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  --c: rgba(255, 255, 255, 0.04);
+  --w: 0.0625rem;
+  --g: 0.1875rem;
+  background: repeating-linear-gradient(
+    var(--c),
+    var(--c) var(--w),
+    transparent var(--w),
+    transparent calc(var(--w) + var(--g))
+  );
+  border-radius: inherit;
+  border: 0.12rem solid rgba(255, 255, 255, 0.12);
+}
+
+.rings {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  position: absolute;
+  inset: 0;
+  perspective: 6rem;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.rings::before,
+.rings::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: calc(var(--width) * var(--width-ratio, 1)) solid transparent;
+  mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(
+      hsl(var(--primary-foreground, 0 0% 100%)),
+      hsl(var(--primary)),
+      #22d3ee,
+      #818cf8,
+      #e0f2fe
+    )
+    border-box;
+  border-radius: 50%;
+  mask-composite: exclude;
+  animation: ring var(--duration) ease-in-out infinite;
+  --start: 180deg;
+  --value: var(--start);
+  --scale: 1;
+  transform: rotateY(var(--value)) rotateX(var(--value)) rotateZ(var(--value)) scale(var(--scale));
+}
+
+.rings::before {
+  --start: 180deg;
+}
+.rings::after {
+  --start: 90deg;
+}
+
+.ringsInner::before {
+  --start: 360deg;
+}
+.ringsInner::after {
+  --start: 270deg;
+}

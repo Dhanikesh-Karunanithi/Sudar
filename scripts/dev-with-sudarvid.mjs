@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawn, spawnSync } from 'node:child_process'
+import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -14,10 +15,68 @@ if (!appTarget || (appTarget !== 'learn' && appTarget !== 'studio')) {
   process.exit(1)
 }
 
+/** Minimal .env parser — KEY=VALUE, ignores comments/blank lines. */
+function readEnvFile(filePath) {
+  const out = {}
+  if (!fs.existsSync(filePath)) return out
+  const text = fs.readFileSync(filePath, 'utf8')
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+    const eq = trimmed.indexOf('=')
+    if (eq <= 0) continue
+    const key = trimmed.slice(0, eq).trim()
+    let value = trimmed.slice(eq + 1).trim()
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1)
+    }
+    out[key] = value
+  }
+  return out
+}
+
+function firstNonEmpty(...values) {
+  for (const v of values) {
+    if (typeof v === 'string' && v.trim()) return v.trim()
+  }
+  return undefined
+}
+
 const extraArgs = process.argv.slice(3)
-const sudarVidUrl = (process.env.SUDARVID_URL || 'http://localhost:8000').replace(/\/$/, '')
-const intelligenceUrl = (process.env.SUDAR_INTELLIGENCE_URL ?? process.env.BYTEOS_INTELLIGENCE_URL ?? 'http://localhost:8001').replace(/\/$/, '')
-const intelligenceServiceSecret = process.env.INTELLIGENCE_SERVICE_SECRET || 'sudar-local-dev-secret'
+const appDir = path.join(repoRoot, appTarget === 'learn' ? 'sudar-learn' : 'sudar-studio')
+const appEnv = {
+  ...readEnvFile(path.join(appDir, '.env')),
+  ...readEnvFile(path.join(appDir, '.env.local')),
+}
+const intelligenceEnv = {
+  ...readEnvFile(path.join(repoRoot, 'sudar-intelligence', '.env')),
+  ...readEnvFile(path.join(repoRoot, 'sudar-intelligence', '.env.local')),
+}
+
+const sudarVidUrl = (
+  process.env.SUDARVID_URL ||
+  appEnv.SUDARVID_URL ||
+  'http://localhost:8000'
+).replace(/\/$/, '')
+const intelligenceUrl = (
+  firstNonEmpty(
+    process.env.SUDAR_INTELLIGENCE_URL,
+    process.env.BYTEOS_INTELLIGENCE_URL,
+    appEnv.SUDAR_INTELLIGENCE_URL,
+    appEnv.BYTEOS_INTELLIGENCE_URL,
+  ) ?? 'http://localhost:8001'
+).replace(/\/$/, '')
+// Prefer shell → app .env.local → intelligence .env.local. Do NOT invent a secret that
+// mismatches a separately started Intelligence process (causes preview STT 401).
+const intelligenceServiceSecret = firstNonEmpty(
+  process.env.INTELLIGENCE_SERVICE_SECRET,
+  appEnv.INTELLIGENCE_SERVICE_SECRET,
+  intelligenceEnv.INTELLIGENCE_SERVICE_SECRET,
+  'sudar-local-dev-secret',
+)
 
 function startProcess(command, args, cwd, label, envOverrides = {}) {
   const child = spawn(command, args, {
@@ -147,6 +206,9 @@ async function main() {
       BYTEOS_INTELLIGENCE_URL: intelligenceUrl,
       INTELLIGENCE_SERVICE_SECRET: intelligenceServiceSecret,
     }
+  )
+  console.log(
+    `[${appConfig.label}] Intelligence URL=${intelligenceUrl}; service secret loaded (${intelligenceServiceSecret.length} chars)`,
   )
   runningChildren.push(appChild)
 

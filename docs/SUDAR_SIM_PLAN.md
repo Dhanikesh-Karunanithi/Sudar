@@ -134,3 +134,4 @@ EN, FR, ES, PT, Tamil — scenario `locale` drives STT/TTS routing table in `sud
 
 - [SUDAR_SIM_DEPLOY.md](SUDAR_SIM_DEPLOY.md) — Oracle + LiveKit deploy
 - [SUDAR_SIM_API.md](SUDAR_SIM_API.md) — HTTP + ALP contracts
+- [SUDAR_SIM_VOICE_SEED.md](SUDAR_SIM_VOICE_SEED.md) — Voice MVP contact-center scenario seed (Stream C)

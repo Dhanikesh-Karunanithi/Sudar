@@ -9,28 +9,37 @@ This file is a short pointer so you and Cursor can quickly see the **Next 3** wi
 
 Update this list after each milestone (and keep it in sync with STRATEGIC_PATH Section 3).
 
-1. **Visibility** — Record Sudar memory demo video (1–2 min); add 2–4 screenshots to [docs/screenshots/](docs/screenshots/) and link from README.
-2. **SudarVid polish** — Finalize and demo the refreshed SudarVid creator UX (timeline/loader flow) and capture before/after clips for docs.
-3. **One more win** — Either ship one more modality end-to-end (e.g. Audio TTS for current module) or add compliance email reminders for at-risk/overdue.
+1. **Run the beta** — Merge the beta readiness PR, deploy, set `SUDAR_SIM_SERVICE_SECRET` + Sentry DSNs, invite testers into **Sudar Beta** (Studio → Users), run the **E2E smoke** workflow with tester creds, triage feedback weekly. See [docs/TESTER_GUIDE.md](docs/TESTER_GUIDE.md).
+2. **Visibility** — Record Sudar memory / SudarNotes demo video (1–2 min); add 2–4 screenshots to [docs/screenshots/](docs/screenshots/) and link from README.
+3. **Teaching OS loop at scale** — Expand beyond the seeded domain; Studio Domains curator depth; claim analytics. See [docs/TEACHING_OS.md](docs/TEACHING_OS.md).
+
+Agent memory (decisions, glossary, feature map, known gaps): [docs/memory/](docs/memory/README.md).
 
 ---
 
-## Latest checkpoint (2026-04-17)
+## Latest checkpoint (2026-09-29) — beta readiness
 
-- **Repository migration is now materially complete**: active surfaces and references are aligned around `sudar-*` paths, with legacy `byteos-*` remnants reduced to compatibility/cleanup follow-ups.
-- **Learn engagement layer expanded**: gamification, check-ins, coins/rewards, achievements, notifications, and learner insight endpoints/pages were added and wired into the dashboard experience.
-- **Tutor + audio experience advanced**: proactive tutor primitives, voice preview/provider status routes, and generation pipeline updates landed for richer support and media output.
-- **Documentation pass updated**: roadmap, shipped features, trust/deployment references, and product docs were updated to reflect current architecture and shipped scope.
+- **Done**: content quality gate + golden eval in CI; Learn loop (mastery strip, Next 15, NBA recompute, Practice, Sim fallback, SudarNotes persistence/voice/domains); Security Phase 1 (Bearer allowlist, RAG/enroll tenant locks, invite rate limits, CSRF, Sim secret fail-closed); Sentry; Studio Feedback button; Playwright smoke; Sudar Beta org; tester guide. Details: **UPDATES.md** 2026-09-29.
+- **Known gaps**: [docs/memory/KNOWN_GAPS.md](docs/memory/KNOWN_GAPS.md).
+
+## Previous checkpoint (2026-09-15)
+
+- **Security P0**: Public invite codes revoked (`EARLY_TALISMA`, `CURSOR-HIRE-*`); `security:audit` matcher restored for `createServiceRoleSupabaseClient()`.
+- **Docs truth-sync**: AGENTS / ECOSYSTEM / PROGRESS aligned with Cloudflare prod, Learn-owned NBA, SudarSim, MCP, 5 personas.
+- Prior (2026-07-28): SudarNotes + Teaching OS spine. See **UPDATES.md** Latest for MCP (2026-09-10) and SudarSim voice.
 
 ---
 
 ## Quick context for Cursor
 
 - **Current phase**: Phases 1–4 complete; Phase 5 (Engagement & Scale) in progress. See [ECOSYSTEM.md](ECOSYSTEM.md) Section 8.
+- **Prod deploy**: Studio + Learn → **Cloudflare Workers (OpenNext)**; marketing → Cloudflare Pages. Intelligence / SudarVid / SudarSim / MCP workers: manual or host-specific (Render/Railway/OCI/Wrangler).
 - **Sudar's memory**: Implemented in Learn API ([sudar-learn/src/app/api/tutor/query/route.ts](sudar-learn/src/app/api/tutor/query/route.ts)); see [docs/sudar-memory.md](docs/sudar-memory.md).
-- **Action Plans A–C**: Complete (assign path + due date, certificate print, compliance view). See [docs/ACTION_PLANS.md](docs/ACTION_PLANS.md).
-- **Time per section & completion rules**: Studio Analytics has “Time per section” (per-course, per-learner active/idle time; possible skip / over time flags). Admins can set per-module completion rule: “Learner marks complete” or “Minimum time on section” (minutes). Learn enforces min time using active (tab-visible) time only.
-- **SudarVid status**: Creator-side overhaul landed in `sudar_vid` (timeline editing, loader UX, expanded media pipeline and templates); pending final demo capture and README visuals.
+- **NBA**: Canonical engine in [sudar-learn/src/lib/intelligence/nextBestActionEngine.ts](sudar-learn/src/lib/intelligence/nextBestActionEngine.ts).
+- **SudarNotes**: [docs/SUDAR_2_0_VISION.md](docs/SUDAR_2_0_VISION.md); code under `sudar-learn/src/lib/sudarNotes/` and `components/journey/`.
+- **Teaching OS**: [docs/TEACHING_OS.md](docs/TEACHING_OS.md); code under `sudar-learn/src/lib/teaching/`.
+- **Structural cleanup**: [docs/STRUCTURAL_CLEANUP_AUDIT.md](docs/STRUCTURAL_CLEANUP_AUDIT.md).
+- **SudarVid status**: Creator-side overhaul landed in `sudar_vid`; pending final demo capture and README visuals.
 
 ---
 

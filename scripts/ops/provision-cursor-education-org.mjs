@@ -76,11 +76,23 @@ const TEST_LEARNERS = [
   },
 ]
 
-const INVITE_CODES = [
-  { code: 'CURSOR-HIRE-01', max_uses: 5, type: 'tester', grants_tier: 'tester' },
-  { code: 'CURSOR-HIRE-02', max_uses: 5, type: 'early_access', grants_tier: 'early_access' },
-  { code: 'CURSOR-HIRE-03', max_uses: 3, type: 'tester', grants_tier: 'unlimited' },
+/** Historical public codes — revoked; never re-create with these literals. */
+const REVOKED_PUBLIC_CODES = new Set([
+  'EARLY_TALISMA',
+  'CURSOR-HIRE-01',
+  'CURSOR-HIRE-02',
+  'CURSOR-HIRE-03',
+])
+
+const INVITE_CODE_SPECS = [
+  { label: 'tester', max_uses: 5, type: 'tester', grants_tier: 'tester' },
+  { label: 'early_access', max_uses: 5, type: 'early_access', grants_tier: 'early_access' },
+  { label: 'unlimited_guest', max_uses: 3, type: 'tester', grants_tier: 'unlimited' },
 ]
+
+function randomInviteCode(prefix) {
+  return `${prefix}-${randomBytes(6).toString('base64url').toUpperCase()}`
+}
 
 function hashKey(key) {
   return createHash('sha256').update(key, 'utf8').digest('hex')
@@ -258,33 +270,27 @@ async function ensureIntegrationKey(orgId) {
 
 async function ensureInviteCodes() {
   const created = []
-  for (const inv of INVITE_CODES) {
-    const { data: existing } = await admin
-      .from('invite_codes')
-      .select('id, code')
-      .eq('code', inv.code)
-      .maybeSingle()
-    if (existing) {
-      console.log('Invite code exists:', inv.code)
-      created.push({ ...inv, status: 'exists' })
-      continue
+  for (const spec of INVITE_CODE_SPECS) {
+    const code = randomInviteCode('CURSOR-EDU')
+    if (REVOKED_PUBLIC_CODES.has(code)) {
+      throw new Error(`Refusing to create revoked public invite code: ${code}`)
     }
     if (dryRun) {
-      console.log('[dry-run] would create invite:', inv.code)
-      created.push({ ...inv, status: 'dry-run' })
+      console.log('[dry-run] would create invite:', code, `(${spec.label})`)
+      created.push({ ...spec, code, status: 'dry-run' })
       continue
     }
     const { error } = await admin.from('invite_codes').insert({
-      code: inv.code,
-      type: inv.type,
-      grants_tier: inv.grants_tier,
+      code,
+      type: spec.type,
+      grants_tier: spec.grants_tier,
       bonus_credits: 0,
-      max_uses: inv.max_uses,
+      max_uses: spec.max_uses,
       is_active: true,
     })
     if (error) throw error
-    console.log('Created invite code:', inv.code)
-    created.push({ ...inv, status: 'created' })
+    console.log('Created invite code:', code, `(${spec.label}) — share out-of-band only`)
+    created.push({ ...spec, code, status: 'created' })
   }
   return created
 }
@@ -337,18 +343,18 @@ async function main() {
   credentials.integrationKey = await ensureIntegrationKey(orgId)
   credentials.inviteCodes = await ensureInviteCodes()
 
-  const outPath = join(repoRoot, 'portfolio/cursor-education/credentials.local')
+  const outPath = join(repoRoot, 'archive/portfolio-cursor-education/cursor-education/credentials.local')
   if (!dryRun) {
-    mkdirSync(join(repoRoot, 'portfolio/cursor-education'), { recursive: true })
+    mkdirSync(join(repoRoot, 'archive/portfolio-cursor-education/cursor-education'), { recursive: true })
     writeFileSync(outPath, JSON.stringify(credentials, null, 2), 'utf8')
-    console.log('\nWrote credentials to portfolio/cursor-education/credentials.local')
+    console.log('\nWrote credentials to archive/portfolio-cursor-education/cursor-education/credentials.local')
     console.log('(gitignored via *.local — do not commit)')
   }
 
   console.log('\nDone. Next:')
-  console.log('1. Build SCORMs: node portfolio/cursor-education/scripts/build-scorm.mjs')
-  console.log('2. Upload: node --env-file=sudar-studio/.env.local portfolio/cursor-education/scripts/upload-to-sudar.mjs')
-  console.log('3. Share CURSOR-HIRE-* codes with hiring reviewers for self-signup.')
+  console.log('1. Build SCORMs: node archive/portfolio-cursor-education/cursor-education/scripts/build-scorm.mjs')
+  console.log('2. Upload: node --env-file=sudar-studio/.env.local archive/portfolio-cursor-education/cursor-education/scripts/upload-to-sudar.mjs')
+  console.log('3. Share invite codes from credentials.local out-of-band (never commit them).')
 }
 
 main().catch((err) => {

@@ -1,6 +1,7 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { z } from 'zod'
+import { refreshNextBestAction } from '@/lib/intelligence/nextBestActionEngine'
 import type { Json } from '@/types/database'
 import { recordStruggleTopics } from '@/lib/learner/syncTopicSkills'
 import { evaluateGamification } from '@/lib/gamification/engine'
@@ -34,6 +35,11 @@ const eventTypeEnum = z.enum([
   'sim_retry',
   'sim_rubric_dimension',
   'coach_report_viewed',
+  'claim_check',
+  'claim_mastery_update',
+  'review_due_served',
+  'session_replan',
+  'flashcard_review',
 ])
 
 const eventBodySchema = z.object({
@@ -248,49 +254,101 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Refresh twin rollups + next best action after meaningful learning milestones (fire-and-forget)
+  // Teaching OS: quiz / flashcard → claim mastery when module has linked claims
+  if (
+    (event_type === 'quiz_attempt' || event_type === 'flashcard_review') &&
+    module_id
+  ) {
+    try {
+      const { claimsForModule } = await import('@/lib/teaching/claimGraph')
+      const { recordClaimEvidence } = await import('@/lib/teaching/mastery')
+      const claims = await claimsForModule(admin, module_id)
+      const scoreRaw = typeof quizPayload?.score === 'number' ? quizPayload.score : null
+      const score01 =
+        scoreRaw != null
+          ? scoreRaw > 1
+            ? Math.min(1, scoreRaw / 100)
+            : scoreRaw
+          : event_type === 'flashcard_review'
+            ? quizPayload?.correct === true
+              ? 0.85
+              : quizPayload?.correct === false
+                ? 0.2
+                : 0.5
+            : 0.5
+      for (const claim of claims.slice(0, 6)) {
+        await recordClaimEvidence(admin, {
+          userId: user.id,
+          claimId: claim.id,
+          evidence_type: event_type === 'flashcard_review' ? 'flashcard' : 'quiz',
+          correct:
+            typeof quizPayload?.correct === 'boolean'
+              ? quizPayload.correct
+              : score01 >= 0.7
+                ? true
+                : score01 < 0.4
+                  ? false
+                  : null,
+          score: score01,
+          courseId: course_id ?? null,
+          moduleId: module_id,
+          modality: event_type === 'flashcard_review' ? 'flashcards' : 'text',
+        })
+      }
+    } catch {
+      /* claim tables may not be migrated yet */
+    }
+  }
+
+  // Refresh twin rollups after meaningful learning milestones (fire-and-forget).
+  // Skip high-frequency noise (video play/pause, inactivity, heartbeats).
   const rollupTriggers = new Set([
     'module_complete',
     'quiz_attempt',
     'session_end',
     'modality_switch',
-    'video_play',
-    'video_pause',
     'drop_off',
-    'inactivity_warning_started',
-    'inactivity_hibernated',
-    'inactivity_resumed',
   ])
   if (rollupTriggers.has(event_type)) {
     const baseUrl = request.nextUrl.origin
     const cookie = request.headers.get('cookie') ?? ''
-    fetch(`${baseUrl}/api/learner/twin-rollup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: cookie },
-      body: JSON.stringify({ force: false }),
-    }).catch(() => {})
+    after(() =>
+      fetch(`${baseUrl}/api/learner/twin-rollup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({ force: false }),
+      }).then(() => undefined, () => undefined),
+    )
   }
 
-  if (event_type === 'module_complete' || event_type === 'quiz_attempt') {
+  if (event_type === 'module_complete' || event_type === 'sim_complete') {
+    const userId = user.id
+    after(() => refreshNextBestAction(admin, userId))
+  } else if (event_type === 'quiz_attempt') {
     const baseUrl = request.nextUrl.origin
-    fetch(`${baseUrl}/api/intelligence/next-action`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: request.headers.get('cookie') ?? '' },
-      body: JSON.stringify({ force: false }),
-    }).catch(() => {})
+    const cookie = request.headers.get('cookie') ?? ''
+    after(() =>
+      fetch(`${baseUrl}/api/intelligence/next-action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify({ force: false }),
+      }).then(() => undefined, () => undefined),
+    )
   }
 
-  // Gamification engine — fire-and-forget after every event
-  evaluateGamification({
-    userId: user.id,
-    eventType: event_type,
-    courseId: course_id ?? null,
-    moduleId: module_id ?? null,
-    payload: (payload as Record<string, unknown>) ?? {},
-    origin: request.nextUrl.origin,
-    cookieHeader: request.headers.get('cookie') ?? '',
-  }).catch(() => {})
-
+  // Gamification: skip section_heartbeat (no coin rules; avoids 30s engine scans)
+  if (event_type !== 'section_heartbeat') {
+    const gamificationInput = {
+      userId: user.id,
+      eventType: event_type,
+      courseId: course_id ?? null,
+      moduleId: module_id ?? null,
+      payload: (payload as Record<string, unknown>) ?? {},
+      origin: request.nextUrl.origin,
+      cookieHeader: request.headers.get('cookie') ?? '',
+    }
+    after(() => evaluateGamification(gamificationInput).then(() => undefined, () => undefined))
+  }
   // On course_complete — check if all mandatory courses in any enrolled path are done → issue cert
   if (event_type === 'module_complete' && course_id) {
     const { data: courseEnrollment } = await admin

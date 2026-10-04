@@ -1,0 +1,15 @@
+---
+description: Sudar Intelligence (FastAPI) and sudar-sim (Pipecat/LiveKit) Python conventions
+globs: sudar-intelligence/**/*.py, sudar-sim/**/*.py
+alwaysApply: false
+---
+
+# Sudar Intelligence and SudarSim (Python)
+
+- Python 3.11+, FastAPI, Pydantic v2 models for every request/response, `async def` handlers.
+- Intelligence routes: `src/api/routes/` (`tutor`, `audio`, `sim`, `agents`, `content`, `health`). Core clients: `src/core/` (`ai_client.py`, `deepgram_client.py`, `cartesia_client.py`, `edge_tts_helper.py`, `hf_client.py`).
+- NBA and learner twin rollups are owned by **Learn**, not Intelligence. Don't add adaptive logic here.
+- Service auth: `src/api/auth.py` (`INTELLIGENCE_SERVICE_SECRET` first, then Supabase JWT). Never make an unauthenticated route that spends provider credits.
+- Every provider call: try/except with fallback (e.g. Deepgram -> HF Whisper; Cartesia -> Edge TTS). Missing keys must degrade, not crash; surface the degraded mode in `/health`.
+- sudar-sim agent (`sudar-sim/agent/`): if a pipeline fails to start (missing `DEEPGRAM_API_KEY` / `CARTESIA_API_KEY` / LiveKit), report failure back to Learn via the sync callback so the UI can fall back to text.
+- No `print()` in committed code; use `logging`. Tests: `pytest` in `sudar-intelligence/tests`.

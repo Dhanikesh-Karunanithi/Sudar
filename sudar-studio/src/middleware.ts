@@ -1,9 +1,12 @@
 import { createServerClient } from '@supabase/ssr'
-import type { User } from '@supabase/supabase-js'
+import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
 import { checkUserInviteAccess, isEarlyAccessEnabled } from '@shared-access'
+
+type AccessSupabase = Parameters<typeof checkUserInviteAccess>[1]
 import { fetchWithDeadline } from '@/lib/fetch-with-deadline'
+import { isBearerApiRoute, isSelfAuthenticatingApiRoute } from '@/lib/security/bearerRoutes'
 
 const PUBLIC_PATHS = [
   '/login',
@@ -28,7 +31,6 @@ const INVITE_EXEMPT_PATHS = ['/signup', '/login', '/auth/callback', '/api/auth/c
 function isInviteExemptPath(pathname: string): boolean {
   return INVITE_EXEMPT_PATHS.some((p) => pathname.startsWith(p))
 }
-
 export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -75,9 +77,30 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
   const isPublic = isPublicPath(pathname)
-  const delegatesAuth = pathname.startsWith('/api/studio/ai/generate-video/render/')
+  const bearerToken = /^Bearer\s+(\S+)/i.exec(request.headers.get('authorization') ?? '')?.[1] ?? null
+  const selfAuthenticating = isSelfAuthenticatingApiRoute(pathname)
 
-  if (!user && !isPublic && !delegatesAuth) {
+  let accessClient: SupabaseClient = supabase
+  let bearerAuthenticated = false
+  if (!user && bearerToken && isBearerApiRoute(pathname)) {
+    const bearerClient = createServerClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: `Bearer ${bearerToken}` }, fetch: fetchWithDeadline() },
+      cookies: { getAll: () => [], setAll: () => {} },
+    })
+    try {
+      const { data, error } = await bearerClient.auth.getUser(bearerToken)
+      if (!error && data.user) {
+        user = data.user
+        accessClient = bearerClient
+        bearerAuthenticated = true
+      }
+    } catch {
+      user = null
+    }
+  }
+  const delegatesAuth = selfAuthenticating || bearerAuthenticated
+
+  if (!user && !isPublic && !selfAuthenticating) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401 })
     }
@@ -86,8 +109,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  if (user && isEarlyAccessEnabled() && !isPublic && !delegatesAuth) {
-    const access = await checkUserInviteAccess(user.id, supabase)
+  if (user && isEarlyAccessEnabled() && !isPublic && !selfAuthenticating) {
+    const access = await checkUserInviteAccess(user.id, accessClient as unknown as AccessSupabase)
     if (!access.hasAccess) {
       if (pathname.startsWith('/api/')) {
         return NextResponse.json({ error: 'Invite required', code: 'INVITE_REQUIRED' }, { status: 403 })
@@ -102,6 +125,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && (pathname === '/login' || pathname === '/signup')) {
+    const mcpOAuth = request.nextUrl.searchParams.get('mcp_oauth') === '1'
+    if (mcpOAuth && pathname === '/login') {
+      return supabaseResponse
+    }
     if (isEarlyAccessEnabled()) {
       const access = await checkUserInviteAccess(user.id, supabase)
       if (!access.hasAccess) {

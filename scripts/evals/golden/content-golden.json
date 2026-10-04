@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "description": "Golden set for the content quality gate. `expect.deterministic` must hold without any API key (CI). `expect.judge` is checked only when EVAL_JUDGE=1 and a provider key is set.",
+  "modules": [
+    {
+      "id": "good-deescalation",
+      "title": "De-escalating an upset customer",
+      "bloomLevel": "Apply",
+      "learningOutcomes": ["Use acknowledge-restate-resolve to calm an upset customer"],
+      "markdown": "## Why the first ten seconds matter\n\nYou already handle routine calls well. Last week, in the module on active listening, you practised reflecting what a customer said. Today you'll use that skill when the customer is angry.\n\nImagine Maria calls: she was charged twice for her subscription and she is furious. What she needs first is not a refund policy. She needs to feel heard.\n\n## The acknowledge-restate-resolve pattern\n\n[objective]Use acknowledge-restate-resolve to calm an upset customer[/objective]\n\nThe pattern has three short moves. Acknowledge the feeling. Restate the problem in your own words. Offer a concrete next step.\n\n### Worked example\n\n1. Acknowledge: \"I can hear how frustrating a double charge is.\"\n2. Restate: \"So you were billed twice on the 3rd for the same plan.\"\n3. Resolve: \"I'm reversing the second charge now, and you'll see it within three business days.\"\n\nNotice that the agent never argues about whose fault it was.\n\n[apply]Your turn: a customer says their order arrived broken for the second time. Write your acknowledge, restate, and resolve lines.[/apply]\n\n## Check yourself\n\n### Check yourself\n\n1. Why does acknowledging the feeling come before the fix?\n2. How does restating connect to the active-listening skill from the previous module?\n3. What makes a next step concrete rather than vague?",
+      "expect": { "deterministic": { "maxWarnings": 0 }, "judge": { "minOverall": 7 } }
+    },
+    {
+      "id": "good-spacing",
+      "title": "Spacing your practice",
+      "bloomLevel": "Understand",
+      "learningOutcomes": ["Explain why spaced practice beats cramming"],
+      "sources": [1, 2],
+      "markdown": "## The cramming trap\n\nYou have probably crammed for a test and forgotten most of it a week later. That feeling is the forgetting curve at work.\n\n## What spacing does\n\n[objective]Explain why spaced practice beats cramming[/objective]\n\nSpreading the same study time across several sessions leads to better long-term retention than one long session [1]. Each gap forces you to work a little harder to recall, and that effort strengthens memory [2].\n\n### Worked example\n\nSuppose you have three hours to learn a new product catalogue. Instead of one three-hour block on Monday, study for one hour on Monday, one hour on Wednesday, and one hour the following Monday. For example, on Wednesday you first try to recall the catalogue before reopening it.\n\n[apply]Your turn: plan three spaced sessions for something you need to learn this month.[/apply]\n\n### Check yourself\n\n1. Why does a gap between sessions help rather than hurt?\n2. What would you change in your current study routine?",
+      "expect": { "deterministic": { "maxWarnings": 0, "citationsOk": true }, "judge": { "minOverall": 7 } }
+    },
+    {
+      "id": "bad-fabricated-citation",
+      "title": "Spacing your practice",
+      "sources": [1],
+      "markdown": "## Spacing\n\nSpaced practice improves retention by 73% [1]. A 2019 study found that 91% of learners forget within a day [4]. For example, study on Monday and Wednesday.\n\nWhat will you schedule this week?",
+      "expect": { "deterministic": { "mustFlag": ["accuracy_risk"], "citationsOk": false }, "judge": { "maxOverall": 6.9 } }
+    },
+    {
+      "id": "bad-wall-of-text",
+      "title": "Data privacy basics",
+      "markdown": "## Overview\n\nData privacy is an important topic that every employee should understand because organisations collect a great deal of personal information about customers and employees and this information must be handled carefully in accordance with the relevant regulations and internal policies which may differ between jurisdictions and which are updated from time to time by the relevant authorities and it is therefore essential that everyone takes the time to read and understand the policies that apply to them and to ask their manager if they are unsure about anything because mistakes can lead to serious consequences for the organisation including fines and reputational damage as well as harm to the individuals whose data is affected and so it is very important to be careful at all times when handling any kind of personal data whether it is stored electronically or on paper and whether it relates to customers suppliers or colleagues and this applies equally to all staff regardless of their role or seniority within the organisation and it is also important to report any suspected breaches promptly so that they can be investigated and any necessary steps can be taken to limit the damage and prevent similar incidents in future.",
+      "expect": { "deterministic": { "mustFlag": ["cognitive_load", "retrieval_practice", "worked_examples"] }, "judge": { "maxOverall": 6.9 } }
+    },
+    {
+      "id": "bad-generic-opening",
+      "title": "Giving feedback",
+      "markdown": "## Introduction\n\nIn this module we will explore feedback. It is important to note that feedback matters. Feedback helps people grow. Good feedback is useful. Bad feedback is not useful. Everyone should give good feedback. Feedback should be given often. Managers and peers can both give feedback. Feedback can be positive or negative. Always try to give feedback in a kind way. Feedback is a gift. Remember that feedback is important for teams, individuals and organisations of every size and type across all industries and sectors worldwide in every situation you might encounter at work today.",
+      "expect": { "deterministic": { "mustFlag": ["worked_examples", "retrieval_practice"] }, "judge": { "maxOverall": 6.9 } }
+    }
+  ],
+  "quizzes": [
+    {
+      "id": "good-quiz",
+      "objectives": ["Use acknowledge-restate-resolve", "Connect restating to active listening"],
+      "questions": [
+        { "question": "A customer is angry about a double charge. What should you say first?", "options": ["Acknowledge how frustrating it is", "Explain the billing policy", "Transfer to billing", "Ask for their account number"], "correct": 0 },
+        { "question": "Why restate the problem before resolving it?", "options": ["It shows you listened accurately", "It fills silence", "It delays the refund", "It is required by law"], "correct": 0 }
+      ],
+      "expect": { "maxCritical": 0 }
+    },
+    {
+      "id": "bad-quiz-broken-key",
+      "objectives": ["One", "Two", "Three"],
+      "questions": [
+        { "question": "Which step comes first?", "options": ["Acknowledge", "Acknowledge", "Resolve"], "correct": 0 },
+        { "question": "Which is correct?", "options": ["A", "B", "C"], "correct": 5 }
+      ],
+      "expect": { "minCritical": 2, "mustFlag": ["objective_alignment"] }
+    }
+  ]
+}

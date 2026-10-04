@@ -5,6 +5,23 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { SimWorkspace } from '@/components/sudarsim/SimWorkspace'
 import type { SimPersonaState } from '@shared-sudarsim/schemas'
 
+/** API `error` must be a string; guard against legacy Zod flatten objects. */
+function formatApiError(error: unknown, fallback: string): string {
+  if (typeof error === 'string' && error.trim()) return error
+  if (error && typeof error === 'object') {
+    const flattened = error as { formErrors?: string[]; fieldErrors?: Record<string, string[] | undefined> }
+    const parts: string[] = []
+    if (Array.isArray(flattened.formErrors)) parts.push(...flattened.formErrors.filter(Boolean))
+    if (flattened.fieldErrors && typeof flattened.fieldErrors === 'object') {
+      for (const [field, msgs] of Object.entries(flattened.fieldErrors)) {
+        if (Array.isArray(msgs) && msgs.length) parts.push(`${field}: ${msgs.join(', ')}`)
+      }
+    }
+    if (parts.length) return parts.join('; ')
+  }
+  return fallback
+}
+
 export default function SimSessionPageInner({ params }: { params: Promise<{ id: string }> }) {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -13,6 +30,7 @@ export default function SimSessionPageInner({ params }: { params: Promise<{ id: 
   const [payload, setPayload] = useState<{
     scenario: Parameters<typeof SimWorkspace>[0]['scenario']
     persona_state: SimPersonaState
+    voice: Parameters<typeof SimWorkspace>[0]['voice']
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -32,14 +50,14 @@ export default function SimSessionPageInner({ params }: { params: Promise<{ id: 
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             scenario_id: scenarioId,
-            module_id: moduleId,
-            course_id: courseId,
+            module_id: moduleId || undefined,
+            course_id: courseId || undefined,
             preview,
           }),
         })
         const data = await res.json()
         if (!data.success) {
-          setError(data.error ?? 'Failed to start session')
+          setError(formatApiError(data.error, 'Failed to start session'))
           return
         }
         const previewQuery = preview ? '&preview=1' : ''
@@ -52,7 +70,7 @@ export default function SimSessionPageInner({ params }: { params: Promise<{ id: 
       const res = await fetch(`/api/sim/session/${id}`)
       const data = await res.json()
       if (!data.success) {
-        setError(data.error ?? 'Session not found')
+        setError(formatApiError(data.error, 'Session not found'))
         return
       }
       const sessionMeta = data.session?.metadata as { preview?: boolean } | null
@@ -67,6 +85,7 @@ export default function SimSessionPageInner({ params }: { params: Promise<{ id: 
           crm_skin: null,
         },
         persona_state: data.session.persona_state,
+        voice: data.voice ?? null,
       })
     })
   }, [params, searchParams, router])
@@ -99,6 +118,7 @@ export default function SimSessionPageInner({ params }: { params: Promise<{ id: 
         sessionId={sessionId}
         scenario={payload.scenario}
         initialPersonaState={payload.persona_state}
+        voice={payload.voice}
         moduleId={moduleId}
         courseId={courseId}
         onCompleteModule={() => router.push(courseId ? `/courses/${courseId}/learn` : '/')}

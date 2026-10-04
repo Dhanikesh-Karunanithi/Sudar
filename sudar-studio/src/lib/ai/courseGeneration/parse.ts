@@ -1,4 +1,4 @@
-import { ENTRY_TYPES, EXIT_TYPES, SIDE_NOTE_TYPES } from './prompts'
+import { moduleEnvelopeSchema } from '@shared-content-generation/schemas'
 
 export function extractSummary(content: string, title: string): string {
   const lines = content.split('\n').filter((l) => l.trim().length > 0 && !l.startsWith('#'))
@@ -36,49 +36,30 @@ export function parseEnvelope(raw: string): {
     visibility?: SideCardVisibility
   }
 } | null {
+  let parsed: unknown
   try {
     const match = raw.match(/\{[\s\S]*\}/)
     if (!match) return null
-    const parsed = JSON.parse(match[0]) as Record<string, unknown>
-    const out: {
-      entryState?: { type: string; content: string }
-      exitState?: { type: string; content: string }
-      sideCard?: { title: string; content: string; tips?: string[]; noteType?: string }
-    } = {}
-    const entry = parsed.entryState as { type?: string; content?: string } | null | undefined
-    if (
-      entry &&
-      entry !== null &&
-      entry.type &&
-      ENTRY_TYPES.includes(entry.type as (typeof ENTRY_TYPES)[number]) &&
-      typeof entry.content === 'string' &&
-      entry.content.trim().length > 10
-    ) {
-      out.entryState = { type: entry.type, content: entry.content.trim() }
-    }
-    const exit = parsed.exitState as { type?: string; content?: string } | undefined
-    if (exit?.type && EXIT_TYPES.includes(exit.type as (typeof EXIT_TYPES)[number]) && typeof exit.content === 'string') {
-      out.exitState = { type: exit.type, content: exit.content }
-    }
-    const side = parsed.sideCard as {
-      title?: string
-      content?: string
-      noteType?: string
-      visibility?: string
-    } | undefined
-    if (side?.title && typeof side.content === 'string' && side.content.trim().length > 20) {
-      const noteType =
-        side.noteType && SIDE_NOTE_TYPES.includes(side.noteType as (typeof SIDE_NOTE_TYPES)[number])
-          ? side.noteType
-          : undefined
-      const vis =
-        side.visibility === 'visible' || side.visibility === 'floating' || side.visibility === 'hidden'
-          ? side.visibility
-          : 'hidden'
-      out.sideCard = { title: side.title, content: side.content, noteType, visibility: vis }
-    }
-    return out
+    parsed = JSON.parse(match[0])
   } catch {
     return null
   }
+  const result = moduleEnvelopeSchema.safeParse(parsed)
+  if (!result.success) return null
+  const env = result.data
+  const out: {
+    entryState?: { type: string; content: string }
+    exitState?: { type: string; content: string }
+    sideCard?: { title: string; content: string; tips?: string[]; noteType?: string; visibility?: SideCardVisibility }
+  } = {}
+  if (env.entryState && env.entryState.content.trim().length > 10) {
+    out.entryState = { type: env.entryState.type, content: env.entryState.content.trim() }
+  }
+  if (env.exitState) {
+    out.exitState = { type: env.exitState.type, content: env.exitState.content.trim() }
+  }
+  if (env.sideCard && env.sideCard.content.trim().length > 20) {
+    out.sideCard = { ...env.sideCard }
+  }
+  return out
 }

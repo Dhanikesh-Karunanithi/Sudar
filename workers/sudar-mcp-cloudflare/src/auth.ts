@@ -17,18 +17,12 @@ function sign(payloadB64: string, secret: string): string {
   return createHmac('sha256', secret).update(payloadB64).digest('base64url')
 }
 
-export function issueMcpSession(accessToken: string, userId: string, secret: string, ttlSec: number): string {
-  const payload: McpSessionPayload = {
-    sub: userId,
-    access_token: accessToken,
-    exp: Math.floor(Date.now() / 1000) + ttlSec,
-    nonce: randomBytes(8).toString('hex'),
-  }
+export function signPayload(payload: object, secret: string): string {
   const payloadB64 = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url')
   return `${payloadB64}.${sign(payloadB64, secret)}`
 }
 
-export function verifyMcpSession(token: string, secret: string): McpSessionPayload | null {
+export function verifyPayload<T extends { exp?: number }>(token: string, secret: string): T | null {
   const parts = token.split('.')
   if (parts.length !== 2) return null
   const [payloadB64, sig] = parts
@@ -41,13 +35,28 @@ export function verifyMcpSession(token: string, secret: string): McpSessionPaylo
     return null
   }
   try {
-    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8')) as McpSessionPayload
-    if (!payload.access_token || !payload.sub || !payload.exp) return null
-    if (payload.exp < Math.floor(Date.now() / 1000)) return null
+    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8')) as T
+    if (typeof payload.exp === 'number' && payload.exp < Math.floor(Date.now() / 1000)) return null
     return payload
   } catch {
     return null
   }
+}
+
+export function issueMcpSession(accessToken: string, userId: string, secret: string, ttlSec: number): string {
+  const payload: McpSessionPayload = {
+    sub: userId,
+    access_token: accessToken,
+    exp: Math.floor(Date.now() / 1000) + ttlSec,
+    nonce: randomBytes(8).toString('hex'),
+  }
+  return signPayload(payload, secret)
+}
+
+export function verifyMcpSession(token: string, secret: string): McpSessionPayload | null {
+  const payload = verifyPayload<McpSessionPayload>(token, secret)
+  if (!payload?.access_token || !payload.sub) return null
+  return payload
 }
 
 export async function validateSupabaseAccessToken(

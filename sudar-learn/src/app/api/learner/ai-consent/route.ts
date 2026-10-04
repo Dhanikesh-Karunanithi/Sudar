@@ -21,7 +21,7 @@ export async function POST() {
   if (!existing) {
     const { error: insErr } = await admin
       .from('learner_profiles')
-      .insert({ user_id: user.id, generative_ai_consent_at: now })
+      .insert({ user_id: user.id, generative_ai_consent_at: now, updated_at: now })
     if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 })
   } else {
     const { error } = await admin

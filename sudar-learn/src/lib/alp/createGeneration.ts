@@ -52,12 +52,19 @@ export async function generateQuizForCreate(
   })
 
   const { content: raw } = await chatCompletion(
-    { messages: [{ role: 'user', content: prompt }], max_tokens: 1200, temperature: 0.5 },
+    { messages: [{ role: 'user', content: prompt }], max_tokens: 2000, temperature: 0.4 },
     createMeteringCtx(ctx, 'studio_assist', '/api/alp/create/quiz'),
   )
   if (!raw) throw new Error('AI generation failed')
 
-  const quiz = parseQuizFromAi(raw)
+  const parsedQuiz = parseQuizFromAi(raw)
+  const quiz: QuizResult = {
+    questions: parsedQuiz.questions.filter((q) => {
+      const opts = q.options.map((o) => o.trim().toLowerCase())
+      return q.correct >= 0 && q.correct < opts.length && new Set(opts).size === opts.length
+    }),
+  }
+  if (quiz.questions.length === 0) throw new Error('Generated quiz failed validation')
   const title = params.moduleTitle ?? params.courseTitle ?? 'Sudar Quiz'
   const result: {
     quiz: QuizResult

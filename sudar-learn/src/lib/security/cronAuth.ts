@@ -2,11 +2,14 @@ import { timingSafeEqual } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 
 function extractCronSecret(request: NextRequest): string {
-  return (
-    request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim() ??
-    request.nextUrl.searchParams.get('secret')?.trim() ??
-    ''
-  )
+  const headerSecret = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim() ?? ''
+  if (headerSecret) return headerSecret
+
+  // Query-string secrets leak via logs/Referer — allow only outside production
+  if (process.env.NODE_ENV !== 'production') {
+    return request.nextUrl.searchParams.get('secret')?.trim() ?? ''
+  }
+  return ''
 }
 
 function secretsMatch(actual: string, expected: string): boolean {

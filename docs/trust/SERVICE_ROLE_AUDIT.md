@@ -18,9 +18,11 @@ Run this from the repo root to review all service-role callsites:
 
 ```bash
 npm run security:audit
+# Optional: fail CI while REVIEW queue nonempty
+SECURITY_AUDIT_STRICT=1 npm run security:audit
 ```
 
-The script exits non-zero while unclassified callsites remain. That is intentional: it makes the remaining manual review queue visible in CI without pretending the sweep is complete.
+The script matches **`createServiceRoleSupabaseClient()`** (and legacy **`createAdminClient()`**). It prints every callsite. By default it exits **0** once at least one callsite is found (so a stale matcher cannot go green with “0 callsites”). Set **`SECURITY_AUDIT_STRICT=1`** to exit non-zero while unclassified (`REVIEW`) callsites remain — intentional once the queue is being actively triaged.
 
 ## Hardened in current pass
 
@@ -39,7 +41,7 @@ The script exits non-zero while unclassified callsites remain. That is intention
 ### P0/P1 route families
 
 - Studio course/user/org management routes: confirm every route uses `requireOrgAdmin`, `requireOrgContentEditor`, `requireSuperAdmin`, or direct creator/org checks before service-role access.
-- Learn learner-owned routes: confirm `getUser()` occurs before `createAdminClient()` writes and all caller-provided IDs are pinned to `user.id`.
+- Learn learner-owned routes: confirm `getUser()` occurs before `createServiceRoleSupabaseClient()` writes and all caller-provided IDs are pinned to `user.id`.
 - AI generation routes: confirm enrolled course/module checks and org AI policy checks before expensive provider calls.
 - Notification routes: continue replacing raw service-role writes with typed helper functions that enforce recipient ownership or admin role.
 

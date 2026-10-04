@@ -1,6 +1,8 @@
 /**
  * Per-user daily usage limits for AI calls.
  * Uses atomic RPC increment_usage_request_count; returns 429 when over limit.
+ * Fails closed in production when the RPC is unavailable (prevents unbounded spend);
+ * fails open in development so a local DB without the RPC still works.
  * Requires admin client (service role).
  */
 
@@ -21,11 +23,15 @@ const LIMITS: Record<LimitType, number> = {
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
+export type UsageCheckResult =
+  | { allowed: true }
+  | { allowed: false; limit: number; reason?: 'over_limit' | 'metering_unavailable' }
+
 export async function checkAndIncrementUsage(
   admin: Pick<SupabaseClient<Database>, 'rpc'>,
   userId: string,
   type: LimitType
-): Promise<{ allowed: true } | { allowed: false; limit: number }> {
+): Promise<UsageCheckResult> {
   const limit = LIMITS[type]
   const today = new Date().toISOString().slice(0, 10)
 
@@ -34,7 +40,26 @@ export async function checkAndIncrementUsage(
     p_date: today,
   })
 
-  if (error || newCount == null) return { allowed: true }
-  if (newCount > limit) return { allowed: false, limit }
+  if (error || newCount == null) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[usage-limits] metering unavailable; allowing in development', error?.message)
+      return { allowed: true }
+    }
+    return { allowed: false, limit, reason: 'metering_unavailable' }
+  }
+  if (newCount > limit) return { allowed: false, limit, reason: 'over_limit' }
   return { allowed: true }
+}
+
+export function usageLimitErrorResponse(usage: Extract<UsageCheckResult, { allowed: false }>) {
+  if (usage.reason === 'metering_unavailable') {
+    return {
+      status: 503 as const,
+      body: { error: 'Usage metering temporarily unavailable. Please try again shortly.' },
+    }
+  }
+  return {
+    status: 429 as const,
+    body: { error: `Daily AI limit (${usage.limit}) reached. Try again tomorrow.` },
+  }
 }

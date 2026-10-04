@@ -4,9 +4,9 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveLearnerPreferences } from '@/lib/learner/learnerPreferences'
+import { checkAndIncrementUsage, usageLimitErrorResponse } from '@/lib/usage-limits'
 
 const INTELLIGENCE_URL = (process.env.SUDAR_INTELLIGENCE_URL ?? process.env.BYTEOS_INTELLIGENCE_URL)?.replace(/\/$/, '')
-const INTELLIGENCE_SERVICE_SECRET = process.env.INTELLIGENCE_SERVICE_SECRET?.trim()
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -22,6 +22,11 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createServiceRoleSupabaseClient()
+  const usage = await checkAndIncrementUsage(admin, user.id, 'generic')
+  if (!usage.allowed) {
+    const err = usageLimitErrorResponse(usage)
+    return NextResponse.json(err.body, { status: err.status })
+  }
   const { data: profile } = await admin
     .from('learner_profiles')
     .select('learner_preferences')
@@ -32,7 +37,6 @@ export async function POST(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`
-  if (INTELLIGENCE_SERVICE_SECRET) headers['X-Intelligence-Service-Secret'] = INTELLIGENCE_SERVICE_SECRET
 
   const res = await fetch(`${INTELLIGENCE_URL}/api/image/generate`, {
     method: 'POST',

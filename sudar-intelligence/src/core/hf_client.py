@@ -260,3 +260,121 @@ async def generate_image_bytes(
                 return {"b64_json": b64, "url": data[0].get("url"), "model": model}
 
     raise RuntimeError("HF returned no image data")
+
+
+HF_DEFAULT_ASR_MODEL = "openai/whisper-large-v3"
+
+
+def hf_asr_model() -> str:
+    return os.environ.get("SIM_STT_MODEL", "").strip() or HF_DEFAULT_ASR_MODEL
+
+
+def hf_asr_endpoint_url() -> str | None:
+    raw = os.environ.get("HF_ASR_ENDPOINT_URL", "").strip()
+    return raw.rstrip("/") if raw else None
+
+
+def _parse_asr_text(data: Any) -> str:
+    """Normalize HF Whisper / ASR payloads to a single transcript string."""
+    if isinstance(data, str):
+        return data.strip()
+    if isinstance(data, dict):
+        text = data.get("text")
+        if isinstance(text, str):
+            return text.strip()
+        # Some endpoints nest under "output" / "transcription"
+        for key in ("output", "transcription", "generated_text"):
+            nested = data.get(key)
+            if isinstance(nested, str):
+                return nested.strip()
+            if isinstance(nested, dict) and isinstance(nested.get("text"), str):
+                return nested["text"].strip()
+    if isinstance(data, list) and data:
+        # Chunked ASR: concatenate text fields
+        parts: list[str] = []
+        for item in data:
+            if isinstance(item, dict) and isinstance(item.get("text"), str):
+                parts.append(item["text"].strip())
+            elif isinstance(item, str):
+                parts.append(item.strip())
+        return " ".join(p for p in parts if p).strip()
+    return ""
+
+
+async def transcribe_audio(
+    audio_bytes: bytes,
+    *,
+    content_type: str | None = None,
+    model: str | None = None,
+    language: str | None = None,
+) -> dict[str, Any]:
+    """
+    Transcribe audio via Hugging Face ASR (Whisper by default).
+    Uses HF_ASR_ENDPOINT_URL when set, else Inference API / Router for SIM_STT_MODEL.
+    Returns {"text": str, "model": str, "raw": Any}.
+    """
+    api_key = hf_api_key()
+    if not api_key:
+        raise RuntimeError("HUGGINGFACE_API_KEY not configured")
+    if not audio_bytes:
+        raise ValueError("audio is empty")
+
+    model_id = (model or "").strip() or hf_asr_model()
+    mime = (content_type or "audio/webm").split(";")[0].strip() or "audio/webm"
+    endpoint = hf_asr_endpoint_url()
+
+    # Dedicated Inference Endpoint (or custom ASR URL) first.
+    urls: list[str] = []
+    if endpoint:
+        urls.append(endpoint)
+    urls.append(f"{HF_ROUTER_BASE}/{model_id}")
+    urls.append(f"{HF_INFERENCE_MODELS_BASE}/{model_id}")
+
+    headers_bin = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": mime,
+    }
+    params: dict[str, str] = {}
+    # Whisper language hint when provided (short codes: en, fr, ta, …)
+    if language:
+        lang = language.strip().lower().split("-", 1)[0]
+        if lang:
+            params["language"] = lang
+
+    last_error = "HF ASR request failed"
+    async with httpx.AsyncClient(timeout=180.0) as client:
+        for url in urls:
+            r = await client.post(url, headers=headers_bin, content=audio_bytes, params=params or None)
+            if r.status_code == 200:
+                try:
+                    data = r.json()
+                except Exception:
+                    data = r.text
+                text = _parse_asr_text(data)
+                if text:
+                    return {"text": text, "model": model_id, "raw": data}
+                last_error = "HF ASR returned empty transcript"
+                continue
+
+            # Fallback: JSON + base64 inputs (some TEI / custom endpoints)
+            if r.status_code in (400, 404, 415, 422):
+                b64 = base64.b64encode(audio_bytes).decode("ascii")
+                payload: dict[str, Any] = {"inputs": b64}
+                if language:
+                    payload["parameters"] = {"language": language.strip().lower().split("-", 1)[0]}
+                r2 = await client.post(url, headers=_auth_headers(api_key), json=payload)
+                if r2.status_code == 200:
+                    try:
+                        data = r2.json()
+                    except Exception:
+                        data = r2.text
+                    text = _parse_asr_text(data)
+                    if text:
+                        return {"text": text, "model": model_id, "raw": data}
+                    last_error = "HF ASR returned empty transcript"
+                    continue
+                last_error = r2.text or f"HF ASR HTTP {r2.status_code}"
+            else:
+                last_error = r.text or f"HF ASR HTTP {r.status_code}"
+
+    raise RuntimeError(last_error)

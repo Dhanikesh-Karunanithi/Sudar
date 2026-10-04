@@ -62,6 +62,7 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-body)", "Inter", "Segoe UI", "Arial", "sans-serif"],
         display: ["var(--font-display)", "Manrope", "Inter", "Segoe UI", "Arial", "sans-serif"],
+        mono: ["var(--font-space-mono)", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
         /** Arabic, Indic, Cyrillic, Hebrew, Thai, etc. */
         "noto-intl": [
           "var(--font-noto-intl)",

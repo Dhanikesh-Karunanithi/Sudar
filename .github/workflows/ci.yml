@@ -39,7 +39,48 @@ jobs:
           cache-dependency-path: sudar-studio/package-lock.json
       - run: npm ci
       - run: npm run lint
+      - run: npm test
       - run: npm run build
+
+  content-eval:
+    # LLM judge calibration on the golden set; non-blocking because it depends on a live provider.
+    # Deterministic golden checks already run (blocking) inside the sudar-studio `npm test` job.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: sudar-studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: sudar-studio/package-lock.json
+      - run: npm ci
+      - name: Content quality eval (golden set + LLM judge)
+        env:
+          TOGETHER_API_KEY: ${{ secrets.TOGETHER_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: npm run eval:content
+
+  intelligence:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sudar-intelligence
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: sudar-intelligence/requirements.txt
+      - run: pip install -r requirements.txt pytest
+      - name: Import smoke + tests
+        run: |
+          python -c "import src.api.main"
+          if [ -d tests ]; then python -m pytest -q tests; fi
 
   dependency-audit:
     runs-on: ubuntu-latest

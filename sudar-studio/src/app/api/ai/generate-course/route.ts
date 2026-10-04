@@ -8,7 +8,12 @@ type CourseInsert = Database['public']['Tables']['courses']['Insert']
 import { chatCompletion, resolveChatConfigError, type ChatCompletionContext } from '@/lib/ai/chat'
 import { fetchStudioOrgAiContext } from '@/lib/ai/studioOrgAiChat'
 import { mergeBlueprintAnswersIntoSettings } from '@/lib/ai/courseGeneration/blueprintMerge'
-import type { AiGenerationCourseSettings, CourseBlueprintQuestion } from '@/lib/ai/courseGeneration/types'
+import type {
+  AiGenerationCourseSettings,
+  CourseBlueprintQuestion,
+  ThemePreference,
+} from '@/lib/ai/courseGeneration/types'
+import { z } from 'zod'
 import { generateCourseMetadata } from '@/lib/ai/courseGeneration/courseMetadata'
 import {
   getOrgDefaultUiLocale,
@@ -22,6 +27,12 @@ import {
 import { suggestExperiencePackFromText } from '@/lib/themes/experiencePacks'
 import { fillEmptyModulesForCourse } from '@/lib/ai/courseGeneration'
 import { buildStudioUsageChatCtx, withUsageMetadata } from '@/lib/ai/studioUsageContext'
+import {
+  assembleHtmlExportPayload,
+  assembleScormJsonPayload,
+} from '@/lib/export/assembleCourseExport'
+import type { ModuleRow } from '@/lib/export/buildScorm12ExportZip'
+import { studioCourseEditorUrl } from '@/lib/urls/studioOrigin'
 
 /** Strip markdown code fences and extract/repair JSON for parsing. */
 function extractJson(raw: string): string {
@@ -76,13 +87,59 @@ async function callAI(messages: { role: string; content: string }[], maxTokens =
 
 const emptyModuleContent = { type: 'text', body: '' } as const
 
+const THEME_PREFERENCES = [
+  'calora_editorial',
+  'minimal_modern',
+  'vibrant_interactive',
+  'data_visualization',
+  'dark_academic',
+  'immersive_storytelling',
+] as const satisfies readonly ThemePreference[]
+
+const generateCourseRequestSchema = z.object({
+  title: z.string().trim().min(1, 'is required').max(200),
+  /** @deprecated use `brief` — kept for API compatibility; treated as author intent, not final copy */
+  description: z.string().max(4000).nullable().optional(),
+  /** Author intent; AI generates the stored `description`. */
+  brief: z.string().max(4000).nullable().optional(),
+  difficulty: z.string().max(40).default('intermediate'),
+  num_modules: z.coerce.number().int().min(1).max(20).default(5),
+  target_audience: z.string().max(500).optional(),
+  learning_outcomes: z.array(z.string().max(500)).max(20).optional(),
+  tone: z.string().max(200).optional(),
+  industry: z.string().max(200).optional(),
+  no_external_video: z.boolean().optional(),
+  blueprint_answers: z.array(z.object({ question_id: z.string().max(100), option_id: z.string().max(100) })).max(30).optional(),
+  blueprint_questions: z.array(z.unknown()).max(30).optional() as z.ZodType<CourseBlueprintQuestion[] | undefined>,
+  course_type: z.string().max(100).optional(),
+  theme_preference: z.enum(THEME_PREFERENCES).optional().catch(undefined),
+  brand_colors: z
+    .object({ primary: z.string().max(40), accent: z.string().max(40), secondary: z.string().max(40).optional() })
+    .optional(),
+  tone_preference: z.string().max(100).optional(),
+  content_density: z.enum(['concise', 'balanced', 'detailed']).optional(),
+  vary_introductions: z.boolean().optional(),
+  minimize_sidecards: z.boolean().optional(),
+  strict_component_validation: z.boolean().optional(),
+  apply_quality_filtering: z.boolean().optional(),
+  export_format: z.enum(['html', 'scorm12', 'both', 'none']).optional(),
+})
+
 export async function POST(request: NextRequest) {
   const session = await getRequestSession(request)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { user } = session
 
   const admin = createServiceRoleSupabaseClient()
-  const body = await request.json()
+  const parsedBody = generateCourseRequestSchema.safeParse(await request.json().catch(() => null))
+  if (!parsedBody.success) {
+    const first = parsedBody.error.issues[0]
+    return NextResponse.json(
+      { success: false, error: `Invalid request${first ? `: ${first.path.join('.')} ${first.message}` : ''}` },
+      { status: 400 }
+    )
+  }
+  const body = parsedBody.data
   const {
     title,
     description,
@@ -105,33 +162,8 @@ export async function POST(request: NextRequest) {
     minimize_sidecards,
     strict_component_validation,
     apply_quality_filtering,
-  } = body as {
-    title?: string
-    /** @deprecated use `brief` — kept for API compatibility; treated as author intent, not final copy */
-    description?: string | null
-    /** Author intent; AI generates the stored `description`. */
-    brief?: string | null
-    difficulty?: string
-    num_modules?: number
-    target_audience?: string
-    learning_outcomes?: string[]
-    tone?: string
-    industry?: string
-    no_external_video?: boolean
-    blueprint_answers?: { question_id: string; option_id: string }[]
-    blueprint_questions?: CourseBlueprintQuestion[]
-    course_type?: string
-    theme_preference?: string
-    brand_colors?: { primary: string; accent: string; secondary?: string }
-    tone_preference?: string
-    content_density?: 'concise' | 'balanced' | 'detailed'
-    vary_introductions?: boolean
-    minimize_sidecards?: boolean
-    strict_component_validation?: boolean
-    apply_quality_filtering?: boolean
-  }
-
-  if (!title) return NextResponse.json({ error: 'title required' }, { status: 400 })
+    export_format,
+  } = body
 
   const orgId = await getOrCreateOrg(user.id)
   const { orgSettings, privateRuntime } = await fetchStudioOrgAiContext(admin, orgId)
@@ -157,7 +189,7 @@ export async function POST(request: NextRequest) {
     ...(industry?.trim() ? { industry: industry.trim() } : {}),
     ...(no_external_video === true ? { no_external_video: true } : {}),
     ...(course_type?.trim() ? { course_type: course_type.trim() } : {}),
-    ...(theme_preference?.trim() ? { theme_preference: theme_preference.trim() } : {}),
+    ...(theme_preference ? { theme_preference } : {}),
     ...(brand_colors?.primary && brand_colors?.accent ? { brand_colors } : {}),
     ...(tone_preference?.trim() ? { tone_preference: tone_preference.trim() } : {}),
     ...(content_density ? { content_density } : {}),
@@ -315,6 +347,8 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
     chatAiCtx: withUsageMetadata(chatAiCtx, { course_id: course.id }),
   })
 
+  const studioUrl = studioCourseEditorUrl(course.id, request.url)
+
   if (fillResult.error || !fillResult.completed) {
     return NextResponse.json(
       {
@@ -322,12 +356,55 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
           fillResult.error ??
           'Course was created but module content generation did not finish. You can try again from the course page or contact support.',
         course_id: course.id,
+        studio_url: studioUrl,
         modules_generated: fillResult.modules_generated,
       },
       { status: 502 }
     )
   }
 
+  const { data: filledModules } = await admin
+    .from('modules')
+    .select('title, order_index, content')
+    .eq('course_id', course.id)
+    .order('order_index', { ascending: true })
+
+  const moduleRowsForExport = (filledModules ?? []) as ModuleRow[]
   const moduleResults = moduleTitles.map((t, idx) => ({ title: t, order_index: idx }))
-  return NextResponse.json({ course_id: course.id, modules: moduleResults })
+  const wantHtml = export_format === 'html' || export_format === 'both'
+  const wantScorm = export_format === 'scorm12' || export_format === 'both'
+
+  const payload: {
+    success: true
+    course_id: string
+    studio_url: string
+    modules: { title: string; order_index: number }[]
+    html?: ReturnType<typeof assembleHtmlExportPayload>
+    scorm?: Awaited<ReturnType<typeof assembleScormJsonPayload>>
+  } = {
+    success: true,
+    course_id: course.id,
+    studio_url: studioUrl,
+    modules: moduleResults,
+  }
+
+  if (wantHtml) {
+    payload.html = assembleHtmlExportPayload({
+      courseId: course.id,
+      courseTitle: title,
+      studioUrl,
+      modules: moduleRowsForExport,
+    })
+  }
+  if (wantScorm) {
+    payload.scorm = await assembleScormJsonPayload({
+      admin,
+      courseId: course.id,
+      courseTitle: title,
+      studioUrl,
+      modules: moduleRowsForExport,
+    })
+  }
+
+  return NextResponse.json(payload)
 }
