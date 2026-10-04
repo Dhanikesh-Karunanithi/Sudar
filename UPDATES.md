@@ -21,9 +21,10 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 - **Theme**: Browser agents used Sudar as six personas (report: `docs/beta/PERSONA_TEST_REPORT_2026-09-30.md`). Four P0s and two P1s fixed before the beta merge.
 - **AI**: Orgs with Sudar AI enabled fall through to the cloud chain when the deployment lacks `ALLOW_ORG_PLATFORM_AI` (generation and tutor were blocked). Tutor and memory defaults moved to the serverless `meta-llama/Llama-3.3-70B-Instruct-Turbo`, because Together retired `gpt-oss-20b` / `gemma-3n` from serverless. The cloud chain retries a provider with its default model when a pinned model is unavailable.
 - **Security**: Studio onboarding org steps (rename, invites, governance) are now Admin-only, and the org slug no longer changes on rename.
-- **Learner twin**: `learner_profiles` inserts now set `updated_at` (the column has no DB default), the tutor memory route inserts when the row is missing, and 29 missing rows were backfilled. **Operators:** apply `supabase/migrations/20261004120000_learner_profiles_updated_at_default.sql` via Supabase MCP.
+- **Learner twin**: `learner_profiles` inserts now set `updated_at` (the column has no DB default), the tutor memory route inserts when the row is missing, and 29 missing rows were backfilled. Migration `20261004120000_learner_profiles_updated_at_default.sql` is applied to prod (`updated_at` now defaults to `now()`).
 - **Learn**: Enrolment no longer 500s when email notifications can't be signed (`NOTIFICATION_UNSUBSCRIBE_SECRET` unset); proactive tutor prompts no longer crash.
-- **Ops**: `scripts/ops/provision-persona-testers.mjs` creates QA persona accounts in Sudar Beta (credentials in gitignored `.local-backups/`).
+- **Ops**: `scripts/ops/provision-persona-testers.mjs` creates QA persona accounts in Sudar Beta (credentials in gitignored `.local-backups/`). E2E secrets use the Priya (creator) and Arjun (learner) personas.
+- **Release**: Merged to `main` and tagged `v0.9.0-beta.2`. The E2E smoke against prod (with the tutor) passed 16 tests; the sim test is skipped until the `E2E_SIM_SCENARIO_ID` repo variable is set. Prod still needs `NOTIFICATION_UNSUBSCRIBE_SECRET` for enrolment emails, and the SudarVid host needs `TOGETHER_TEXT_MODEL`.
 
 ### 2026-09-29 — Beta readiness (content quality, one learning loop, hardening)
 
