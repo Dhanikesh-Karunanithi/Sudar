@@ -37,15 +37,16 @@ export async function PATCH(request: NextRequest) {
     .from('learner_profiles')
     .select('ai_tutor_context')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
+  const now = new Date().toISOString()
   const existing = (profile?.ai_tutor_context as Record<string, unknown>) ?? {}
-  const updated = { ...existing, ...safeUpdates, last_updated: new Date().toISOString() }
+  const updated = { ...existing, ...safeUpdates, last_updated: now }
 
-  const { error } = await admin
-    .from('learner_profiles')
-    .update({ ai_tutor_context: updated })
-    .eq('user_id', user.id)
+  // An update on a missing row silently no-ops, which left onboarding answers unsaved for new learners.
+  const { error } = profile
+    ? await admin.from('learner_profiles').update({ ai_tutor_context: updated, updated_at: now }).eq('user_id', user.id)
+    : await admin.from('learner_profiles').insert({ user_id: user.id, ai_tutor_context: updated, updated_at: now })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })

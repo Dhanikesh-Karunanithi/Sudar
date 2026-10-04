@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (!existingProfile) {
-    await admin.from('learner_profiles').insert({ user_id: user.id })
+    await admin.from('learner_profiles').insert({ user_id: user.id, updated_at: new Date().toISOString() })
   }
 
   // Personalized course welcome is opt-in from the course viewer ("Personalize for me")
