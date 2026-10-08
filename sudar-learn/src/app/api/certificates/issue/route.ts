@@ -27,6 +27,38 @@ export async function POST(request: NextRequest) {
   if (!path) return NextResponse.json({ error: 'Path not found' }, { status: 404 })
   if (!path.issues_certificate) return NextResponse.json({ error: 'Path does not issue certificates' }, { status: 400 })
 
+  const { data: pathEnrollment } = await admin
+    .from('enrollments')
+    .select('personalized_sequence')
+    .eq('user_id', user.id)
+    .eq('path_id', path_id)
+    .maybeSingle()
+
+  if (!pathEnrollment) {
+    return NextResponse.json({ error: 'Not enrolled in this path' }, { status: 403 })
+  }
+
+  const seq = (pathEnrollment.personalized_sequence as Array<{ course_id: string; is_mandatory: boolean }> | null)
+    ?? (path.courses as Array<{ course_id: string; is_mandatory: boolean }> | null)
+    ?? []
+  const mandatoryCourseIds = seq.filter((c) => c.is_mandatory).map((c) => c.course_id)
+
+  if (mandatoryCourseIds.length > 0) {
+    const { data: mandatoryStatuses } = await admin
+      .from('enrollments')
+      .select('course_id, status')
+      .eq('user_id', user.id)
+      .in('course_id', mandatoryCourseIds)
+
+    const allDone = mandatoryCourseIds.every(
+      (cid) => mandatoryStatuses?.find((e) => e.course_id === cid)?.status === 'completed',
+    )
+
+    if (!allDone) {
+      return NextResponse.json({ error: 'Mandatory courses not completed' }, { status: 403 })
+    }
+  }
+
   // Check existing cert
   const { data: existing } = await admin
     .from('certifications')
