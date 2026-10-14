@@ -6,6 +6,10 @@
  */
 import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { validateAlpKey, getAlpKeyFromRequest, rejectAlpUserOutsideOrg } from '@/lib/alp-auth'
+import {
+  computeEnrollmentProgressPercent,
+  countDistinctModulesCompleted,
+} from '@/lib/learner/courseEnrollmentProgress'
 import type { Json } from '@/types/database'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -56,16 +60,13 @@ export async function POST(request: NextRequest) {
       .select('id', { count: 'exact', head: true })
       .eq('course_id', course_id)
 
-    const { count: completedModules } = await admin
-      .from('learning_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user_id)
-      .eq('course_id', course_id)
-      .eq('event_type', 'module_complete')
+    const completedModules = await countDistinctModulesCompleted(admin, user_id, course_id)
 
-    if (totalModules != null && completedModules != null && totalModules > 0) {
-      const progress = Math.min(100, Math.round((completedModules / totalModules) * 100))
-      const status = progress >= 100 ? 'completed' : 'in_progress'
+    if (totalModules != null && totalModules > 0) {
+      const { progressPct: progress, status } = computeEnrollmentProgressPercent(
+        completedModules,
+        totalModules,
+      )
 
       await admin
         .from('enrollments')
