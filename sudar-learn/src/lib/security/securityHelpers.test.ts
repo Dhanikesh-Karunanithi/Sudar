@@ -1,7 +1,7 @@
 import { describe, expect, it, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
-import { courseIdFromScormPath, normalizeStoragePath } from '@/lib/security/scormAccess'
+import { canLearnerAccessScormPath, courseIdFromScormPath, normalizeStoragePath } from '@/lib/security/scormAccess'
 import {
   isSafeSudarVidJobId,
   normalizeRenderAssetPath,
@@ -27,6 +27,53 @@ describe('SCORM storage path helpers', () => {
   it('extracts course id only from SCORM package paths', () => {
     expect(courseIdFromScormPath('scorm-packages/course-1/index.html')).toBe('course-1')
     expect(courseIdFromScormPath('course-media/course-1/index.html')).toBeNull()
+  })
+})
+
+describe('canLearnerAccessScormPath', () => {
+  const storagePath = 'scorm-packages/course-1/index.html'
+
+  function mockAdmin(handlers: {
+    enrollment?: { id: string } | null
+    course?: { org_id: string | null } | null
+    member?: { role: string | null } | null
+  }) {
+    return {
+      from: (table: string) => {
+        const query = {
+          select: () => query,
+          eq: () => query,
+          maybeSingle: async () => {
+            if (table === 'enrollments') return { data: handlers.enrollment ?? null }
+            if (table === 'courses') return { data: handlers.course ?? null }
+            if (table === 'org_members') return { data: handlers.member ?? null }
+            return { data: null }
+          },
+        }
+        return query
+      },
+    }
+  }
+
+  it('allows enrolled learners', async () => {
+    const admin = mockAdmin({ enrollment: { id: 'enroll-1' } })
+    await expect(canLearnerAccessScormPath(admin, 'user-1', storagePath)).resolves.toBe(true)
+  })
+
+  it('allows org content editors without enrollment', async () => {
+    const admin = mockAdmin({
+      course: { org_id: 'org-1' },
+      member: { role: 'CREATOR' },
+    })
+    await expect(canLearnerAccessScormPath(admin, 'editor-1', storagePath)).resolves.toBe(true)
+  })
+
+  it('denies org learners without enrollment', async () => {
+    const admin = mockAdmin({
+      course: { org_id: 'org-1' },
+      member: { role: 'LEARNER' },
+    })
+    await expect(canLearnerAccessScormPath(admin, 'learner-1', storagePath)).resolves.toBe(false)
   })
 })
 
