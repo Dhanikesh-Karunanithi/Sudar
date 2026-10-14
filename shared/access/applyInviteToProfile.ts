@@ -4,16 +4,6 @@ import { redeemInviteCode, validateInviteCode } from './inviteCodes'
 
 type AccessSupabase = SupabaseClient<Record<string, unknown>>
 
-export async function ensureInviteRedeemed(
-  supabase: AccessSupabase,
-  userId: string,
-  rawCode: string
-): Promise<void> {
-  const validation = await validateInviteCode(supabase, rawCode)
-  if (!validation.valid) return
-  await redeemInviteCode(supabase, userId, rawCode)
-}
-
 export async function applyInviteToProfile(
   supabase: AccessSupabase,
   userId: string,
@@ -23,10 +13,9 @@ export async function applyInviteToProfile(
     .from('profiles')
     .select('signup_code_used, access_tier')
     .eq('id', userId)
-    .single()
+    .maybeSingle()
 
   if (profile?.signup_code_used) {
-    await ensureInviteRedeemed(supabase, userId, profile.signup_code_used)
     return { ok: true, alreadyApplied: true }
   }
 
@@ -35,7 +24,12 @@ export async function applyInviteToProfile(
     return { ok: false, error: validation.error }
   }
 
-  await supabase
+  const redeemed = await redeemInviteCode(supabase, userId, rawCode, { skipProfileCheck: true })
+  if (!redeemed.ok) {
+    return { ok: false, error: redeemed.error }
+  }
+
+  const { error: updateError } = await supabase
     .from('profiles')
     .update({
       access_tier: validation.grantsTier ?? 'early_access',
@@ -43,7 +37,9 @@ export async function applyInviteToProfile(
     })
     .eq('id', userId)
 
-  await redeemInviteCode(supabase, userId, rawCode)
+  if (updateError) {
+    return { ok: false, error: 'Could not apply invite code to profile.' }
+  }
 
   return { ok: true }
 }

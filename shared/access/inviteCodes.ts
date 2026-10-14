@@ -3,9 +3,38 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 type AccessSupabase = SupabaseClient<Record<string, unknown>>
 
 import type { InviteCodeType, InviteValidation } from './types'
+import { ORG_INVITE_CODE, ORG_PROVISIONED_CODE, GRANDFATHERED_CODE } from './constants'
+
+const PROFILE_INVITE_MARKERS = new Set([ORG_INVITE_CODE, ORG_PROVISIONED_CODE, GRANDFATHERED_CODE])
 
 function normalizeCode(code: string): string {
   return code.trim().toUpperCase()
+}
+
+type RedeemRpcResult = {
+  ok: boolean
+  error?: string
+  code?: string
+}
+
+async function atomicRedeemInviteCode(
+  supabase: AccessSupabase,
+  code: string
+): Promise<{ ok: true; code: string } | { ok: false; error: string }> {
+  const { data, error } = await supabase.rpc('redeem_invite_code_internal', {
+    raw_code: code,
+  })
+
+  if (error) {
+    return { ok: false, error: 'Could not redeem invite code.' }
+  }
+
+  const result = data as RedeemRpcResult | null
+  if (!result?.ok) {
+    return { ok: false, error: result?.error ?? 'Invalid or expired invite code.' }
+  }
+
+  return { ok: true, code: result.code ?? code }
 }
 
 export async function validateInviteCode(
@@ -46,10 +75,16 @@ export async function validateInviteCode(
   }
 }
 
+export type RedeemInviteOptions = {
+  /** When true, skip the profile ownership check (apply-profile flow redeems before writing). */
+  skipProfileCheck?: boolean
+}
+
 export async function redeemInviteCode(
   supabase: AccessSupabase,
-  _userId: string,
-  rawCode: string
+  userId: string,
+  rawCode: string,
+  options: RedeemInviteOptions = {}
 ): Promise<{ ok: boolean; error?: string }> {
   const validation = await validateInviteCode(supabase, rawCode)
   if (!validation.valid) {
@@ -58,21 +93,22 @@ export async function redeemInviteCode(
 
   const code = normalizeCode(rawCode)
 
-  const { data: invite } = await supabase
-    .from('invite_codes')
-    .select('id, uses_count, max_uses')
-    .eq('code', code)
-    .single()
+  if (!options.skipProfileCheck) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('signup_code_used')
+      .eq('id', userId)
+      .maybeSingle()
 
-  if (invite) {
-    if (invite.max_uses != null && invite.uses_count >= invite.max_uses) {
-      return { ok: false, error: 'Invite code already fully redeemed.' }
+    const profileCode = profile?.signup_code_used
+    if (!profileCode || PROFILE_INVITE_MARKERS.has(profileCode)) {
+      return { ok: false, error: 'Invite code is not active on this account.' }
     }
-    await supabase
-      .from('invite_codes')
-      .update({ uses_count: invite.uses_count + 1 })
-      .eq('id', invite.id)
+    if (normalizeCode(profileCode) !== code) {
+      return { ok: false, error: 'Invite code is not active on this account.' }
+    }
   }
 
-  return { ok: true }
+  const redeemed = await atomicRedeemInviteCode(supabase, code)
+  return redeemed.ok ? { ok: true } : { ok: false, error: redeemed.error }
 }
