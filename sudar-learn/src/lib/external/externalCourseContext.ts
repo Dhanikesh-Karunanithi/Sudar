@@ -8,13 +8,17 @@ export async function loadExternalCourseContext(
   const { data: course } = await admin
     .from('courses')
     .select(
-      'title, description, external_provider, external_url, allow_tutor_discussion, content_access_mode, external_metadata',
+      'title, description, external_provider, external_url, content_access_mode, external_metadata',
     )
     .eq('id', courseId)
     .eq('is_external', true)
     .maybeSingle()
 
   if (!course) return ''
+
+  // allow_tutor_discussion may be absent until migration 20260602120000 is applied.
+  const allowTutorDiscussion =
+    (course as { allow_tutor_discussion?: boolean }).allow_tutor_discussion !== false
 
   const { data: extRaw } = await admin
     .from('external_course_data' as 'courses')
@@ -31,7 +35,7 @@ export async function loadExternalCourseContext(
   }
   const ext = extRaw as ExtRow | null
 
-  if (course.allow_tutor_discussion === false || course.content_access_mode === 'iframe_only') {
+  if (!allowTutorDiscussion || course.content_access_mode === 'iframe_only') {
     return `[External course "${course.title}" on ${course.external_provider}. Tutor can recommend but not discuss detailed content — learner views on provider site.]`
   }
 
