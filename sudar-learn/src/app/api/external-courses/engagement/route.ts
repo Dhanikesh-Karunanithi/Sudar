@@ -31,11 +31,11 @@ export async function POST(request: NextRequest) {
 
   await recordExternalCourseEngagement(admin, session.user.id, course_id, patch)
 
-  if (event_type !== 'click') {
+  if (event_type === 'view') {
     await admin.from('learning_events').insert({
       user_id: session.user.id,
       course_id,
-      event_type: event_type === 'complete' ? 'module_complete' : 'module_start',
+      event_type: 'module_start',
       modality: 'text',
       duration_secs: duration_secs ?? null,
       payload: { source: 'external_course', external_event: event_type },
