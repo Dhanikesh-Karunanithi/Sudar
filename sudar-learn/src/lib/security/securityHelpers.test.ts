@@ -1,7 +1,7 @@
 import { describe, expect, it, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
-import { courseIdFromScormPath, normalizeStoragePath } from '@/lib/security/scormAccess'
+import { courseIdFromScormPath, canLearnerAccessScormPath, normalizeStoragePath } from '@/lib/security/scormAccess'
 import {
   isSafeSudarVidJobId,
   normalizeRenderAssetPath,
@@ -27,6 +27,94 @@ describe('SCORM storage path helpers', () => {
   it('extracts course id only from SCORM package paths', () => {
     expect(courseIdFromScormPath('scorm-packages/course-1/index.html')).toBe('course-1')
     expect(courseIdFromScormPath('course-media/course-1/index.html')).toBeNull()
+  })
+})
+
+type ScormFixture = {
+  enrollments: Array<{ user_id: string; course_id: string }>
+  courses: Array<{ id: string; org_id: string | null; status: string }>
+  orgMembers: Array<{ org_id: string; user_id: string; role: string }>
+}
+
+function mockScormAdmin(fixture: ScormFixture) {
+  const tables: Record<string, Array<Record<string, string>>> = {
+    enrollments: fixture.enrollments.map((row, i) => ({ id: `enr-${i}`, ...row })),
+    courses: fixture.courses.map((row) => ({ ...row })),
+    org_members: fixture.orgMembers.map((row, i) => ({ id: `mem-${i}`, ...row })),
+  }
+
+  return {
+    from(table: string) {
+      const rows = tables[table] ?? []
+      const filters: Array<{ column: string; value: string }> = []
+      const builder = {
+        select() {
+          return builder
+        },
+        eq(column: string, value: string) {
+          filters.push({ column, value })
+          return builder
+        },
+        async maybeSingle() {
+          const match = rows.find((row) =>
+            filters.every((f) => row[f.column] === f.value),
+          )
+          return { data: match ?? null }
+        },
+      }
+      return builder
+    },
+  }
+}
+
+describe('canLearnerAccessScormPath', () => {
+  const path = 'scorm-packages/course-1/index.html'
+  const courseId = 'course-1'
+  const orgId = 'org-1'
+
+  it('allows enrolled learners', async () => {
+    const admin = mockScormAdmin({
+      enrollments: [{ user_id: 'learner-1', course_id: courseId }],
+      courses: [],
+      orgMembers: [],
+    })
+    await expect(canLearnerAccessScormPath(admin, 'learner-1', path)).resolves.toBe(true)
+  })
+
+  it('denies org learners without enrollment', async () => {
+    const admin = mockScormAdmin({
+      enrollments: [],
+      courses: [{ id: courseId, org_id: orgId, status: 'published' }],
+      orgMembers: [{ org_id: orgId, user_id: 'learner-1', role: 'LEARNER' }],
+    })
+    await expect(canLearnerAccessScormPath(admin, 'learner-1', path)).resolves.toBe(false)
+  })
+
+  it('allows org content editors to preview published courses without enrollment', async () => {
+    const admin = mockScormAdmin({
+      enrollments: [],
+      courses: [{ id: courseId, org_id: orgId, status: 'published' }],
+      orgMembers: [{ org_id: orgId, user_id: 'creator-1', role: 'CREATOR' }],
+    })
+    await expect(canLearnerAccessScormPath(admin, 'creator-1', path)).resolves.toBe(true)
+  })
+
+  it('allows org content editors to preview draft courses without enrollment', async () => {
+    const admin = mockScormAdmin({
+      enrollments: [],
+      courses: [{ id: courseId, org_id: orgId, status: 'draft' }],
+      orgMembers: [{ org_id: orgId, user_id: 'admin-1', role: 'ADMIN' }],
+    })
+    await expect(canLearnerAccessScormPath(admin, 'admin-1', path)).resolves.toBe(true)
+  })
+
+  it('denies users outside the course org', async () => {
+    const admin = mockScormAdmin({
+      enrollments: [],
+      courses: [{ id: courseId, org_id: orgId, status: 'published' }],
+      orgMembers: [],
+    })
+    await expect(canLearnerAccessScormPath(admin, 'outsider-1', path)).resolves.toBe(false)
   })
 })
 
