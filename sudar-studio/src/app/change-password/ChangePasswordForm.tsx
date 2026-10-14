@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 
 export function ChangePasswordForm() {
   const router = useRouter()
@@ -23,16 +22,14 @@ export function ChangePasswordForm() {
       return
     }
     setLoading(true)
-    const supabase = createClient()
-    const { error: updateError } = await supabase.auth.updateUser({ password })
-    if (updateError) {
-      setError(updateError.message)
-      setLoading(false)
-      return
-    }
-    const res = await fetch('/api/auth/complete-password-change', { method: 'POST' })
+    const res = await fetch('/api/auth/complete-password-change', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    })
     if (!res.ok) {
-      setError('Failed to complete. Please try again.')
+      const data = await res.json().catch(() => ({}))
+      setError(typeof data.error === 'string' ? data.error : 'Failed to complete. Please try again.')
       setLoading(false)
       return
     }
