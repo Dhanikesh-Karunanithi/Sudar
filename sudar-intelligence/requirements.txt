@@ -1,6 +1,6 @@
 # ByteOS Intelligence — Python Dependencies
 fastapi==0.115.0
-uvicorn[standard]==0.30.0
+uvicorn[standard]==0.46.0
 pydantic==2.8.0
 pydantic-settings==2.4.0
 PyYAML>=6.0.1
