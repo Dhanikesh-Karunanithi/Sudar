@@ -10,6 +10,11 @@
 import { createClient, createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { dispatchUserNotification } from '@/lib/notifications/dispatch'
 import { NextRequest, NextResponse } from 'next/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { z } from 'zod'
+import { courseBelongsToOrg, userInOrg } from '@/lib/security/contentEditorAccess'
+
+const pathEnrollBodySchema = z.object({ path_id: z.string().uuid() })
 
 interface PathCourse {
   course_id: string
@@ -64,18 +69,24 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createServiceRoleSupabaseClient()
-  const { path_id } = await request.json()
-  if (!path_id) return NextResponse.json({ error: 'path_id required' }, { status: 400 })
+  const parsed = pathEnrollBodySchema.safeParse(await request.json().catch(() => ({})))
+  if (!parsed.success) return NextResponse.json({ error: 'path_id required' }, { status: 400 })
+  const { path_id } = parsed.data
 
   // Load path
   const { data: path } = await admin
     .from('learning_paths')
-    .select('id, title, status, courses, is_adaptive, issues_certificate')
+    .select('id, title, status, courses, is_adaptive, issues_certificate, org_id')
     .eq('id', path_id)
     .eq('status', 'published')
     .single()
 
-  if (!path) return NextResponse.json({ error: 'Path not found or not published' }, { status: 404 })
+  if (
+    !path ||
+    !(await userInOrg(admin as unknown as SupabaseClient, user.id, path.org_id as string | null))
+  ) {
+    return NextResponse.json({ error: 'Path not found or not published' }, { status: 404 })
+  }
 
   // Check for existing enrollment
   const { data: existing } = await admin
@@ -199,8 +210,12 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Auto-enroll in individual courses for progress tracking
+  // Auto-enroll in individual courses for progress tracking (same tenant as the path)
+  const pathOrgId = path.org_id as string
   for (const c of personalizedSequence) {
+    if (!(await courseBelongsToOrg(admin as unknown as SupabaseClient, c.course_id, pathOrgId))) {
+      continue
+    }
     const { data: ce } = await admin
       .from('enrollments')
       .select('id')
