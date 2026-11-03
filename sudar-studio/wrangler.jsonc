@@ -21,10 +21,6 @@
   "observability": {
     "enabled": true
   },
-  "limits": {
-    "cpu_ms": 300000,
-    "subrequests": 100000
-  },
   "vars": {
     "EARLY_ACCESS_ENABLED": "true",
     "ADMIN_EMAILS": "dhanikesh.karunanithi@foundever.com,connect@dhanikeshkarunanithi.com"
