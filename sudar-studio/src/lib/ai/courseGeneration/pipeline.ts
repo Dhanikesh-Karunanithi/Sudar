@@ -170,6 +170,10 @@ export async function fillEmptyModulesForCourse(
   let totalQualityIssues = 0
   let modulesNeedingReview = 0
   const gateConfig = qualityGateConfig()
+  // Cloudflare Workers Free allows ~50 subrequests/invocation. Full fill (judge +
+  // component picker + envelope + media) exceeds that; lean mode keeps 1 content
+  // call per module so MCP/ChatGPT course create can finish.
+  const leanFill = process.env.LEAN_COURSE_FILL === 'true'
 
   const validTypes = new Set(COMPONENT_PROFILES.map((p) => p.type))
   const forbiddenDisallowed: ComponentType[] | undefined = (() => {
@@ -213,7 +217,7 @@ export async function fillEmptyModulesForCourse(
     )
 
     try {
-      const draft = await callAI(contentMessages, 2200, chatAiCtx, 'module_fill')
+      const draft = await callAI(contentMessages, leanFill ? 1600 : 2200, chatAiCtx, 'module_fill')
 
       const gate = await gateModuleMarkdown({
         courseTitle: course.title,
@@ -222,7 +226,7 @@ export async function fillEmptyModulesForCourse(
         learningOutcomes: genWithType?.learning_outcomes,
         bloomLevel: resolvedEntry.bloomLevel,
         documentGrounding: docChunk,
-        judgeEnabled: genWithType?.apply_quality_filtering !== false,
+        judgeEnabled: !leanFill && genWithType?.apply_quality_filtering !== false,
         chatCtx: chatAiCtx,
         regenerate: async (previous, critique) => {
           const refined = await callAI(
@@ -255,7 +259,7 @@ export async function fillEmptyModulesForCourse(
       const noExternal = gen?.no_external_video === true
       // Media lookups burn Cloudflare Worker subrequests; skip by default so
       // MCP/generate-course can finish under Workers limits.
-      const skipMediaLookups = process.env.SKIP_COURSE_MEDIA_LOOKUPS !== 'false'
+      const skipMediaLookups = leanFill || process.env.SKIP_COURSE_MEDIA_LOOKUPS !== 'false'
       let verifiedVideo: { url: string; title: string } | null = null
       if (!noExternal && !skipMediaLookups) {
         try {
@@ -266,25 +270,27 @@ export async function fillEmptyModulesForCourse(
       }
       const allowVideo = !noExternal && verifiedVideo != null
 
-      let selected = await selectComponentsForModule(mod.title, contentSummary, role, {
-        excludeTypes: recentExcludes(recentComponentTypes),
-        disallowedTypes: forbiddenDisallowed,
-        allowVideoInPrompt: allowVideo,
-        verifiedVideoUrl: verifiedVideo?.url ?? null,
-        chatContext: chatAiCtx,
-        bloomLevel: resolvedEntry.bloomLevel,
-        archetype: resolvedEntry.archetype,
-        learningOutcomes: gen?.learning_outcomes,
-        assessmentDensity: gen?.assessment_density,
-        interactivityLevel: gen?.interactivity_level,
-        primaryPedagogy: gen?.primary_pedagogy,
-        moduleFullText: content,
-        courseTypeCounts: { ...courseComponentCounts },
-        moduleIndex: modIndex,
-        totalModules: modulesOrdered.length,
-        courseType,
-        strictValidation: genWithType?.strict_component_validation !== false,
-      })
+      let selected = leanFill
+        ? []
+        : await selectComponentsForModule(mod.title, contentSummary, role, {
+            excludeTypes: recentExcludes(recentComponentTypes),
+            disallowedTypes: forbiddenDisallowed,
+            allowVideoInPrompt: allowVideo,
+            verifiedVideoUrl: verifiedVideo?.url ?? null,
+            chatContext: chatAiCtx,
+            bloomLevel: resolvedEntry.bloomLevel,
+            archetype: resolvedEntry.archetype,
+            learningOutcomes: gen?.learning_outcomes,
+            assessmentDensity: gen?.assessment_density,
+            interactivityLevel: gen?.interactivity_level,
+            primaryPedagogy: gen?.primary_pedagogy,
+            moduleFullText: content,
+            courseTypeCounts: { ...courseComponentCounts },
+            moduleIndex: modIndex,
+            totalModules: modulesOrdered.length,
+            courseType,
+            strictValidation: genWithType?.strict_component_validation !== false,
+          })
 
       selected = sanitizeVideoComponents(selected, {
         allowExternalVideo: !noExternal,
@@ -338,36 +344,38 @@ export async function fillEmptyModulesForCourse(
             visibility?: 'hidden' | 'floating' | 'visible'
           }
         | undefined
-      try {
-        const moduleOpeningPreview = content.split('\n').slice(0, 8).join('\n')
-        const envelopeMessages = buildEnvelopePrompt(
-          mod.title,
-          content,
-          (resolvedEntry.archetype ?? 'cold-open') as string,
-          {
-            minimizeSideCard: genWithType?.minimize_sidecards !== false,
-            moduleOpeningPreview,
-          }
-        )
-        const envelopeRaw = await callAI(envelopeMessages, 800, chatAiCtx, 'other')
-        const envelope = parseEnvelope(envelopeRaw)
-        if (envelope) {
-          if (
-            envelope.entryState &&
-            !contentHasGenericScenarioDuplication(envelope.entryState.content, content)
-          ) {
-            entryState = envelope.entryState
-          }
-          exitState = envelope.exitState
-          if (envelope.sideCard) {
-            sideCard = {
-              ...envelope.sideCard,
-              visibility: envelope.sideCard.visibility ?? 'hidden',
+      if (!leanFill) {
+        try {
+          const moduleOpeningPreview = content.split('\n').slice(0, 8).join('\n')
+          const envelopeMessages = buildEnvelopePrompt(
+            mod.title,
+            content,
+            (resolvedEntry.archetype ?? 'cold-open') as string,
+            {
+              minimizeSideCard: genWithType?.minimize_sidecards !== false,
+              moduleOpeningPreview,
+            }
+          )
+          const envelopeRaw = await callAI(envelopeMessages, 800, chatAiCtx, 'other')
+          const envelope = parseEnvelope(envelopeRaw)
+          if (envelope) {
+            if (
+              envelope.entryState &&
+              !contentHasGenericScenarioDuplication(envelope.entryState.content, content)
+            ) {
+              entryState = envelope.entryState
+            }
+            exitState = envelope.exitState
+            if (envelope.sideCard) {
+              sideCard = {
+                ...envelope.sideCard,
+                visibility: envelope.sideCard.visibility ?? 'hidden',
+              }
             }
           }
+        } catch {
+          // envelope optional
         }
-      } catch {
-        // envelope optional
       }
 
       const storedQuality = toStoredQuality(gate, interactiveQuizIssues(interactiveElements))
