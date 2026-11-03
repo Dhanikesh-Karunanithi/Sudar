@@ -47,6 +47,6 @@ describe('cloud chat fallback', () => {
     })
 
     expect(result.content).toBe('hello')
-    expect(models).toEqual(['openai/gpt-oss-20b', 'meta-llama/Llama-3.3-70B-Instruct-Turbo'])
+    expect(models).toEqual(['openai/gpt-oss-20b', 'openai/gpt-oss-120b'])
   })
 })

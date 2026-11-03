@@ -36,7 +36,8 @@ const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
 
 const DEFAULT_MODEL_BY_PROVIDER: Record<string, string> = {
   openrouter: 'openai/gpt-4o-mini',
-  together: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+  // Together retired Llama-3.3-70B-Instruct-Turbo from serverless (2026-10-22).
+  together: 'openai/gpt-oss-120b',
   openai: 'gpt-4o-mini',
   anthropic: 'claude-3-5-sonnet-20241022',
   custom: 'gemma3:4b',
@@ -97,13 +98,17 @@ function getApiKeyAndUrl(provider: string): { key: string; url: string } {
 }
 
 function resolveModel(provider: string, options: PlatformChatOptions, override?: string): string {
-  return (
-    options.model ??
-    override ??
-    process.env.AI_CHAT_DEFAULT_MODEL?.trim() ??
-    DEFAULT_MODEL_BY_PROVIDER[provider] ??
-    DEFAULT_MODEL_BY_PROVIDER.together
-  )
+  if (options.model?.trim()) return options.model.trim()
+  if (override?.trim()) return override.trim()
+  // AI_CHAT_DEFAULT_MODEL is for custom/local runtimes (Ollama). Do not apply it to cloud
+  // providers — a Together model id in env would poison OpenRouter/OpenAI fallbacks.
+  if (provider === 'custom') {
+    return (
+      process.env.AI_CHAT_DEFAULT_MODEL?.trim() ||
+      DEFAULT_MODEL_BY_PROVIDER.custom
+    )
+  }
+  return DEFAULT_MODEL_BY_PROVIDER[provider] ?? DEFAULT_MODEL_BY_PROVIDER.openrouter
 }
 
 async function chatOpenAICompatible(

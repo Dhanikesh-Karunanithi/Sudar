@@ -126,6 +126,18 @@ const generateCourseRequestSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  try {
+    return await postGenerateCourse(request)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return NextResponse.json(
+      { success: false, error: `Course generation failed: ${message}` },
+      { status: 500 }
+    )
+  }
+}
+
+async function postGenerateCourse(request: NextRequest) {
   const session = await getRequestSession(request)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { user } = session
@@ -306,11 +318,26 @@ Example: ["Introduction", "Core Concepts", "Practical Applications", "Advanced T
 
   let moduleTitles: string[] = []
   try {
-    const raw = await callAI([{ role: 'user', content: outlinePrompt }], 300, chatAiCtx)
+    const raw = await callAI([{ role: 'user', content: outlinePrompt }], 600, chatAiCtx)
     const jsonStr = extractJson(raw)
     if (!jsonStr.startsWith('[')) throw new Error('Outline response did not contain a JSON array')
-    moduleTitles = JSON.parse(jsonStr)
-    if (!Array.isArray(moduleTitles) || moduleTitles.length === 0) throw new Error('Outline must be a non-empty array of module titles')
+    const parsed: unknown = JSON.parse(jsonStr)
+    const flattenTitles = (value: unknown): string[] => {
+      if (!Array.isArray(value)) return []
+      if (value.every((item) => typeof item === 'string')) {
+        return value.map((item) => String(item).trim()).filter(Boolean)
+      }
+      if (value.length === 1 && Array.isArray(value[0])) {
+        return flattenTitles(value[0])
+      }
+      return value
+        .flatMap((item) => (typeof item === 'string' ? [item] : Array.isArray(item) ? item : []))
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean)
+    }
+    moduleTitles = flattenTitles(parsed)
+    if (moduleTitles.length === 0) throw new Error('Outline must be a non-empty array of module titles')
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     return NextResponse.json(

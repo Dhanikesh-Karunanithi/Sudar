@@ -12,17 +12,18 @@ export type OrgMembership = {
 /**
  * Returns the user's first org, or auto-creates a "Personal Workspace"
  * on their first Studio visit. Every course requires an org_id.
- * Uses the admin client (service role) for org/member provisioning to
- * bypass RLS policies that would otherwise block the initial insert.
+ * Uses the admin client (service role) for membership lookup and org/member
+ * provisioning so RLS on `org_members` cannot hide existing memberships and
+ * accidentally spawn an empty personal workspace (MCP / Bearer sessions).
  */
 export async function getOrCreateOrg(userId: string): Promise<string> {
-  const supabase = await createClient()
   const admin = createServiceRoleSupabaseClient()
 
   const active = await getActiveOrgId(userId)
   if (active) return active
 
-  const { data: membership } = await supabase
+  // Service role — never rely on the cookie/Bearer user client here.
+  const { data: membership } = await admin
     .from('org_members')
     .select('org_id')
     .eq('user_id', userId)
@@ -35,11 +36,11 @@ export async function getOrCreateOrg(userId: string): Promise<string> {
     return membership.org_id
   }
 
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from('profiles')
     .select('full_name')
     .eq('id', userId)
-    .single()
+    .maybeSingle()
 
   const orgName = profile?.full_name
     ? `${profile.full_name}'s Workspace`
@@ -53,7 +54,32 @@ export async function getOrCreateOrg(userId: string): Promise<string> {
     .select('id')
     .single()
 
-  if (error || !org) throw new Error(`Failed to create org: ${error?.message}`)
+  if (error || !org) {
+    // Race / prior MCP session: personal workspace slug already exists.
+    const { data: existing } = await admin
+      .from('organisations')
+      .select('id')
+      .eq('slug', slug)
+      .maybeSingle()
+    if (existing?.id) {
+      const { data: existingMember } = await admin
+        .from('org_members')
+        .select('org_id')
+        .eq('org_id', existing.id)
+        .eq('user_id', userId)
+        .maybeSingle()
+      if (!existingMember) {
+        await admin.from('org_members').insert({
+          org_id: existing.id,
+          user_id: userId,
+          role: 'ADMIN',
+        })
+      }
+      await syncActiveOrg(userId, existing.id)
+      return existing.id
+    }
+    throw new Error(`Failed to create org: ${error?.message}`)
+  }
 
   await admin.from('org_members').insert({
     org_id: org.id,
@@ -74,11 +100,16 @@ async function syncActiveOrg(userId: string, orgId: string): Promise<void> {
     .eq('id', userId)
 }
 
+function isPersonalWorkspaceSlug(slug: string | null | undefined): boolean {
+  return typeof slug === 'string' && slug.startsWith('workspace-')
+}
+
 /**
  * Resolve the user's active organisation:
- * 1. profiles.active_org_id when membership exists
+ * 1. profiles.active_org_id when membership exists (unless it is an auto
+ *    personal workspace and the user also belongs to a real org — then heal)
  * 2. profiles.org_id when membership exists
- * 3. earliest org_members row
+ * 3. earliest non-personal org_members row, else earliest membership
  */
 export async function getActiveOrgId(userId: string): Promise<string | null> {
   const admin = createServiceRoleSupabaseClient()
@@ -90,20 +121,38 @@ export async function getActiveOrgId(userId: string): Promise<string | null> {
 
   const { data: memberships } = await admin
     .from('org_members')
-    .select('org_id, role, created_at, organisations(name, slug)')
+    .select('org_id, role, joined_at, organisations(name, slug)')
     .eq('user_id', userId)
     .order('joined_at', { ascending: true })
 
-  const memberOrgIds = new Set((memberships ?? []).map((m) => m.org_id))
+  const rows = memberships ?? []
+  const memberOrgIds = new Set(rows.map((m) => m.org_id))
+
+  const slugFor = (orgId: string): string => {
+    const row = rows.find((m) => m.org_id === orgId)
+    const org = row?.organisations as { name?: string; slug?: string } | null
+    return org?.slug ?? ''
+  }
+
+  const realMembership = rows.find((m) => !isPersonalWorkspaceSlug(slugFor(m.org_id)))
 
   const candidates = [profile?.active_org_id, profile?.org_id].filter(
     (id): id is string => typeof id === 'string' && memberOrgIds.has(id)
   )
 
-  if (candidates.length > 0) return candidates[0]
+  if (candidates.length > 0) {
+    const preferred = candidates[0]
+    // MCP/Studio once created an empty personal workspace for provisioned
+    // persona accounts; prefer the real org membership when both exist.
+    if (isPersonalWorkspaceSlug(slugFor(preferred)) && realMembership?.org_id) {
+      await syncActiveOrg(userId, realMembership.org_id)
+      return realMembership.org_id
+    }
+    return preferred
+  }
 
-  const first = memberships?.[0]?.org_id
-  return first ?? null
+  if (realMembership?.org_id) return realMembership.org_id
+  return rows[0]?.org_id ?? null
 }
 
 export async function listOrgMemberships(userId: string): Promise<OrgMembership[]> {

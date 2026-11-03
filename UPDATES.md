@@ -16,6 +16,88 @@ This file tracks **what we've built** (phase-wise) and **what's upcoming**. Upda
 
 ## Latest (add new entries at the top)
 
+### 2026-11-03 — Fix MCP `sudar_build_course` empty HTTP 500
+
+- **Cause**: Studio `getActiveOrgId` selected `org_members.created_at`, which did not exist. Membership lookup failed, Bearer/MCP sessions rejected a valid `active_org_id`, then crashed creating a duplicate personal workspace (empty 500 body). Separately, Together retired `Llama-3.3-70B-Instruct-Turbo` from serverless.
+- **Hotfix (live)**: Migration `org_members_created_at_compat`; Priya active org → Sudar Beta; Worker secret `AI_CHAT_DEFAULT_MODEL=openai/gpt-oss-120b` on Studio/Learn.
+- **Code (pending deploy)**: `org.ts` service-role membership + workspace heal; generate-course top-level catch + outline flatten; Together default → `openai/gpt-oss-120b`; Studio `wrangler.jsonc` `limits.subrequests` raised (module fill was hitting CF subrequest cap).
+- **Verified**: Bearer `GET /api/courses` returns Sudar Beta courses; generate-course creates `course_id` (module fill may still 502 until Studio redeploy with higher subrequest limits).
+
+### 2026-11-03 — MCP + ChatGPT Content Excellence & Near-Studio authoring
+
+- **Theme**: ChatGPT/Cursor MCP builds world-class courses, chooses host vs download, and edits/publishes in chat.
+- **Shipped**:
+  - HTML/SCORM export renders `sudar_scene` + DesignSpec CSS; signed Storage `download_url`s (MCP prefers URLs over large base64).
+  - `sudar_build_course`: DesignSpec args + `delivery` (`host` \| `download` \| `both`).
+  - Near-Studio Bearer APIs under `/api/mcp/authoring/courses/*` + tools: get/update/regenerate/add-remove/publish/quality; `bearerRoutes` allowlist.
+  - Instructions, discovery, MCP_SERVERS / MCP_CHATGPT_LAUNCH, export scene fixture test.
+- **Docs**: [MCP_SERVERS.md](docs/MCP_SERVERS.md), [MCP_CHATGPT_LAUNCH.md](docs/MCP_CHATGPT_LAUNCH.md), SHIPPED_FEATURES MCP section.
+
+### 2026-11-02 — Content excellence (DesignSpec + Sudar Interact + anti-sameness)
+
+- **Theme**: World-class authored content — unified design controls, curated interactive scenes, topic-aware lesson forms, modality gates.
+- **Shipped**:
+  - Roadmap + D-023: [docs/CONTENT_EXCELLENCE_ROADMAP.md](docs/CONTENT_EXCELLENCE_ROADMAP.md).
+  - Shared `DesignSpec`, lesson forms, scene catalog/schemas, `gateModalityContent`, freeform org-flag helpers under `shared/content-generation/`.
+  - Studio **Design Studio** (`BrandSettings`): persona, theme, full palette, interaction intensity, layout preset → `courses.settings.design_spec` + legacy keys + `courses.template`.
+  - Pipeline: lesson-form assignment, form-aware prompts/judge, emits `sudar_scene` interactives; Learn renders four live scenes (case canvas, framework grid, branching decision, retrieval drill).
+  - Modality gates on flashcards, mindmap, video source notes, podcast scripts; DesignSpec hints for Watch/Podcast.
+  - Advanced freeform: `POST /api/studio/freeform-html` + sandboxed Learn iframe (org flag only).
+- **Docs**: SHIPPED_FEATURES, ENV_REFERENCE, KNOWN_GAPS, CONTENT_QUALITY §6.
+
+### 2026-11-02 — Simulation showcase (oracle + LLM learner agents)
+
+- **Theme**: Deck-ready Sudar-vs-baseline simulation tables under named personas.
+- **Shipped**: `npm run research:simulate` runs oracle H1/H6/H8 and LLM/stub H2/H3 (+ skeptic); writes `docs/research/hypothesis-kit/SHOWCASE.md` and `runs/*-sim.json`. Live Learn tutor optional via bearer; stubs keep offline regen.
+- **Docs**: [SHOWCASE.md](docs/research/hypothesis-kit/SHOWCASE.md), [CLAIMS.md](docs/research/hypothesis-kit/CLAIMS.md).
+
+### 2026-11-02 — Hypothesis research kit + Twin “why” + teaching eval
+
+- **Theme**: Evidence-backed adaptation claims without MiroFish — personas, pre-registered hypos, offline datasets, synthetic harness, narratives, and explainable Next 15.
+- **Shipped**:
+  - Research kit under `docs/research/hypothesis-kit/` (PERSONAS, HYPOTHESES H1–H11, OFFLINE_DATASETS, NARRATIVES, OUTCOME_CARD, CLAIMS, COHORT_PROTOCOL) plus `scripts/research/` JSON, offline mappers, H1/H2 harness.
+  - `npm run eval:teaching` / `research:calibrate` / `research:harness`; CI job `teaching-eval` (blocking, no LLM).
+  - Learn Twin trust: Next 15 and dashboard NBA show **Why Sudar suggests this** via `reason_code` on scheduler candidates; synthetic events skip twin rollup + gamification.
+  - Provision script adds Asha + Dev research personas.
+- **Docs**: [docs/research/hypothesis-kit/README.md](docs/research/hypothesis-kit/README.md), [docs/SHIPPED_FEATURES.md](docs/SHIPPED_FEATURES.md).
+
+### 2026-10-20 — SudarVid HTML film comparison
+
+- **Theme**: A local test of interactive HTML films, with length following the number of ideas.
+- **Shipped**: `http://127.0.0.1:8000/film-test/` plays the same two topics three ways. A is one seekable film with a stop. B is the existing lesson player. C is a playlist of short units. The short topic stays one unit. “How an LLM writes” is four mechanisms in A and C.
+
+### 2026-10-20 — SudarVid continues when narration is refused
+
+- **Theme**: A video job no longer dies when Edge TTS returns 403 from Bing speech.
+- **Shipped**: `POST /generate` still writes `slides.html` and marks the job done. The progress stream warns that the deck will play without voice. The client no longer sees the speech websocket URL.
+
+### 2026-10-20 — SudarVid planner model chain
+
+- **Theme**: Watch video planning no longer calls Together's retired `openai/gpt-oss-20b`.
+- **Shipped**: The slide planner tries `Prism-ML/Ternary-Bonsai-27B`, then `together/Tev1-4B-experimental`, when the first model is unavailable or returns no JSON. `TOGETHER_TEXT_MODEL` still pins the first try.
+
+### 2026-10-20 — STE master lesson cache
+
+- **Theme**: One authored microlearning lesson SudarVid can reuse, instead of rendering a new video for every learner.
+- **Shipped**: The STE lesson (`sudar_vid/examples/ste-microlearning/`) plays through `slides.html` with beat-by-beat rewrite, a word count, `seek(t)`, and a `learner_role` query binding. `POST /lessons/resolve` and `GET /lessons/ste-microlearning` cache a master plus an example-domain variant on disk. Shared narration is synthesized once. A second domain re-renders only the slotted lines. A template SudarVid does not know is stored as `purpose_built` under its own master key.
+- **Docs**: [docs/SHIPPED_FEATURES.md](docs/SHIPPED_FEATURES.md).
+
+### 2026-10-20 — Learning evidence integrity
+
+- **Theme**: Progress and mastery only move on real evidence, and course recommendations stay inside the learner's organisation.
+- **Shipped**: Quiz and flashcard events with no score or explicit result no longer update claim mastery. `POST /api/teaching/evidence` returns 400 when both are missing. Showing a tutor check no longer writes a `0.55` mastery score. Course and path progress on `module_complete` (Learn and ALP) counts distinct modules. Next-best-action course lookup fails closed when the profile has no organisation.
+- **Shipped**: `POST /api/events` and `POST /api/teaching/evidence` reject another organisation's course, a module from a different course, a learner who is not enrolled, and a claim outside the learner's organisation before any service-role write. Events with neither course nor module still succeed.
+- **Shipped**: A quiz, flashcard, or simulation score updates mastery only when it names exactly one claim. The scheduler, when no domain is supplied, uses domains from existing mastery and from enrolled courses, including claims that have never been assessed.
+- **Still open**: Recommendation confidence numbers are ranking labels, not calibrated probabilities.
+
+### 2026-10-07 — Hurix Learning Design Portfolio (SCORM path on a new org)
+
+- **Theme**: Three Hurix-branded instructional design courses, packaged as the certified path **Intentional by Design: Hurix Learning Design Certificate**, for the Hurix Digital CLO conversation. The courses are Design With Intent, Learning That Sticks, and Human First, Tech Second.
+- **Content**: A new data-driven **Learning Design Studio** SCORM 1.2 shell (`archive/portfolio-hurix-learning-design/shared/`) with 14 scene types: story, choice, sort/feed audit, sequence, match, builder, forgetting-curve simulator, slide makeover, adaptive drill, weekly planner, retrieval, reflection, pause and check-in. It adds a Designer's notes toggle, a mentor panel, an energy meter, light/dark themes, keyboard alternatives for drag, and resume via `suspend_data`. Pass mark is 70%.
+- **Ops**: The new org **Hurix Learning Design Portfolio** (`hurix-learning-design`) has 2 demo learners and private invite codes in gitignored `credentials.local`. `scripts/ops/provision-hurix-portfolio-org.mjs` creates it. `upload-to-sudar.mjs` updates courses in place by title, so ids and enrollments survive re-uploads. `prepare-demo-access.mjs` switches portfolio users' active org, saves a restore file (`--restore` reverts) and never hides other orgs' courses. `build-scorm.mjs` adds content-hash `?v=` cache-busting, because the Learn SCORM proxy caches for an hour.
+- **QA**: All 50 activities autoplay to `passed` (100%) in a local SCORM harness. Course 3 completes inside Learn on prod (the enrollment was marked completed, then reset). Checked on desktop and at 390px.
+- **Docs**: `archive/portfolio-hurix-learning-design/README.md`, `DEMO_SCRIPT.md`, `OUTLINES.md`.
+
 ### 2026-10-04 — Persona testing fixes (pre-beta)
 
 - **Theme**: Browser agents used Sudar as six personas (report: `docs/beta/PERSONA_TEST_REPORT_2026-09-30.md`). Four P0s and two P1s fixed before the beta merge.

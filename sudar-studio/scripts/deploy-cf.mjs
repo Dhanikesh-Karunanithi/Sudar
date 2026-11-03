@@ -22,5 +22,6 @@ function run(args) {
   if (r.status !== 0) process.exit(r.status ?? 1)
 }
 
-run(['build'])
+// Next 15.5.x is past OpenNext's default support window; Studio/Learn already ship on it in prod.
+run(['build', '--dangerouslyUseUnsupportedNextVersion'])
 run(['deploy'])

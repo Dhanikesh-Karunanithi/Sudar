@@ -253,9 +253,16 @@ export async function fillEmptyModulesForCourse(
                 : 'core'
 
       const noExternal = gen?.no_external_video === true
+      // Media lookups burn Cloudflare Worker subrequests; skip by default so
+      // MCP/generate-course can finish under Workers limits.
+      const skipMediaLookups = process.env.SKIP_COURSE_MEDIA_LOOKUPS !== 'false'
       let verifiedVideo: { url: string; title: string } | null = null
-      if (!noExternal) {
-        verifiedVideo = await searchYouTubeWatchUrl(`${mod.title} ${course.title}`)
+      if (!noExternal && !skipMediaLookups) {
+        try {
+          verifiedVideo = await searchYouTubeWatchUrl(`${mod.title} ${course.title}`)
+        } catch {
+          verifiedVideo = null
+        }
       }
       const allowVideo = !noExternal && verifiedVideo != null
 
@@ -296,15 +303,21 @@ export async function fillEmptyModulesForCourse(
         selected.length > 0 ? toInteractiveElements(selected, resolvedEntry.bloomLevel) : []
 
       const parsedSections = parseMarkdownSections(content)
-      const imageIndices = pickImageSectionIndices(parsedSections.length, modIndex)
+      const imageIndices = skipMediaLookups
+        ? []
+        : pickImageSectionIndices(parsedSections.length, modIndex)
       const sectionImages = new Map<number, NonNullable<Awaited<ReturnType<typeof getOneImage>>>>()
       for (let imgIdx = 0; imgIdx < imageIndices.length; imgIdx++) {
         const secIdx = imageIndices[imgIdx]!
         const heading = parsedSections[secIdx]?.heading ?? ''
         const query =
           imgIdx === 0 ? mod.title : `${mod.title} ${heading}`.slice(0, 100)
-        const imageResult = await getOneImage(query, course.title)
-        if (imageResult) sectionImages.set(secIdx, imageResult)
+        try {
+          const imageResult = await getOneImage(query, course.title)
+          if (imageResult) sectionImages.set(secIdx, imageResult)
+        } catch {
+          // Prefer finishing the module over failing the whole course on media/API limits.
+        }
       }
 
       const sections = parsedSections.map((sec, i) => ({

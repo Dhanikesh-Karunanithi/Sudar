@@ -40,8 +40,8 @@ export type ChatCompletionResult = {
 }
 
 // Together serverless models only; gpt-oss-20b and gemma-3n were moved to dedicated endpoints (Oct 2026).
-const DEFAULT_TUTOR_MODEL = 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
-const DEFAULT_MEMORY_MODEL = 'meta-llama/Llama-3.3-70B-Instruct-Turbo'
+const DEFAULT_TUTOR_MODEL = 'openai/gpt-oss-120b'
+const DEFAULT_MEMORY_MODEL = 'openai/gpt-oss-120b'
 
 async function chatPrivateOpenAi(
   runtime: PrivateOpenAiRuntime,
