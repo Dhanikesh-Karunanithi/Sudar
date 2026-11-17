@@ -1,3 +1,5 @@
+import { verifySimServiceSecret } from '@/lib/sim/simInternalAuth'
+
 /**
  * Paths on Sudar Learn that must be reachable without a Supabase browser session.
  * Used by middleware so ALP (integration keys / signed embed) and auth callbacks work.
@@ -43,6 +45,11 @@ export function isLearnApiDelegatedAuthPath(pathname: string, headers?: Headers)
   // sudar-sim voice agent calls server-to-server with X-Sudar-Sim-Secret (no cookie); both handlers
   // verify the secret themselves, and the session route falls back to cookie auth without it.
   if (/^\/api\/sim\/session\/[^/]+\/agent$/.test(pathname)) return true
-  if (/^\/api\/sim\/session\/[^/]+$/.test(pathname) && headers?.get('x-sudar-sim-secret')) return true
+  if (
+    /^\/api\/sim\/session\/[^/]+$/.test(pathname) &&
+    verifySimServiceSecret(headers?.get('x-sudar-sim-secret') ?? null)
+  ) {
+    return true
+  }
   return false
 }
